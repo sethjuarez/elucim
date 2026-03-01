@@ -7,11 +7,14 @@ import {
   Arrow,
   Rect,
   Text,
+  Polygon,
   Axes,
   FunctionPlot,
   Vector,
+  VectorField,
   Matrix,
   Graph,
+  LaTeX,
   type GraphNode,
   type GraphEdge,
   FadeIn,
@@ -554,6 +557,137 @@ function AnimatedTangent() {
   );
 }
 
+// ─── New Primitives: LaTeX, VectorField, Polygon ─────────────────────────────
+
+/** LaTeX rendering demo */
+function LaTeXDemo() {
+  return (
+    <section id="latex-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>LaTeX Rendering (KaTeX)</h2>
+      <Player
+        width={800}
+        height={400}
+        fps={60}
+        durationInFrames={150}
+        background="#111127"
+      >
+        <Sequence from={0} durationInFrames={150}>
+          <LaTeX expression="E = mc^2" x={400} y={60} fontSize={36} color="#ff6b6b" fadeIn={30} />
+        </Sequence>
+        <Sequence from={30} durationInFrames={120}>
+          <LaTeX expression="\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}" x={400} y={150} fontSize={28} color="#4ecdc4" fadeIn={30} />
+        </Sequence>
+        <Sequence from={60} durationInFrames={90}>
+          <LaTeX expression="\sum_{n=0}^{\infty} \frac{x^n}{n!} = e^x" x={400} y={240} fontSize={28} color="#ffe66d" fadeIn={30} />
+        </Sequence>
+        <Sequence from={90} durationInFrames={60}>
+          <LaTeX expression="\nabla \times \mathbf{E} = -\frac{\partial \mathbf{B}}{\partial t}" x={400} y={330} fontSize={28} color="#a29bfe" fadeIn={30} />
+        </Sequence>
+      </Player>
+    </section>
+  );
+}
+
+/** VectorField demo */
+function VectorFieldDemo() {
+  return (
+    <section id="vector-field-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Vector Field</h2>
+      <Player
+        width={800}
+        height={600}
+        fps={60}
+        durationInFrames={90}
+        background="#111127"
+      >
+        <Axes
+          domain={[-4, 4]}
+          range={[-3, 3]}
+          origin={[400, 300]}
+          scale={50}
+          showGrid
+          axisColor="#444"
+          gridColor="#222"
+        />
+        <VectorField
+          fn={(x, y) => [-y, x]}
+          domain={[-4, 4]}
+          range={[-3, 3]}
+          origin={[400, 300]}
+          scale={50}
+          color="#4ecdc4"
+          arrowScale={0.35}
+          normalize
+          fadeIn={40}
+        />
+        <Sequence from={50} durationInFrames={40}>
+          <Text x={400} y={570} fill="#888" fontSize={14} textAnchor="middle" fadeIn={15}>
+            F(x,y) = (-y, x) — rotation field
+          </Text>
+        </Sequence>
+      </Player>
+    </section>
+  );
+}
+
+/** Polygon demo */
+function PolygonDemo() {
+  return (
+    <section id="polygon-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Polygon</h2>
+      <Player
+        width={600}
+        height={350}
+        fps={60}
+        durationInFrames={120}
+        background="#111127"
+      >
+        {/* Pentagon */}
+        <Sequence from={0} durationInFrames={120}>
+          <Polygon
+            points={pentagonPoints(200, 160, 80)}
+            stroke="#ff6b6b"
+            fill="rgba(255,107,107,0.15)"
+            strokeWidth={3}
+            draw={50}
+          />
+          <Text x={200} y={260} fill="#ff6b6b" fontSize={14} textAnchor="middle" fadeIn={30}>
+            Pentagon
+          </Text>
+        </Sequence>
+        {/* Star */}
+        <Sequence from={30} durationInFrames={90}>
+          <Polygon
+            points={starPoints(400, 160, 80, 35)}
+            stroke="#ffe66d"
+            fill="rgba(255,230,109,0.15)"
+            strokeWidth={3}
+            draw={50}
+          />
+          <Text x={400} y={260} fill="#ffe66d" fontSize={14} textAnchor="middle" fadeIn={30}>
+            Star
+          </Text>
+        </Sequence>
+      </Player>
+    </section>
+  );
+}
+
+function pentagonPoints(cx: number, cy: number, r: number): [number, number][] {
+  return Array.from({ length: 5 }, (_, i) => {
+    const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)] as [number, number];
+  });
+}
+
+function starPoints(cx: number, cy: number, outerR: number, innerR: number): [number, number][] {
+  return Array.from({ length: 10 }, (_, i) => {
+    const angle = (i * Math.PI) / 5 - Math.PI / 2;
+    const r = i % 2 === 0 ? outerR : innerR;
+    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)] as [number, number];
+  });
+}
+
 // ─── Phase 3: Animation System demos ─────────────────────────────────────────
 
 /** FadeIn / FadeOut demonstration */
@@ -739,6 +873,13 @@ export function App() {
         <MatrixDemo />
         <GraphDemo />
       </div>
+
+      <hr style={{ borderColor: '#333', margin: '32px 0' }} />
+      <h2 style={{ marginBottom: 16 }}>New Primitives</h2>
+
+      <LaTeXDemo />
+      <VectorFieldDemo />
+      <PolygonDemo />
 
       <hr style={{ borderColor: '#333', margin: '32px 0' }} />
       <h2 style={{ marginBottom: 16 }}>Phase 3: Animation System</h2>

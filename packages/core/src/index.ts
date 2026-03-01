@@ -12,17 +12,20 @@ export { interpolate, type InterpolateOptions } from './hooks/interpolate';
 // Context
 export { useElucimContext, type ElucimContextValue } from './context';
 
-// Mobjects
+// Primitives
 export { Circle, type CircleProps } from './mobjects/Circle';
 export { Line, type LineProps } from './mobjects/Line';
 export { Arrow, type ArrowProps } from './mobjects/Arrow';
 export { Rect, type RectProps } from './mobjects/Rect';
 export { Text, type TextProps } from './mobjects/Text';
+export { Polygon, type PolygonProps } from './mobjects/Polygon';
 export { Axes, type AxesProps, mathToSvg } from './mobjects/Axes';
 export { FunctionPlot, type FunctionPlotProps } from './mobjects/FunctionPlot';
 export { Vector, type VectorProps } from './mobjects/Vector';
+export { VectorField, type VectorFieldProps } from './mobjects/VectorField';
 export { Matrix, type MatrixProps } from './mobjects/Matrix';
 export { Graph, type GraphProps, type GraphNode, type GraphEdge } from './mobjects/Graph';
+export { LaTeX, type LaTeXProps } from './mobjects/LaTeX';
 export { useAnimation, type AnimationProps } from './mobjects/animation';
 
 // Easing
