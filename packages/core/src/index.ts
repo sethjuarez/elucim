@@ -50,3 +50,13 @@ export { Draw, type DrawProps, Write, type WriteProps } from './animations/DrawW
 export { Transform, type TransformProps, Morph, type MorphProps } from './animations/Transform';
 export { Parallel, Stagger, type StaggerProps } from './animations/Groups';
 export { Timeline, type TimelineAction, type PlayOptions } from './animations/Timeline';
+
+// Export / Video
+export {
+  exportAnimation,
+  exportWithMediaRecorder,
+  svgToCanvas,
+  downloadBlob,
+  useExport,
+  type ExportOptions,
+} from './export';
