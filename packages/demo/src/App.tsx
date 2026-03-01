@@ -7,6 +7,13 @@ import {
   Arrow,
   Rect,
   Text,
+  Axes,
+  FunctionPlot,
+  Vector,
+  Matrix,
+  Graph,
+  type GraphNode,
+  type GraphEdge,
   interpolate,
   useCurrentFrame,
   easeOutCubic,
@@ -279,6 +286,267 @@ function TextDemo() {
   );
 }
 
+// ─── Phase 2: Math Primitives demos ──────────────────────────────────────────
+
+/** Axes + FunctionPlot: sin(x) and cos(x) with draw animation */
+function AxesFunctionDemo() {
+  return (
+    <section id="axes-function-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Axes + Function Plots</h2>
+      <Player
+        width={800}
+        height={600}
+        fps={60}
+        durationInFrames={120}
+        background="#111127"
+      >
+        <Sequence from={0} durationInFrames={120}>
+          <Axes
+            domain={[-5, 5]}
+            range={[-3, 3]}
+            origin={[400, 300]}
+            scale={60}
+            showGrid
+            fadeIn={20}
+          />
+        </Sequence>
+        <Sequence from={20} durationInFrames={100}>
+          <FunctionPlot
+            fn={Math.sin}
+            domain={[-5, 5]}
+            origin={[400, 300]}
+            scale={60}
+            color="#ff6b6b"
+            strokeWidth={3}
+            draw={60}
+          />
+        </Sequence>
+        <Sequence from={50} durationInFrames={70}>
+          <FunctionPlot
+            fn={Math.cos}
+            domain={[-5, 5]}
+            origin={[400, 300]}
+            scale={60}
+            color="#4ecdc4"
+            strokeWidth={3}
+            draw={60}
+          />
+        </Sequence>
+        {/* Labels */}
+        <Sequence from={80} durationInFrames={40}>
+          <Text x={680} y={195} fill="#ff6b6b" fontSize={18} fadeIn={15}>sin(x)</Text>
+        </Sequence>
+        <Sequence from={90} durationInFrames={30}>
+          <Text x={680} y={240} fill="#4ecdc4" fontSize={18} fadeIn={15}>cos(x)</Text>
+        </Sequence>
+      </Player>
+    </section>
+  );
+}
+
+/** Vectors on axes */
+function VectorDemo() {
+  return (
+    <section id="vector-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Vectors</h2>
+      <Player
+        width={600}
+        height={500}
+        fps={60}
+        durationInFrames={120}
+        background="#111127"
+      >
+        <Axes
+          domain={[-4, 4]}
+          range={[-4, 4]}
+          origin={[300, 250]}
+          scale={50}
+          showGrid
+          axisColor="#555"
+        />
+        <Sequence from={10} durationInFrames={110}>
+          <Vector to={[3, 2]} origin={[300, 250]} scale={50} color="#ff6b6b" label="v₁" fadeIn={20} />
+        </Sequence>
+        <Sequence from={30} durationInFrames={90}>
+          <Vector to={[-2, 3]} origin={[300, 250]} scale={50} color="#4ecdc4" label="v₂" fadeIn={20} />
+        </Sequence>
+        <Sequence from={50} durationInFrames={70}>
+          <Vector to={[1, 5]} origin={[300, 250]} scale={50} color="#ffe66d" label="v₁+v₂" fadeIn={20} strokeWidth={3} />
+        </Sequence>
+        {/* Dashed line showing parallelogram */}
+        <Sequence from={60} durationInFrames={60}>
+          <AnimatedParallelogram />
+        </Sequence>
+      </Player>
+    </section>
+  );
+}
+
+function AnimatedParallelogram() {
+  const frame = useCurrentFrame();
+  const opacity = interpolate(frame, [0, 20], [0, 0.4]);
+  const ox = 300, oy = 250, s = 50;
+  // v1 = (3,2), v2 = (-2,3)
+  const v1End = [ox + 3 * s, oy - 2 * s];
+  const v2End = [ox - 2 * s, oy - 3 * s];
+  const sum = [ox + 1 * s, oy - 5 * s];
+  return (
+    <g opacity={opacity}>
+      <line x1={v1End[0]} y1={v1End[1]} x2={sum[0]} y2={sum[1]} stroke="#ffe66d" strokeWidth={1} strokeDasharray="6 4" />
+      <line x1={v2End[0]} y1={v2End[1]} x2={sum[0]} y2={sum[1]} stroke="#ffe66d" strokeWidth={1} strokeDasharray="6 4" />
+    </g>
+  );
+}
+
+/** Matrix display */
+function MatrixDemo() {
+  return (
+    <section id="matrix-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Matrix</h2>
+      <Player
+        width={600}
+        height={300}
+        fps={60}
+        durationInFrames={90}
+        background="#111127"
+      >
+        <Sequence from={0} durationInFrames={90}>
+          <Matrix
+            values={[
+              [1, 0, 0],
+              [0, 'cos θ', '-sin θ'],
+              [0, 'sin θ', 'cos θ'],
+            ]}
+            x={150}
+            y={60}
+            cellSize={55}
+            fontSize={18}
+            fadeIn={30}
+          />
+        </Sequence>
+        <Sequence from={40} durationInFrames={50}>
+          <Text x={300} y={250} fill="#888" fontSize={16} textAnchor="middle" fadeIn={20}>
+            Rotation matrix Rₓ(θ)
+          </Text>
+        </Sequence>
+      </Player>
+    </section>
+  );
+}
+
+/** Graph (nodes + edges) */
+function GraphDemo() {
+  const nodes: GraphNode[] = [
+    { id: 'A', x: 120, y: 100, label: 'A', color: '#ff6b6b' },
+    { id: 'B', x: 300, y: 60, label: 'B', color: '#4ecdc4' },
+    { id: 'C', x: 480, y: 100, label: 'C', color: '#ffe66d' },
+    { id: 'D', x: 200, y: 250, label: 'D', color: '#a29bfe' },
+    { id: 'E', x: 400, y: 250, label: 'E', color: '#fd79a8' },
+  ];
+  const edges: GraphEdge[] = [
+    { from: 'A', to: 'B', directed: true, label: '4' },
+    { from: 'B', to: 'C', directed: true, label: '2' },
+    { from: 'A', to: 'D', directed: true, label: '7' },
+    { from: 'D', to: 'E', directed: true, label: '1' },
+    { from: 'B', to: 'E', directed: true, label: '3' },
+    { from: 'E', to: 'C', directed: true, label: '5' },
+  ];
+
+  return (
+    <section id="graph-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Graph (Directed, Weighted)</h2>
+      <Player
+        width={600}
+        height={350}
+        fps={60}
+        durationInFrames={90}
+        background="#111127"
+      >
+        <Graph nodes={nodes} edges={edges} fadeIn={40} edgeColor="#666" />
+        <Sequence from={50} durationInFrames={40}>
+          <Text x={300} y={330} fill="#888" fontSize={14} textAnchor="middle" fadeIn={15}>
+            Shortest path: A → B → E → C (cost: 10)
+          </Text>
+        </Sequence>
+      </Player>
+    </section>
+  );
+}
+
+/** Combined math scene: Axes + function + tangent line */
+function TangentLineDemo() {
+  return (
+    <section id="tangent-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Animated Tangent Line</h2>
+      <Player
+        width={800}
+        height={500}
+        fps={60}
+        durationInFrames={180}
+        background="#111127"
+      >
+        <Axes
+          domain={[-4, 4]}
+          range={[-2, 4]}
+          origin={[400, 350]}
+          scale={70}
+          showGrid
+          axisColor="#555"
+          gridColor="#222"
+        />
+        <FunctionPlot
+          fn={(x) => x * x * 0.5}
+          domain={[-4, 4]}
+          origin={[400, 350]}
+          scale={70}
+          color="#ff6b6b"
+          strokeWidth={3}
+        />
+        <AnimatedTangent />
+      </Player>
+    </section>
+  );
+}
+
+function AnimatedTangent() {
+  const frame = useCurrentFrame();
+  const ox = 400, oy = 350, s = 70;
+  // Animate x from -3 to 3 over 180 frames
+  const x = interpolate(frame, [0, 180], [-3, 3], { easing: easeInOutQuad });
+  const y = x * x * 0.5;
+  const slope = x; // derivative of 0.5*x^2
+
+  // Tangent line: y - y0 = slope * (x - x0), draw from x-1.5 to x+1.5
+  const tLen = 1.5;
+  const tx1 = x - tLen;
+  const ty1 = y - slope * tLen;
+  const tx2 = x + tLen;
+  const ty2 = y + slope * tLen;
+
+  const svgX = ox + x * s;
+  const svgY = oy - y * s;
+
+  return (
+    <g>
+      {/* Tangent line */}
+      <line
+        x1={ox + tx1 * s}
+        y1={oy - ty1 * s}
+        x2={ox + tx2 * s}
+        y2={oy - ty2 * s}
+        stroke="#4ecdc4"
+        strokeWidth={2}
+      />
+      {/* Point on curve */}
+      <circle cx={svgX} cy={svgY} r={5} fill="#ffe66d" />
+      {/* Slope label */}
+      <text x={svgX + 12} y={svgY - 12} fill="#ffe66d" fontSize={14} fontFamily="monospace">
+        slope = {slope.toFixed(2)}
+      </text>
+    </g>
+  );
+}
+
 // ─── App ─────────────────────────────────────────────────────────────────────
 
 export function App() {
@@ -295,6 +563,18 @@ export function App() {
       <EasingDemo />
       <SequenceTimingDemo />
       <TransformDemo />
+
+      <hr style={{ borderColor: '#333', margin: '32px 0' }} />
+      <h2 style={{ marginBottom: 16 }}>Phase 2: Math Primitives</h2>
+
+      <AxesFunctionDemo />
+      <VectorDemo />
+      <TangentLineDemo />
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <MatrixDemo />
+        <GraphDemo />
+      </div>
 
       <hr style={{ borderColor: '#333', margin: '32px 0' }} />
       <h2 style={{ marginBottom: 16 }}>Individual Mobjects</h2>
