@@ -40,3 +40,10 @@ export {
   spring,
   cubicBezier,
 } from './easing';
+
+// Animations (Phase 3)
+export { FadeIn, type FadeInProps, FadeOut, type FadeOutProps } from './animations/Fade';
+export { Draw, type DrawProps, Write, type WriteProps } from './animations/DrawWrite';
+export { Transform, type TransformProps, Morph, type MorphProps } from './animations/Transform';
+export { Parallel, Stagger, type StaggerProps } from './animations/Groups';
+export { Timeline, type TimelineAction, type PlayOptions } from './animations/Timeline';

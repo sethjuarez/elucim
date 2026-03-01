@@ -14,10 +14,17 @@ import {
   Graph,
   type GraphNode,
   type GraphEdge,
+  FadeIn,
+  FadeOut,
+  Write,
+  Transform as AnimTransform,
+  Morph,
+  Stagger,
   interpolate,
   useCurrentFrame,
   easeOutCubic,
   easeInOutQuad,
+  easeInOutCubic,
   easeOutBounce,
   easeOutElastic,
   spring,
@@ -547,6 +554,163 @@ function AnimatedTangent() {
   );
 }
 
+// ─── Phase 3: Animation System demos ─────────────────────────────────────────
+
+/** FadeIn / FadeOut demonstration */
+function FadeAnimationsDemo() {
+  return (
+    <section id="fade-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>FadeIn / FadeOut</h2>
+      <Player
+        width={800}
+        height={300}
+        fps={60}
+        durationInFrames={120}
+        background="#111127"
+      >
+        <Sequence from={0} durationInFrames={60}>
+          <FadeIn duration={40}>
+            <Circle cx={200} cy={150} r={60} fill="#6c5ce7" stroke="#6c5ce7" />
+            <Text x={200} y={155} fill="#fff" fontSize={16} textAnchor="middle" dominantBaseline="middle">
+              FadeIn
+            </Text>
+          </FadeIn>
+        </Sequence>
+        <Sequence from={60} durationInFrames={60}>
+          <FadeOut duration={40}>
+            <Circle cx={600} cy={150} r={60} fill="#ff6b6b" stroke="#ff6b6b" />
+            <Text x={600} y={155} fill="#fff" fontSize={16} textAnchor="middle" dominantBaseline="middle">
+              FadeOut
+            </Text>
+          </FadeOut>
+        </Sequence>
+        {/* Always-visible reference */}
+        <Rect x={370} y={120} width={60} height={60} fill="#333" stroke="#555" />
+        <Text x={400} y={155} fill="#888" fontSize={12} textAnchor="middle" dominantBaseline="middle">
+          ref
+        </Text>
+      </Player>
+    </section>
+  );
+}
+
+/** Write animation on text */
+function WriteDemo() {
+  return (
+    <section id="write-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Write Animation</h2>
+      <Player
+        width={800}
+        height={200}
+        fps={60}
+        durationInFrames={90}
+        background="#111127"
+      >
+        <Sequence from={0} durationInFrames={90}>
+          <Write duration={60}>
+            <Text x={400} y={100} fill="#4ecdc4" fontSize={48} textAnchor="middle" dominantBaseline="middle" fontFamily="serif">
+              E = mc²
+            </Text>
+          </Write>
+        </Sequence>
+      </Player>
+    </section>
+  );
+}
+
+/** Transform animation — moving and rotating */
+function TransformAnimDemo() {
+  return (
+    <section id="transform-anim-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Transform Animation</h2>
+      <Player
+        width={800}
+        height={300}
+        fps={60}
+        durationInFrames={120}
+        background="#111127"
+      >
+        <Sequence from={0} durationInFrames={120}>
+          <AnimTransform
+            duration={100}
+            translate={{ from: [100, 150], to: [600, 150] }}
+            rotate={{ from: 0, to: 360 }}
+            scale={{ from: 0.5, to: 1.5 }}
+            easing={easeInOutCubic}
+          >
+            <Rect x={-30} y={-30} width={60} height={60} fill="#ffe66d" stroke="#fff" strokeWidth={2} rx={8} />
+          </AnimTransform>
+        </Sequence>
+
+        {/* Scale labels */}
+        <Text x={100} y={250} fill="#666" fontSize={12} textAnchor="middle">start: scale=0.5</Text>
+        <Text x={600} y={250} fill="#666" fontSize={12} textAnchor="middle">end: scale=1.5, rot=360°</Text>
+      </Player>
+    </section>
+  );
+}
+
+/** Stagger animation — elements appearing one by one */
+function StaggerDemo() {
+  return (
+    <section id="stagger-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Stagger Animation</h2>
+      <Player
+        width={800}
+        height={200}
+        fps={60}
+        durationInFrames={120}
+        background="#111127"
+      >
+        <Sequence from={0} durationInFrames={120}>
+          <Stagger staggerDelay={12}>
+            <Circle cx={100} cy={100} r={30} fill="#ff6b6b" stroke="#ff6b6b" />
+            <Circle cx={200} cy={100} r={30} fill="#4ecdc4" stroke="#4ecdc4" />
+            <Circle cx={300} cy={100} r={30} fill="#ffe66d" stroke="#ffe66d" />
+            <Circle cx={400} cy={100} r={30} fill="#a29bfe" stroke="#a29bfe" />
+            <Circle cx={500} cy={100} r={30} fill="#fd79a8" stroke="#fd79a8" />
+            <Circle cx={600} cy={100} r={30} fill="#00cec9" stroke="#00cec9" />
+            <Circle cx={700} cy={100} r={30} fill="#6c5ce7" stroke="#6c5ce7" />
+          </Stagger>
+        </Sequence>
+      </Player>
+    </section>
+  );
+}
+
+/** Morph animation — color and scale transition */
+function MorphDemo() {
+  return (
+    <section id="morph-demo">
+      <h2 style={{ padding: '16px 0 8px' }}>Morph Animation</h2>
+      <Player
+        width={800}
+        height={250}
+        fps={60}
+        durationInFrames={120}
+        background="#111127"
+      >
+        <Sequence from={0} durationInFrames={120}>
+          <Morph
+            duration={100}
+            fromColor="#ff6b6b"
+            toColor="#4ecdc4"
+            fromScale={0.8}
+            toScale={1.2}
+          >
+            <g transform="translate(400, 125)">
+              <circle r={50} stroke="#fff" strokeWidth={2} />
+              <text y={6} fill="#fff" fontSize={16} textAnchor="middle" fontWeight="bold">
+                Morph
+              </text>
+            </g>
+          </Morph>
+        </Sequence>
+      </Player>
+    </section>
+  );
+}
+
 // ─── App ─────────────────────────────────────────────────────────────────────
 
 export function App() {
@@ -577,7 +741,16 @@ export function App() {
       </div>
 
       <hr style={{ borderColor: '#333', margin: '32px 0' }} />
-      <h2 style={{ marginBottom: 16 }}>Individual Mobjects</h2>
+      <h2 style={{ marginBottom: 16 }}>Phase 3: Animation System</h2>
+
+      <FadeAnimationsDemo />
+      <WriteDemo />
+      <TransformAnimDemo />
+      <StaggerDemo />
+      <MorphDemo />
+
+      <hr style={{ borderColor: '#333', margin: '32px 0' }} />
+      <h2 style={{ marginBottom: 16 }}>Individual Primitives</h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         <CircleDemo />
