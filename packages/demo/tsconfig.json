@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@elucim/core": ["../core/src/index.ts"]
+    }
+  },
+  "include": ["src", "../core/src"]
+}

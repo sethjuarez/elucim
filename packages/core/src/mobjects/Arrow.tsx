@@ -1,0 +1,60 @@
+import React from 'react';
+import { useAnimation, type AnimationProps } from './animation';
+
+export interface ArrowProps extends AnimationProps {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  stroke?: string;
+  strokeWidth?: number;
+  headSize?: number;
+  opacity?: number;
+}
+
+export function Arrow({
+  x1,
+  y1,
+  x2,
+  y2,
+  stroke = '#fff',
+  strokeWidth = 2,
+  headSize = 10,
+  opacity: baseOpacity = 1,
+  fadeIn,
+  fadeOut,
+  draw,
+  easing,
+}: ArrowProps) {
+  const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+  const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, length);
+
+  // Compute arrowhead points
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const headAngle = Math.PI / 6; // 30 degrees
+  const p1x = x2 - headSize * Math.cos(angle - headAngle);
+  const p1y = y2 - headSize * Math.sin(angle - headAngle);
+  const p2x = x2 - headSize * Math.cos(angle + headAngle);
+  const p2y = y2 - headSize * Math.sin(angle + headAngle);
+
+  const finalOpacity = baseOpacity * anim.opacity;
+
+  return (
+    <g data-testid="elucim-arrow" opacity={finalOpacity}>
+      <line
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        strokeDasharray={anim.strokeDasharray}
+        strokeDashoffset={anim.strokeDashoffset}
+      />
+      <polygon
+        points={`${x2},${y2} ${p1x},${p1y} ${p2x},${p2y}`}
+        fill={stroke}
+      />
+    </g>
+  );
+}

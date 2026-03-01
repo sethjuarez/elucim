@@ -1,0 +1,14 @@
+{
+  "name": "elucim-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @elucim/demo dev",
+    "build": "pnpm --filter @elucim/core build",
+    "test": "pnpm --filter @elucim/core test",
+    "test:e2e": "pnpm --filter @elucim/e2e test",
+    "lint": "pnpm -r lint"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
