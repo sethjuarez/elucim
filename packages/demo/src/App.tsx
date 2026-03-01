@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Player,
   Sequence,
@@ -15,6 +15,8 @@ import {
   Matrix,
   Graph,
   LaTeX,
+  Presentation,
+  Slide,
   type GraphNode,
   type GraphEdge,
   FadeIn,
@@ -899,6 +901,122 @@ export function App() {
         <ArrowDemo />
         <RectDemo />
         <TextDemo />
+      </div>
+
+      <hr style={{ borderColor: '#333', margin: '32px 0' }} />
+      <h2 style={{ marginBottom: 16 }}>🎤 Presentation Mode</h2>
+      <p style={{ color: '#888', marginBottom: 16 }}>
+        Click the presentation below to navigate. Use ← → keys, Space, or F for fullscreen.
+      </p>
+
+      <div id="presentation-demo" style={{ maxWidth: 960, margin: '0 auto' }}>
+        <Presentation
+          width={960}
+          height={540}
+          transition="fade"
+          transitionDuration={500}
+          showNotes
+        >
+          <Slide title="Welcome" notes="Introduce Elucim and its purpose.">
+            <Player width={960} height={540} fps={60} durationInFrames={120} background="#111127" controls={false} autoPlay loop>
+              <Sequence from={0} durationInFrames={120}>
+                <Text x={480} y={200} fill="#4ecdc4" fontSize={48} textAnchor="middle" fadeIn={30}>
+                  ✨ Elucim
+                </Text>
+              </Sequence>
+              <Sequence from={30} durationInFrames={90}>
+                <Text x={480} y={280} fill="#888" fontSize={22} textAnchor="middle" fadeIn={30}>
+                  Animate concepts. Illuminate understanding.
+                </Text>
+              </Sequence>
+              <Sequence from={60} durationInFrames={60}>
+                <Stagger interval={8}>
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <FadeIn key={i} durationInFrames={20}>
+                      <Circle cx={330 + i * 65} cy={380} r={20} stroke="#4ecdc4" fill="rgba(78,205,196,0.15)" strokeWidth={2} />
+                    </FadeIn>
+                  ))}
+                </Stagger>
+              </Sequence>
+            </Player>
+          </Slide>
+
+          <Slide title="The Unit Circle" notes="Show the relationship between sine, cosine and the unit circle.">
+            <Player width={960} height={540} fps={60} durationInFrames={150} background="#111127" controls={false} autoPlay loop>
+              <Axes domain={[-2, 2]} range={[-2, 2]} origin={[480, 270]} scale={120} showGrid axisColor="#444" gridColor="#1a1a2e" />
+              <Circle cx={480} cy={270} r={120} stroke="#4ecdc4" strokeWidth={2} fill="none" draw={40} />
+              <Sequence from={40} durationInFrames={110}>
+                <FunctionPlot fn={(x) => Math.sqrt(1 - x * x)} domain={[-1, 1]} origin={[480, 270]} scale={120} stroke="#ff6b6b" strokeWidth={2} draw={40} />
+              </Sequence>
+              <Sequence from={60} durationInFrames={90}>
+                <LaTeX expression="\sin^2\theta + \cos^2\theta = 1" x={480} y={60} fontSize={28} color="#ffe66d" fadeIn={25} />
+              </Sequence>
+            </Player>
+          </Slide>
+
+          <Slide title="Taylor Series" notes="Visual demonstration of Taylor series approximation of sin(x).">
+            <Player width={960} height={540} fps={60} durationInFrames={180} background="#111127" controls={false} autoPlay loop>
+              <Axes domain={[-4, 4]} range={[-2, 2]} origin={[480, 270]} scale={60} showGrid axisColor="#444" gridColor="#1a1a2e" />
+              <FunctionPlot fn={Math.sin} domain={[-4, 4]} origin={[480, 270]} scale={60} stroke="#666" strokeWidth={1} draw={20} />
+              <Sequence from={20} durationInFrames={160}>
+                <FunctionPlot fn={(x) => x} domain={[-4, 4]} origin={[480, 270]} scale={60} stroke="#ff6b6b" strokeWidth={2} draw={30} />
+              </Sequence>
+              <Sequence from={60} durationInFrames={120}>
+                <FunctionPlot fn={(x) => x - x ** 3 / 6} domain={[-4, 4]} origin={[480, 270]} scale={60} stroke="#4ecdc4" strokeWidth={2} draw={30} />
+              </Sequence>
+              <Sequence from={100} durationInFrames={80}>
+                <FunctionPlot fn={(x) => x - x ** 3 / 6 + x ** 5 / 120} domain={[-3.5, 3.5]} origin={[480, 270]} scale={60} stroke="#ffe66d" strokeWidth={2} draw={30} />
+              </Sequence>
+              <Sequence from={30} durationInFrames={150}>
+                <LaTeX expression="\sin(x) \approx x - \frac{x^3}{3!} + \frac{x^5}{5!} - \cdots" x={480} y={50} fontSize={24} color="#e0e0e0" fadeIn={25} />
+              </Sequence>
+            </Player>
+          </Slide>
+
+          <Slide title="Vector Fields" notes="Demonstrate a rotation vector field and its properties." background="#0a0a15">
+            <Player width={960} height={540} fps={60} durationInFrames={120} background="#0a0a15" controls={false} autoPlay loop>
+              <Axes domain={[-4, 4]} range={[-3, 3]} origin={[480, 270]} scale={50} showGrid axisColor="#333" gridColor="#181828" />
+              <VectorField
+                fn={(x, y) => [-y, x]}
+                domain={[-4, 4]} range={[-3, 3]}
+                origin={[480, 270]} scale={50}
+                color="#a29bfe" arrowScale={0.35} normalize fadeIn={40}
+              />
+              <Sequence from={50} durationInFrames={70}>
+                <LaTeX expression="\mathbf{F}(x,y) = (-y, x)" x={480} y={50} fontSize={26} color="#a29bfe" fadeIn={20} />
+              </Sequence>
+              <Sequence from={70} durationInFrames={50}>
+                <Text x={480} y={510} fill="#666" fontSize={14} textAnchor="middle" fadeIn={15}>
+                  A rotation field — every vector is tangent to a circle centered at the origin
+                </Text>
+              </Sequence>
+            </Player>
+          </Slide>
+
+          <Slide title="Thank You" notes="Closing slide. Mention the Explorer and docs.">
+            <Player width={960} height={540} fps={60} durationInFrames={120} background="#111127" controls={false} autoPlay loop>
+              <Sequence from={0} durationInFrames={120}>
+                <Text x={480} y={220} fill="#4ecdc4" fontSize={42} textAnchor="middle" fadeIn={30}>
+                  Thank you!
+                </Text>
+              </Sequence>
+              <Sequence from={30} durationInFrames={90}>
+                <Text x={480} y={290} fill="#888" fontSize={18} textAnchor="middle" fadeIn={25}>
+                  github.com/example/elucim · Explorer at :3200 · Docs at :3300
+                </Text>
+              </Sequence>
+              <Sequence from={60} durationInFrames={60}>
+                <Stagger interval={6}>
+                  {['🎬', '📐', '✍️', '🎮', '📹'].map((emoji, i) => (
+                    <FadeIn key={i} durationInFrames={15}>
+                      <Text x={330 + i * 65} y={380} fill="#e0e0e0" fontSize={32} textAnchor="middle">{emoji}</Text>
+                    </FadeIn>
+                  ))}
+                </Stagger>
+              </Sequence>
+            </Player>
+          </Slide>
+        </Presentation>
       </div>
     </div>
   );

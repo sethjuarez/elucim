@@ -4,6 +4,12 @@
 export { Scene, type SceneProps } from './components/Scene';
 export { Sequence, type SequenceProps } from './components/Sequence';
 export { Player, type PlayerProps } from './components/Player';
+export {
+  Presentation, type PresentationProps,
+  Slide, type SlideProps,
+  usePresentationContext,
+  type TransitionType,
+} from './components/Presentation';
 
 // Hooks
 export { useCurrentFrame } from './hooks/useCurrentFrame';
