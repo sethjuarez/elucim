@@ -3,6 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter @elucim/demo dev",
+    "dev:explorer": "pnpm --filter @elucim/explorer dev",
+    "dev:docs": "pnpm --filter @elucim/docs dev",
     "build": "pnpm --filter @elucim/core build",
     "test": "pnpm --filter @elucim/core test",
     "test:e2e": "pnpm --filter @elucim/e2e test",

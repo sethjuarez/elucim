@@ -10,12 +10,14 @@
 2. [Core Concepts](#core-concepts)
 3. [Primitives Reference](#primitives-reference)
 4. [Math Primitives](#math-primitives)
-5. [Animation System](#animation-system)
-6. [Easing Functions](#easing-functions)
-7. [The Player Component](#the-player-component)
-8. [Imperative Timeline DSL](#imperative-timeline-dsl)
-9. [Recipes & Patterns](#recipes--patterns)
-10. [API Reference](#api-reference)
+5. [New Primitives (Phase 4)](#new-primitives)
+6. [Animation System](#animation-system)
+7. [Easing Functions](#easing-functions)
+8. [The Player Component](#the-player-component)
+9. [Imperative Timeline DSL](#imperative-timeline-dsl)
+10. [Video Export](#video-export)
+11. [Recipes & Patterns](#recipes--patterns)
+12. [API Reference](#api-reference)
 
 ---
 
@@ -341,6 +343,121 @@ const edges: GraphEdge[] = [
   edgeColor="#666"
   fadeIn={40}
 />
+```
+
+---
+
+## New Primitives
+
+### LaTeX (KaTeX Rendering)
+
+Render beautiful math equations using KaTeX, embedded in SVG via `foreignObject`.
+
+**Setup**: Add KaTeX CSS to your HTML:
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.33/dist/katex.min.css" />
+```
+
+```tsx
+<LaTeX
+  expression="E = mc^2"
+  x={400} y={200}
+  fontSize={32}
+  color="#ff6b6b"
+  fadeIn={30}
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `expression` | `string` | — | LaTeX expression |
+| `x`, `y` | `number` | — | Center position |
+| `fontSize` | `number` | `24` | Font size |
+| `color` | `string` | `'#e0e0e0'` | Text color |
+| `width`, `height` | `number` | `400`, `100` | Container size |
+| `fadeIn` | `number` | `0` | Fade-in frames |
+
+### VectorField
+
+Visualize 2D vector fields as grids of arrows.
+
+```tsx
+<VectorField
+  fn={(x, y) => [-y, x]}  // Rotation field
+  domain={[-4, 4]}
+  range={[-3, 3]}
+  origin={[400, 300]}
+  scale={50}
+  color="#4ecdc4"
+  arrowScale={0.35}
+  normalize
+  fadeIn={30}
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `fn` | `(x, y) => [number, number]` | — | Vector field function |
+| `normalize` | `boolean` | `false` | Normalize arrows to equal length |
+| `arrowScale` | `number` | `0.3` | Arrow size scale |
+| `spacing` | `number` | `1` | Grid spacing |
+
+### Polygon
+
+Closed polygon with draw animation.
+
+```tsx
+<Polygon
+  points={[[100, 50], [50, 150], [150, 150]]}
+  stroke="#4ecdc4"
+  fill="rgba(78,205,196,0.15)"
+  strokeWidth={3}
+  draw={40}
+/>
+```
+
+---
+
+## Video Export
+
+Export animations as WebM/MP4 video files directly from the browser.
+
+### Using the useExport Hook
+
+```tsx
+import { useExport } from '@elucim/core';
+
+function ExportButton({ svgRef, setFrame }) {
+  const { isExporting, progress, startExport, cancel } = useExport();
+
+  return isExporting ? (
+    <div>
+      <progress value={progress} max={1} />
+      <button onClick={cancel}>Cancel</button>
+    </div>
+  ) : (
+    <button onClick={() => startExport(svgRef.current, setFrame, {
+      totalFrames: 180, fps: 60, width: 1920, height: 1080
+    })}>
+      Export Video
+    </button>
+  );
+}
+```
+
+### Low-Level API
+
+```tsx
+import { exportAnimation } from '@elucim/core';
+
+await exportAnimation(svgElement, (frame) => setFrame(frame), {
+  totalFrames: 180,
+  fps: 60,
+  width: 1920,
+  height: 1080,
+  format: 'webm',  // or 'mp4'
+  onProgress: (frame, total) => console.log(`${frame}/${total}`),
+});
 ```
 
 ---

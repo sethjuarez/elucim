@@ -1,8 +1,53 @@
-# elucim
-
 # Elucim
 
 > **Animate concepts. Illuminate understanding.**
+
+A JavaScript/TypeScript library for creating animated concept explanations — 3Blue1Brown-style math visualizations, built natively for the web in React.
+
+## ✅ Implementation Status
+
+| Phase | Status | What's Included |
+|-------|--------|----------------|
+| **Phase 1: Core Engine** | ✅ Complete | Scene, Sequence, Player, interpolate, 20+ easing functions, SVG primitives |
+| **Phase 2: Math Primitives** | ✅ Complete | Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX (KaTeX) |
+| **Phase 3: Animation System** | ✅ Complete | FadeIn/Out, Draw, Write, Transform, Morph, Stagger, Parallel, Timeline DSL |
+| **Phase 4: New Primitives** | ✅ Complete | Polygon, VectorField, LaTeX rendering |
+| **Phase 5: Tooling** | ✅ Complete | Interactive Explorer, Video Export, VitePress docs site |
+| **Testing** | ✅ Complete | 90 Playwright visual tests + 100 Vitest unit tests |
+
+## Quick Start
+
+```bash
+pnpm install
+pnpm --filter @elucim/demo dev       # Demo playground → http://localhost:3100
+pnpm --filter @elucim/explorer dev    # Interactive explorer → http://localhost:3200
+pnpm --filter @elucim/docs dev        # Documentation site → http://localhost:3300
+```
+
+## Monorepo Structure
+
+```
+packages/
+  core/       — Library: components, hooks, primitives, animations, export
+  demo/       — Demo playground with 15+ interactive scenes
+  explorer/   — Storybook-style primitive browser with live controls
+  docs/       — VitePress documentation site
+  e2e/        — Playwright visual regression tests
+docs/         — Developer guide (creating-visuals.md)
+```
+
+## Running Tests
+
+```bash
+# Unit tests (100 tests)
+pnpm --filter @elucim/core test
+
+# Visual regression tests (90 tests — requires demo running on :3100)
+pnpm --filter @elucim/demo dev &
+cd packages/e2e && npx playwright test
+```
+
+---
 
 `elucim.com`
 
