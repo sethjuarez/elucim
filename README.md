@@ -13,7 +13,8 @@ A JavaScript/TypeScript library for creating animated concept explanations — 3
 | **Phase 3: Animation System** | ✅ Complete | FadeIn/Out, Draw, Write, Transform, Morph, Stagger, Parallel, Timeline DSL |
 | **Phase 4: New Primitives** | ✅ Complete | Polygon, VectorField, LaTeX rendering |
 | **Phase 5: Tooling** | ✅ Complete | Interactive Explorer, Video Export, VitePress docs site |
-| **Testing** | ✅ Complete | 90 Playwright visual tests + 100 Vitest unit tests |
+| **Phase 6: Presentation** | ✅ Complete | Slide mode, transitions, HUD, keyboard nav, presenter notes |
+| **Testing** | ✅ Complete | 100 Playwright visual tests + 100 Vitest unit tests |
 
 ## Quick Start
 
@@ -168,7 +169,7 @@ The Mobject abstraction is renderer-independent:
 | Video export | ✅ | ✅ | ✅ |
 | 3D support | ✅ (BabylonJS) | ⚠️ | ❌ |
 | LaTeX rendering | ✅ | ✅ | ❌ |
-| Slide/presentation mode | ✅ | ⚠️ | ❌ |
+| Slide/presentation mode | ✅ | ✅ | ❌ |
 | Open source | ✅ | ✅ | ⚠️ (BSL) |
 
 ---
@@ -204,7 +205,7 @@ The Mobject abstraction is renderer-independent:
 - [ ] BabylonJS renderer backend
 - [ ] 3D Mobjects: `Surface`, `ParametricCurve`, `Axes3D`
 - [ ] Video export (via WebCodecs or Remotion integration)
-- [ ] PPTX/slide export
+- [x] Slide/presentation mode
 
 ### Phase 5 — DX & Ecosystem
 

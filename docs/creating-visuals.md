@@ -16,8 +16,9 @@
 8. [The Player Component](#the-player-component)
 9. [Imperative Timeline DSL](#imperative-timeline-dsl)
 10. [Video Export](#video-export)
-11. [Recipes & Patterns](#recipes--patterns)
-12. [API Reference](#api-reference)
+11. [Presentation Mode](#presentation-mode)
+12. [Recipes & Patterns](#recipes--patterns)
+13. [API Reference](#api-reference)
 
 ---
 
@@ -670,6 +671,101 @@ const { actions, totalFrames } = timeline.compile();
 | `add(type, id, opts?)` | Add animation WITHOUT advancing cursor (parallel) |
 | `wait(seconds)` | Pause timeline for duration |
 | `compile()` | Returns `{ actions, totalFrames }` |
+
+---
+
+## Presentation Mode
+
+Build slide-based presentations with animated content, transitions, and keyboard navigation.
+
+### Basic Usage
+
+```tsx
+import { Presentation, Slide, Scene, Player, Circle, FadeIn } from '@elucim/core';
+
+function MyPresentation() {
+  return (
+    <Presentation
+      transition="fade"
+      transitionDuration={500}
+      showHud
+      showNotes
+    >
+      <Slide title="Introduction" notes="Welcome the audience">
+        <h1>Welcome to My Talk</h1>
+      </Slide>
+
+      <Slide title="Demo" notes="Show the circle animation">
+        <Player width={800} height={450} fps={30} durationInFrames={90}>
+          <Scene>
+            <FadeIn startFrame={0} durationInFrames={60}>
+              <Circle cx={400} cy={225} r={100} fill="#3b82f6" />
+            </FadeIn>
+          </Scene>
+        </Player>
+      </Slide>
+
+      <Slide title="Thanks">
+        <h1>Thank You!</h1>
+      </Slide>
+    </Presentation>
+  );
+}
+```
+
+### Presentation Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `transition` | `TransitionType` | `'none'` | Slide transition effect |
+| `transitionDuration` | `number` | `400` | Transition duration in ms |
+| `showHud` | `boolean` | `true` | Show title, dots, counter overlay |
+| `showNotes` | `boolean` | `false` | Show presenter notes panel |
+| `children` | `ReactNode` | — | `<Slide>` components |
+
+### Slide Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `title` | `string` | — | Slide title (shown in HUD) |
+| `notes` | `string` | — | Presenter notes text |
+| `children` | `ReactNode` | — | Slide content |
+
+### Transition Types
+
+- `'none'` — Instant switch
+- `'fade'` — Cross-fade between slides
+- `'slide-left'` — Slide left/right
+- `'slide-up'` — Slide up/down
+- `'zoom'` — Zoom in/out
+
+### Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `→` / `Space` / `PageDown` | Next slide |
+| `←` / `PageUp` | Previous slide |
+| `Home` | First slide |
+| `End` | Last slide |
+| `F` / `F11` | Toggle fullscreen |
+| `G` | Go to slide (number prompt) |
+
+### Click Navigation
+
+- Click **right half** of slide → Next slide
+- Click **left half** of slide → Previous slide
+- Interactive elements (buttons, inputs) are not intercepted
+
+### Accessing Slide Context
+
+```tsx
+import { usePresentationContext } from '@elucim/core';
+
+function SlideContent() {
+  const { currentSlide, totalSlides, goTo } = usePresentationContext();
+  return <p>Slide {currentSlide + 1} of {totalSlides}</p>;
+}
+```
 
 ---
 
