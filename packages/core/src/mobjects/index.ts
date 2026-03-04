@@ -11,4 +11,5 @@ export { VectorField, type VectorFieldProps } from './VectorField';
 export { Matrix, type MatrixProps } from './Matrix';
 export { Graph, type GraphProps, type GraphNode, type GraphEdge } from './Graph';
 export { LaTeX, type LaTeXProps } from './LaTeX';
+export { BarChart, type BarChartProps, type BarDef } from './BarChart';
 export { useAnimation, type AnimationProps } from './animation';

@@ -32,6 +32,7 @@ export { VectorField, type VectorFieldProps } from './mobjects/VectorField';
 export { Matrix, type MatrixProps } from './mobjects/Matrix';
 export { Graph, type GraphProps, type GraphNode, type GraphEdge } from './mobjects/Graph';
 export { LaTeX, type LaTeXProps } from './mobjects/LaTeX';
+export { BarChart, type BarChartProps, type BarDef } from './mobjects/BarChart';
 export { useAnimation, type AnimationProps } from './mobjects/animation';
 
 // Easing

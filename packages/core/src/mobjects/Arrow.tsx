@@ -10,6 +10,8 @@ export interface ArrowProps extends AnimationProps {
   strokeWidth?: number;
   headSize?: number;
   opacity?: number;
+  /** SVG stroke-dasharray for dashed arrows, e.g. "6 3" */
+  strokeDasharray?: string;
 }
 
 export function Arrow({
@@ -21,6 +23,7 @@ export function Arrow({
   strokeWidth = 2,
   headSize = 10,
   opacity: baseOpacity = 1,
+  strokeDasharray: userDasharray,
   fadeIn,
   fadeOut,
   draw,
@@ -38,6 +41,7 @@ export function Arrow({
   const p2y = y2 - headSize * Math.sin(angle + headAngle);
 
   const finalOpacity = baseOpacity * anim.opacity;
+  const dasharray = anim.strokeDasharray ?? userDasharray;
 
   return (
     <g data-testid="elucim-arrow" opacity={finalOpacity}>
@@ -48,7 +52,7 @@ export function Arrow({
         y2={y2}
         stroke={stroke}
         strokeWidth={strokeWidth}
-        strokeDasharray={anim.strokeDasharray}
+        strokeDasharray={dasharray}
         strokeDashoffset={anim.strokeDashoffset}
       />
       <polygon

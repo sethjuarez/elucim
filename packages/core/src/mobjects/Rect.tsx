@@ -12,6 +12,8 @@ export interface RectProps extends AnimationProps {
   rx?: number;
   ry?: number;
   opacity?: number;
+  /** SVG stroke-dasharray for dashed rectangles, e.g. "6 3" */
+  strokeDasharray?: string;
 }
 
 export function Rect({
@@ -25,6 +27,7 @@ export function Rect({
   rx = 0,
   ry = 0,
   opacity: baseOpacity = 1,
+  strokeDasharray: userDasharray,
   fadeIn,
   fadeOut,
   draw,
@@ -32,6 +35,8 @@ export function Rect({
 }: RectProps) {
   const perimeter = 2 * (width + height);
   const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, perimeter);
+
+  const dasharray = anim.strokeDasharray ?? userDasharray;
 
   return (
     <rect
@@ -45,7 +50,7 @@ export function Rect({
       stroke={stroke}
       strokeWidth={strokeWidth}
       opacity={baseOpacity * anim.opacity}
-      strokeDasharray={anim.strokeDasharray}
+      strokeDasharray={dasharray}
       strokeDashoffset={anim.strokeDashoffset}
       data-testid="elucim-rect"
     />

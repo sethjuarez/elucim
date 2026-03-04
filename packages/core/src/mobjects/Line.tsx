@@ -9,6 +9,8 @@ export interface LineProps extends AnimationProps {
   stroke?: string;
   strokeWidth?: number;
   opacity?: number;
+  /** SVG stroke-dasharray for dashed lines, e.g. "6 3" */
+  strokeDasharray?: string;
 }
 
 export function Line({
@@ -19,6 +21,7 @@ export function Line({
   stroke = '#fff',
   strokeWidth = 2,
   opacity: baseOpacity = 1,
+  strokeDasharray: userDasharray,
   fadeIn,
   fadeOut,
   draw,
@@ -26,6 +29,9 @@ export function Line({
 }: LineProps) {
   const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
   const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, length);
+
+  // draw animation dasharray takes precedence; otherwise use user-provided
+  const dasharray = anim.strokeDasharray ?? userDasharray;
 
   return (
     <line
@@ -36,7 +42,7 @@ export function Line({
       stroke={stroke}
       strokeWidth={strokeWidth}
       opacity={baseOpacity * anim.opacity}
-      strokeDasharray={anim.strokeDasharray}
+      strokeDasharray={dasharray}
       strokeDashoffset={anim.strokeDashoffset}
       data-testid="elucim-line"
     />
