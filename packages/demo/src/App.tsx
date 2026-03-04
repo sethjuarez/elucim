@@ -37,6 +37,7 @@ import {
 import { DslRenderer } from '@elucim/dsl';
 import type { ElucimDocument } from '@elucim/dsl';
 import calculusExplained from '../../dsl/examples/calculus-explained.json';
+import agenticLoop from '../../dsl/examples/agentic-loop.json';
 
 // ─── Demo Scenes ────────────────────────────────────────────────────────────
 
@@ -1162,6 +1163,14 @@ export function App() {
           9-slide animated presentation covering functions, derivatives, trig, vectors, vector fields, matrices, graphs, and Euler's identity — all from a single JSON document.
         </p>
         <DslRenderer dsl={calculusExplained as ElucimDocument} />
+      </section>
+
+      <section id="dsl-agentic" style={{ marginTop: 32 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>🤖 From Words to Agents — Full Presentation (DSL Builder)</h3>
+        <p style={{ color: '#666', fontSize: 14, marginBottom: 12 }}>
+          12-slide animated presentation covering tokenization, embeddings, attention, transformers, autoregressive generation, tool calling, and the agentic loop — built using the Elucim DSL Builder API.
+        </p>
+        <DslRenderer dsl={agenticLoop as ElucimDocument} />
       </section>
     </div>
   );
