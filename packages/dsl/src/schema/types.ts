@@ -104,6 +104,7 @@ export interface LineNode {
   y2: number;
   stroke?: string;
   strokeWidth?: number;
+  strokeDasharray?: string;
   opacity?: number;
   fadeIn?: number;
   fadeOut?: number;
@@ -121,6 +122,7 @@ export interface ArrowNode {
   stroke?: string;
   strokeWidth?: number;
   headSize?: number;
+  strokeDasharray?: string;
   opacity?: number;
   fadeIn?: number;
   fadeOut?: number;
@@ -140,6 +142,7 @@ export interface RectNode {
   strokeWidth?: number;
   rx?: number;
   ry?: number;
+  strokeDasharray?: string;
   opacity?: number;
   fadeIn?: number;
   fadeOut?: number;
@@ -322,6 +325,32 @@ export interface LaTeXNode {
   easing?: EasingSpec;
 }
 
+export interface BarChartBarDef {
+  label: string;
+  value: number;
+  color?: string;
+}
+
+export interface BarChartNode {
+  type: 'barChart';
+  id?: string;
+  bars: BarChartBarDef[];
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  barColor?: string;
+  labelColor?: string;
+  labelFontSize?: number;
+  showValues?: boolean;
+  maxValue?: number;
+  gap?: number;
+  valueFormat?: 'number' | 'percent';
+  fadeIn?: number;
+  fadeOut?: number;
+  easing?: EasingSpec;
+}
+
 // ─── Animation Wrapper Nodes ────────────────────────────────────────────────
 
 export interface FadeInNode {
@@ -441,6 +470,7 @@ export type ElementNode =
   | MatrixNode
   | GraphNode
   | LaTeXNode
+  | BarChartNode
   // Animation wrappers
   | FadeInNode
   | FadeOutNode

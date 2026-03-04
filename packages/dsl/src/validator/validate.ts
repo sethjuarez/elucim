@@ -55,7 +55,7 @@ const VALID_ROOT_TYPES = ['scene', 'player', 'presentation'];
 const VALID_ELEMENT_TYPES = [
   'sequence', 'group',
   'circle', 'line', 'arrow', 'rect', 'polygon', 'text',
-  'axes', 'functionPlot', 'vectorField', 'vector', 'matrix', 'graph', 'latex',
+  'axes', 'functionPlot', 'vectorField', 'vector', 'matrix', 'graph', 'latex', 'barChart',
   'fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel',
   'player', 'scene',
 ];

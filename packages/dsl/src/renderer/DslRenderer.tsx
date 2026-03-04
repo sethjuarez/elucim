@@ -5,7 +5,7 @@ import {
   Presentation, Slide,
   Sequence,
   Circle, Line, Arrow, Rect, Text, Polygon,
-  Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX,
+  Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
   FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel,
 } from '@elucim/core';
 import type { TransitionType } from '@elucim/core';
@@ -148,6 +148,7 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           key={key}
           x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2}
           stroke={node.stroke} strokeWidth={node.strokeWidth}
+          strokeDasharray={node.strokeDasharray}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
@@ -159,6 +160,7 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           key={key}
           x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2}
           stroke={node.stroke} strokeWidth={node.strokeWidth} headSize={node.headSize}
+          strokeDasharray={node.strokeDasharray}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
@@ -171,6 +173,7 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           x={node.x} y={node.y} width={node.width} height={node.height}
           fill={node.fill} stroke={node.stroke} strokeWidth={node.strokeWidth}
           rx={node.rx} ry={node.ry}
+          strokeDasharray={node.strokeDasharray}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
@@ -294,6 +297,20 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           expression={node.expression}
           x={node.x} y={node.y}
           color={node.color} fontSize={node.fontSize} align={node.align}
+          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
+          easing={resolveEasing(node.easing)}
+        />
+      );
+    case 'barChart':
+      return (
+        <BarChart
+          key={key}
+          bars={node.bars}
+          x={node.x} y={node.y} width={node.width} height={node.height}
+          barColor={node.barColor} labelColor={node.labelColor}
+          labelFontSize={node.labelFontSize}
+          showValues={node.showValues} maxValue={node.maxValue}
+          gap={node.gap} valueFormat={node.valueFormat}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
         />

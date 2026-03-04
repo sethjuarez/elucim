@@ -37,6 +37,8 @@ export type {
   CubicBezierEasing,
   GraphNodeDef,
   GraphEdgeDef,
+  BarChartNode,
+  BarChartBarDef,
 } from './schema/types';
 
 // Math expression evaluator
@@ -58,3 +60,12 @@ export { DslRenderer, type DslRendererProps } from './renderer/DslRenderer';
 
 // Easing resolver
 export { resolveEasing } from './renderer/resolveEasing';
+
+// Builders — fluent API for programmatic presentation authoring
+export {
+  presentation,
+  PresentationBuilder,
+  type PresentationOptions,
+} from './builders/PresentationBuilder';
+export { SlideBuilder } from './builders/SlideBuilder';
+export { darkTheme, lightTheme, type Theme } from './builders/themes';
