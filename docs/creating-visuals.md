@@ -17,8 +17,10 @@
 9. [Imperative Timeline DSL](#imperative-timeline-dsl)
 10. [Video Export](#video-export)
 11. [Presentation Mode](#presentation-mode)
-12. [Recipes & Patterns](#recipes--patterns)
-13. [API Reference](#api-reference)
+12. [JSON DSL & Renderer](#json-dsl--renderer)
+13. [DSL Builder API](#dsl-builder-api)
+14. [Recipes & Patterns](#recipes--patterns)
+15. [API Reference](#api-reference)
 
 ---
 
@@ -417,6 +419,52 @@ Closed polygon with draw animation.
 />
 ```
 
+### BarChart
+
+Vertical bar chart with labels, values, and animated reveal.
+
+```tsx
+<BarChart
+  bars={[
+    { label: 'Paris', value: 0.92, color: '#6c5ce7' },
+    { label: 'Lyon', value: 0.03, color: '#a29bfe' },
+    { label: 'the', value: 0.02, color: '#74b9ff' },
+  ]}
+  x={100} y={100}
+  width={600} height={300}
+  barColor="#6c5ce7"
+  labelColor="#ccc"
+  showValues
+  valueFormat="percent"
+  maxValue={1}
+  gap={0.3}
+/>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `bars` | `{ label, value, color? }[]` | — | Bar definitions |
+| `x`, `y` | `number` | — | Top-left position |
+| `width`, `height` | `number` | — | Chart dimensions |
+| `barColor` | `string` | `'#6c5ce7'` | Default bar fill color |
+| `labelColor` | `string` | `'#ccc'` | Label text color |
+| `showValues` | `boolean` | `true` | Show value labels above bars |
+| `valueFormat` | `'number' \| 'percent'` | `'number'` | Value display format |
+| `maxValue` | `number` | auto | Maximum value for scaling |
+| `gap` | `number` | `0.2` | Gap between bars (0–1 ratio) |
+
+### Dashed Lines
+
+Line, Arrow, and Rect support dashed strokes via `strokeDasharray`:
+
+```tsx
+<Line x1={100} y1={200} x2={500} y2={200} stroke="#888" strokeDasharray="6 3" />
+<Arrow x1={100} y1={300} x2={500} y2={300} stroke="#ff6b6b" strokeDasharray="8 4" />
+<Rect x={200} y={350} width={200} height={100} stroke="#4ecdc4" strokeDasharray="5 5" />
+```
+
+> **Note**: When a `draw` animation is active, its `strokeDasharray` takes precedence; the user-provided dasharray applies once the draw completes.
+
 ---
 
 ## Video Export
@@ -769,6 +817,339 @@ function SlideContent() {
 
 ---
 
+## JSON DSL & Renderer
+
+The `@elucim/dsl` package lets you define visuals as JSON documents instead of writing JSX. This is ideal for AI agents, code generation, and data-driven content.
+
+### Installation
+
+```bash
+pnpm add @elucim/dsl @elucim/core react react-dom
+```
+
+### Basic JSON Structure
+
+An `ElucimDocument` is a JSON object with `width`, `height`, `fps`, `durationInFrames`, and a `children` array of element nodes:
+
+```json
+{
+  "width": 800,
+  "height": 600,
+  "fps": 30,
+  "durationInFrames": 90,
+  "children": [
+    {
+      "type": "circle",
+      "cx": 400, "cy": 300, "r": 60,
+      "stroke": "#6c5ce7", "strokeWidth": 3,
+      "fadeIn": 20
+    },
+    {
+      "type": "sequence", "from": 30,
+      "children": [{
+        "type": "text",
+        "x": 400, "y": 300,
+        "content": "Hello DSL",
+        "fontSize": 28,
+        "fill": "#fff",
+        "textAnchor": "middle"
+      }]
+    }
+  ]
+}
+```
+
+### Rendering
+
+```tsx
+import { DslRenderer, validate } from '@elucim/dsl';
+import myDoc from './my-document.json';
+
+function MyDslScene() {
+  const errors = validate(myDoc);
+  if (errors.length > 0) return <pre>{errors.join('\n')}</pre>;
+  return <DslRenderer document={myDoc} />;
+}
+```
+
+### Supported Node Types
+
+| Type | Description | Key Props |
+|------|-------------|-----------|
+| `circle` | SVG circle | `cx`, `cy`, `r`, `fill`, `stroke` |
+| `line` | SVG line | `x1`, `y1`, `x2`, `y2`, `stroke`, `strokeDasharray` |
+| `arrow` | Line with arrowhead | `x1`, `y1`, `x2`, `y2`, `stroke`, `headSize`, `strokeDasharray` |
+| `rect` | SVG rectangle | `x`, `y`, `width`, `height`, `fill`, `stroke`, `rx`, `strokeDasharray` |
+| `polygon` | Closed polygon | `points`, `fill`, `stroke` |
+| `text` | SVG text | `x`, `y`, `content`, `fontSize`, `fill`, `textAnchor` |
+| `latex` | KaTeX expression | `expression`, `x`, `y`, `fontSize`, `color`, `align` |
+| `axes` | Coordinate axes | `origin`, `xRange`, `yRange`, `scale` |
+| `functionPlot` | Function curve | `fn` (string), `domain`, `color` |
+| `vector` | Math vector | `from`, `to`, `color`, `label` |
+| `vectorField` | Vector field grid | `fn` (string), `domain`, `range` |
+| `matrix` | Matrix with brackets | `values`, `cellSize`, `color` |
+| `graph` | Node-edge graph | `nodes[]`, `edges[]`, `nodeColor`, `edgeColor` |
+| `barChart` | Vertical bar chart | `bars[]`, `x`, `y`, `width`, `height`, `valueFormat` |
+| `sequence` | Timed sequence | `from`, `durationInFrames`, `children` |
+| `group` | Grouping | `children` |
+| `fadeIn` | Fade-in wrapper | `duration`, `children` |
+| `fadeOut` | Fade-out wrapper | `duration`, `children` |
+| `draw` | Stroke draw animation | `duration`, `children` |
+| `write` | Write animation | `duration`, `children` |
+| `transform` | Transform animation | `from`, `to`, `duration`, `children` |
+| `morph` | Morph animation | `from`, `to`, `duration`, `children` |
+| `stagger` | Staggered reveal | `staggerDelay`, `children` |
+| `parallel` | Concurrent group | `children` |
+| `player` | Nested Player | `width`, `height`, `fps`, `durationInFrames`, `children` |
+| `scene` | Named scene | `name`, `children` |
+
+### Presentations (Multi-slide)
+
+Wrap slides in a `presentation` node:
+
+```json
+{
+  "type": "presentation",
+  "title": "My Presentation",
+  "children": [
+    {
+      "type": "slide",
+      "title": "Introduction",
+      "notes": "Speaker notes here",
+      "children": [{
+        "type": "player",
+        "width": 900, "height": 640,
+        "fps": 30, "durationInFrames": 150,
+        "autoPlay": true, "loop": false,
+        "children": [
+          { "type": "text", "x": 450, "y": 100, "content": "Hello!", "fontSize": 32, "fill": "#fff" }
+        ]
+      }]
+    }
+  ]
+}
+```
+
+### Validation
+
+Always validate before rendering:
+
+```ts
+import { validate } from '@elucim/dsl';
+
+const errors = validate(document);
+// Returns string[] — empty = valid
+```
+
+---
+
+## DSL Builder API
+
+Writing complex JSON by hand is tedious. The **Builder API** provides a fluent TypeScript interface that generates valid `ElucimDocument` JSON automatically.
+
+### Quick Start
+
+```ts
+import { presentation, darkTheme } from '@elucim/dsl';
+
+const doc = presentation('My Presentation', darkTheme)
+  .slide('Title Slide', s => {
+    s.title('Welcome to Elucim')
+     .subtitle('Animated explanations for the web')
+     .latex('E = mc^2', { y: 300, fontSize: 36 });
+  })
+  .slide('Demo', s => {
+    s.title('Key Concepts')
+     .wait(10)
+     .boxRow(['Step 1', 'Step 2', 'Step 3'], { y: 200 })
+     .wait(15)
+     .text('Each step builds on the last', { x: 450, y: 400, fontSize: 16 });
+  })
+  .build();
+
+// doc is a valid ElucimDocument — write to file or render directly
+import fs from 'fs';
+fs.writeFileSync('output.json', JSON.stringify(doc, null, 2));
+```
+
+### Running a Builder Script
+
+```bash
+npx tsx my-presentation.ts
+```
+
+### Themes
+
+Two built-in themes:
+
+```ts
+import { darkTheme, lightTheme } from '@elucim/dsl';
+```
+
+Theme properties:
+
+| Property | Description |
+|----------|-------------|
+| `background` | Slide background color |
+| `title` | Title text color |
+| `subtitle` | Subtitle text color |
+| `primary` | Primary accent (arrows, highlights) |
+| `secondary` | Secondary accent |
+| `tertiary` | Third accent |
+| `muted` | De-emphasized elements |
+| `text` | Default text color |
+| `boxFill` | Box/rectangle fill |
+| `boxStroke` | Box/rectangle stroke |
+| `success` / `warning` / `error` | Semantic colors |
+| `palette[0-7]` | 8 distinct colors for variety |
+
+### PresentationBuilder
+
+```ts
+const doc = presentation('Title', theme)
+  .slide('Slide Name', (s: SlideBuilder) => { /* build slide */ })
+  .slide('Next Slide', s => { /* ... */ })
+  .build();  // returns ElucimDocument
+```
+
+### SlideBuilder Methods
+
+#### Positioning & Timing
+
+| Method | Description |
+|--------|-------------|
+| `s.wait(frames)` | Advance cursor by N frames (delays next element) |
+| `s.at(frame)` | Set cursor to an absolute frame number |
+| `s.frame` | Read the current cursor position |
+| `s.cx` / `s.cy` | Canvas center coordinates |
+| `s.width` / `s.height` | Canvas dimensions |
+| `s.fps` | Frames per second |
+
+#### High-Level Helpers
+
+```ts
+// Title & subtitle (auto-centered)
+s.title('Main Title', { fontSize: 32, color: '#fff' })
+ .subtitle('Supporting text');
+
+// LaTeX equation
+s.latex('\\int_0^1 f(x)\\,dx', { x: 450, y: 200, fontSize: 28 });
+
+// Text at a position
+s.text('Annotation', { x: 300, y: 400, fontSize: 14, color: '#aaa' });
+```
+
+#### Shapes & Lines
+
+```ts
+s.rect(100, 200, 300, 80, { fill: '#1a1a2e', stroke: '#6c5ce7', dashed: true })
+ .circle(450, 300, 40, { fill: 'none', stroke: '#ff6b6b' })
+ .arrow(200, 300, 400, 300, { color: '#4ecdc4', headSize: 8, dashed: true })
+ .line(100, 500, 700, 500, { color: '#888', dashed: true });
+```
+
+#### Bar Chart
+
+```ts
+s.barChart(
+  [
+    { label: 'Paris', value: 0.92, color: '#6c5ce7' },
+    { label: 'Lyon', value: 0.03, color: '#a29bfe' },
+    { label: 'the', value: 0.02, color: '#74b9ff' },
+  ],
+  { x: 150, y: 300, width: 600, height: 200, valueFormat: 'percent', maxValue: 1 }
+);
+```
+
+#### Graph (Nodes & Edges)
+
+```ts
+s.graph(
+  [
+    { id: 'a', x: 200, y: 300, label: 'User', color: '#6c5ce7' },
+    { id: 'b', x: 500, y: 300, label: 'LLM', color: '#ff6b6b' },
+    { id: 'c', x: 700, y: 300, label: 'Tools', color: '#4ecdc4' },
+  ],
+  [
+    { from: 'a', to: 'b', label: 'query', directed: true },
+    { from: 'b', to: 'c', label: 'tool call', directed: true },
+    { from: 'c', to: 'b', label: 'result', directed: true, color: '#ffd93d' },
+  ]
+);
+```
+
+#### Matrix
+
+```ts
+s.matrix(
+  [[1, 0, 0], [0, 'cos θ', '-sin θ'], [0, 'sin θ', 'cos θ']],
+  { x: 450, y: 300, cellSize: 50 }
+);
+```
+
+#### Layout Helpers
+
+**boxRow** — Horizontal row of labeled boxes with staggered reveal:
+
+```ts
+const positions = s.boxRow(
+  ['Input', 'Process', 'Output'],
+  { y: 250, boxWidth: 120, boxHeight: 50, gap: 20, colors: ['#6c5ce7', '#a29bfe', '#74b9ff'] }
+);
+// positions = [{ x, y, w, h, cx, cy }, ...]
+```
+
+**boxColumn** — Vertical stack of labeled boxes:
+
+```ts
+const layers = s.boxColumn(
+  ['Embedding', 'Attention', 'FFN', 'LayerNorm'],
+  { x: 450, y: 150, boxWidth: 200, boxHeight: 40 }
+);
+```
+
+**connectDown** — Draw arrows between sequential positions:
+
+```ts
+s.connectDown(layers, { color: '#6c5ce7' });
+```
+
+#### Raw Element Insertion
+
+```ts
+// Add any ElementNode at the current cursor
+s.add({ type: 'circle', cx: 100, cy: 100, r: 20, fill: '#ff0000' });
+
+// Add at a specific frame (doesn't move cursor)
+s.addAt(30, { type: 'text', x: 200, y: 200, content: 'Appears at frame 30', fill: '#fff' });
+```
+
+### Advance Control
+
+Every method accepts an `advance` option to control how many frames the cursor moves:
+
+```ts
+// These two labels appear nearly simultaneously (only 2 frames apart)
+s.text('Label A', { x: 100, y: 200, advance: 2 })
+ .text('Label B', { x: 300, y: 200, advance: 2 });
+
+// This pause adds breathing room
+s.wait(20);
+```
+
+### Complete Example
+
+See `packages/dsl/examples/build-agentic-loop.ts` for a full 12-slide presentation built with the Builder API, covering LLM concepts from tokenization to the agentic loop.
+
+```bash
+# Generate the JSON
+npx tsx packages/dsl/examples/build-agentic-loop.ts
+
+# The generated JSON can be rendered by DslRenderer
+```
+
+---
+
 ## Recipes & Patterns
 
 ### Animated Function Plot
@@ -916,6 +1297,10 @@ function MyExplanation() {
 | `<Vector>` | Mathematical vector arrow with label |
 | `<Matrix>` | Matrix with brackets and entries |
 | `<Graph>` | Nodes and edges graph visualization |
+| `<BarChart>` | Vertical bar chart with labels and values |
+| `<LaTeX>` | KaTeX math expression rendering |
+| `<VectorField>` | 2D vector field visualization |
+| `<Polygon>` | Closed polygon with draw animation |
 
 ### Animation Wrappers
 
