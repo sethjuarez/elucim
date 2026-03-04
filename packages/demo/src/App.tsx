@@ -34,6 +34,8 @@ import {
   easeOutElastic,
   spring,
 } from '@elucim/core';
+import { DslRenderer } from '@elucim/dsl';
+import type { ElucimDocument } from '@elucim/dsl';
 
 // ─── Demo Scenes ────────────────────────────────────────────────────────────
 
@@ -847,6 +849,114 @@ function MorphDemo() {
   );
 }
 
+// ─── DSL Data ────────────────────────────────────────────────────────────────
+
+const helloCircleDsl: ElucimDocument = {
+  version: '1.0',
+  root: {
+    type: 'player',
+    width: 800, height: 400, fps: 30, durationInFrames: 90,
+    background: '#0d0d1a',
+    children: [
+      {
+        type: 'fadeIn', duration: 30,
+        children: [{
+          type: 'circle', cx: 400, cy: 200, r: 80,
+          fill: 'none', stroke: '#3b82f6', strokeWidth: 3, draw: 60, easing: 'easeInOutCubic',
+        }],
+      },
+      {
+        type: 'sequence', from: 30,
+        children: [{
+          type: 'fadeIn', duration: 30,
+          children: [{
+            type: 'text', x: 400, y: 330, content: 'Hello, DSL!',
+            fill: '#fff', fontSize: 28, textAnchor: 'middle',
+          }],
+        }],
+      },
+    ],
+  },
+};
+
+const mathDemoDsl: ElucimDocument = {
+  version: '1.0',
+  root: {
+    type: 'player',
+    width: 800, height: 400, fps: 30, durationInFrames: 120,
+    background: '#0d0d1a',
+    children: [
+      { type: 'axes', domain: [-5, 5], range: [-2, 2], origin: [400, 200], scale: 60, showGrid: true, fadeIn: 20 },
+      {
+        type: 'sequence', from: 10,
+        children: [{
+          type: 'functionPlot', fn: 'sin(x)', domain: [-5, 5],
+          origin: [400, 200], scale: 60, color: '#4a9eff', draw: 60,
+        }],
+      },
+      {
+        type: 'sequence', from: 50,
+        children: [{
+          type: 'fadeIn', duration: 20,
+          children: [{
+            type: 'vector', from: [0, 0], to: [2, 1],
+            origin: [400, 200], scale: 60, color: '#ffe66d', label: 'v₁',
+          }],
+        }],
+      },
+    ],
+  },
+};
+
+const animatedSceneDsl: ElucimDocument = {
+  version: '1.0',
+  root: {
+    type: 'player',
+    width: 800, height: 400, fps: 30, durationInFrames: 120,
+    background: '#0d0d1a',
+    children: [
+      {
+        type: 'sequence', from: 0,
+        children: [{
+          type: 'stagger', staggerDelay: 8,
+          children: [
+            { type: 'circle', cx: 150, cy: 200, r: 30, fill: '#ef4444', fadeIn: 20 },
+            { type: 'circle', cx: 250, cy: 200, r: 30, fill: '#f97316', fadeIn: 20 },
+            { type: 'circle', cx: 350, cy: 200, r: 30, fill: '#eab308', fadeIn: 20 },
+            { type: 'circle', cx: 450, cy: 200, r: 30, fill: '#22c55e', fadeIn: 20 },
+            { type: 'circle', cx: 550, cy: 200, r: 30, fill: '#3b82f6', fadeIn: 20 },
+            { type: 'circle', cx: 650, cy: 200, r: 30, fill: '#8b5cf6', fadeIn: 20 },
+          ],
+        }],
+      },
+      {
+        type: 'sequence', from: 60,
+        children: [{
+          type: 'transform', duration: 60,
+          translate: { from: [0, 0], to: [200, 0] },
+          rotate: { from: 0, to: 360 },
+          children: [{
+            type: 'rect', x: 100, y: 300, width: 40, height: 40,
+            fill: '#8b5cf6', stroke: 'none',
+          }],
+        }],
+      },
+    ],
+  },
+};
+
+const invalidDsl = {
+  version: '1.0',
+  root: {
+    type: 'scene',
+    // Missing durationInFrames
+    children: [
+      { type: 'circle', cx: 'not a number', cy: 100 },
+      { type: 'banana' },
+    ],
+  },
+};
+
 // ─── App ─────────────────────────────────────────────────────────────────────
 
 export function App() {
@@ -930,9 +1040,9 @@ export function App() {
                 </Text>
               </Sequence>
               <Sequence from={60} durationInFrames={60}>
-                <Stagger interval={8}>
+                <Stagger staggerDelay={8}>
                   {[0, 1, 2, 3, 4].map((i) => (
-                    <FadeIn key={i} durationInFrames={20}>
+                    <FadeIn key={i} duration={20}>
                       <Circle cx={330 + i * 65} cy={380} r={20} stroke="#4ecdc4" fill="rgba(78,205,196,0.15)" strokeWidth={2} />
                     </FadeIn>
                   ))}
@@ -946,7 +1056,7 @@ export function App() {
               <Axes domain={[-2, 2]} range={[-2, 2]} origin={[480, 270]} scale={120} showGrid axisColor="#444" gridColor="#1a1a2e" />
               <Circle cx={480} cy={270} r={120} stroke="#4ecdc4" strokeWidth={2} fill="none" draw={40} />
               <Sequence from={40} durationInFrames={110}>
-                <FunctionPlot fn={(x) => Math.sqrt(1 - x * x)} domain={[-1, 1]} origin={[480, 270]} scale={120} stroke="#ff6b6b" strokeWidth={2} draw={40} />
+                <FunctionPlot fn={(x) => Math.sqrt(1 - x * x)} domain={[-1, 1]} origin={[480, 270]} scale={120} color="#ff6b6b" strokeWidth={2} draw={40} />
               </Sequence>
               <Sequence from={60} durationInFrames={90}>
                 <LaTeX expression="\sin^2\theta + \cos^2\theta = 1" x={480} y={60} fontSize={28} color="#ffe66d" fadeIn={25} />
@@ -957,15 +1067,15 @@ export function App() {
           <Slide title="Taylor Series" notes="Visual demonstration of Taylor series approximation of sin(x).">
             <Player width={960} height={540} fps={60} durationInFrames={180} background="#111127" controls={false} autoPlay loop>
               <Axes domain={[-4, 4]} range={[-2, 2]} origin={[480, 270]} scale={60} showGrid axisColor="#444" gridColor="#1a1a2e" />
-              <FunctionPlot fn={Math.sin} domain={[-4, 4]} origin={[480, 270]} scale={60} stroke="#666" strokeWidth={1} draw={20} />
+              <FunctionPlot fn={Math.sin} domain={[-4, 4]} origin={[480, 270]} scale={60} color="#666" strokeWidth={1} draw={20} />
               <Sequence from={20} durationInFrames={160}>
-                <FunctionPlot fn={(x) => x} domain={[-4, 4]} origin={[480, 270]} scale={60} stroke="#ff6b6b" strokeWidth={2} draw={30} />
+                <FunctionPlot fn={(x) => x} domain={[-4, 4]} origin={[480, 270]} scale={60} color="#ff6b6b" strokeWidth={2} draw={30} />
               </Sequence>
               <Sequence from={60} durationInFrames={120}>
-                <FunctionPlot fn={(x) => x - x ** 3 / 6} domain={[-4, 4]} origin={[480, 270]} scale={60} stroke="#4ecdc4" strokeWidth={2} draw={30} />
+                <FunctionPlot fn={(x) => x - x ** 3 / 6} domain={[-4, 4]} origin={[480, 270]} scale={60} color="#4ecdc4" strokeWidth={2} draw={30} />
               </Sequence>
               <Sequence from={100} durationInFrames={80}>
-                <FunctionPlot fn={(x) => x - x ** 3 / 6 + x ** 5 / 120} domain={[-3.5, 3.5]} origin={[480, 270]} scale={60} stroke="#ffe66d" strokeWidth={2} draw={30} />
+                <FunctionPlot fn={(x) => x - x ** 3 / 6 + x ** 5 / 120} domain={[-3.5, 3.5]} origin={[480, 270]} scale={60} color="#ffe66d" strokeWidth={2} draw={30} />
               </Sequence>
               <Sequence from={30} durationInFrames={150}>
                 <LaTeX expression="\sin(x) \approx x - \frac{x^3}{3!} + \frac{x^5}{5!} - \cdots" x={480} y={50} fontSize={24} color="#e0e0e0" fadeIn={25} />
@@ -1006,9 +1116,9 @@ export function App() {
                 </Text>
               </Sequence>
               <Sequence from={60} durationInFrames={60}>
-                <Stagger interval={6}>
+                <Stagger staggerDelay={6}>
                   {['🎬', '📐', '✍️', '🎮', '📹'].map((emoji, i) => (
-                    <FadeIn key={i} durationInFrames={15}>
+                    <FadeIn key={i} duration={15}>
                       <Text x={330 + i * 65} y={380} fill="#e0e0e0" fontSize={32} textAnchor="middle">{emoji}</Text>
                     </FadeIn>
                   ))}
@@ -1018,6 +1128,32 @@ export function App() {
           </Slide>
         </Presentation>
       </div>
+
+      <hr style={{ borderColor: '#333', margin: '32px 0' }} />
+      <h2 style={{ marginBottom: 16 }}>🤖 DSL Renderer</h2>
+      <p style={{ color: '#888', marginBottom: 16 }}>
+        These diagrams are rendered from JSON DSL documents — the same format an AI agent would produce.
+      </p>
+
+      <section id="dsl-hello">
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>Hello Circle (DSL)</h3>
+        <DslRenderer dsl={helloCircleDsl} />
+      </section>
+
+      <section id="dsl-math" style={{ marginTop: 24 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>Math Demo (DSL)</h3>
+        <DslRenderer dsl={mathDemoDsl} />
+      </section>
+
+      <section id="dsl-animated" style={{ marginTop: 24 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>Animated Scene (DSL)</h3>
+        <DslRenderer dsl={animatedSceneDsl} />
+      </section>
+
+      <section id="dsl-error" style={{ marginTop: 24 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>Error Handling (DSL)</h3>
+        <DslRenderer dsl={invalidDsl as any} />
+      </section>
     </div>
   );
 }

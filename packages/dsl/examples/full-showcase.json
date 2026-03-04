@@ -1,0 +1,261 @@
+{
+  "$schema": "../elucim.schema.json",
+  "version": "1.0",
+  "root": {
+    "type": "player",
+    "width": 800,
+    "height": 600,
+    "fps": 30,
+    "durationInFrames": 240,
+    "background": "#0d0d1a",
+    "children": [
+      {
+        "type": "sequence",
+        "from": 0,
+        "children": [
+          {
+            "type": "circle",
+            "cx": 100,
+            "cy": 100,
+            "r": 40,
+            "fill": "#3b82f6",
+            "stroke": "#60a5fa",
+            "strokeWidth": 2,
+            "draw": 30,
+            "fadeIn": 20
+          },
+          {
+            "type": "line",
+            "x1": 160,
+            "y1": 100,
+            "x2": 300,
+            "y2": 100,
+            "stroke": "#10b981",
+            "strokeWidth": 2,
+            "draw": 30
+          },
+          {
+            "type": "arrow",
+            "x1": 320,
+            "y1": 100,
+            "x2": 450,
+            "y2": 100,
+            "stroke": "#f59e0b",
+            "strokeWidth": 2,
+            "draw": 30
+          },
+          {
+            "type": "rect",
+            "x": 480,
+            "y": 70,
+            "width": 60,
+            "height": 60,
+            "fill": "none",
+            "stroke": "#8b5cf6",
+            "strokeWidth": 2,
+            "draw": 30
+          },
+          {
+            "type": "polygon",
+            "points": [[600, 70], [640, 130], [560, 130]],
+            "fill": "none",
+            "stroke": "#ef4444",
+            "strokeWidth": 2,
+            "draw": 30
+          },
+          {
+            "type": "text",
+            "x": 700,
+            "y": 105,
+            "content": "Hello",
+            "fill": "#fff",
+            "fontSize": 20,
+            "fadeIn": 30
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 30,
+        "children": [
+          {
+            "type": "axes",
+            "domain": [-4, 4],
+            "range": [-2, 2],
+            "origin": [250, 350],
+            "scale": 50,
+            "showGrid": true,
+            "fadeIn": 20
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 45,
+        "children": [
+          {
+            "type": "functionPlot",
+            "fn": "sin(x)",
+            "domain": [-4, 4],
+            "origin": [250, 350],
+            "scale": 50,
+            "color": "#4a9eff",
+            "draw": 45
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 60,
+        "children": [
+          {
+            "type": "fadeIn",
+            "duration": 20,
+            "children": [
+              {
+                "type": "vector",
+                "from": [0, 0],
+                "to": [2, 1.5],
+                "origin": [250, 350],
+                "scale": 50,
+                "color": "#ffe66d",
+                "label": "v"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 80,
+        "children": [
+          {
+            "type": "fadeIn",
+            "duration": 30,
+            "children": [
+              {
+                "type": "vectorField",
+                "fn": "[-y, x]",
+                "domain": [-3, 3],
+                "range": [-2, 2],
+                "step": 1,
+                "origin": [600, 350],
+                "scale": 40,
+                "color": "#06b6d4",
+                "normalize": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 100,
+        "children": [
+          {
+            "type": "fadeIn",
+            "duration": 20,
+            "children": [
+              {
+                "type": "matrix",
+                "values": [[1, 0], [0, 1]],
+                "x": 550,
+                "y": 160,
+                "cellSize": 36,
+                "color": "#fff",
+                "fontSize": 16
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 120,
+        "children": [
+          {
+            "type": "fadeIn",
+            "duration": 20,
+            "children": [
+              {
+                "type": "graph",
+                "nodes": [
+                  { "id": "A", "x": 100, "y": 500, "label": "A", "color": "#3b82f6" },
+                  { "id": "B", "x": 200, "y": 450, "label": "B", "color": "#10b981" },
+                  { "id": "C", "x": 200, "y": 550, "label": "C", "color": "#f59e0b" }
+                ],
+                "edges": [
+                  { "from": "A", "to": "B", "directed": true },
+                  { "from": "A", "to": "C", "directed": true },
+                  { "from": "B", "to": "C" }
+                ],
+                "nodeRadius": 15,
+                "edgeColor": "#666"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 140,
+        "children": [
+          {
+            "type": "fadeIn",
+            "duration": 20,
+            "children": [
+              {
+                "type": "latex",
+                "expression": "E = mc^2",
+                "x": 400,
+                "y": 530,
+                "color": "#fff",
+                "fontSize": 28
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 160,
+        "children": [
+          {
+            "type": "stagger",
+            "staggerDelay": 6,
+            "children": [
+              { "type": "circle", "cx": 350, "cy": 200, "r": 8, "fill": "#ef4444", "fadeIn": 15 },
+              { "type": "circle", "cx": 375, "cy": 200, "r": 8, "fill": "#f97316", "fadeIn": 15 },
+              { "type": "circle", "cx": 400, "cy": 200, "r": 8, "fill": "#eab308", "fadeIn": 15 },
+              { "type": "circle", "cx": 425, "cy": 200, "r": 8, "fill": "#22c55e", "fadeIn": 15 },
+              { "type": "circle", "cx": 450, "cy": 200, "r": 8, "fill": "#3b82f6", "fadeIn": 15 }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 190,
+        "children": [
+          {
+            "type": "transform",
+            "duration": 50,
+            "translate": { "from": [0, 0], "to": [100, 0] },
+            "rotate": { "from": 0, "to": 180 },
+            "children": [
+              {
+                "type": "rect",
+                "x": 300,
+                "y": 160,
+                "width": 30,
+                "height": 30,
+                "fill": "#8b5cf6",
+                "stroke": "none"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

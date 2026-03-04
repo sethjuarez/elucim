@@ -5,9 +5,8 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@elucim/core": ["../core/src/index.ts"],
-      "@elucim/dsl": ["../dsl/src/index.ts"]
+      "@elucim/core": ["../core/src/index.ts"]
     }
   },
-  "include": ["src", "../core/src", "../dsl/src"]
+  "include": ["src", "../core/src"]
 }

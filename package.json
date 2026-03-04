@@ -5,8 +5,9 @@
     "dev": "pnpm --filter @elucim/demo dev",
     "dev:explorer": "pnpm --filter @elucim/explorer dev",
     "dev:docs": "pnpm --filter @elucim/docs dev",
-    "build": "pnpm --filter @elucim/core build",
-    "test": "pnpm --filter @elucim/core test",
+    "build": "pnpm --filter @elucim/core build && pnpm --filter @elucim/dsl build",
+    "test": "pnpm --filter @elucim/core test && pnpm --filter @elucim/dsl test",
+    "test:dsl": "pnpm --filter @elucim/dsl test",
     "test:e2e": "pnpm --filter @elucim/e2e test",
     "lint": "pnpm -r lint"
   },

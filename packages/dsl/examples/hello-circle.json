@@ -1,0 +1,52 @@
+{
+  "$schema": "../elucim.schema.json",
+  "version": "1.0",
+  "root": {
+    "type": "player",
+    "width": 800,
+    "height": 600,
+    "fps": 30,
+    "durationInFrames": 90,
+    "background": "#0d0d1a",
+    "children": [
+      {
+        "type": "fadeIn",
+        "duration": 30,
+        "children": [
+          {
+            "type": "circle",
+            "cx": 400,
+            "cy": 300,
+            "r": 100,
+            "fill": "none",
+            "stroke": "#3b82f6",
+            "strokeWidth": 3,
+            "draw": 60,
+            "easing": "easeInOutCubic"
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 30,
+        "children": [
+          {
+            "type": "fadeIn",
+            "duration": 30,
+            "children": [
+              {
+                "type": "text",
+                "x": 400,
+                "y": 440,
+                "content": "Hello, Elucim!",
+                "fill": "#fff",
+                "fontSize": 28,
+                "textAnchor": "middle"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

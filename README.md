@@ -14,7 +14,8 @@ A JavaScript/TypeScript library for creating animated concept explanations — 3
 | **Phase 4: New Primitives** | ✅ Complete | Polygon, VectorField, LaTeX rendering |
 | **Phase 5: Tooling** | ✅ Complete | Interactive Explorer, Video Export, VitePress docs site |
 | **Phase 6: Presentation** | ✅ Complete | Slide mode, transitions, HUD, keyboard nav, presenter notes |
-| **Testing** | ✅ Complete | 100 Playwright visual tests + 100 Vitest unit tests |
+| **Phase 7: DSL** | ✅ Complete | JSON DSL for AI agents, safe math evaluator, validator, DslRenderer |
+| **Testing** | ✅ Complete | 110 Playwright visual tests + 203 Vitest unit tests |
 
 ## Quick Start
 

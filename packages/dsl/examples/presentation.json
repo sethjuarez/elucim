@@ -1,0 +1,160 @@
+{
+  "$schema": "../elucim.schema.json",
+  "version": "1.0",
+  "root": {
+    "type": "presentation",
+    "transition": "fade",
+    "transitionDuration": 400,
+    "slides": [
+      {
+        "type": "slide",
+        "title": "Introduction",
+        "notes": "Welcome everyone to this presentation",
+        "children": [
+          {
+            "type": "player",
+            "width": 800,
+            "height": 600,
+            "fps": 30,
+            "durationInFrames": 90,
+            "background": "#0d0d1a",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 30,
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 400,
+                    "y": 250,
+                    "content": "Welcome to Elucim",
+                    "fill": "#fff",
+                    "fontSize": 48,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 20,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 30,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 400,
+                        "y": 320,
+                        "content": "Animated explanations for the web",
+                        "fill": "#888",
+                        "fontSize": 24,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "slide",
+        "title": "Trigonometry",
+        "notes": "Show how sin and cos relate on the unit circle",
+        "children": [
+          {
+            "type": "player",
+            "width": 800,
+            "height": 600,
+            "fps": 30,
+            "durationInFrames": 120,
+            "background": "#0d0d1a",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "axes",
+                "domain": [-4, 4],
+                "range": [-2, 2],
+                "origin": [400, 300],
+                "scale": 80,
+                "showGrid": true,
+                "fadeIn": 20
+              },
+              {
+                "type": "sequence",
+                "from": 10,
+                "children": [
+                  {
+                    "type": "functionPlot",
+                    "fn": "sin(x)",
+                    "domain": [-4, 4],
+                    "origin": [400, 300],
+                    "scale": 80,
+                    "color": "#4a9eff",
+                    "draw": 60
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 40,
+                "children": [
+                  {
+                    "type": "functionPlot",
+                    "fn": "cos(x)",
+                    "domain": [-4, 4],
+                    "origin": [400, 300],
+                    "scale": 80,
+                    "color": "#ff6b6b",
+                    "draw": 60
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "slide",
+        "title": "Thank You",
+        "children": [
+          {
+            "type": "player",
+            "width": 800,
+            "height": 600,
+            "fps": 30,
+            "durationInFrames": 60,
+            "background": "#0d0d1a",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 30,
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 400,
+                    "y": 300,
+                    "content": "Thank You!",
+                    "fill": "#fff",
+                    "fontSize": 64,
+                    "textAnchor": "middle"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

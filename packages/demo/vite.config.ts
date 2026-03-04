@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@elucim/core': resolve(__dirname, '../core/src/index.ts'),
+      '@elucim/dsl': resolve(__dirname, '../dsl/src/index.ts'),
     },
   },
   server: {

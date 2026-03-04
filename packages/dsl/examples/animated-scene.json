@@ -1,0 +1,147 @@
+{
+  "$schema": "../elucim.schema.json",
+  "version": "1.0",
+  "root": {
+    "type": "player",
+    "width": 800,
+    "height": 600,
+    "fps": 30,
+    "durationInFrames": 180,
+    "background": "#0d0d1a",
+    "children": [
+      {
+        "type": "sequence",
+        "from": 0,
+        "children": [
+          {
+            "type": "fadeIn",
+            "duration": 30,
+            "easing": "easeOutCubic",
+            "children": [
+              {
+                "type": "circle",
+                "cx": 200,
+                "cy": 200,
+                "r": 60,
+                "fill": "#3b82f6",
+                "stroke": "#60a5fa",
+                "strokeWidth": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 20,
+        "children": [
+          {
+            "type": "draw",
+            "duration": 45,
+            "easing": "easeInOutQuad",
+            "children": [
+              {
+                "type": "rect",
+                "x": 400,
+                "y": 150,
+                "width": 100,
+                "height": 100,
+                "fill": "none",
+                "stroke": "#10b981",
+                "strokeWidth": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 50,
+        "children": [
+          {
+            "type": "transform",
+            "duration": 60,
+            "easing": "easeInOutCubic",
+            "translate": { "from": [0, 0], "to": [200, 100] },
+            "rotate": { "from": 0, "to": 360 },
+            "scale": { "from": 0.5, "to": 1.5 },
+            "children": [
+              {
+                "type": "arrow",
+                "x1": 100,
+                "y1": 400,
+                "x2": 250,
+                "y2": 350,
+                "stroke": "#f59e0b",
+                "strokeWidth": 3
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 80,
+        "children": [
+          {
+            "type": "stagger",
+            "staggerDelay": 8,
+            "children": [
+              { "type": "circle", "cx": 100, "cy": 500, "r": 15, "fill": "#ef4444", "fadeIn": 20 },
+              { "type": "circle", "cx": 160, "cy": 500, "r": 15, "fill": "#f97316", "fadeIn": 20 },
+              { "type": "circle", "cx": 220, "cy": 500, "r": 15, "fill": "#eab308", "fadeIn": 20 },
+              { "type": "circle", "cx": 280, "cy": 500, "r": 15, "fill": "#22c55e", "fadeIn": 20 },
+              { "type": "circle", "cx": 340, "cy": 500, "r": 15, "fill": "#3b82f6", "fadeIn": 20 },
+              { "type": "circle", "cx": 400, "cy": 500, "r": 15, "fill": "#8b5cf6", "fadeIn": 20 }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 120,
+        "children": [
+          {
+            "type": "morph",
+            "duration": 60,
+            "fromColor": "#ef4444",
+            "toColor": "#06b6d4",
+            "fromScale": 0.5,
+            "toScale": 2,
+            "children": [
+              {
+                "type": "circle",
+                "cx": 600,
+                "cy": 400,
+                "r": 40,
+                "fill": "#ef4444",
+                "stroke": "none"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 100,
+        "children": [
+          {
+            "type": "write",
+            "duration": 45,
+            "children": [
+              {
+                "type": "text",
+                "x": 400,
+                "y": 50,
+                "content": "Animation Showcase",
+                "fill": "#fff",
+                "fontSize": 32,
+                "textAnchor": "middle"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

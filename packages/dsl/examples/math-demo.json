@@ -1,0 +1,98 @@
+{
+  "$schema": "../elucim.schema.json",
+  "version": "1.0",
+  "root": {
+    "type": "player",
+    "width": 800,
+    "height": 600,
+    "fps": 30,
+    "durationInFrames": 150,
+    "background": "#0d0d1a",
+    "children": [
+      {
+        "type": "axes",
+        "domain": [-5, 5],
+        "range": [-3, 3],
+        "origin": [400, 300],
+        "scale": 60,
+        "showGrid": true,
+        "fadeIn": 30
+      },
+      {
+        "type": "sequence",
+        "from": 15,
+        "children": [
+          {
+            "type": "functionPlot",
+            "fn": "sin(x)",
+            "domain": [-5, 5],
+            "origin": [400, 300],
+            "scale": 60,
+            "color": "#4a9eff",
+            "strokeWidth": 2.5,
+            "draw": 60,
+            "easing": "easeInOutCubic"
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 50,
+        "children": [
+          {
+            "type": "functionPlot",
+            "fn": "cos(x)",
+            "domain": [-5, 5],
+            "origin": [400, 300],
+            "scale": 60,
+            "color": "#ff6b6b",
+            "strokeWidth": 2.5,
+            "draw": 60,
+            "easing": "easeInOutCubic"
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 60,
+        "children": [
+          {
+            "type": "fadeIn",
+            "duration": 30,
+            "children": [
+              {
+                "type": "vector",
+                "from": [0, 0],
+                "to": [3, 2],
+                "origin": [400, 300],
+                "scale": 60,
+                "color": "#ffe66d",
+                "label": "v₁"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "sequence",
+        "from": 90,
+        "children": [
+          {
+            "type": "fadeIn",
+            "duration": 30,
+            "children": [
+              {
+                "type": "latex",
+                "expression": "f(x) = \\sin(x)",
+                "x": 650,
+                "y": 80,
+                "color": "#4a9eff",
+                "fontSize": 22
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
