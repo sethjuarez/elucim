@@ -2033,23 +2033,26 @@
                     "duration": 25,
                     "children": [
                       {
-                        "type": "vector",
-                        "from": [
-                          0,
-                          0
-                        ],
-                        "to": [
-                          -1,
-                          0
-                        ],
-                        "origin": [
-                          450,
-                          470
-                        ],
-                        "scale": 85,
-                        "color": "#f472b6",
-                        "strokeWidth": 2.5,
-                        "label": "e^(ipi) = -1"
+                        "type": "group",
+                        "children": [
+                          {
+                            "type": "vector",
+                            "from": [0, 0],
+                            "to": [-1, 0],
+                            "origin": [450, 470],
+                            "scale": 85,
+                            "color": "#f472b6",
+                            "strokeWidth": 2.5
+                          },
+                          {
+                            "type": "latex",
+                            "expression": "e^{i\\pi} = -1",
+                            "x": 370,
+                            "y": 485,
+                            "fontSize": 16,
+                            "color": "#f472b6"
+                          }
+                        ]
                       }
                     ]
                   }
