@@ -10,11 +10,10 @@
     "showHud": true,
     "showNotes": true,
     "slides": [
-
       {
         "type": "slide",
         "title": "The Calculus of Change",
-        "notes": "Title slide — set the stage for a journey through calculus concepts.",
+        "notes": "Title slide -- set the stage for a journey through calculus concepts.",
         "background": "#0a0a1e",
         "children": [
           {
@@ -26,7 +25,7 @@
             "background": "#0a0a1e",
             "controls": false,
             "autoPlay": true,
-            "loop": true,
+            "loop": false,
             "children": [
               {
                 "type": "fadeIn",
@@ -74,13 +73,62 @@
                     "type": "stagger",
                     "staggerDelay": 5,
                     "children": [
-                      { "type": "circle", "cx": 250, "cy": 450, "r": 4, "fill": "#4a9eff", "stroke": "none" },
-                      { "type": "circle", "cx": 320, "cy": 450, "r": 4, "fill": "#6366f1", "stroke": "none" },
-                      { "type": "circle", "cx": 390, "cy": 450, "r": 4, "fill": "#818cf8", "stroke": "none" },
-                      { "type": "circle", "cx": 460, "cy": 450, "r": 4, "fill": "#a78bfa", "stroke": "none" },
-                      { "type": "circle", "cx": 530, "cy": 450, "r": 4, "fill": "#c084fc", "stroke": "none" },
-                      { "type": "circle", "cx": 600, "cy": 450, "r": 4, "fill": "#e879f9", "stroke": "none" },
-                      { "type": "circle", "cx": 670, "cy": 450, "r": 4, "fill": "#f472b6", "stroke": "none" }
+                      {
+                        "type": "circle",
+                        "cx": 250,
+                        "cy": 450,
+                        "r": 4,
+                        "fill": "#4a9eff",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 320,
+                        "cy": 450,
+                        "r": 4,
+                        "fill": "#6366f1",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 390,
+                        "cy": 450,
+                        "r": 4,
+                        "fill": "#818cf8",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 460,
+                        "cy": 450,
+                        "r": 4,
+                        "fill": "#a78bfa",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 530,
+                        "cy": 450,
+                        "r": 4,
+                        "fill": "#c084fc",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 600,
+                        "cy": 450,
+                        "r": 4,
+                        "fill": "#e879f9",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 670,
+                        "cy": 450,
+                        "r": 4,
+                        "fill": "#f472b6",
+                        "stroke": "none"
+                      }
                     ]
                   }
                 ]
@@ -110,11 +158,10 @@
           }
         ]
       },
-
       {
         "type": "slide",
         "title": "Functions: The Building Blocks",
-        "notes": "Introduce f(x) = x² — the simplest polynomial. Show how the curve emerges from plotting input→output pairs.",
+        "notes": "Introduce f(x) = x^2 -- the simplest polynomial. Show how the curve emerges from plotting input->output pairs.",
         "background": "#0a0a1e",
         "children": [
           {
@@ -126,7 +173,7 @@
             "background": "#0a0a1e",
             "controls": false,
             "autoPlay": true,
-            "loop": true,
+            "loop": false,
             "children": [
               {
                 "type": "fadeIn",
@@ -146,10 +193,19 @@
               },
               {
                 "type": "axes",
-                "domain": [-4, 4],
-                "range": [-1, 5],
-                "origin": [300, 480],
-                "scale": 70,
+                "domain": [
+                  -4,
+                  4
+                ],
+                "range": [
+                  -0.5,
+                  4
+                ],
+                "origin": [
+                  300,
+                  510
+                ],
+                "scale": 55,
                 "showGrid": true,
                 "gridColor": "#1e293b",
                 "axisColor": "#475569",
@@ -164,13 +220,23 @@
                   {
                     "type": "functionPlot",
                     "fn": "x^2",
-                    "domain": [-3.5, 3.5],
-                    "origin": [300, 480],
-                    "scale": 70,
+                    "domain": [
+                      -2.2,
+                      2.2
+                    ],
+                    "origin": [
+                      300,
+                      510
+                    ],
+                    "scale": 55,
                     "color": "#4a9eff",
                     "strokeWidth": 3,
                     "draw": 60,
-                    "easing": "easeInOutCubic"
+                    "easing": "easeInOutCubic",
+                    "yClamp": [
+                      -0.5,
+                      4.0
+                    ]
                   }
                 ]
               },
@@ -185,8 +251,8 @@
                       {
                         "type": "latex",
                         "expression": "f(x) = x^2",
-                        "x": 720,
-                        "y": 130,
+                        "x": 730,
+                        "y": 150,
                         "color": "#4a9eff",
                         "fontSize": 26
                       }
@@ -205,7 +271,7 @@
                       {
                         "type": "circle",
                         "cx": 300,
-                        "cy": 480,
+                        "cy": 510,
                         "r": 5,
                         "fill": "#fbbf24",
                         "stroke": "none"
@@ -225,7 +291,7 @@
                       {
                         "type": "text",
                         "x": 310,
-                        "y": 500,
+                        "y": 530,
                         "content": "(0, 0)",
                         "fill": "#fbbf24",
                         "fontSize": 14,
@@ -245,8 +311,8 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 370,
-                        "cy": 410,
+                        "cx": 355,
+                        "cy": 455,
                         "r": 5,
                         "fill": "#fbbf24",
                         "stroke": "none"
@@ -265,8 +331,8 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 380,
-                        "y": 405,
+                        "x": 365,
+                        "y": 450,
                         "content": "(1, 1)",
                         "fill": "#fbbf24",
                         "fontSize": 14,
@@ -286,8 +352,8 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 440,
-                        "cy": 200,
+                        "cx": 410,
+                        "cy": 290,
                         "r": 5,
                         "fill": "#fbbf24",
                         "stroke": "none"
@@ -306,8 +372,8 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 195,
+                        "x": 420,
+                        "y": 285,
                         "content": "(2, 4)",
                         "fill": "#fbbf24",
                         "fontSize": 14,
@@ -327,8 +393,8 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 720,
-                        "y": 200,
+                        "x": 730,
+                        "y": 220,
                         "content": "Every input x maps",
                         "fill": "#94a3b8",
                         "fontSize": 16,
@@ -348,8 +414,8 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 720,
-                        "y": 225,
+                        "x": 730,
+                        "y": 245,
                         "content": "to exactly one output",
                         "fill": "#94a3b8",
                         "fontSize": 16,
@@ -363,11 +429,10 @@
           }
         ]
       },
-
       {
         "type": "slide",
         "title": "The Derivative: Instantaneous Rate of Change",
-        "notes": "Show f(x) = x² and its derivative f'(x) = 2x overlaid. The derivative tells us the slope at every point.",
+        "notes": "Show f(x) = x^2 and its derivative f'(x) = 2x overlaid. The derivative tells us the slope at every point.",
         "background": "#0a0a1e",
         "children": [
           {
@@ -379,7 +444,7 @@
             "background": "#0a0a1e",
             "controls": false,
             "autoPlay": true,
-            "loop": true,
+            "loop": false,
             "children": [
               {
                 "type": "fadeIn",
@@ -399,9 +464,18 @@
               },
               {
                 "type": "axes",
-                "domain": [-4, 4],
-                "range": [-3, 5],
-                "origin": [320, 420],
+                "domain": [
+                  -4,
+                  4
+                ],
+                "range": [
+                  -1,
+                  4
+                ],
+                "origin": [
+                  300,
+                  500
+                ],
                 "scale": 60,
                 "showGrid": true,
                 "gridColor": "#1e293b",
@@ -417,13 +491,23 @@
                   {
                     "type": "functionPlot",
                     "fn": "x^2",
-                    "domain": [-3.5, 3.5],
-                    "origin": [320, 420],
+                    "domain": [
+                      -2.2,
+                      2.2
+                    ],
+                    "origin": [
+                      300,
+                      500
+                    ],
                     "scale": 60,
                     "color": "#4a9eff",
                     "strokeWidth": 3,
                     "draw": 50,
-                    "easing": "easeInOutCubic"
+                    "easing": "easeInOutCubic",
+                    "yClamp": [
+                      -1.0,
+                      4.0
+                    ]
                   }
                 ]
               },
@@ -438,8 +522,8 @@
                       {
                         "type": "latex",
                         "expression": "f(x) = x^2",
-                        "x": 720,
-                        "y": 100,
+                        "x": 700,
+                        "y": 120,
                         "color": "#4a9eff",
                         "fontSize": 22
                       }
@@ -458,8 +542,8 @@
                       {
                         "type": "latex",
                         "expression": "\\frac{d}{dx}[x^2] = 2x",
-                        "x": 720,
-                        "y": 160,
+                        "x": 700,
+                        "y": 180,
                         "color": "#f472b6",
                         "fontSize": 22
                       }
@@ -474,13 +558,23 @@
                   {
                     "type": "functionPlot",
                     "fn": "2*x",
-                    "domain": [-3.5, 3.5],
-                    "origin": [320, 420],
+                    "domain": [
+                      -2.5,
+                      2.5
+                    ],
+                    "origin": [
+                      300,
+                      500
+                    ],
                     "scale": 60,
                     "color": "#f472b6",
                     "strokeWidth": 2.5,
                     "draw": 50,
-                    "easing": "easeInOutCubic"
+                    "easing": "easeInOutCubic",
+                    "yClamp": [
+                      -1.0,
+                      4.0
+                    ]
                   }
                 ]
               },
@@ -494,10 +588,10 @@
                     "children": [
                       {
                         "type": "line",
-                        "x1": 380,
-                        "y1": 360,
-                        "x2": 500,
-                        "y2": 120,
+                        "x1": 280,
+                        "y1": 500,
+                        "x2": 420,
+                        "y2": 360,
                         "stroke": "#fbbf24",
                         "strokeWidth": 1.5
                       }
@@ -515,8 +609,8 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 380,
-                        "cy": 360,
+                        "cx": 360,
+                        "cy": 440,
                         "r": 5,
                         "fill": "#fbbf24",
                         "stroke": "none"
@@ -535,8 +629,8 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 510,
-                        "y": 115,
+                        "x": 470,
+                        "y": 235,
                         "content": "tangent at x=1",
                         "fill": "#fbbf24",
                         "fontSize": 14,
@@ -556,8 +650,8 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 510,
-                        "y": 135,
+                        "x": 470,
+                        "y": 255,
                         "content": "slope = f'(1) = 2",
                         "fill": "#fbbf24",
                         "fontSize": 14,
@@ -577,8 +671,8 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 720,
-                        "y": 250,
+                        "x": 700,
+                        "y": 260,
                         "content": "The derivative gives us",
                         "fill": "#94a3b8",
                         "fontSize": 15,
@@ -598,8 +692,8 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 720,
-                        "y": 272,
+                        "x": 700,
+                        "y": 282,
                         "content": "the slope at any point",
                         "fill": "#94a3b8",
                         "fontSize": 15,
@@ -613,11 +707,10 @@
           }
         ]
       },
-
       {
         "type": "slide",
         "title": "Trigonometric Functions",
-        "notes": "Show sin and cos on the same axes — these oscillating functions are everywhere in nature: waves, orbits, sound.",
+        "notes": "Show sin and cos on the same axes -- these oscillating functions are everywhere in nature: waves, orbits, sound.",
         "background": "#0a0a1e",
         "children": [
           {
@@ -629,7 +722,7 @@
             "background": "#0a0a1e",
             "controls": false,
             "autoPlay": true,
-            "loop": true,
+            "loop": false,
             "children": [
               {
                 "type": "fadeIn",
@@ -649,10 +742,19 @@
               },
               {
                 "type": "axes",
-                "domain": [-7, 7],
-                "range": [-2, 2],
-                "origin": [450, 350],
-                "scale": 50,
+                "domain": [
+                  -7,
+                  7
+                ],
+                "range": [
+                  -1.5,
+                  1.5
+                ],
+                "origin": [
+                  450,
+                  380
+                ],
+                "scale": 80,
                 "showGrid": true,
                 "gridColor": "#1e293b",
                 "axisColor": "#475569",
@@ -666,13 +768,23 @@
                   {
                     "type": "functionPlot",
                     "fn": "sin(x)",
-                    "domain": [-6.5, 6.5],
-                    "origin": [450, 350],
-                    "scale": 50,
+                    "domain": [
+                      -6.5,
+                      6.5
+                    ],
+                    "origin": [
+                      450,
+                      380
+                    ],
+                    "scale": 80,
                     "color": "#4a9eff",
                     "strokeWidth": 3,
                     "draw": 60,
-                    "easing": "easeInOutCubic"
+                    "easing": "easeInOutCubic",
+                    "yClamp": [
+                      -1.5,
+                      1.5
+                    ]
                   }
                 ]
               },
@@ -683,13 +795,23 @@
                   {
                     "type": "functionPlot",
                     "fn": "cos(x)",
-                    "domain": [-6.5, 6.5],
-                    "origin": [450, 350],
-                    "scale": 50,
+                    "domain": [
+                      -6.5,
+                      6.5
+                    ],
+                    "origin": [
+                      450,
+                      380
+                    ],
+                    "scale": 80,
                     "color": "#f472b6",
                     "strokeWidth": 3,
                     "draw": 60,
-                    "easing": "easeInOutCubic"
+                    "easing": "easeInOutCubic",
+                    "yClamp": [
+                      -1.5,
+                      1.5
+                    ]
                   }
                 ]
               },
@@ -704,8 +826,8 @@
                       {
                         "type": "latex",
                         "expression": "\\sin(x)",
-                        "x": 800,
-                        "y": 100,
+                        "x": 130,
+                        "y": 110,
                         "color": "#4a9eff",
                         "fontSize": 22
                       }
@@ -724,8 +846,8 @@
                       {
                         "type": "latex",
                         "expression": "\\cos(x)",
-                        "x": 800,
-                        "y": 145,
+                        "x": 130,
+                        "y": 150,
                         "color": "#f472b6",
                         "fontSize": 22
                       }
@@ -745,27 +867,11 @@
                         "type": "latex",
                         "expression": "\\frac{d}{dx}[\\sin(x)] = \\cos(x)",
                         "x": 450,
-                        "y": 530,
+                        "y": 560,
                         "color": "#a78bfa",
                         "fontSize": 22,
                         "align": "center"
                       }
-                    ]
-                  }
-                ]
-              },
-              {
-                "type": "sequence",
-                "from": 120,
-                "children": [
-                  {
-                    "type": "stagger",
-                    "staggerDelay": 3,
-                    "children": [
-                      { "type": "circle", "cx": 450, "cy": 350, "r": 4, "fill": "#fbbf24", "stroke": "none" },
-                      { "type": "circle", "cx": 528, "cy": 308, "r": 4, "fill": "#fbbf24", "stroke": "none" },
-                      { "type": "circle", "cx": 607, "cy": 350, "r": 4, "fill": "#fbbf24", "stroke": "none" },
-                      { "type": "circle", "cx": 372, "cy": 308, "r": 4, "fill": "#fbbf24", "stroke": "none" }
                     ]
                   }
                 ]
@@ -781,8 +887,8 @@
                       {
                         "type": "text",
                         "x": 450,
-                        "y": 575,
-                        "content": "The derivative of sin is cos — they are intimately linked",
+                        "y": 595,
+                        "content": "The derivative of sin is cos -- they are intimately linked",
                         "fill": "#64748b",
                         "fontSize": 14,
                         "textAnchor": "middle"
@@ -795,11 +901,10 @@
           }
         ]
       },
-
       {
         "type": "slide",
         "title": "Vectors: Direction and Magnitude",
-        "notes": "Vectors represent quantities with both direction and magnitude. Show vector addition visually — the parallelogram law.",
+        "notes": "Vectors represent quantities with both direction and magnitude. Show vector addition visually -- the parallelogram law.",
         "background": "#0a0a1e",
         "children": [
           {
@@ -811,7 +916,7 @@
             "background": "#0a0a1e",
             "controls": false,
             "autoPlay": true,
-            "loop": true,
+            "loop": false,
             "children": [
               {
                 "type": "fadeIn",
@@ -831,10 +936,19 @@
               },
               {
                 "type": "axes",
-                "domain": [-1, 6],
-                "range": [-1, 5],
-                "origin": [150, 520],
-                "scale": 80,
+                "domain": [
+                  -1,
+                  6
+                ],
+                "range": [
+                  -1,
+                  5
+                ],
+                "origin": [
+                  200,
+                  500
+                ],
+                "scale": 70,
                 "showGrid": true,
                 "gridColor": "#1e293b",
                 "axisColor": "#475569",
@@ -851,13 +965,22 @@
                     "children": [
                       {
                         "type": "vector",
-                        "from": [0, 0],
-                        "to": [3, 1],
-                        "origin": [150, 520],
-                        "scale": 80,
+                        "from": [
+                          0,
+                          0
+                        ],
+                        "to": [
+                          3,
+                          1
+                        ],
+                        "origin": [
+                          200,
+                          500
+                        ],
+                        "scale": 70,
                         "color": "#4a9eff",
                         "strokeWidth": 3,
-                        "label": "a⃗"
+                        "label": "a"
                       }
                     ]
                   }
@@ -873,13 +996,22 @@
                     "children": [
                       {
                         "type": "vector",
-                        "from": [0, 0],
-                        "to": [1, 3],
-                        "origin": [150, 520],
-                        "scale": 80,
+                        "from": [
+                          0,
+                          0
+                        ],
+                        "to": [
+                          1,
+                          3
+                        ],
+                        "origin": [
+                          200,
+                          500
+                        ],
+                        "scale": 70,
                         "color": "#f472b6",
                         "strokeWidth": 3,
-                        "label": "b⃗"
+                        "label": "b"
                       }
                     ]
                   }
@@ -895,10 +1027,10 @@
                     "children": [
                       {
                         "type": "line",
-                        "x1": 390,
-                        "y1": 440,
-                        "x2": 470,
-                        "y2": 200,
+                        "x1": 410,
+                        "y1": 430,
+                        "x2": 480,
+                        "y2": 220,
                         "stroke": "#4a9eff",
                         "strokeWidth": 1
                       }
@@ -916,10 +1048,10 @@
                     "children": [
                       {
                         "type": "line",
-                        "x1": 230,
-                        "y1": 280,
-                        "x2": 470,
-                        "y2": 200,
+                        "x1": 270,
+                        "y1": 290,
+                        "x2": 480,
+                        "y2": 220,
                         "stroke": "#f472b6",
                         "strokeWidth": 1
                       }
@@ -938,13 +1070,22 @@
                     "children": [
                       {
                         "type": "vector",
-                        "from": [0, 0],
-                        "to": [4, 4],
-                        "origin": [150, 520],
-                        "scale": 80,
+                        "from": [
+                          0,
+                          0
+                        ],
+                        "to": [
+                          4,
+                          4
+                        ],
+                        "origin": [
+                          200,
+                          500
+                        ],
+                        "scale": 70,
                         "color": "#fbbf24",
                         "strokeWidth": 3,
-                        "label": "a⃗ + b⃗"
+                        "label": "a + b"
                       }
                     ]
                   }
@@ -961,10 +1102,10 @@
                       {
                         "type": "latex",
                         "expression": "\\vec{a} + \\vec{b} = \\begin{pmatrix} 3 \\\\ 1 \\end{pmatrix} + \\begin{pmatrix} 1 \\\\ 3 \\end{pmatrix} = \\begin{pmatrix} 4 \\\\ 4 \\end{pmatrix}",
-                        "x": 700,
+                        "x": 650,
                         "y": 300,
                         "color": "#fbbf24",
-                        "fontSize": 20,
+                        "fontSize": 18,
                         "align": "center"
                       }
                     ]
@@ -981,7 +1122,7 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 700,
+                        "x": 650,
                         "y": 420,
                         "content": "Vectors add tip-to-tail",
                         "fill": "#94a3b8",
@@ -996,11 +1137,10 @@
           }
         ]
       },
-
       {
         "type": "slide",
         "title": "Vector Fields: Flow and Force",
-        "notes": "A vector field assigns a vector to every point in space. This one shows rotation — imagine fluid swirling around the origin.",
+        "notes": "A vector field assigns a vector to every point in space. This one shows rotation -- imagine fluid swirling around the origin.",
         "background": "#0a0a1e",
         "children": [
           {
@@ -1012,7 +1152,7 @@
             "background": "#0a0a1e",
             "controls": false,
             "autoPlay": true,
-            "loop": true,
+            "loop": false,
             "children": [
               {
                 "type": "fadeIn",
@@ -1032,9 +1172,18 @@
               },
               {
                 "type": "axes",
-                "domain": [-4, 4],
-                "range": [-3, 3],
-                "origin": [350, 350],
+                "domain": [
+                  -4,
+                  4
+                ],
+                "range": [
+                  -3,
+                  3
+                ],
+                "origin": [
+                  350,
+                  350
+                ],
                 "scale": 65,
                 "showGrid": false,
                 "axisColor": "#334155",
@@ -1048,10 +1197,19 @@
                   {
                     "type": "vectorField",
                     "fn": "[-y, x]",
-                    "domain": [-3.5, 3.5],
-                    "range": [-2.5, 2.5],
+                    "domain": [
+                      -3.5,
+                      3.5
+                    ],
+                    "range": [
+                      -2.5,
+                      2.5
+                    ],
                     "step": 0.8,
-                    "origin": [350, 350],
+                    "origin": [
+                      350,
+                      350
+                    ],
                     "scale": 65,
                     "arrowScale": 0.25,
                     "color": "#6366f1",
@@ -1171,7 +1329,6 @@
           }
         ]
       },
-
       {
         "type": "slide",
         "title": "Matrices: Linear Transformations",
@@ -1187,7 +1344,7 @@
             "background": "#0a0a1e",
             "controls": false,
             "autoPlay": true,
-            "loop": true,
+            "loop": false,
             "children": [
               {
                 "type": "fadeIn",
@@ -1216,12 +1373,18 @@
                       {
                         "type": "matrix",
                         "values": [
-                          ["cos θ", "-sin θ"],
-                          ["sin θ", "cos θ"]
+                          [
+                            "cos t",
+                            "-sin t"
+                          ],
+                          [
+                            "sin t",
+                            "cos t"
+                          ]
                         ],
                         "x": 350,
-                        "y": 130,
-                        "cellSize": 70,
+                        "y": 110,
+                        "cellSize": 55,
                         "color": "#a78bfa",
                         "fontSize": 20,
                         "bracketColor": "#6366f1"
@@ -1242,7 +1405,7 @@
                         "type": "latex",
                         "expression": "R(\\theta) = \\text{rotation by } \\theta",
                         "x": 450,
-                        "y": 260,
+                        "y": 230,
                         "color": "#818cf8",
                         "fontSize": 20,
                         "align": "center"
@@ -1253,10 +1416,19 @@
               },
               {
                 "type": "axes",
-                "domain": [-3, 3],
-                "range": [-3, 3],
-                "origin": [450, 440],
-                "scale": 55,
+                "domain": [
+                  -3,
+                  3
+                ],
+                "range": [
+                  -2,
+                  2
+                ],
+                "origin": [
+                  450,
+                  480
+                ],
+                "scale": 60,
                 "showGrid": true,
                 "gridColor": "#1e293b",
                 "axisColor": "#334155",
@@ -1273,13 +1445,22 @@
                     "children": [
                       {
                         "type": "vector",
-                        "from": [0, 0],
-                        "to": [2, 0],
-                        "origin": [450, 440],
-                        "scale": 55,
+                        "from": [
+                          0,
+                          0
+                        ],
+                        "to": [
+                          2,
+                          0
+                        ],
+                        "origin": [
+                          450,
+                          480
+                        ],
+                        "scale": 60,
                         "color": "#4a9eff",
                         "strokeWidth": 3,
-                        "label": "ê₁"
+                        "label": "e1"
                       }
                     ]
                   }
@@ -1295,13 +1476,22 @@
                     "children": [
                       {
                         "type": "vector",
-                        "from": [0, 0],
-                        "to": [0, 2],
-                        "origin": [450, 440],
-                        "scale": 55,
+                        "from": [
+                          0,
+                          0
+                        ],
+                        "to": [
+                          0,
+                          2
+                        ],
+                        "origin": [
+                          450,
+                          480
+                        ],
+                        "scale": 60,
                         "color": "#f472b6",
                         "strokeWidth": 3,
-                        "label": "ê₂"
+                        "label": "e2"
                       }
                     ]
                   }
@@ -1318,13 +1508,22 @@
                     "children": [
                       {
                         "type": "vector",
-                        "from": [0, 0],
-                        "to": [1.41, 1.41],
-                        "origin": [450, 440],
-                        "scale": 55,
+                        "from": [
+                          0,
+                          0
+                        ],
+                        "to": [
+                          1.41,
+                          1.41
+                        ],
+                        "origin": [
+                          450,
+                          480
+                        ],
+                        "scale": 60,
                         "color": "#4a9eff",
                         "strokeWidth": 2,
-                        "label": "R(ê₁)"
+                        "label": "R(e1)"
                       }
                     ]
                   }
@@ -1341,13 +1540,22 @@
                     "children": [
                       {
                         "type": "vector",
-                        "from": [0, 0],
-                        "to": [-1.41, 1.41],
-                        "origin": [450, 440],
-                        "scale": 55,
+                        "from": [
+                          0,
+                          0
+                        ],
+                        "to": [
+                          -1.41,
+                          1.41
+                        ],
+                        "origin": [
+                          450,
+                          480
+                        ],
+                        "scale": 60,
                         "color": "#f472b6",
                         "strokeWidth": 2,
-                        "label": "R(ê₂)"
+                        "label": "R(e2)"
                       }
                     ]
                   }
@@ -1364,8 +1572,8 @@
                       {
                         "type": "circle",
                         "cx": 450,
-                        "cy": 440,
-                        "r": 110,
+                        "cy": 480,
+                        "r": 120,
                         "fill": "none",
                         "stroke": "#fbbf24",
                         "strokeWidth": 1,
@@ -1385,9 +1593,9 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 770,
-                        "y": 400,
-                        "content": "θ = 45°",
+                        "x": 750,
+                        "y": 430,
+                        "content": "t = 45 deg",
                         "fill": "#fbbf24",
                         "fontSize": 18,
                         "textAnchor": "middle"
@@ -1406,8 +1614,8 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 770,
-                        "y": 430,
+                        "x": 750,
+                        "y": 460,
                         "content": "Lengths preserved",
                         "fill": "#94a3b8",
                         "fontSize": 14,
@@ -1427,8 +1635,8 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 770,
-                        "y": 455,
+                        "x": 750,
+                        "y": 485,
                         "content": "Angles preserved",
                         "fill": "#94a3b8",
                         "fontSize": 14,
@@ -1442,11 +1650,10 @@
           }
         ]
       },
-
       {
         "type": "slide",
         "title": "Graph Theory: Networks",
-        "notes": "Graphs model relationships. Show a small network with weighted edges — could represent cities, neurons, or social connections.",
+        "notes": "Graphs model relationships. Show a small network with weighted edges -- could represent cities, neurons, or social connections.",
         "background": "#0a0a1e",
         "children": [
           {
@@ -1458,7 +1665,7 @@
             "background": "#0a0a1e",
             "controls": false,
             "autoPlay": true,
-            "loop": true,
+            "loop": false,
             "children": [
               {
                 "type": "fadeIn",
@@ -1488,23 +1695,94 @@
                       {
                         "type": "graph",
                         "nodes": [
-                          { "id": "A", "x": 200, "y": 150, "label": "Input", "color": "#4a9eff" },
-                          { "id": "B", "x": 200, "y": 350, "label": "Data", "color": "#4a9eff" },
-                          { "id": "C", "x": 450, "y": 150, "label": "Process", "color": "#a78bfa" },
-                          { "id": "D", "x": 450, "y": 350, "label": "Transform", "color": "#a78bfa" },
-                          { "id": "E", "x": 450, "y": 500, "label": "Filter", "color": "#a78bfa" },
-                          { "id": "F", "x": 700, "y": 250, "label": "Output", "color": "#34d399" }
+                          {
+                            "id": "A",
+                            "x": 200,
+                            "y": 150,
+                            "label": "Input",
+                            "color": "#4a9eff"
+                          },
+                          {
+                            "id": "B",
+                            "x": 200,
+                            "y": 350,
+                            "label": "Data",
+                            "color": "#4a9eff"
+                          },
+                          {
+                            "id": "C",
+                            "x": 450,
+                            "y": 150,
+                            "label": "Process",
+                            "color": "#a78bfa"
+                          },
+                          {
+                            "id": "D",
+                            "x": 450,
+                            "y": 350,
+                            "label": "Transform",
+                            "color": "#a78bfa"
+                          },
+                          {
+                            "id": "E",
+                            "x": 450,
+                            "y": 500,
+                            "label": "Filter",
+                            "color": "#a78bfa"
+                          },
+                          {
+                            "id": "F",
+                            "x": 700,
+                            "y": 250,
+                            "label": "Output",
+                            "color": "#34d399"
+                          }
                         ],
                         "edges": [
-                          { "from": "A", "to": "C", "directed": true, "label": "5" },
-                          { "from": "A", "to": "D", "directed": true, "label": "3" },
-                          { "from": "B", "to": "D", "directed": true, "label": "7" },
-                          { "from": "B", "to": "E", "directed": true, "label": "2" },
-                          { "from": "C", "to": "F", "directed": true, "label": "4" },
-                          { "from": "D", "to": "F", "directed": true, "label": "6" },
-                          { "from": "E", "to": "F", "directed": true, "label": "8" }
+                          {
+                            "from": "A",
+                            "to": "C",
+                            "directed": true,
+                            "label": "5"
+                          },
+                          {
+                            "from": "A",
+                            "to": "D",
+                            "directed": true,
+                            "label": "3"
+                          },
+                          {
+                            "from": "B",
+                            "to": "D",
+                            "directed": true,
+                            "label": "7"
+                          },
+                          {
+                            "from": "B",
+                            "to": "E",
+                            "directed": true,
+                            "label": "2"
+                          },
+                          {
+                            "from": "C",
+                            "to": "F",
+                            "directed": true,
+                            "label": "4"
+                          },
+                          {
+                            "from": "D",
+                            "to": "F",
+                            "directed": true,
+                            "label": "6"
+                          },
+                          {
+                            "from": "E",
+                            "to": "F",
+                            "directed": true,
+                            "label": "8"
+                          }
                         ],
-                        "nodeRadius": 28,
+                        "nodeRadius": 35,
                         "edgeWidth": 2,
                         "labelColor": "#e0e7ff",
                         "labelFontSize": 13
@@ -1525,7 +1803,7 @@
                         "type": "text",
                         "x": 450,
                         "y": 590,
-                        "content": "Weighted directed graph — edges carry capacity or cost",
+                        "content": "Weighted directed graph -- edges carry capacity or cost",
                         "fill": "#64748b",
                         "fontSize": 15,
                         "textAnchor": "middle"
@@ -1546,7 +1824,7 @@
                         "type": "text",
                         "x": 450,
                         "y": 618,
-                        "content": "Shortest path: Input → Transform → Output (cost: 9)",
+                        "content": "Shortest path: Input -> Transform -> Output (cost: 9)",
                         "fill": "#fbbf24",
                         "fontSize": 14,
                         "textAnchor": "middle"
@@ -1559,11 +1837,10 @@
           }
         ]
       },
-
       {
         "type": "slide",
         "title": "Euler's Identity: The Most Beautiful Equation",
-        "notes": "Euler's identity connects five fundamental constants: e, i, π, 1, and 0. It's often called the most beautiful equation in mathematics.",
+        "notes": "Euler's identity connects five fundamental constants: e, i, pi, 1, and 0. It's often called the most beautiful equation in mathematics.",
         "background": "#0a0a1e",
         "children": [
           {
@@ -1575,7 +1852,7 @@
             "background": "#0a0a1e",
             "controls": false,
             "autoPlay": true,
-            "loop": true,
+            "loop": false,
             "children": [
               {
                 "type": "fadeIn",
@@ -1626,8 +1903,8 @@
                       {
                         "type": "text",
                         "x": 150,
-                        "y": 260,
-                        "content": "e — growth",
+                        "y": 230,
+                        "content": "e -- growth",
                         "fill": "#4a9eff",
                         "fontSize": 18,
                         "textAnchor": "middle"
@@ -1635,8 +1912,8 @@
                       {
                         "type": "text",
                         "x": 310,
-                        "y": 260,
-                        "content": "i — rotation",
+                        "y": 230,
+                        "content": "i -- rotation",
                         "fill": "#a78bfa",
                         "fontSize": 18,
                         "textAnchor": "middle"
@@ -1644,8 +1921,8 @@
                       {
                         "type": "text",
                         "x": 450,
-                        "y": 260,
-                        "content": "π — circles",
+                        "y": 230,
+                        "content": "pi -- circles",
                         "fill": "#f472b6",
                         "fontSize": 18,
                         "textAnchor": "middle"
@@ -1653,8 +1930,8 @@
                       {
                         "type": "text",
                         "x": 590,
-                        "y": 260,
-                        "content": "1 — unity",
+                        "y": 230,
+                        "content": "1 -- unity",
                         "fill": "#34d399",
                         "fontSize": 18,
                         "textAnchor": "middle"
@@ -1662,8 +1939,8 @@
                       {
                         "type": "text",
                         "x": 740,
-                        "y": 260,
-                        "content": "0 — nothing",
+                        "y": 230,
+                        "content": "0 -- nothing",
                         "fill": "#94a3b8",
                         "fontSize": 18,
                         "textAnchor": "middle"
@@ -1674,10 +1951,19 @@
               },
               {
                 "type": "axes",
-                "domain": [-2, 2],
-                "range": [-2, 2],
-                "origin": [450, 450],
-                "scale": 90,
+                "domain": [
+                  -2,
+                  2
+                ],
+                "range": [
+                  -1.5,
+                  1.5
+                ],
+                "origin": [
+                  450,
+                  470
+                ],
+                "scale": 85,
                 "showGrid": true,
                 "gridColor": "#1e293b",
                 "axisColor": "#334155",
@@ -1695,8 +1981,8 @@
                       {
                         "type": "circle",
                         "cx": 450,
-                        "cy": 450,
-                        "r": 90,
+                        "cy": 470,
+                        "r": 85,
                         "fill": "none",
                         "stroke": "#6366f1",
                         "strokeWidth": 2,
@@ -1717,10 +2003,19 @@
                     "children": [
                       {
                         "type": "vector",
-                        "from": [0, 0],
-                        "to": [1, 0],
-                        "origin": [450, 450],
-                        "scale": 90,
+                        "from": [
+                          0,
+                          0
+                        ],
+                        "to": [
+                          1,
+                          0
+                        ],
+                        "origin": [
+                          450,
+                          470
+                        ],
+                        "scale": 85,
                         "color": "#34d399",
                         "strokeWidth": 2.5,
                         "label": "1"
@@ -1739,13 +2034,22 @@
                     "children": [
                       {
                         "type": "vector",
-                        "from": [0, 0],
-                        "to": [-1, 0],
-                        "origin": [450, 450],
-                        "scale": 90,
+                        "from": [
+                          0,
+                          0
+                        ],
+                        "to": [
+                          -1,
+                          0
+                        ],
+                        "origin": [
+                          450,
+                          470
+                        ],
+                        "scale": 85,
                         "color": "#f472b6",
                         "strokeWidth": 2.5,
-                        "label": "e^(iπ) = −1"
+                        "label": "e^(ipi) = -1"
                       }
                     ]
                   }
@@ -1761,10 +2065,19 @@
                     "children": [
                       {
                         "type": "vector",
-                        "from": [0, 0],
-                        "to": [0, 1],
-                        "origin": [450, 450],
-                        "scale": 90,
+                        "from": [
+                          0,
+                          0
+                        ],
+                        "to": [
+                          0,
+                          1
+                        ],
+                        "origin": [
+                          450,
+                          470
+                        ],
+                        "scale": 85,
                         "color": "#a78bfa",
                         "strokeWidth": 2,
                         "label": "i"
@@ -1798,11 +2111,10 @@
           }
         ]
       },
-
       {
         "type": "slide",
         "title": "Thank You",
-        "notes": "Closing slide — invite questions and further exploration.",
+        "notes": "Closing slide -- invite questions and further exploration.",
         "background": "#0a0a1e",
         "children": [
           {
@@ -1814,7 +2126,7 @@
             "background": "#0a0a1e",
             "controls": false,
             "autoPlay": true,
-            "loop": true,
+            "loop": false,
             "children": [
               {
                 "type": "fadeIn",
@@ -1862,13 +2174,62 @@
                     "type": "stagger",
                     "staggerDelay": 4,
                     "children": [
-                      { "type": "circle", "cx": 270, "cy": 430, "r": 6, "fill": "#4a9eff", "stroke": "none" },
-                      { "type": "circle", "cx": 330, "cy": 430, "r": 6, "fill": "#6366f1", "stroke": "none" },
-                      { "type": "circle", "cx": 390, "cy": 430, "r": 6, "fill": "#818cf8", "stroke": "none" },
-                      { "type": "circle", "cx": 450, "cy": 430, "r": 6, "fill": "#a78bfa", "stroke": "none" },
-                      { "type": "circle", "cx": 510, "cy": 430, "r": 6, "fill": "#c084fc", "stroke": "none" },
-                      { "type": "circle", "cx": 570, "cy": 430, "r": 6, "fill": "#e879f9", "stroke": "none" },
-                      { "type": "circle", "cx": 630, "cy": 430, "r": 6, "fill": "#f472b6", "stroke": "none" }
+                      {
+                        "type": "circle",
+                        "cx": 270,
+                        "cy": 430,
+                        "r": 6,
+                        "fill": "#4a9eff",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 330,
+                        "cy": 430,
+                        "r": 6,
+                        "fill": "#6366f1",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 390,
+                        "cy": 430,
+                        "r": 6,
+                        "fill": "#818cf8",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 450,
+                        "cy": 430,
+                        "r": 6,
+                        "fill": "#a78bfa",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 510,
+                        "cy": 430,
+                        "r": 6,
+                        "fill": "#c084fc",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 570,
+                        "cy": 430,
+                        "r": 6,
+                        "fill": "#e879f9",
+                        "stroke": "none"
+                      },
+                      {
+                        "type": "circle",
+                        "cx": 630,
+                        "cy": 430,
+                        "r": 6,
+                        "fill": "#f472b6",
+                        "stroke": "none"
+                      }
                     ]
                   }
                 ]
@@ -1885,7 +2246,7 @@
                         "type": "text",
                         "x": 450,
                         "y": 490,
-                        "content": "Built with Elucim — animated explanations for the web",
+                        "content": "Built with Elucim -- animated explanations for the web",
                         "fill": "#475569",
                         "fontSize": 14,
                         "textAnchor": "middle"
