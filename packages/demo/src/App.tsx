@@ -36,6 +36,7 @@ import {
 } from '@elucim/core';
 import { DslRenderer } from '@elucim/dsl';
 import type { ElucimDocument } from '@elucim/dsl';
+import calculusExplained from '../../dsl/examples/calculus-explained.json';
 
 // ─── Demo Scenes ────────────────────────────────────────────────────────────
 
@@ -1153,6 +1154,14 @@ export function App() {
       <section id="dsl-error" style={{ marginTop: 24 }}>
         <h3 style={{ color: '#aaa', marginBottom: 8 }}>Error Handling (DSL)</h3>
         <DslRenderer dsl={invalidDsl as any} />
+      </section>
+
+      <section id="dsl-calculus" style={{ marginTop: 32 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>📐 The Calculus of Change — Full Presentation (DSL)</h3>
+        <p style={{ color: '#666', fontSize: 14, marginBottom: 12 }}>
+          9-slide animated presentation covering functions, derivatives, trig, vectors, vector fields, matrices, graphs, and Euler's identity — all from a single JSON document.
+        </p>
+        <DslRenderer dsl={calculusExplained as ElucimDocument} />
       </section>
     </div>
   );

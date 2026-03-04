@@ -1,0 +1,1903 @@
+{
+  "$schema": "../elucim.schema.json",
+  "version": "1.0",
+  "root": {
+    "type": "presentation",
+    "width": 900,
+    "height": 650,
+    "transition": "fade",
+    "transitionDuration": 500,
+    "showHud": true,
+    "showNotes": true,
+    "slides": [
+
+      {
+        "type": "slide",
+        "title": "The Calculus of Change",
+        "notes": "Title slide — set the stage for a journey through calculus concepts.",
+        "background": "#0a0a1e",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 150,
+            "background": "#0a0a1e",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 40,
+                "easing": "easeOutCubic",
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 450,
+                    "y": 220,
+                    "content": "The Calculus of Change",
+                    "fill": "#e0e7ff",
+                    "fontSize": 46,
+                    "fontWeight": 700,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 25,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 30,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "\\frac{df}{dx} = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}",
+                        "x": 450,
+                        "y": 310,
+                        "color": "#818cf8",
+                        "fontSize": 28,
+                        "align": "center"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 50,
+                "children": [
+                  {
+                    "type": "stagger",
+                    "staggerDelay": 5,
+                    "children": [
+                      { "type": "circle", "cx": 250, "cy": 450, "r": 4, "fill": "#4a9eff", "stroke": "none" },
+                      { "type": "circle", "cx": 320, "cy": 450, "r": 4, "fill": "#6366f1", "stroke": "none" },
+                      { "type": "circle", "cx": 390, "cy": 450, "r": 4, "fill": "#818cf8", "stroke": "none" },
+                      { "type": "circle", "cx": 460, "cy": 450, "r": 4, "fill": "#a78bfa", "stroke": "none" },
+                      { "type": "circle", "cx": 530, "cy": 450, "r": 4, "fill": "#c084fc", "stroke": "none" },
+                      { "type": "circle", "cx": 600, "cy": 450, "r": 4, "fill": "#e879f9", "stroke": "none" },
+                      { "type": "circle", "cx": 670, "cy": 450, "r": 4, "fill": "#f472b6", "stroke": "none" }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 70,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 30,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 450,
+                        "y": 520,
+                        "content": "A visual journey through the language of change",
+                        "fill": "#64748b",
+                        "fontSize": 18,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "slide",
+        "title": "Functions: The Building Blocks",
+        "notes": "Introduce f(x) = x² — the simplest polynomial. Show how the curve emerges from plotting input→output pairs.",
+        "background": "#0a0a1e",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 180,
+            "background": "#0a0a1e",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 20,
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 450,
+                    "y": 45,
+                    "content": "Functions: The Building Blocks",
+                    "fill": "#e0e7ff",
+                    "fontSize": 28,
+                    "fontWeight": 700,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "axes",
+                "domain": [-4, 4],
+                "range": [-1, 5],
+                "origin": [300, 480],
+                "scale": 70,
+                "showGrid": true,
+                "gridColor": "#1e293b",
+                "axisColor": "#475569",
+                "labelColor": "#94a3b8",
+                "fadeIn": 30,
+                "easing": "easeOutCubic"
+              },
+              {
+                "type": "sequence",
+                "from": 20,
+                "children": [
+                  {
+                    "type": "functionPlot",
+                    "fn": "x^2",
+                    "domain": [-3.5, 3.5],
+                    "origin": [300, 480],
+                    "scale": 70,
+                    "color": "#4a9eff",
+                    "strokeWidth": 3,
+                    "draw": 60,
+                    "easing": "easeInOutCubic"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 60,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "f(x) = x^2",
+                        "x": 720,
+                        "y": 130,
+                        "color": "#4a9eff",
+                        "fontSize": 26
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 80,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "circle",
+                        "cx": 300,
+                        "cy": 480,
+                        "r": 5,
+                        "fill": "#fbbf24",
+                        "stroke": "none"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 85,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 310,
+                        "y": 500,
+                        "content": "(0, 0)",
+                        "fill": "#fbbf24",
+                        "fontSize": 14,
+                        "textAnchor": "start"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 100,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "circle",
+                        "cx": 370,
+                        "cy": 410,
+                        "r": 5,
+                        "fill": "#fbbf24",
+                        "stroke": "none"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 105,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 380,
+                        "y": 405,
+                        "content": "(1, 1)",
+                        "fill": "#fbbf24",
+                        "fontSize": 14,
+                        "textAnchor": "start"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 120,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "circle",
+                        "cx": 440,
+                        "cy": 200,
+                        "r": 5,
+                        "fill": "#fbbf24",
+                        "stroke": "none"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 125,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 450,
+                        "y": 195,
+                        "content": "(2, 4)",
+                        "fill": "#fbbf24",
+                        "fontSize": 14,
+                        "textAnchor": "start"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 140,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 720,
+                        "y": 200,
+                        "content": "Every input x maps",
+                        "fill": "#94a3b8",
+                        "fontSize": 16,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 145,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 720,
+                        "y": 225,
+                        "content": "to exactly one output",
+                        "fill": "#94a3b8",
+                        "fontSize": 16,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "slide",
+        "title": "The Derivative: Instantaneous Rate of Change",
+        "notes": "Show f(x) = x² and its derivative f'(x) = 2x overlaid. The derivative tells us the slope at every point.",
+        "background": "#0a0a1e",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 210,
+            "background": "#0a0a1e",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 20,
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 450,
+                    "y": 45,
+                    "content": "The Derivative",
+                    "fill": "#e0e7ff",
+                    "fontSize": 28,
+                    "fontWeight": 700,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "axes",
+                "domain": [-4, 4],
+                "range": [-3, 5],
+                "origin": [320, 420],
+                "scale": 60,
+                "showGrid": true,
+                "gridColor": "#1e293b",
+                "axisColor": "#475569",
+                "labelColor": "#94a3b8",
+                "fadeIn": 25,
+                "easing": "easeOutCubic"
+              },
+              {
+                "type": "sequence",
+                "from": 15,
+                "children": [
+                  {
+                    "type": "functionPlot",
+                    "fn": "x^2",
+                    "domain": [-3.5, 3.5],
+                    "origin": [320, 420],
+                    "scale": 60,
+                    "color": "#4a9eff",
+                    "strokeWidth": 3,
+                    "draw": 50,
+                    "easing": "easeInOutCubic"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 50,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "f(x) = x^2",
+                        "x": 720,
+                        "y": 100,
+                        "color": "#4a9eff",
+                        "fontSize": 22
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 70,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "\\frac{d}{dx}[x^2] = 2x",
+                        "x": 720,
+                        "y": 160,
+                        "color": "#f472b6",
+                        "fontSize": 22
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 90,
+                "children": [
+                  {
+                    "type": "functionPlot",
+                    "fn": "2*x",
+                    "domain": [-3.5, 3.5],
+                    "origin": [320, 420],
+                    "scale": 60,
+                    "color": "#f472b6",
+                    "strokeWidth": 2.5,
+                    "draw": 50,
+                    "easing": "easeInOutCubic"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 130,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "line",
+                        "x1": 380,
+                        "y1": 360,
+                        "x2": 500,
+                        "y2": 120,
+                        "stroke": "#fbbf24",
+                        "strokeWidth": 1.5
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 135,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "circle",
+                        "cx": 380,
+                        "cy": 360,
+                        "r": 5,
+                        "fill": "#fbbf24",
+                        "stroke": "none"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 140,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 510,
+                        "y": 115,
+                        "content": "tangent at x=1",
+                        "fill": "#fbbf24",
+                        "fontSize": 14,
+                        "textAnchor": "start"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 140,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 510,
+                        "y": 135,
+                        "content": "slope = f'(1) = 2",
+                        "fill": "#fbbf24",
+                        "fontSize": 14,
+                        "textAnchor": "start"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 170,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 720,
+                        "y": 250,
+                        "content": "The derivative gives us",
+                        "fill": "#94a3b8",
+                        "fontSize": 15,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 175,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 720,
+                        "y": 272,
+                        "content": "the slope at any point",
+                        "fill": "#94a3b8",
+                        "fontSize": 15,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "slide",
+        "title": "Trigonometric Functions",
+        "notes": "Show sin and cos on the same axes — these oscillating functions are everywhere in nature: waves, orbits, sound.",
+        "background": "#0a0a1e",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 180,
+            "background": "#0a0a1e",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 20,
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 450,
+                    "y": 45,
+                    "content": "Trigonometric Functions",
+                    "fill": "#e0e7ff",
+                    "fontSize": 28,
+                    "fontWeight": 700,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "axes",
+                "domain": [-7, 7],
+                "range": [-2, 2],
+                "origin": [450, 350],
+                "scale": 50,
+                "showGrid": true,
+                "gridColor": "#1e293b",
+                "axisColor": "#475569",
+                "labelColor": "#94a3b8",
+                "fadeIn": 25
+              },
+              {
+                "type": "sequence",
+                "from": 15,
+                "children": [
+                  {
+                    "type": "functionPlot",
+                    "fn": "sin(x)",
+                    "domain": [-6.5, 6.5],
+                    "origin": [450, 350],
+                    "scale": 50,
+                    "color": "#4a9eff",
+                    "strokeWidth": 3,
+                    "draw": 60,
+                    "easing": "easeInOutCubic"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 50,
+                "children": [
+                  {
+                    "type": "functionPlot",
+                    "fn": "cos(x)",
+                    "domain": [-6.5, 6.5],
+                    "origin": [450, 350],
+                    "scale": 50,
+                    "color": "#f472b6",
+                    "strokeWidth": 3,
+                    "draw": 60,
+                    "easing": "easeInOutCubic"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 80,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "\\sin(x)",
+                        "x": 800,
+                        "y": 100,
+                        "color": "#4a9eff",
+                        "fontSize": 22
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 90,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "\\cos(x)",
+                        "x": 800,
+                        "y": 145,
+                        "color": "#f472b6",
+                        "fontSize": 22
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 100,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "\\frac{d}{dx}[\\sin(x)] = \\cos(x)",
+                        "x": 450,
+                        "y": 530,
+                        "color": "#a78bfa",
+                        "fontSize": 22,
+                        "align": "center"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 120,
+                "children": [
+                  {
+                    "type": "stagger",
+                    "staggerDelay": 3,
+                    "children": [
+                      { "type": "circle", "cx": 450, "cy": 350, "r": 4, "fill": "#fbbf24", "stroke": "none" },
+                      { "type": "circle", "cx": 528, "cy": 308, "r": 4, "fill": "#fbbf24", "stroke": "none" },
+                      { "type": "circle", "cx": 607, "cy": 350, "r": 4, "fill": "#fbbf24", "stroke": "none" },
+                      { "type": "circle", "cx": 372, "cy": 308, "r": 4, "fill": "#fbbf24", "stroke": "none" }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 130,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 450,
+                        "y": 575,
+                        "content": "The derivative of sin is cos — they are intimately linked",
+                        "fill": "#64748b",
+                        "fontSize": 14,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "slide",
+        "title": "Vectors: Direction and Magnitude",
+        "notes": "Vectors represent quantities with both direction and magnitude. Show vector addition visually — the parallelogram law.",
+        "background": "#0a0a1e",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 180,
+            "background": "#0a0a1e",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 20,
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 450,
+                    "y": 45,
+                    "content": "Vectors: Direction & Magnitude",
+                    "fill": "#e0e7ff",
+                    "fontSize": 28,
+                    "fontWeight": 700,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "axes",
+                "domain": [-1, 6],
+                "range": [-1, 5],
+                "origin": [150, 520],
+                "scale": 80,
+                "showGrid": true,
+                "gridColor": "#1e293b",
+                "axisColor": "#475569",
+                "labelColor": "#94a3b8",
+                "fadeIn": 25
+              },
+              {
+                "type": "sequence",
+                "from": 20,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "from": [0, 0],
+                        "to": [3, 1],
+                        "origin": [150, 520],
+                        "scale": 80,
+                        "color": "#4a9eff",
+                        "strokeWidth": 3,
+                        "label": "a⃗"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 45,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "from": [0, 0],
+                        "to": [1, 3],
+                        "origin": [150, 520],
+                        "scale": 80,
+                        "color": "#f472b6",
+                        "strokeWidth": 3,
+                        "label": "b⃗"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 75,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "line",
+                        "x1": 390,
+                        "y1": 440,
+                        "x2": 470,
+                        "y2": 200,
+                        "stroke": "#4a9eff",
+                        "strokeWidth": 1
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 80,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "line",
+                        "x1": 230,
+                        "y1": 280,
+                        "x2": 470,
+                        "y2": 200,
+                        "stroke": "#f472b6",
+                        "strokeWidth": 1
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 95,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 30,
+                    "easing": "easeOutCubic",
+                    "children": [
+                      {
+                        "type": "vector",
+                        "from": [0, 0],
+                        "to": [4, 4],
+                        "origin": [150, 520],
+                        "scale": 80,
+                        "color": "#fbbf24",
+                        "strokeWidth": 3,
+                        "label": "a⃗ + b⃗"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 100,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "\\vec{a} + \\vec{b} = \\begin{pmatrix} 3 \\\\ 1 \\end{pmatrix} + \\begin{pmatrix} 1 \\\\ 3 \\end{pmatrix} = \\begin{pmatrix} 4 \\\\ 4 \\end{pmatrix}",
+                        "x": 700,
+                        "y": 300,
+                        "color": "#fbbf24",
+                        "fontSize": 20,
+                        "align": "center"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 140,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 700,
+                        "y": 420,
+                        "content": "Vectors add tip-to-tail",
+                        "fill": "#94a3b8",
+                        "fontSize": 16,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "slide",
+        "title": "Vector Fields: Flow and Force",
+        "notes": "A vector field assigns a vector to every point in space. This one shows rotation — imagine fluid swirling around the origin.",
+        "background": "#0a0a1e",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 150,
+            "background": "#0a0a1e",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 20,
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 450,
+                    "y": 45,
+                    "content": "Vector Fields: Flow & Force",
+                    "fill": "#e0e7ff",
+                    "fontSize": 28,
+                    "fontWeight": 700,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "axes",
+                "domain": [-4, 4],
+                "range": [-3, 3],
+                "origin": [350, 350],
+                "scale": 65,
+                "showGrid": false,
+                "axisColor": "#334155",
+                "labelColor": "#64748b",
+                "fadeIn": 20
+              },
+              {
+                "type": "sequence",
+                "from": 15,
+                "children": [
+                  {
+                    "type": "vectorField",
+                    "fn": "[-y, x]",
+                    "domain": [-3.5, 3.5],
+                    "range": [-2.5, 2.5],
+                    "step": 0.8,
+                    "origin": [350, 350],
+                    "scale": 65,
+                    "arrowScale": 0.25,
+                    "color": "#6366f1",
+                    "strokeWidth": 1.5,
+                    "normalize": true,
+                    "fadeIn": 40,
+                    "easing": "easeOutCubic"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 50,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "\\vec{F}(x, y) = \\langle -y, \\, x \\rangle",
+                        "x": 730,
+                        "y": 120,
+                        "color": "#a78bfa",
+                        "fontSize": 22
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 70,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "circle",
+                        "cx": 350,
+                        "cy": 350,
+                        "r": 130,
+                        "fill": "none",
+                        "stroke": "#fbbf24",
+                        "strokeWidth": 1.5,
+                        "opacity": 0.4
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 90,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 730,
+                        "y": 200,
+                        "content": "Pure rotation field",
+                        "fill": "#94a3b8",
+                        "fontSize": 16,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 95,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 730,
+                        "y": 225,
+                        "content": "Every arrow is tangent",
+                        "fill": "#94a3b8",
+                        "fontSize": 16,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 100,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 730,
+                        "y": 250,
+                        "content": "to circles around the origin",
+                        "fill": "#94a3b8",
+                        "fontSize": 16,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "slide",
+        "title": "Matrices: Linear Transformations",
+        "notes": "A 2x2 matrix represents a linear transformation of the plane. Show the rotation matrix and how it maps basis vectors.",
+        "background": "#0a0a1e",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 180,
+            "background": "#0a0a1e",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 20,
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 450,
+                    "y": 45,
+                    "content": "Matrices as Transformations",
+                    "fill": "#e0e7ff",
+                    "fontSize": 28,
+                    "fontWeight": 700,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 10,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 30,
+                    "children": [
+                      {
+                        "type": "matrix",
+                        "values": [
+                          ["cos θ", "-sin θ"],
+                          ["sin θ", "cos θ"]
+                        ],
+                        "x": 350,
+                        "y": 130,
+                        "cellSize": 70,
+                        "color": "#a78bfa",
+                        "fontSize": 20,
+                        "bracketColor": "#6366f1"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 30,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "R(\\theta) = \\text{rotation by } \\theta",
+                        "x": 450,
+                        "y": 260,
+                        "color": "#818cf8",
+                        "fontSize": 20,
+                        "align": "center"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "axes",
+                "domain": [-3, 3],
+                "range": [-3, 3],
+                "origin": [450, 440],
+                "scale": 55,
+                "showGrid": true,
+                "gridColor": "#1e293b",
+                "axisColor": "#334155",
+                "labelColor": "#64748b",
+                "fadeIn": 25
+              },
+              {
+                "type": "sequence",
+                "from": 50,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "from": [0, 0],
+                        "to": [2, 0],
+                        "origin": [450, 440],
+                        "scale": 55,
+                        "color": "#4a9eff",
+                        "strokeWidth": 3,
+                        "label": "ê₁"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 60,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "from": [0, 0],
+                        "to": [0, 2],
+                        "origin": [450, 440],
+                        "scale": 55,
+                        "color": "#f472b6",
+                        "strokeWidth": 3,
+                        "label": "ê₂"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 90,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 30,
+                    "easing": "easeOutCubic",
+                    "children": [
+                      {
+                        "type": "vector",
+                        "from": [0, 0],
+                        "to": [1.41, 1.41],
+                        "origin": [450, 440],
+                        "scale": 55,
+                        "color": "#4a9eff",
+                        "strokeWidth": 2,
+                        "label": "R(ê₁)"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 100,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 30,
+                    "easing": "easeOutCubic",
+                    "children": [
+                      {
+                        "type": "vector",
+                        "from": [0, 0],
+                        "to": [-1.41, 1.41],
+                        "origin": [450, 440],
+                        "scale": 55,
+                        "color": "#f472b6",
+                        "strokeWidth": 2,
+                        "label": "R(ê₂)"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 120,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "circle",
+                        "cx": 450,
+                        "cy": 440,
+                        "r": 110,
+                        "fill": "none",
+                        "stroke": "#fbbf24",
+                        "strokeWidth": 1,
+                        "opacity": 0.3
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 140,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 770,
+                        "y": 400,
+                        "content": "θ = 45°",
+                        "fill": "#fbbf24",
+                        "fontSize": 18,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 150,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 770,
+                        "y": 430,
+                        "content": "Lengths preserved",
+                        "fill": "#94a3b8",
+                        "fontSize": 14,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 155,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 770,
+                        "y": 455,
+                        "content": "Angles preserved",
+                        "fill": "#94a3b8",
+                        "fontSize": 14,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "slide",
+        "title": "Graph Theory: Networks",
+        "notes": "Graphs model relationships. Show a small network with weighted edges — could represent cities, neurons, or social connections.",
+        "background": "#0a0a1e",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 150,
+            "background": "#0a0a1e",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 20,
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 450,
+                    "y": 45,
+                    "content": "Graph Theory: Networks",
+                    "fill": "#e0e7ff",
+                    "fontSize": 28,
+                    "fontWeight": 700,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 10,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 40,
+                    "easing": "easeOutCubic",
+                    "children": [
+                      {
+                        "type": "graph",
+                        "nodes": [
+                          { "id": "A", "x": 200, "y": 150, "label": "Input", "color": "#4a9eff" },
+                          { "id": "B", "x": 200, "y": 350, "label": "Data", "color": "#4a9eff" },
+                          { "id": "C", "x": 450, "y": 150, "label": "Process", "color": "#a78bfa" },
+                          { "id": "D", "x": 450, "y": 350, "label": "Transform", "color": "#a78bfa" },
+                          { "id": "E", "x": 450, "y": 500, "label": "Filter", "color": "#a78bfa" },
+                          { "id": "F", "x": 700, "y": 250, "label": "Output", "color": "#34d399" }
+                        ],
+                        "edges": [
+                          { "from": "A", "to": "C", "directed": true, "label": "5" },
+                          { "from": "A", "to": "D", "directed": true, "label": "3" },
+                          { "from": "B", "to": "D", "directed": true, "label": "7" },
+                          { "from": "B", "to": "E", "directed": true, "label": "2" },
+                          { "from": "C", "to": "F", "directed": true, "label": "4" },
+                          { "from": "D", "to": "F", "directed": true, "label": "6" },
+                          { "from": "E", "to": "F", "directed": true, "label": "8" }
+                        ],
+                        "nodeRadius": 28,
+                        "edgeWidth": 2,
+                        "labelColor": "#e0e7ff",
+                        "labelFontSize": 13
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 80,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 450,
+                        "y": 590,
+                        "content": "Weighted directed graph — edges carry capacity or cost",
+                        "fill": "#64748b",
+                        "fontSize": 15,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 100,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 450,
+                        "y": 618,
+                        "content": "Shortest path: Input → Transform → Output (cost: 9)",
+                        "fill": "#fbbf24",
+                        "fontSize": 14,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "slide",
+        "title": "Euler's Identity: The Most Beautiful Equation",
+        "notes": "Euler's identity connects five fundamental constants: e, i, π, 1, and 0. It's often called the most beautiful equation in mathematics.",
+        "background": "#0a0a1e",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 210,
+            "background": "#0a0a1e",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 20,
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 450,
+                    "y": 45,
+                    "content": "Euler's Identity",
+                    "fill": "#e0e7ff",
+                    "fontSize": 28,
+                    "fontWeight": 700,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 15,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 40,
+                    "easing": "easeOutCubic",
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "e^{i\\pi} + 1 = 0",
+                        "x": 450,
+                        "y": 150,
+                        "color": "#fbbf24",
+                        "fontSize": 48,
+                        "align": "center"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 60,
+                "children": [
+                  {
+                    "type": "stagger",
+                    "staggerDelay": 10,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 150,
+                        "y": 260,
+                        "content": "e — growth",
+                        "fill": "#4a9eff",
+                        "fontSize": 18,
+                        "textAnchor": "middle"
+                      },
+                      {
+                        "type": "text",
+                        "x": 310,
+                        "y": 260,
+                        "content": "i — rotation",
+                        "fill": "#a78bfa",
+                        "fontSize": 18,
+                        "textAnchor": "middle"
+                      },
+                      {
+                        "type": "text",
+                        "x": 450,
+                        "y": 260,
+                        "content": "π — circles",
+                        "fill": "#f472b6",
+                        "fontSize": 18,
+                        "textAnchor": "middle"
+                      },
+                      {
+                        "type": "text",
+                        "x": 590,
+                        "y": 260,
+                        "content": "1 — unity",
+                        "fill": "#34d399",
+                        "fontSize": 18,
+                        "textAnchor": "middle"
+                      },
+                      {
+                        "type": "text",
+                        "x": 740,
+                        "y": 260,
+                        "content": "0 — nothing",
+                        "fill": "#94a3b8",
+                        "fontSize": 18,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "axes",
+                "domain": [-2, 2],
+                "range": [-2, 2],
+                "origin": [450, 450],
+                "scale": 90,
+                "showGrid": true,
+                "gridColor": "#1e293b",
+                "axisColor": "#334155",
+                "labelColor": "#64748b",
+                "fadeIn": 30
+              },
+              {
+                "type": "sequence",
+                "from": 100,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 20,
+                    "children": [
+                      {
+                        "type": "circle",
+                        "cx": 450,
+                        "cy": 450,
+                        "r": 90,
+                        "fill": "none",
+                        "stroke": "#6366f1",
+                        "strokeWidth": 2,
+                        "draw": 40,
+                        "easing": "easeInOutCubic"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 120,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "from": [0, 0],
+                        "to": [1, 0],
+                        "origin": [450, 450],
+                        "scale": 90,
+                        "color": "#34d399",
+                        "strokeWidth": 2.5,
+                        "label": "1"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 140,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "from": [0, 0],
+                        "to": [-1, 0],
+                        "origin": [450, 450],
+                        "scale": 90,
+                        "color": "#f472b6",
+                        "strokeWidth": 2.5,
+                        "label": "e^(iπ) = −1"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 155,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "vector",
+                        "from": [0, 0],
+                        "to": [0, 1],
+                        "origin": [450, 450],
+                        "scale": 90,
+                        "color": "#a78bfa",
+                        "strokeWidth": 2,
+                        "label": "i"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 175,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 450,
+                        "y": 600,
+                        "content": "Five constants, one elegant equation",
+                        "fill": "#64748b",
+                        "fontSize": 16,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "slide",
+        "title": "Thank You",
+        "notes": "Closing slide — invite questions and further exploration.",
+        "background": "#0a0a1e",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 120,
+            "background": "#0a0a1e",
+            "controls": false,
+            "autoPlay": true,
+            "loop": true,
+            "children": [
+              {
+                "type": "fadeIn",
+                "duration": 40,
+                "easing": "easeOutCubic",
+                "children": [
+                  {
+                    "type": "text",
+                    "x": 450,
+                    "y": 250,
+                    "content": "Thank You",
+                    "fill": "#e0e7ff",
+                    "fontSize": 56,
+                    "fontWeight": 700,
+                    "textAnchor": "middle"
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 30,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 30,
+                    "children": [
+                      {
+                        "type": "latex",
+                        "expression": "\\text{Mathematics is the language of the universe}",
+                        "x": 450,
+                        "y": 340,
+                        "color": "#818cf8",
+                        "fontSize": 22,
+                        "align": "center"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 50,
+                "children": [
+                  {
+                    "type": "stagger",
+                    "staggerDelay": 4,
+                    "children": [
+                      { "type": "circle", "cx": 270, "cy": 430, "r": 6, "fill": "#4a9eff", "stroke": "none" },
+                      { "type": "circle", "cx": 330, "cy": 430, "r": 6, "fill": "#6366f1", "stroke": "none" },
+                      { "type": "circle", "cx": 390, "cy": 430, "r": 6, "fill": "#818cf8", "stroke": "none" },
+                      { "type": "circle", "cx": 450, "cy": 430, "r": 6, "fill": "#a78bfa", "stroke": "none" },
+                      { "type": "circle", "cx": 510, "cy": 430, "r": 6, "fill": "#c084fc", "stroke": "none" },
+                      { "type": "circle", "cx": 570, "cy": 430, "r": 6, "fill": "#e879f9", "stroke": "none" },
+                      { "type": "circle", "cx": 630, "cy": 430, "r": 6, "fill": "#f472b6", "stroke": "none" }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "sequence",
+                "from": 75,
+                "children": [
+                  {
+                    "type": "fadeIn",
+                    "duration": 25,
+                    "children": [
+                      {
+                        "type": "text",
+                        "x": 450,
+                        "y": 490,
+                        "content": "Built with Elucim — animated explanations for the web",
+                        "fill": "#475569",
+                        "fontSize": 14,
+                        "textAnchor": "middle"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
