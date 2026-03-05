@@ -1,48 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6c5ce7"/>
-      <stop offset="50%" stop-color="#a29bfe"/>
-      <stop offset="100%" stop-color="#74b9ff"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#ff6b6b"/>
-      <stop offset="100%" stop-color="#ffd93d"/>
-    </linearGradient>
-    <filter id="softGlow">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-  <!-- Background circle -->
-  <circle cx="256" cy="256" r="240" fill="#0d0d1a" stroke="url(#glow)" stroke-width="4"/>
-  <!-- Coordinate grid lines (subtle) -->
-  <line x1="256" y1="56" x2="256" y2="456" stroke="#1a1a3a" stroke-width="1" opacity="0.5"/>
-  <line x1="56" y1="256" x2="456" y2="256" stroke="#1a1a3a" stroke-width="1" opacity="0.5"/>
-  <!-- Function curve (sine wave) -->
-  <path d="M 96 256 C 136 156, 176 156, 216 256 C 256 356, 296 356, 336 256 C 376 156, 416 156, 456 256"
-        fill="none" stroke="url(#glow)" stroke-width="3.5" stroke-linecap="round" filter="url(#softGlow)"/>
-  <!-- Tangent line at inflection -->
-  <line x1="176" y1="316" x2="296" y2="196" stroke="url(#accent)" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>
-  <!-- Point on curve -->
-  <circle cx="236" cy="256" r="6" fill="#ffd93d" filter="url(#softGlow)"/>
-  <!-- Orbiting circles (atoms/nodes) -->
-  <circle cx="160" cy="160" r="14" fill="none" stroke="#6c5ce7" stroke-width="2.5" opacity="0.8"/>
-  <circle cx="160" cy="160" r="4" fill="#a29bfe"/>
-  <circle cx="380" cy="170" r="11" fill="none" stroke="#74b9ff" stroke-width="2" opacity="0.7"/>
-  <circle cx="380" cy="170" r="3" fill="#74b9ff"/>
-  <circle cx="350" cy="370" r="12" fill="none" stroke="#ff6b6b" stroke-width="2" opacity="0.7"/>
-  <circle cx="350" cy="370" r="3.5" fill="#ff6b6b"/>
-  <!-- Connecting edges (graph-like) -->
-  <line x1="172" y1="168" x2="236" y2="250" stroke="#6c5ce7" stroke-width="1.5" opacity="0.4"/>
-  <line x1="374" y1="178" x2="340" y2="256" stroke="#74b9ff" stroke-width="1.5" opacity="0.4"/>
-  <line x1="344" y1="362" x2="290" y2="280" stroke="#ff6b6b" stroke-width="1.5" opacity="0.4"/>
-  <!-- "E" letterform built from geometric elements -->
-  <g transform="translate(256, 440)" opacity="0.0">
-    <!-- Hidden: text fallback for accessibility -->
-    <text font-family="system-ui, sans-serif" font-size="14" fill="#a29bfe" text-anchor="middle" y="5">elucim</text>
-  </g>
+  <!-- Elucim logo: bold "e" + sine wave spark — passes the baseball cap test -->
+  <!-- A thick ring with a single sine curve cutting through it -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#6c5ce7" stroke-width="48"/>
+  <!-- Sine wave through the center — the "illumination" / animation motif -->
+  <path d="M 96 256 C 176 136, 336 376, 416 256"
+        fill="none" stroke="#6c5ce7" stroke-width="48" stroke-linecap="round"/>
 </svg>
