@@ -39,6 +39,14 @@
 /* Presentation fills the demo width; inner Players also scale to fill their slides */
 .live-demo-content [data-testid="elucim-presentation"] {
   width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  will-change: contents;
+}
+
+/* Prevent focus-driven scroll when clicking presentation buttons */
+[data-testid="elucim-presentation"] button {
+  scroll-margin: 0;
 }
 [data-testid="elucim-slide"] [data-testid="elucim-player"],
 [data-testid="elucim-slide"] [data-testid="elucim-scene"] {
@@ -66,6 +74,11 @@
 [data-testid="elucim-presentation"] button:focus {
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* Keep presentation stable during button clicks */
+[data-testid="elucim-presentation"] button:focus-visible {
+  outline: none !important;
 }
 
 /* Round the controls bar bottom corners inside the demo */

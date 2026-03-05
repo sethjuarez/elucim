@@ -614,13 +614,13 @@ export function PresentationDemo() {
       <Slide title="Welcome" notes="Opening slide — introduce Elucim presentations">
         <Player width={700} height={400} fps={30} durationInFrames={90} autoPlay loop controls={false}>
           <FadeIn duration={25}>
-            <Text x={350} y={160} fill="#e0e7ff" fontSize={36} textAnchor="middle">
+            <Text x={350} y={185} fill="#e0e7ff" fontSize={36} textAnchor="middle">
               Elucim Presentations
             </Text>
           </FadeIn>
           <Sequence from={30} durationInFrames={60}>
             <FadeIn duration={20}>
-              <Text x={350} y={220} fill="#888" fontSize={18} textAnchor="middle">
+              <Text x={350} y={230} fill="#888" fontSize={18} textAnchor="middle">
                 Use ← → keys or click buttons to navigate
               </Text>
             </FadeIn>
@@ -630,17 +630,17 @@ export function PresentationDemo() {
 
       <Slide title="Animated Math" notes="Each slide has its own Player with independent animation">
         <Player width={700} height={400} fps={30} durationInFrames={90} autoPlay loop controls={false}>
-          <Axes origin={[350, 250]} domain={[-3, 3]} range={[-1.5, 1.5]} scale={80}
+          <Axes origin={[350, 220]} domain={[-3, 3]} range={[-1.5, 1.5]} scale={80}
                 axisColor="#555" labelColor="#888" />
           <Sequence from={10} durationInFrames={80}>
             <Draw duration={50}>
               <FunctionPlot fn={(x: number) => Math.sin(x)} domain={[-3, 3]}
-                            origin={[350, 250]} scale={80} color="#6c5ce7" strokeWidth={2.5} />
+                            origin={[350, 220]} scale={80} color="#6c5ce7" strokeWidth={2.5} />
             </Draw>
           </Sequence>
           <Sequence from={50} durationInFrames={40}>
             <FadeIn duration={20}>
-              <LaTeX expression={`f(x) = \\sin(x)`} x={520} y={100} fontSize={20} color="#e0e7ff" />
+              <LaTeX expression={`f(x) = \\sin(x)`} x={520} y={80} fontSize={20} color="#e0e7ff" />
             </FadeIn>
           </Sequence>
         </Player>
@@ -649,11 +649,11 @@ export function PresentationDemo() {
       <Slide title="Euler's Identity" notes="LaTeX rendering with animated reveal">
         <Player width={700} height={400} fps={30} durationInFrames={60} autoPlay loop controls={false}>
           <FadeIn duration={30}>
-            <LaTeX expression={euler} x={350} y={170} fontSize={40} color="#fdcb6e" align="center" />
+            <LaTeX expression={euler} x={350} y={175} fontSize={40} color="#fdcb6e" align="center" />
           </FadeIn>
           <Sequence from={30} durationInFrames={30}>
             <FadeIn duration={15}>
-              <Text x={350} y={280} fill="#888" fontSize={16} textAnchor="middle">
+              <Text x={350} y={250} fill="#888" fontSize={16} textAnchor="middle">
                 "The most beautiful equation in mathematics"
               </Text>
             </FadeIn>
