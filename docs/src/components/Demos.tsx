@@ -71,7 +71,7 @@ export function ArrowDemo() {
       </Sequence>
       <Sequence from={50} durationInFrames={40}>
         <FadeIn duration={15}>
-          <Text x={120} y={135} fill="#aaa" fontSize={11} textAnchor="middle">directed</Text>
+          <Text x={120} y={135} fill="currentColor" fontSize={11} textAnchor="middle">directed</Text>
         </FadeIn>
       </Sequence>
     </Player>
@@ -115,7 +115,7 @@ export function TextDemo() {
       </Sequence>
       <Sequence from={50} durationInFrames={70}>
         <FadeIn duration={20}>
-          <Text x={250} y={200} fill="#888" fontSize={12} textAnchor="middle" fontFamily="monospace">
+          <Text x={250} y={200} fill="currentColor" fontSize={12} textAnchor="middle" fontFamily="monospace">
             fontSize · fontWeight · fontFamily · textAnchor
           </Text>
         </FadeIn>
@@ -151,7 +151,7 @@ export function AxesDemo() {
   return (
     <Player width={500} height={350} fps={30} durationInFrames={120} autoPlay loop>
       <Axes origin={[250, 200]} xRange={[-4, 4]} yRange={[-2, 3]} scale={50}
-            color="#444" labelColor="#888" showGrid gridColor="#222" />
+            color="currentColor" labelColor="currentColor" showGrid gridColor="currentColor" />
       <Sequence from={20} durationInFrames={100}>
         <Draw duration={40}>
           <FunctionPlot fn={(x: number) => Math.sin(x)} domain={[-4, 4]}
@@ -172,7 +172,7 @@ export function VectorDemo() {
   return (
     <Player width={500} height={350} fps={30} durationInFrames={90} autoPlay loop>
       <Axes origin={[250, 200]} xRange={[-4, 4]} yRange={[-3, 3]} scale={50}
-            color="#333" labelColor="#666" />
+            color="currentColor" labelColor="currentColor" />
       <FadeIn duration={20}>
         <Vector from={[0, 0]} to={[3, 2]} origin={[250, 200]} scale={50}
                 color="#6c5ce7" strokeWidth={2.5} label="v" />
@@ -192,7 +192,7 @@ export function MatrixDemo() {
     <Player width={500} height={300} fps={30} durationInFrames={60} autoPlay loop>
       <FadeIn duration={20}>
         <Matrix values={[[1, 0, 0], [0, 'cos θ', '-sin θ'], [0, 'sin θ', 'cos θ']]}
-               x={250} y={150} cellSize={55} color="#e0e0e0" bracketColor="#6c5ce7" />
+               x={250} y={150} cellSize={55} color="currentColor" bracketColor="#6c5ce7" />
       </FadeIn>
     </Player>
   );
@@ -214,10 +214,10 @@ export function GraphDemo() {
             { from: 'b', to: 'c', directed: true, label: '2' },
             { from: 'c', to: 'd', directed: true, label: '7' },
             { from: 'd', to: 'a', directed: true, label: '3' },
-            { from: 'a', to: 'c', directed: false, label: '5', color: '#888' },
+            { from: 'a', to: 'c', directed: false, label: '5', color: 'currentColor' },
           ]}
           nodeColor="#6c5ce7"
-          edgeColor="#555"
+          edgeColor="currentColor"
           labelColor="#fff"
         />
       </FadeIn>
@@ -260,7 +260,7 @@ export function BarChartDemo() {
             { label: 'London', value: 0.01, color: '#55efc4' },
           ]}
           x={50} y={30} width={400} height={230}
-          barColor="#6c5ce7" labelColor="#ccc"
+          barColor="#6c5ce7" labelColor="currentColor"
           showValues valueFormat="percent" maxValue={1} gap={0.3}
         />
       </FadeIn>
@@ -364,7 +364,7 @@ export function StaggerDemo() {
       </Stagger>
       <Sequence from={50} durationInFrames={40}>
         <FadeIn duration={15}>
-          <Text x={250} y={200} fill="#888" fontSize={12} textAnchor="middle">
+          <Text x={250} y={200} fill="currentColor" fontSize={12} textAnchor="middle">
             Elements appear with staggerDelay between each
           </Text>
         </FadeIn>
@@ -385,14 +385,14 @@ export function QuickStartDemo() {
       </Sequence>
       <Sequence from={30} durationInFrames={90}>
         <FadeIn duration={20}>
-          <Text x={250} y={180} fill="#fff" fontSize={24} textAnchor="middle">
+          <Text x={250} y={180} fill="currentColor" fontSize={24} textAnchor="middle">
             Hello World
           </Text>
         </FadeIn>
       </Sequence>
       <Sequence from={60} durationInFrames={60}>
         <FadeIn duration={20}>
-          <Text x={250} y={300} fill="#888" fontSize={14} textAnchor="middle">
+          <Text x={250} y={300} fill="currentColor" fontSize={14} textAnchor="middle">
             Your first Elucim scene ✨
           </Text>
         </FadeIn>
@@ -408,7 +408,7 @@ export function HeroDemo() {
     <Player width={600} height={200} fps={30} durationInFrames={150} autoPlay loop
             background="transparent">
       <Axes origin={[300, 110]} xRange={[-4, 4]} yRange={[-1.5, 1.5]} scale={50}
-            color="#888" labelColor="#666" showGrid={false} />
+            color="currentColor" labelColor="currentColor" showGrid={false} />
       <Sequence from={0} durationInFrames={150}>
         <Draw duration={50}>
           <FunctionPlot fn={(x: number) => Math.sin(x)} domain={[-4, 4]}

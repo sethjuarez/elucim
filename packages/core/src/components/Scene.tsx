@@ -99,7 +99,8 @@ export function Scene({
           maxWidth: '100%',
           aspectRatio: `${width} / ${height}`,
           overflow: 'hidden',
-          background,
+          background: `var(--elucim-scene-bg, ${background})`,
+          color: 'var(--elucim-scene-fg, #e0e0e0)',
           ...style,
         }}
         data-testid="elucim-scene"

@@ -55,6 +55,17 @@
   --elucim-ctrl-fg: #e0e0e0;
   --elucim-ctrl-accent: #4a9eff;
 }
+
+/* Theme-aware Scene canvas */
+[data-theme='light'] [data-testid="elucim-scene"] {
+  --elucim-scene-bg: #f5f5fa;
+  --elucim-scene-fg: #333;
+}
+
+[data-theme='dark'] [data-testid="elucim-scene"] {
+  --elucim-scene-bg: #0d0d1a;
+  --elucim-scene-fg: #e0e0e0;
+}
 .props-table {
   font-size: 0.9rem;
 }
