@@ -134,8 +134,8 @@ export function PolygonDemo() {
 export function AxesDemo() {
   return (
     <Player width={500} height={350} fps={30} durationInFrames={120} autoPlay loop>
-      <Axes origin={[250, 200]} xRange={[-4, 4]} yRange={[-2, 3]} scale={50}
-            color="currentColor" labelColor="currentColor" showGrid gridColor="currentColor" />
+      <Axes origin={[250, 200]} domain={[-4, 4]} range={[-2, 3]} scale={50}
+            axisColor="currentColor" labelColor="currentColor" showGrid gridColor="currentColor" />
       <Sequence from={20} durationInFrames={100}>
         <FunctionPlot fn={(x: number) => Math.sin(x)} domain={[-4, 4]}
                       origin={[250, 200]} scale={50} color="#6c5ce7" strokeWidth={2.5} draw={40} />
@@ -151,8 +151,8 @@ export function AxesDemo() {
 export function VectorDemo() {
   return (
     <Player width={500} height={350} fps={30} durationInFrames={90} autoPlay loop>
-      <Axes origin={[250, 200]} xRange={[-4, 4]} yRange={[-3, 3]} scale={50}
-            color="currentColor" labelColor="currentColor" />
+      <Axes origin={[250, 200]} domain={[-4, 4]} range={[-3, 3]} scale={50}
+            axisColor="currentColor" labelColor="currentColor" />
       <FadeIn duration={20}>
         <Vector from={[0, 0]} to={[3, 2]} origin={[250, 200]} scale={50}
                 color="#6c5ce7" strokeWidth={2.5} label="v" />
@@ -397,8 +397,8 @@ export function HeroDemo() {
   return (
     <Player width={600} height={200} fps={30} durationInFrames={150} autoPlay loop
             background="transparent">
-      <Axes origin={[300, 110]} xRange={[-4, 4]} yRange={[-1.5, 1.5]} scale={50}
-            color="currentColor" labelColor="currentColor" showGrid={false} />
+      <Axes origin={[300, 110]} domain={[-4, 4]} range={[-1.5, 1.5]} scale={50}
+            axisColor="currentColor" labelColor="currentColor" showGrid={false} />
       <Sequence from={0} durationInFrames={150}>
         <FunctionPlot fn={(x: number) => Math.sin(x)} domain={[-4, 4]}
                       origin={[300, 110]} scale={50} color="#6c5ce7" strokeWidth={2.5} draw={50} />
@@ -447,8 +447,8 @@ export function TangentDemo() {
   const derivExpr = "f'(x) = \\cos(x)";
   return (
     <Player width={600} height={400} fps={30} durationInFrames={120} autoPlay loop>
-      <Axes origin={[300, 200]} xRange={[-4, 4]} yRange={[-2, 2]} scale={50}
-            color="currentColor" labelColor="currentColor" showGrid gridColor="currentColor" />
+      <Axes origin={[300, 200]} domain={[-4, 4]} range={[-2, 2]} scale={50}
+            axisColor="currentColor" labelColor="currentColor" showGrid gridColor="currentColor" />
       <FunctionPlot fn={Math.sin} domain={[-4, 4]} origin={[300, 200]} scale={50}
                     color="#818cf8" strokeWidth={2.5} />
       <TangentLine />
@@ -515,15 +515,15 @@ export function CalcTitleDemo() {
       {/* Subtitle */}
       <Sequence from={20} durationInFrames={130}>
         <FadeIn duration={25}>
-          <Text x={300} y={72} fill="currentColor" fontSize={14} textAnchor="middle" opacity={0.6}>
+          <Text x={300} y={72} fill="#888" fontSize={14} textAnchor="middle">
             A visual journey through mathematics
           </Text>
         </FadeIn>
       </Sequence>
       {/* Function plot — compact axes with tight y-range */}
       <Sequence from={40} durationInFrames={110}>
-        <Axes origin={[300, 220]} xRange={[-5, 5]} yRange={[-2, 2]} scale={50}
-              color="currentColor" labelColor="currentColor" showGrid={false} />
+        <Axes origin={[300, 220]} domain={[-5, 5]} range={[-1.5, 1.5]} scale={50}
+              axisColor="currentColor" labelColor="currentColor" showGrid={false} />
         <FunctionPlot fn={Math.sin} domain={[-5, 5]} origin={[300, 220]} scale={50}
                       color="#6c5ce7" strokeWidth={2.5} draw={40} />
       </Sequence>
