@@ -216,16 +216,16 @@ export function LaTeXDemo() {
   return (
     <Player width={500} height={300} fps={30} durationInFrames={90} autoPlay loop>
       <FadeIn duration={20}>
-        <LaTeX expression={expr1} x={250} y={80} fontSize={36} color="#6c5ce7" />
+        <LaTeX expression={expr1} x={250} y={30} fontSize={36} color="#6c5ce7" />
       </FadeIn>
       <Sequence from={25} durationInFrames={65}>
         <FadeIn duration={20}>
-          <LaTeX expression={expr2} x={250} y={180} fontSize={28} color="#ff6b6b" />
+          <LaTeX expression={expr2} x={250} y={120} fontSize={28} color="#ff6b6b" />
         </FadeIn>
       </Sequence>
       <Sequence from={45} durationInFrames={45}>
         <FadeIn duration={20}>
-          <LaTeX expression={expr3} x={250} y={260} fontSize={22} color="#4ecdc4" />
+          <LaTeX expression={expr3} x={250} y={200} fontSize={22} color="#4ecdc4" />
         </FadeIn>
       </Sequence>
     </Player>

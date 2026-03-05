@@ -48,17 +48,18 @@ export function LaTeX({
 
   // Use generous sizing — foreignObject overflow is visible so exact size isn't critical
   const estimatedWidth = Math.max(expression.length * fontSize * 0.55, fontSize * 8);
+  const foWidth = estimatedWidth + fontSize * 2;
   const height = fontSize * 4;
   const offsetX =
-    align === 'center' ? -estimatedWidth / 2
-    : align === 'right' ? -estimatedWidth
+    align === 'center' ? -foWidth / 2
+    : align === 'right' ? -foWidth
     : 0;
 
   return (
     <foreignObject
       x={x + offsetX}
       y={y - fontSize * 1.5}
-      width={estimatedWidth + fontSize * 2}
+      width={foWidth}
       height={height}
       opacity={anim.opacity}
       data-testid="elucim-latex"
