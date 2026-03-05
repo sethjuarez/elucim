@@ -8,6 +8,12 @@ export interface PlayerProps extends Omit<SceneProps, 'frame' | 'autoPlay'> {
   loop?: boolean;
   /** Auto-play on mount. Default: false */
   autoPlay?: boolean;
+  /** Background color of controls bar. Default: '#1a1a2e' */
+  controlsBackground?: string;
+  /** Text/icon color of controls bar. Default: '#e0e0e0' */
+  controlsColor?: string;
+  /** Accent color for scrub bar progress and handle. Default: '#4a9eff' */
+  controlsAccent?: string;
 }
 
 /**
@@ -21,6 +27,9 @@ export function Player({
   fps = 60,
   width = 1920,
   height = 1080,
+  controlsBackground = '#1a1a2e',
+  controlsColor = '#e0e0e0',
+  controlsAccent = '#4a9eff',
   children,
   ...sceneProps
 }: PlayerProps) {
@@ -180,8 +189,8 @@ export function Player({
             alignItems: 'center',
             gap: 8,
             padding: '8px 12px',
-            background: '#1a1a2e',
-            color: '#e0e0e0',
+            background: controlsBackground,
+            color: controlsColor,
             height: controlBarHeight,
             boxSizing: 'border-box',
             fontSize: 13,
@@ -194,11 +203,10 @@ export function Player({
             style={{
               background: 'none',
               border: 'none',
-              color: '#e0e0e0',
+              color: controlsColor,
               cursor: 'pointer',
               fontSize: 18,
               padding: '2px 6px',
-              lineHeight: 1,
             }}
             data-testid="elucim-play-btn"
             title={playing ? 'Pause' : 'Play'}
@@ -212,7 +220,7 @@ export function Player({
             style={{
               background: 'none',
               border: 'none',
-              color: '#e0e0e0',
+              color: controlsColor,
               cursor: 'pointer',
               fontSize: 14,
               padding: '2px 4px',
@@ -228,7 +236,7 @@ export function Player({
             style={{
               background: 'none',
               border: 'none',
-              color: '#e0e0e0',
+              color: controlsColor,
               cursor: 'pointer',
               fontSize: 14,
               padding: '2px 4px',
@@ -245,7 +253,7 @@ export function Player({
             style={{
               flex: 1,
               height: 6,
-              background: '#333',
+              background: controlsColor + '33',
               borderRadius: 3,
               cursor: 'pointer',
               position: 'relative',
@@ -259,7 +267,7 @@ export function Player({
                 top: 0,
                 height: '100%',
                 width: `${progress * 100}%`,
-                background: '#4a9eff',
+                background: controlsAccent,
                 borderRadius: 3,
                 transition: playing ? 'none' : 'width 0.05s',
               }}
@@ -273,8 +281,8 @@ export function Player({
                 width: 12,
                 height: 12,
                 borderRadius: '50%',
-                background: '#4a9eff',
-                border: '2px solid #fff',
+                background: controlsAccent,
+                border: `2px solid ${controlsColor}`,
               }}
               data-testid="elucim-scrub-handle"
             />

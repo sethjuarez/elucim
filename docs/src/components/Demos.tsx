@@ -405,9 +405,10 @@ export function QuickStartDemo() {
 
 export function HeroDemo() {
   return (
-    <Player width={600} height={300} fps={30} durationInFrames={150} autoPlay loop>
+    <Player width={600} height={300} fps={30} durationInFrames={150} autoPlay loop
+            background="transparent">
       <Axes origin={[300, 180]} xRange={[-4, 4]} yRange={[-2, 2]} scale={50}
-            color="#333" labelColor="#555" showGrid={false} />
+            color="#888" labelColor="#666" showGrid={false} />
       <Sequence from={0} durationInFrames={150}>
         <Draw duration={50}>
           <FunctionPlot fn={(x: number) => Math.sin(x)} domain={[-4, 4]}
