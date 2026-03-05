@@ -405,7 +405,7 @@ export function Presentation({
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '12px 24px',
-              background: 'linear-gradient(transparent, rgba(0,0,0,0.6))',
+              background: 'rgba(0,0,0,0.5)',
               color: '#fff',
               fontSize: 14,
               opacity: 0.8,
