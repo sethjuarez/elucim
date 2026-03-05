@@ -11,7 +11,7 @@ export interface SceneProps {
   fps?: number;
   /** Total duration in frames */
   durationInFrames: number;
-  /** Background color. Default: '#000' */
+  /** Background color. Default: auto (light/dark aware) */
   background?: string;
   /** Children to render */
   children: React.ReactNode;
@@ -37,7 +37,7 @@ export function Scene({
   height = 1080,
   fps = 60,
   durationInFrames,
-  background = '#000',
+  background = 'light-dark(#f5f5fa, #0d0d1a)',
   children,
   autoPlay = false,
   frame: controlledFrame,
@@ -105,7 +105,8 @@ export function Scene({
           aspectRatio: insidePresentation ? undefined : `${width} / ${height}`,
           overflow: 'hidden',
           background: effectiveBg,
-          color: 'var(--elucim-scene-fg, #e0e0e0)',
+          colorScheme: 'light dark',
+          color: 'var(--elucim-scene-fg, light-dark(#333, #e0e0e0))',
           ...style,
         }}
         data-testid="elucim-scene"

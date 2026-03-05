@@ -9,9 +9,9 @@ export interface PlayerProps extends Omit<SceneProps, 'frame' | 'autoPlay'> {
   loop?: boolean;
   /** Auto-play on mount. Default: false */
   autoPlay?: boolean;
-  /** Background color of controls bar. Default: '#1a1a2e' */
+  /** Background color of controls bar. Default: auto (light/dark aware) */
   controlsBackground?: string;
-  /** Text/icon color of controls bar. Default: '#e0e0e0' */
+  /** Text/icon color of controls bar. Default: auto (light/dark aware) */
   controlsColor?: string;
   /** Accent color for scrub bar progress and handle. Default: '#4a9eff' */
   controlsAccent?: string;
@@ -28,9 +28,9 @@ export function Player({
   fps = 60,
   width = 1920,
   height = 1080,
-  controlsBackground = '#1a1a2e',
-  controlsColor = '#e0e0e0',
-  controlsAccent = '#4a9eff',
+  controlsBackground = 'light-dark(#ecedf0, #1a1a2e)',
+  controlsColor = 'light-dark(#333, #e0e0e0)',
+  controlsAccent = 'light-dark(#4a7eff, #4a9eff)',
   children,
   ...sceneProps
 }: PlayerProps) {
@@ -169,6 +169,7 @@ export function Player({
         maxWidth: '100%',
         outline: 'none',
         fontFamily: 'system-ui, sans-serif',
+        colorScheme: 'light dark',
       }}
       data-testid="elucim-player"
     >
