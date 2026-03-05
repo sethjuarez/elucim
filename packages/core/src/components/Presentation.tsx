@@ -405,10 +405,9 @@ export function Presentation({
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '12px 24px',
-              background: 'rgba(0,0,0,0.5)',
-              color: '#fff',
+              background: 'transparent',
+              color: 'inherit',
               fontSize: 14,
-              opacity: 0.8,
               pointerEvents: 'none',
               transition: 'opacity 0.3s',
               zIndex: 100,
@@ -427,7 +426,8 @@ export function Presentation({
                       width: i === slideIndex ? 10 : 6,
                       height: 6,
                       borderRadius: 3,
-                      background: i === slideIndex ? '#4ecdc4' : 'rgba(255,255,255,0.4)',
+                      background: i === slideIndex ? '#4ecdc4' : 'currentColor',
+                      opacity: i === slideIndex ? 1 : 0.35,
                       transition: 'all 0.3s',
                     }}
                   />
