@@ -39,14 +39,16 @@ export function LaTeX({
         throwOnError: false,
         displayMode: true,
         output: 'html',
+        strict: false,
       });
     } catch {
       return `<span style="color:red">LaTeX error</span>`;
     }
   }, [expression]);
 
-  // Estimate width for alignment (rough heuristic)
-  const estimatedWidth = expression.length * fontSize * 0.6;
+  // Use generous sizing — foreignObject overflow is visible so exact size isn't critical
+  const estimatedWidth = Math.max(expression.length * fontSize * 0.55, fontSize * 8);
+  const height = fontSize * 4;
   const offsetX =
     align === 'center' ? -estimatedWidth / 2
     : align === 'right' ? -estimatedWidth
@@ -55,11 +57,12 @@ export function LaTeX({
   return (
     <foreignObject
       x={x + offsetX}
-      y={y - fontSize * 1.2}
+      y={y - fontSize * 1.5}
       width={estimatedWidth + fontSize * 2}
-      height={fontSize * 3}
+      height={height}
       opacity={anim.opacity}
       data-testid="elucim-latex"
+      style={{ overflow: 'visible' }}
     >
       <div
         style={{

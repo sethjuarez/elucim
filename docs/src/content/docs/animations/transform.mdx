@@ -7,8 +7,8 @@ import LiveDemo from '@components/LiveDemo.tsx';
 import { TransformDemo } from '@components/Demos.tsx';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-<LiveDemo client:load height="250px">
-  <TransformDemo />
+<LiveDemo client:visible height="250px">
+  <TransformDemo client:visible />
 </LiveDemo>
 
 ## Transform

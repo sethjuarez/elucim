@@ -3,11 +3,18 @@ title: Recipes & Patterns
 description: Common patterns for Elucim animations — function plots, staggered reveals, graph visualizations, and more.
 ---
 
+import LiveDemo from '../../../components/LiveDemo';
+import { TangentDemo, PipelineDemo } from '../../../components/Demos';
+
 Bite-sized patterns you can copy into your projects. Each recipe is self-contained and demonstrates a common animation technique.
 
 ## 1. Animated Function Plot with Moving Tangent
 
 Use `useCurrentFrame` and `interpolate` to sweep a tangent line along a curve.
+
+<LiveDemo client:visible>
+  <TangentDemo client:visible />
+</LiveDemo>
 
 ```tsx
 import { Player, Axes, FunctionPlot, Line, Circle, Text,
@@ -37,6 +44,10 @@ function TangentDemo() {
 ## 2. Staggered Box Reveal with Labels
 
 Use `<Stagger>` to reveal a row of labeled boxes one at a time.
+
+<LiveDemo client:visible>
+  <PipelineDemo client:visible />
+</LiveDemo>
 
 ```tsx
 import { Player, Stagger, FadeIn, Rect, Text } from '@elucim/core';

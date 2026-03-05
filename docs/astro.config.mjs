@@ -15,6 +15,15 @@ export default defineConfig({
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/elucim/elucim' },
       ],
+      head: [
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'stylesheet',
+            href: 'https://cdn.jsdelivr.net/npm/katex@0.16.33/dist/katex.min.css',
+          },
+        },
+      ],
       customCss: ['./src/styles/custom.css'],
       sidebar: [
         {

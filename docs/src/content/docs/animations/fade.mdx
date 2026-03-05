@@ -7,8 +7,8 @@ import LiveDemo from '@components/LiveDemo.tsx';
 import { FadeDemo } from '@components/Demos.tsx';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-<LiveDemo client:load height="250px">
-  <FadeDemo />
+<LiveDemo client:visible height="250px">
+  <FadeDemo client:visible />
 </LiveDemo>
 
 ## FadeIn
