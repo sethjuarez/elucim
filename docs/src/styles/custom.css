@@ -28,8 +28,9 @@
   border-radius: 12px;
 }
 
-/* Make Player responsive but constrained */
+/* Make Player fill the content width */
 .live-demo-content [data-testid="elucim-player"] {
+  width: 100%;
   max-width: 100%;
 }
 
