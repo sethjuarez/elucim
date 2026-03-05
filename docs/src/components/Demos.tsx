@@ -612,7 +612,7 @@ export function PresentationDemo() {
       background="#1a1a2e"
     >
       <Slide title="Welcome" notes="Opening slide — introduce Elucim presentations">
-        <Player width={700} height={400} fps={30} durationInFrames={90} autoPlay loop>
+        <Player width={700} height={400} fps={30} durationInFrames={90} autoPlay loop controls={false}>
           <FadeIn duration={25}>
             <Text x={350} y={160} fill="#e0e7ff" fontSize={36} textAnchor="middle">
               Elucim Presentations
@@ -629,7 +629,7 @@ export function PresentationDemo() {
       </Slide>
 
       <Slide title="Animated Math" notes="Each slide has its own Player with independent animation">
-        <Player width={700} height={400} fps={30} durationInFrames={90} autoPlay loop>
+        <Player width={700} height={400} fps={30} durationInFrames={90} autoPlay loop controls={false}>
           <Axes origin={[350, 250]} domain={[-3, 3]} range={[-1.5, 1.5]} scale={80}
                 axisColor="#555" labelColor="#888" />
           <Sequence from={10} durationInFrames={80}>
@@ -647,7 +647,7 @@ export function PresentationDemo() {
       </Slide>
 
       <Slide title="Euler's Identity" notes="LaTeX rendering with animated reveal">
-        <Player width={700} height={400} fps={30} durationInFrames={60} autoPlay loop>
+        <Player width={700} height={400} fps={30} durationInFrames={60} autoPlay loop controls={false}>
           <FadeIn duration={30}>
             <LaTeX expression={euler} x={350} y={170} fontSize={40} color="#fdcb6e" align="center" />
           </FadeIn>
