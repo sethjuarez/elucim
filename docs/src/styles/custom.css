@@ -29,10 +29,43 @@
 }
 
 /* Make Player and Scene fill the content width (override inline width from components) */
-.live-demo-content [data-testid="elucim-player"],
-.live-demo-content [data-testid="elucim-scene"] {
+/* Use :not() to avoid double-overriding Players nested inside a Presentation */
+.live-demo-content [data-testid="elucim-player"]:not([data-testid="elucim-slide"] [data-testid="elucim-player"]),
+.live-demo-content [data-testid="elucim-scene"]:not([data-testid="elucim-slide"] [data-testid="elucim-scene"]) {
   width: 100% !important;
   max-width: 100%;
+}
+
+/* Presentation fills the demo width; inner Players also scale to fill their slides */
+.live-demo-content [data-testid="elucim-presentation"] {
+  width: 100% !important;
+}
+[data-testid="elucim-slide"] [data-testid="elucim-player"],
+[data-testid="elucim-slide"] [data-testid="elucim-scene"] {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+}
+[data-testid="elucim-slide"] [data-testid="elucim-scene"] {
+  --elucim-scene-bg: transparent !important;
+  background: transparent !important;
+}
+
+/* Presentation fills the LiveDemo edge-to-edge — no padding, no border */
+.live-demo:has([data-testid="elucim-presentation"]) {
+  border: none;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.live-demo:has([data-testid="elucim-presentation"]) .live-demo-content {
+  padding: 0;
+}
+
+/* Suppress focus ring inside presentations */
+[data-testid="elucim-presentation"]:focus,
+[data-testid="elucim-presentation"] button:focus {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Round the controls bar bottom corners inside the demo */
