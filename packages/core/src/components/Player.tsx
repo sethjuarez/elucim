@@ -201,7 +201,7 @@ export function Player({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
+            gap: 10,
             height: 40,
             padding: '0 12px',
             background: controlsBackground,
@@ -212,12 +212,15 @@ export function Player({
           }}
           data-testid="elucim-controls"
         >
-          <button onClick={togglePlay} style={btnStyle}
-            data-testid="elucim-play-btn" title={playing ? 'Pause' : 'Play'}>
-            {playing ? '⏸' : '▶'}
-          </button>
-          <button onClick={stepBackward} style={btnStyle} title="Step backward">◀</button>
-          <button onClick={stepForward} style={btnStyle} title="Step forward">▶</button>
+          {/* Button group — tightly packed */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+            <button onClick={togglePlay} style={btnStyle}
+              data-testid="elucim-play-btn" title={playing ? 'Pause' : 'Play'}>
+              {playing ? '⏸' : '▶'}
+            </button>
+            <button onClick={stepBackward} style={btnStyle} title="Step backward">◀</button>
+            <button onClick={stepForward} style={btnStyle} title="Step forward">▶</button>
+          </div>
 
           {/* Scrub bar */}
           <div
