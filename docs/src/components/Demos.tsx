@@ -392,6 +392,8 @@ export function QuickStartDemo() {
 // ─── Hero Demo ──────────────────────────────────────────────────────
 
 export function HeroDemo() {
+  const sinExpr = 'f(x) = \\sin(x)';
+  const cosExpr = 'g(x) = \\cos(x)';
   return (
     <Player width={600} height={200} fps={30} durationInFrames={150} autoPlay loop
             background="transparent">
@@ -407,12 +409,12 @@ export function HeroDemo() {
       </Sequence>
       <Sequence from={60} durationInFrames={90}>
         <FadeIn duration={20}>
-          <LaTeX expression="f(x) = \\sin(x)" x={480} y={40} fontSize={16} color="#6c5ce7" />
+          <LaTeX expression={sinExpr} x={480} y={40} fontSize={16} color="#6c5ce7" />
         </FadeIn>
       </Sequence>
       <Sequence from={75} durationInFrames={75}>
         <FadeIn duration={20}>
-          <LaTeX expression="g(x) = \\cos(x)" x={480} y={70} fontSize={16} color="#ff6b6b" />
+          <LaTeX expression={cosExpr} x={480} y={70} fontSize={16} color="#ff6b6b" />
         </FadeIn>
       </Sequence>
     </Player>
@@ -441,6 +443,8 @@ function TangentLine() {
 }
 
 export function TangentDemo() {
+  const fnExpr = 'f(x) = \\sin(x)';
+  const derivExpr = "f'(x) = \\cos(x)";
   return (
     <Player width={600} height={400} fps={30} durationInFrames={120} autoPlay loop>
       <Axes origin={[300, 200]} xRange={[-4, 4]} yRange={[-2, 2]} scale={50}
@@ -450,12 +454,12 @@ export function TangentDemo() {
       <TangentLine />
       <Sequence from={10} durationInFrames={110}>
         <FadeIn duration={15}>
-          <LaTeX expression="f(x) = \\sin(x)" x={500} y={40} fontSize={18} color="#818cf8" />
+          <LaTeX expression={fnExpr} x={500} y={40} fontSize={18} color="#818cf8" />
         </FadeIn>
       </Sequence>
       <Sequence from={20} durationInFrames={100}>
         <FadeIn duration={15}>
-          <LaTeX expression="f'(x) = \\cos(x)" x={500} y={75} fontSize={16} color="#f472b6" />
+          <LaTeX expression={derivExpr} x={500} y={75} fontSize={16} color="#f472b6" />
         </FadeIn>
       </Sequence>
     </Player>
@@ -497,12 +501,13 @@ export function PipelineDemo() {
 }
 
 export function CalcTitleDemo() {
+  const derivExpr = '\\frac{d}{dx}\\sin(x) = \\cos(x)';
   return (
     <Player width={600} height={400} fps={30} durationInFrames={150} autoPlay loop>
       {/* Title */}
       <Sequence from={0} durationInFrames={150}>
         <FadeIn duration={30}>
-          <Text x={300} y={100} fill="#e0e7ff" fontSize={32} fontWeight="bold" textAnchor="middle">
+          <Text x={300} y={45} fill="#6c5ce7" fontSize={28} fontWeight="bold" textAnchor="middle">
             The Calculus of Change
           </Text>
         </FadeIn>
@@ -510,22 +515,22 @@ export function CalcTitleDemo() {
       {/* Subtitle */}
       <Sequence from={20} durationInFrames={130}>
         <FadeIn duration={25}>
-          <Text x={300} y={140} fill="currentColor" fontSize={16} textAnchor="middle" opacity={0.7}>
+          <Text x={300} y={72} fill="currentColor" fontSize={14} textAnchor="middle" opacity={0.6}>
             A visual journey through mathematics
           </Text>
         </FadeIn>
       </Sequence>
-      {/* Function plot */}
+      {/* Function plot — compact axes with tight y-range */}
       <Sequence from={40} durationInFrames={110}>
-        <Axes origin={[300, 280]} xRange={[-4, 4]} yRange={[-1.5, 1.5]} scale={40}
+        <Axes origin={[300, 220]} xRange={[-5, 5]} yRange={[-2, 2]} scale={50}
               color="currentColor" labelColor="currentColor" showGrid={false} />
-        <FunctionPlot fn={Math.sin} domain={[-4, 4]} origin={[300, 280]} scale={40}
+        <FunctionPlot fn={Math.sin} domain={[-5, 5]} origin={[300, 220]} scale={50}
                       color="#6c5ce7" strokeWidth={2.5} draw={40} />
       </Sequence>
       {/* LaTeX equation */}
       <Sequence from={80} durationInFrames={70}>
         <FadeIn duration={20}>
-          <LaTeX expression="\\frac{d}{dx}\\sin(x) = \\cos(x)" x={300} y={360} fontSize={22} color="#a78bfa" />
+          <LaTeX expression={derivExpr} x={300} y={345} fontSize={18} color="#6c5ce7" />
         </FadeIn>
       </Sequence>
     </Player>
