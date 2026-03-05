@@ -375,6 +375,8 @@ export function Presentation({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              zIndex: 1,
+              willChange: 'opacity, transform',
               ...getTransitionStyle(transition, 'exit', transProgress),
             }}
           >
@@ -390,7 +392,9 @@ export function Presentation({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            ...getTransitionStyle(transition, 'enter', transProgress),
+            zIndex: 2,
+            willChange: 'opacity, transform',
+            ...(transitioning ? getTransitionStyle(transition, 'enter', transProgress) : {}),
           }}
         >
           {currentSlide}
@@ -422,17 +426,17 @@ export function Presentation({
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               {/* Progress dots */}
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 {slides.map((_, i) => (
                   <div
                     key={i}
                     style={{
-                      width: i === slideIndex ? 10 : 6,
+                      width: 6,
                       height: 6,
-                      borderRadius: 3,
+                      borderRadius: '50%',
                       background: i === slideIndex ? '#4ecdc4' : 'currentColor',
-                      opacity: i === slideIndex ? 1 : 0.35,
-                      transition: 'all 0.3s',
+                      opacity: i === slideIndex ? 1 : 0.3,
+                      transition: 'background 0.3s, opacity 0.3s',
                     }}
                   />
                 ))}
@@ -450,15 +454,21 @@ export function Presentation({
           data-testid="elucim-fullscreen-btn"
           style={{
             position: 'absolute',
-            top: 12,
-            right: 12,
+            top: 10,
+            right: 10,
             background: 'color-mix(in srgb, currentColor 15%, transparent)',
             border: '1px solid color-mix(in srgb, currentColor 20%, transparent)',
             color: 'inherit',
             borderRadius: 6,
-            padding: '6px 10px',
+            width: 30,
+            height: 30,
+            padding: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             cursor: 'pointer',
-            fontSize: 16,
+            fontSize: 14,
+            lineHeight: 1,
             zIndex: 100,
             opacity: 0.6,
             transition: 'opacity 0.2s',
