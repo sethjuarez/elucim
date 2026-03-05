@@ -76,6 +76,14 @@
   box-shadow: none !important;
 }
 
+/* Theme-aware Presentation HUD */
+[data-theme='light'] [data-testid="elucim-presentation"] button {
+  color: #333;
+}
+[data-theme='dark'] [data-testid="elucim-presentation"] button {
+  color: #e0e0e0;
+}
+
 /* Keep presentation stable during button clicks */
 [data-testid="elucim-presentation"] button:focus-visible {
   outline: none !important;
@@ -103,11 +111,26 @@
 [data-theme='light'] [data-testid="elucim-scene"] {
   --elucim-scene-bg: #f5f5fa;
   --elucim-scene-fg: #333;
+  color: #333;
 }
 
 [data-theme='dark'] [data-testid="elucim-scene"] {
   --elucim-scene-bg: #0d0d1a;
   --elucim-scene-fg: #e0e0e0;
+  color: #e0e0e0;
+}
+
+/* Theme-aware Presentation */
+[data-theme='light'] [data-testid="elucim-presentation"] {
+  --elucim-scene-bg: #f5f5fa;
+  background: #f5f5fa !important;
+  color: #333;
+}
+
+[data-theme='dark'] [data-testid="elucim-presentation"] {
+  --elucim-scene-bg: #0d0d1a;
+  background: #0d0d1a !important;
+  color: #e0e0e0;
 }
 
 /* Hero demo — clean, no border chrome */

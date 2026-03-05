@@ -609,18 +609,18 @@ export function PresentationDemo() {
       transition="fade"
       transitionDuration={500}
       showHUD
-      background="#1a1a2e"
+      background="var(--elucim-scene-bg, #1a1a2e)"
     >
       <Slide title="Welcome" notes="Opening slide — introduce Elucim presentations">
         <Player width={700} height={400} fps={30} durationInFrames={90} autoPlay loop controls={false}>
           <FadeIn duration={25}>
-            <Text x={350} y={185} fill="#e0e7ff" fontSize={36} textAnchor="middle">
+            <Text x={350} y={185} fill="currentColor" fontSize={36} textAnchor="middle">
               Elucim Presentations
             </Text>
           </FadeIn>
           <Sequence from={30} durationInFrames={60}>
             <FadeIn duration={20}>
-              <Text x={350} y={230} fill="#888" fontSize={18} textAnchor="middle">
+              <Text x={350} y={230} fill="currentColor" fontSize={18} textAnchor="middle" opacity={0.5}>
                 Use ← → keys or click buttons to navigate
               </Text>
             </FadeIn>
@@ -631,7 +631,7 @@ export function PresentationDemo() {
       <Slide title="Animated Math" notes="Each slide has its own Player with independent animation">
         <Player width={700} height={400} fps={30} durationInFrames={90} autoPlay loop controls={false}>
           <Axes origin={[350, 220]} domain={[-3, 3]} range={[-1.5, 1.5]} scale={80}
-                axisColor="#555" labelColor="#888" />
+                axisColor="currentColor" labelColor="currentColor" />
           <Sequence from={10} durationInFrames={80}>
             <Draw duration={50}>
               <FunctionPlot fn={(x: number) => Math.sin(x)} domain={[-3, 3]}
@@ -640,7 +640,7 @@ export function PresentationDemo() {
           </Sequence>
           <Sequence from={50} durationInFrames={40}>
             <FadeIn duration={20}>
-              <LaTeX expression={`f(x) = \\sin(x)`} x={520} y={80} fontSize={20} color="#e0e7ff" />
+              <LaTeX expression={`f(x) = \\sin(x)`} x={520} y={80} fontSize={20} color="currentColor" />
             </FadeIn>
           </Sequence>
         </Player>
@@ -653,7 +653,7 @@ export function PresentationDemo() {
           </FadeIn>
           <Sequence from={30} durationInFrames={30}>
             <FadeIn duration={15}>
-              <Text x={350} y={250} fill="#888" fontSize={16} textAnchor="middle">
+              <Text x={350} y={250} fill="currentColor" fontSize={16} textAnchor="middle" opacity={0.5}>
                 "The most beautiful equation in mathematics"
               </Text>
             </FadeIn>
