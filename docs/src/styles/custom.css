@@ -28,9 +28,9 @@
   border-radius: 12px;
 }
 
-/* Make Player fill the content width */
+/* Make Player fill the content width (override inline style from Player component) */
 .live-demo-content [data-testid="elucim-player"] {
-  width: 100%;
+  width: 100% !important;
   max-width: 100%;
 }
 
