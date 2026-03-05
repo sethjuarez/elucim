@@ -19,21 +19,21 @@ export { interpolate, type InterpolateOptions } from './hooks/interpolate';
 export { useElucimContext, type ElucimContextValue } from './context';
 
 // Primitives
-export { Circle, type CircleProps } from './mobjects/Circle';
-export { Line, type LineProps } from './mobjects/Line';
-export { Arrow, type ArrowProps } from './mobjects/Arrow';
-export { Rect, type RectProps } from './mobjects/Rect';
-export { Text, type TextProps } from './mobjects/Text';
-export { Polygon, type PolygonProps } from './mobjects/Polygon';
-export { Axes, type AxesProps, mathToSvg } from './mobjects/Axes';
-export { FunctionPlot, type FunctionPlotProps } from './mobjects/FunctionPlot';
-export { Vector, type VectorProps } from './mobjects/Vector';
-export { VectorField, type VectorFieldProps } from './mobjects/VectorField';
-export { Matrix, type MatrixProps } from './mobjects/Matrix';
-export { Graph, type GraphProps, type GraphNode, type GraphEdge } from './mobjects/Graph';
-export { LaTeX, type LaTeXProps } from './mobjects/LaTeX';
-export { BarChart, type BarChartProps, type BarDef } from './mobjects/BarChart';
-export { useAnimation, type AnimationProps } from './mobjects/animation';
+export { Circle, type CircleProps } from './primitives/Circle';
+export { Line, type LineProps } from './primitives/Line';
+export { Arrow, type ArrowProps } from './primitives/Arrow';
+export { Rect, type RectProps } from './primitives/Rect';
+export { Text, type TextProps } from './primitives/Text';
+export { Polygon, type PolygonProps } from './primitives/Polygon';
+export { Axes, type AxesProps, mathToSvg } from './primitives/Axes';
+export { FunctionPlot, type FunctionPlotProps } from './primitives/FunctionPlot';
+export { Vector, type VectorProps } from './primitives/Vector';
+export { VectorField, type VectorFieldProps } from './primitives/VectorField';
+export { Matrix, type MatrixProps } from './primitives/Matrix';
+export { Graph, type GraphProps, type GraphNode, type GraphEdge } from './primitives/Graph';
+export { LaTeX, type LaTeXProps } from './primitives/LaTeX';
+export { BarChart, type BarChartProps, type BarDef } from './primitives/BarChart';
+export { useAnimation, type AnimationProps } from './primitives/animation';
 
 // Easing
 export {

@@ -78,14 +78,14 @@ There is no JavaScript-native tool for building **beautiful, mathematical, inter
 
 ## Core Design Principles
 
-### 1. Mobject System (from Manim)
+### 1. Primitive System
 
-First-class mathematical primitives that know how to animate themselves:
+First-class visual primitives that know how to animate themselves:
 
 - Geometric shapes (Circle, Line, Arrow, Polygon)
-- Math objects (Axes, FunctionPlot, Graph, Vector, Matrix)
+- Math & data (Axes, FunctionPlot, Graph, Vector, Matrix)
 - Text & LaTeX rendering
-- Each Mobject can `fadeIn`, `write`, `transform`, `morph`, `trace`
+- Each primitive can `fadeIn`, `write`, `transform`, `morph`, `trace`
 
 ### 2. React-Based & Declarative (from Remotion)
 
@@ -124,7 +124,7 @@ Unlike Manim and Remotion, Elucim renders **live in the browser**. The `<Player>
 
 ### 5. Renderer-Agnostic Core
 
-The Mobject abstraction is renderer-independent:
+The primitive abstraction is renderer-independent:
 
 - **SVG/Canvas** — default for crisp 2D (vector-sharp text, geometric shapes)
 - **BabylonJS** — optional 3D backend (surfaces, parametric curves, 3D graphs, WebGPU)
@@ -136,7 +136,7 @@ The Mobject abstraction is renderer-independent:
 ```
 ┌─────────────────────────────────────────────────┐
 │                  React Layer                     │
-│   <Scene> <Sequence> <Mobject> <Player>          │
+│   <Scene> <Sequence> <Primitive> <Player>         │
 ├─────────────────────────────────────────────────┤
 │               Timeline Engine                    │
 │   Frame clock · Interpolation · Easing           │
@@ -152,7 +152,7 @@ The Mobject abstraction is renderer-independent:
 
 - `Scene` — a composition with dimensions, fps, and duration
 - `Sequence` — a time-offset wrapper (from Remotion)
-- `Mobject` — a renderable mathematical object with built-in animation methods
+- `Primitive` — a renderable visual element with built-in animation methods
 - `useCurrentFrame()` — the core hook, returns frame number (0 → duration)
 - `interpolate(frame, [in, out], [from, to], easing)` — maps time to values
 - `<Player>` — interactive browser component for scrubbing/stepping
@@ -165,7 +165,7 @@ The Mobject abstraction is renderer-independent:
 |---|:---:|:---:|:---:|
 | JavaScript/TypeScript | ✅ | ❌ | ✅ |
 | React components | ✅ | ❌ | ✅ |
-| Math primitives (Mobjects) | ✅ | ✅ | ❌ |
+| Math primitives | ✅ | ✅ | ❌ |
 | Interactive in browser | ✅ | ❌ | ❌ |
 | Video export | ✅ | ✅ | ✅ |
 | 3D support | ✅ (BabylonJS) | ⚠️ | ❌ |
@@ -181,7 +181,7 @@ The Mobject abstraction is renderer-independent:
 
 - [ ] `Scene` and `Sequence` components
 - [ ] `useCurrentFrame()` and `interpolate()` hooks
-- [ ] SVG renderer with basic Mobjects: Circle, Line, Arrow, Rect, Text
+- [ ] SVG renderer with basic primitives: Circle, Line, Arrow, Rect, Text
 - [ ] `<Player>` component with scrubbing
 - [ ] Easing library (linear, easeIn, easeOut, spring, etc.)
 
@@ -199,12 +199,12 @@ The Mobject abstraction is renderer-independent:
 - [ ] Built-in animation types: `FadeIn`, `FadeOut`, `Write`, `Draw`, `Transform`, `Morph`
 - [ ] Imperative timeline DSL (`scene.play()`)
 - [ ] Animation groups (parallel + sequential)
-- [ ] `Transform` between arbitrary Mobjects
+- [ ] `Transform` between arbitrary primitives
 
 ### Phase 4 — 3D & Export
 
 - [ ] BabylonJS renderer backend
-- [ ] 3D Mobjects: `Surface`, `ParametricCurve`, `Axes3D`
+- [ ] 3D primitives: `Surface`, `ParametricCurve`, `Axes3D`
 - [ ] Video export (via WebCodecs or Remotion integration)
 - [x] Slide/presentation mode
 
@@ -212,7 +212,7 @@ The Mobject abstraction is renderer-independent:
 
 - [ ] VSCode extension with live preview
 - [ ] Hot reload dev server
-- [ ] Storybook-style Mobject explorer
+- [ ] Storybook-style primitive explorer
 - [ ] Documentation site with interactive examples
 
 ---

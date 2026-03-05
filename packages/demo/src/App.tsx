@@ -41,11 +41,11 @@ import agenticLoop from '../../dsl/examples/agentic-loop.json';
 
 // ─── Demo Scenes ────────────────────────────────────────────────────────────
 
-/** Showcase: All basic Mobjects with animations */
-function AllMobjectsDemo() {
+/** Showcase: All basic primitives with animations */
+function AllPrimitivesDemo() {
   return (
-    <section id="all-mobjects">
-      <h2 style={{ padding: '16px 0 8px' }}>All Mobjects</h2>
+    <section id="all-primitives">
+      <h2 style={{ padding: '16px 0 8px' }}>All Primitives</h2>
       <Player
         width={800}
         height={500}
@@ -76,7 +76,7 @@ function AllMobjectsDemo() {
         {/* Text with fadeIn */}
         <Sequence from={80} durationInFrames={100} name="text">
           <Text x={400} y={450} fill="#a29bfe" fontSize={32} textAnchor="middle" fadeIn={20}>
-            Elucim Mobjects
+            Elucim Primitives
           </Text>
         </Sequence>
       </Player>
@@ -971,7 +971,7 @@ export function App() {
         Animate concepts. Illuminate understanding.
       </p>
 
-      <AllMobjectsDemo />
+      <AllPrimitivesDemo />
       <EasingDemo />
       <SequenceTimingDemo />
       <TransformDemo />

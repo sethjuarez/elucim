@@ -68,42 +68,42 @@ test.describe('Scene and Player', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Test Suite: All Mobjects composite scene
+// Test Suite: All Primitives composite scene
 // ═══════════════════════════════════════════════════════════════════════════════
 
-test.describe('All Mobjects Demo', () => {
+test.describe('All Primitives Demo', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.waitForSelector('#all-mobjects');
+    await page.waitForSelector('#all-primitives');
   });
 
   test('frame 0 — empty scene before animations start', async ({ page }) => {
-    await screenshotSection(page, 'all-mobjects', '03-all-mobjects-frame0.png');
+    await screenshotSection(page, 'all-primitives', '03-all-primitives-frame0.png');
   });
 
   test('frame 15 — circle drawing begins', async ({ page }) => {
-    await seekToFrame(page, '#all-mobjects [data-testid="elucim-player"]', 15, 180);
-    await screenshotSection(page, 'all-mobjects', '04-all-mobjects-frame15.png');
+    await seekToFrame(page, '#all-primitives [data-testid="elucim-player"]', 15, 180);
+    await screenshotSection(page, 'all-primitives', '04-all-primitives-frame15.png');
   });
 
   test('frame 45 — circle + rect + line visible', async ({ page }) => {
-    await seekToFrame(page, '#all-mobjects [data-testid="elucim-player"]', 45, 180);
-    await screenshotSection(page, 'all-mobjects', '05-all-mobjects-frame45.png');
+    await seekToFrame(page, '#all-primitives [data-testid="elucim-player"]', 45, 180);
+    await screenshotSection(page, 'all-primitives', '05-all-primitives-frame45.png');
   });
 
-  test('frame 90 — all mobjects appearing', async ({ page }) => {
-    await seekToFrame(page, '#all-mobjects [data-testid="elucim-player"]', 90, 180);
-    await screenshotSection(page, 'all-mobjects', '06-all-mobjects-frame90.png');
+  test('frame 90 — All Primitives appearing', async ({ page }) => {
+    await seekToFrame(page, '#all-primitives [data-testid="elucim-player"]', 90, 180);
+    await screenshotSection(page, 'all-primitives', '06-all-primitives-frame90.png');
   });
 
   test('frame 120 — text visible', async ({ page }) => {
-    await seekToFrame(page, '#all-mobjects [data-testid="elucim-player"]', 120, 180);
-    await screenshotSection(page, 'all-mobjects', '07-all-mobjects-frame120.png');
+    await seekToFrame(page, '#all-primitives [data-testid="elucim-player"]', 120, 180);
+    await screenshotSection(page, 'all-primitives', '07-all-primitives-frame120.png');
   });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Test Suite: Individual Mobject demos
+// Test Suite: Individual primitive demos
 // ═══════════════════════════════════════════════════════════════════════════════
 
 test.describe('Circle Demo', () => {
