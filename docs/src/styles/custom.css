@@ -28,15 +28,11 @@
   border-radius: 12px;
 }
 
-/* Make Player fill the content width (override inline style from Player component) */
-.live-demo-content [data-testid="elucim-player"] {
+/* Make Player and Scene fill the content width (override inline width from components) */
+.live-demo-content [data-testid="elucim-player"],
+.live-demo-content [data-testid="elucim-scene"] {
   width: 100% !important;
   max-width: 100%;
-}
-
-.live-demo-content [data-testid="elucim-player"] svg {
-  max-width: 100%;
-  height: auto;
 }
 
 /* Round the controls bar bottom corners inside the demo */
