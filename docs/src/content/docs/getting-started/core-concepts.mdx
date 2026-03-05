@@ -7,11 +7,23 @@ description: Understand the building blocks — frames, sequences, the coordinat
 
 Elucim animations are **frame-based**, not time-based. Every animation is defined in terms of frames:
 
-```
-frame 0       frame 30      frame 60      frame 90
-|─────────────|─────────────|─────────────|
-  circle fades in  text appears   both visible
-```
+<svg viewBox="0 0 680 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:680px;display:block;margin:1rem auto;" role="img" aria-label="Frame timeline diagram">
+  <line x1="60" y1="36" x2="620" y2="36" stroke="currentColor" stroke-width="2"/>
+  <line x1="60" y1="26" x2="60" y2="46" stroke="currentColor" stroke-width="2"/>
+  <line x1="247" y1="26" x2="247" y2="46" stroke="currentColor" stroke-width="2"/>
+  <line x1="433" y1="26" x2="433" y2="46" stroke="currentColor" stroke-width="2"/>
+  <line x1="620" y1="26" x2="620" y2="46" stroke="currentColor" stroke-width="2"/>
+  <text x="60" y="18" text-anchor="middle" fill="currentColor" font-size="13" font-family="monospace">frame 0</text>
+  <text x="247" y="18" text-anchor="middle" fill="currentColor" font-size="13" font-family="monospace">frame 30</text>
+  <text x="433" y="18" text-anchor="middle" fill="currentColor" font-size="13" font-family="monospace">frame 60</text>
+  <text x="620" y="18" text-anchor="middle" fill="currentColor" font-size="13" font-family="monospace">frame 90</text>
+  <line x1="90" y1="54" x2="216" y2="54" stroke="#6c5ce7" stroke-width="2" opacity="0.5"/>
+  <line x1="277" y1="54" x2="403" y2="54" stroke="#00b894" stroke-width="2" opacity="0.5"/>
+  <line x1="464" y1="54" x2="590" y2="54" stroke="#fdcb6e" stroke-width="2" opacity="0.5"/>
+  <text x="153" y="70" text-anchor="middle" fill="#6c5ce7" font-size="12" font-family="sans-serif">circle fades in</text>
+  <text x="340" y="70" text-anchor="middle" fill="#00b894" font-size="12" font-family="sans-serif">text appears</text>
+  <text x="527" y="70" text-anchor="middle" fill="#fdcb6e" font-size="12" font-family="sans-serif">both visible</text>
+</svg>
 
 Convert between frames and seconds:
 - **frames = seconds × fps** → 2 seconds at 30fps = 60 frames
@@ -24,13 +36,21 @@ Elucim uses **SVG coordinates**:
 - X increases **rightward**
 - Y increases **downward**
 
-```
-(0,0) ────────────────── (width, 0)
-  │                          │
-  │     (cx, cy) = center    │
-  │                          │
-(0, height) ──────── (width, height)
-```
+<svg viewBox="0 0 540 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:540px;display:block;margin:1rem auto;" role="img" aria-label="SVG coordinate system diagram">
+  <rect x="80" y="40" width="320" height="220" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 3" rx="4"/>
+  <text x="76" y="30" text-anchor="end" fill="currentColor" font-size="13" font-family="monospace">(0, 0)</text>
+  <text x="404" y="30" text-anchor="start" fill="currentColor" font-size="13" font-family="monospace">(width, 0)</text>
+  <text x="76" y="280" text-anchor="end" fill="currentColor" font-size="13" font-family="monospace">(0, height)</text>
+  <text x="404" y="280" text-anchor="start" fill="currentColor" font-size="13" font-family="monospace">(width, height)</text>
+  <line x1="80" y1="40" x2="360" y2="40" stroke="#6c5ce7" stroke-width="2"/>
+  <polygon points="360,35 375,40 360,45" fill="#6c5ce7"/>
+  <text x="380" y="44" fill="#6c5ce7" font-size="12" font-family="sans-serif" font-weight="bold">X</text>
+  <line x1="80" y1="40" x2="80" y2="220" stroke="#00b894" stroke-width="2"/>
+  <polygon points="75,220 80,235 85,220" fill="#00b894"/>
+  <text x="68" y="242" fill="#00b894" font-size="12" font-family="sans-serif" font-weight="bold">Y</text>
+  <circle cx="240" cy="150" r="4" fill="#fdcb6e"/>
+  <text x="240" y="170" text-anchor="middle" fill="currentColor" font-size="12" font-family="monospace">(cx, cy) = center</text>
+</svg>
 
 For math primitives like `<Axes>`, you specify an `origin` point that becomes the mathematical `(0,0)`, and a `scale` factor that maps math units to pixels.
 
