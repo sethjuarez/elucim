@@ -42,6 +42,19 @@
 .live-demo-content [data-testid="elucim-controls"] {
   border-radius: 0 0 8px 8px;
 }
+
+/* Theme-aware Player controls — override CSS custom properties per theme */
+[data-theme='light'] [data-testid="elucim-controls"] {
+  --elucim-ctrl-bg: #ecedf0;
+  --elucim-ctrl-fg: #333;
+  --elucim-ctrl-accent: #4a7eff;
+}
+
+[data-theme='dark'] [data-testid="elucim-controls"] {
+  --elucim-ctrl-bg: #1a1a2e;
+  --elucim-ctrl-fg: #e0e0e0;
+  --elucim-ctrl-accent: #4a9eff;
+}
 .props-table {
   font-size: 0.9rem;
 }

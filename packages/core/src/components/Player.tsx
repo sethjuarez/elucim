@@ -191,10 +191,19 @@ export function Player({
 }
 
 /**
- * Flat flexbox controls bar with explicit resets.
- * Layout: [▶][◀][▶] [────●────────] [0.00s / 4.97s · F0]
- * Every element uses inline styles with all relevant properties reset
- * to prevent host-page CSS (e.g. Starlight) from interfering.
+ * Theme-aware controls bar using CSS custom properties.
+ *
+ * Props provide fallback values that are written as CSS custom properties
+ * on the root element. Host pages can override these with plain CSS:
+ *
+ *   [data-testid="elucim-controls"] {
+ *     --elucim-ctrl-bg: #f0f0f5;
+ *     --elucim-ctrl-fg: #333;
+ *     --elucim-ctrl-accent: #4a9eff;
+ *   }
+ *
+ * All child elements inherit color from the root and SVGs use currentColor,
+ * so a single CSS rule is enough to re-theme the entire bar.
  */
 function ControlBar({ playing, progress, time, bg, fg, accent, onTogglePlay, onStepBack, onStepForward, onScrub, onScrubDrag }: {
   playing: boolean; progress: number; time: string;
@@ -204,135 +213,95 @@ function ControlBar({ playing, progress, time, bg, fg, accent, onTogglePlay, onS
   onScrubDrag: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
   const h = 36;
-  // Shared reset for every child — kills inherited margins/padding from host CSS
-  const reset: React.CSSProperties = { margin: 0, padding: 0, border: 'none', boxSizing: 'border-box' as const };
+  const iconSize = 16;
+  const r: React.CSSProperties = { margin: 0, padding: 0, border: 'none', boxSizing: 'border-box' };
 
-  const iconBtn = (onClick: () => void, label: string, icon: React.ReactNode, testId?: string): React.ReactNode => (
-    <button
-      onClick={onClick}
-      title={label}
-      data-testid={testId}
-      style={{
-        ...reset,
-        background: 'none',
-        color: fg,
-        cursor: 'pointer',
-        width: 28,
-        height: h,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      {icon}
-    </button>
-  );
-
-  const svgIcon = (d: string, size = 14) => (
-    <svg width={size} height={size} viewBox="0 0 14 14" fill="none" style={reset}>
-      <path d={d} fill={fg} />
+  // Icons use currentColor so they inherit from the bar's color property
+  const playIcon = (
+    <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" style={r}>
+      <path d="M4 2 L4 14 L13 8 Z" fill="currentColor" />
     </svg>
   );
-
-  const playIcon = svgIcon('M3 1 L3 13 L12 7 Z');
   const pauseIcon = (
-    <svg width={14} height={14} viewBox="0 0 14 14" fill="none" style={reset}>
-      <rect x={2} y={1} width={3.5} height={12} rx={1} fill={fg} />
-      <rect x={8.5} y={1} width={3.5} height={12} rx={1} fill={fg} />
+    <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" style={r}>
+      <rect x={2.5} y={2} width={4} height={12} rx={1} fill="currentColor" />
+      <rect x={9.5} y={2} width={4} height={12} rx={1} fill="currentColor" />
     </svg>
   );
   const skipBackIcon = (
-    <svg width={14} height={14} viewBox="0 0 14 14" fill="none" style={reset}>
-      <rect x={1} y={2} width={2.5} height={10} rx={0.5} fill={fg} />
-      <path d="M13 2 L13 12 L5 7 Z" fill={fg} />
+    <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" style={r}>
+      <rect x={1.5} y={3} width={2.5} height={10} rx={0.5} fill="currentColor" />
+      <path d="M14 3 L14 13 L5.5 8 Z" fill="currentColor" />
     </svg>
   );
   const skipFwdIcon = (
-    <svg width={14} height={14} viewBox="0 0 14 14" fill="none" style={reset}>
-      <path d="M1 2 L1 12 L9 7 Z" fill={fg} />
-      <rect x={10.5} y={2} width={2.5} height={10} rx={0.5} fill={fg} />
+    <svg width={iconSize} height={iconSize} viewBox="0 0 16 16" style={r}>
+      <path d="M2 3 L2 13 L10.5 8 Z" fill="currentColor" />
+      <rect x={12} y={3} width={2.5} height={10} rx={0.5} fill="currentColor" />
     </svg>
+  );
+
+  const btn = (onClick: () => void, label: string, icon: React.ReactNode, testId?: string) => (
+    <button onClick={onClick} title={label} data-testid={testId} style={{
+      ...r, background: 'none', color: 'inherit', cursor: 'pointer',
+      width: 30, height: h, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    }}>
+      {icon}
+    </button>
   );
 
   return (
     <div
       data-testid="elucim-controls"
       style={{
-        ...reset,
+        ...r,
         display: 'flex',
         alignItems: 'center',
         gap: 0,
         height: h,
         padding: '0 10px',
-        background: bg,
-        color: fg,
+        background: `var(--elucim-ctrl-bg, ${bg})`,
+        color: `var(--elucim-ctrl-fg, ${fg})`,
         userSelect: 'none',
         fontFamily: 'system-ui, -apple-system, sans-serif',
         fontSize: 12,
         lineHeight: '1',
         overflow: 'hidden',
-      }}
+      } as React.CSSProperties}
     >
-      {/* Transport buttons — tightly grouped */}
-      {iconBtn(onTogglePlay, playing ? 'Pause' : 'Play', playing ? pauseIcon : playIcon, 'elucim-play-btn')}
-      {iconBtn(onStepBack, 'Step backward', skipBackIcon)}
-      {iconBtn(onStepForward, 'Step forward', skipFwdIcon)}
+      {btn(onTogglePlay, playing ? 'Pause' : 'Play', playing ? pauseIcon : playIcon, 'elucim-play-btn')}
+      {btn(onStepBack, 'Step backward', skipBackIcon)}
+      {btn(onStepForward, 'Step forward', skipFwdIcon)}
 
-      {/* Scrub bar — fills remaining space */}
+      {/* Scrub bar */}
       <div
-        onClick={onScrub}
-        onMouseMove={onScrubDrag}
+        onClick={onScrub} onMouseMove={onScrubDrag}
         data-testid="elucim-scrubbar"
-        style={{
-          ...reset,
-          flex: 1,
-          height: h,
-          display: 'flex',
-          alignItems: 'center',
-          cursor: 'pointer',
-          position: 'relative',
-          marginLeft: 8,
-          marginRight: 8,
-        }}
+        style={{ ...r, flex: 1, height: h, display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative', marginLeft: 8, marginRight: 8 }}
       >
-        {/* Track background */}
-        <div style={{ ...reset, flex: 1, height: 4, background: fg + '33', borderRadius: 2, position: 'relative' }}>
-          {/* Track fill */}
-          <div style={{ ...reset, position: 'absolute', left: 0, top: 0, height: '100%', width: `${progress * 100}%`, background: accent, borderRadius: 2 }} />
-          {/* Handle */}
-          <div
-            data-testid="elucim-scrub-handle"
-            style={{
-              ...reset,
-              position: 'absolute',
-              left: `${progress * 100}%`,
-              top: '50%',
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              background: accent,
-              border: `2px solid ${fg}`,
-              transform: 'translate(-50%, -50%)',
-              pointerEvents: 'none',
-            }}
-          />
+        {/* Track background — uses currentColor with opacity for theme adaptability */}
+        <div style={{ ...r, flex: 1, height: 4, borderRadius: 2, position: 'relative', background: 'currentColor', opacity: 0.2 }} />
+        {/* Track fill + handle — sits on top of the track via absolute positioning */}
+        <div style={{ ...r, position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+          <div style={{ ...r, flex: 1, height: 4, borderRadius: 2, position: 'relative' }}>
+            <div style={{ ...r, position: 'absolute', left: 0, top: 0, height: '100%', width: `${progress * 100}%`, background: `var(--elucim-ctrl-accent, ${accent})`, borderRadius: 2 }} />
+            <div
+              data-testid="elucim-scrub-handle"
+              style={{
+                ...r, position: 'absolute', left: `${progress * 100}%`, top: '50%',
+                width: 12, height: 12, borderRadius: '50%',
+                background: `var(--elucim-ctrl-accent, ${accent})`, border: `2px solid var(--elucim-ctrl-fg, ${fg})`,
+                transform: 'translate(-50%, -50%)', pointerEvents: 'none',
+              }}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Time display */}
-      <span
-        data-testid="elucim-frame-display"
-        style={{
-          ...reset,
-          fontSize: 11,
-          color: fg,
-          fontVariantNumeric: 'tabular-nums',
-          whiteSpace: 'nowrap',
-          flexShrink: 0,
-          lineHeight: `${h}px`,
-        }}
-      >
+      <span data-testid="elucim-frame-display" style={{
+        ...r, fontSize: 11, color: 'inherit', fontVariantNumeric: 'tabular-nums',
+        whiteSpace: 'nowrap', flexShrink: 0, lineHeight: `${h}px`,
+      }}>
         {time}
       </span>
     </div>
