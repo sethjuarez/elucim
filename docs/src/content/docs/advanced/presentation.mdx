@@ -3,7 +3,14 @@ title: Presentation Mode
 description: Build multi-slide animated presentations with transitions, keyboard navigation, and presenter notes.
 ---
 
+import LiveDemo from '../../../components/LiveDemo.tsx';
+import { PresentationDemo } from '../../../components/Demos.tsx';
+
 The `<Presentation>` component turns Elucim into a full slide-deck system. Each `<Slide>` can contain its own `<Player>` with independent animations, and transitions handle movement between slides.
+
+<LiveDemo title="Presentation Demo — use ← → to navigate slides">
+  <PresentationDemo client:only="react" />
+</LiveDemo>
 
 ## Presentation Props
 
