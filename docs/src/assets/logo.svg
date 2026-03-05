@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <circle cx="256" cy="256" r="200" fill="none" stroke="#6c5ce7" stroke-width="44"/>
-  <!-- Cosine wave: center → up → center → down → center -->
-  <path d="M 90 256 C 145 165, 200 165, 256 256 C 312 347, 367 347, 422 256"
+  <!-- sin(x): starts at center, peaks, returns, troughs, returns — purple -->
+  <path d="M 100 256 C 128 256, 150 176, 178 176 C 206 176, 228 256, 256 256 C 284 256, 306 336, 334 336 C 362 336, 384 256, 412 256"
         fill="none" stroke="#6c5ce7" stroke-width="14" stroke-linecap="round"/>
-  <!-- Sine wave (mirrored): center → down → center → up → center -->
-  <path d="M 90 256 C 145 347, 200 347, 256 256 C 312 165, 367 165, 422 256"
-        fill="none" stroke="#00cec9" stroke-width="14" stroke-linecap="round"/>
+  <!-- cos(x): starts at peak, crosses center, troughs, crosses center, peaks — coral -->
+  <path d="M 100 176 C 128 176, 150 256, 178 256 C 206 256, 228 336, 256 336 C 284 336, 306 256, 334 256 C 362 256, 384 176, 412 176"
+        fill="none" stroke="#ff6b6b" stroke-width="14" stroke-linecap="round"/>
 </svg>
