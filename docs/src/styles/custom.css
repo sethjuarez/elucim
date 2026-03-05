@@ -39,8 +39,6 @@
 /* Presentation fills the demo width; inner Players also scale to fill their slides */
 .live-demo-content [data-testid="elucim-presentation"] {
   width: 100% !important;
-  height: auto !important;
-  max-height: none !important;
   will-change: contents;
 }
 

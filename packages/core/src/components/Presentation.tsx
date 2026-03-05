@@ -341,8 +341,7 @@ export function Presentation({
         data-testid="elucim-presentation"
         style={{
           width: '100%',
-          height: showNotes ? '80vh' : '100%',
-          maxHeight: '100vh',
+          height: showNotes ? '80vh' : 'auto',
           background,
           position: 'relative',
           outline: 'none',
@@ -448,9 +447,9 @@ export function Presentation({
             position: 'absolute',
             top: 12,
             right: 12,
-            background: 'rgba(0,0,0,0.4)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            color: '#fff',
+            background: 'color-mix(in srgb, currentColor 15%, transparent)',
+            border: '1px solid color-mix(in srgb, currentColor 20%, transparent)',
+            color: 'inherit',
             borderRadius: 6,
             padding: '6px 10px',
             cursor: 'pointer',
@@ -476,9 +475,9 @@ export function Presentation({
               left: 12,
               top: '50%',
               transform: 'translateY(-50%)',
-              background: 'rgba(0,0,0,0.3)',
+              background: 'color-mix(in srgb, currentColor 15%, transparent)',
               border: 'none',
-              color: '#fff',
+              color: 'inherit',
               borderRadius: '50%',
               width: 44,
               height: 44,
@@ -507,9 +506,9 @@ export function Presentation({
               right: 12,
               top: '50%',
               transform: 'translateY(-50%)',
-              background: 'rgba(0,0,0,0.3)',
+              background: 'color-mix(in srgb, currentColor 15%, transparent)',
               border: 'none',
-              color: '#fff',
+              color: 'inherit',
               borderRadius: '50%',
               width: 44,
               height: 44,
@@ -537,22 +536,22 @@ export function Presentation({
           data-testid="elucim-presenter-notes"
           style={{
             padding: '16px 24px',
-            background: '#1a1a2e',
-            borderTop: '1px solid #333',
-            color: '#ccc',
+            background: 'color-mix(in srgb, currentColor 8%, transparent)',
+            borderTop: '1px solid color-mix(in srgb, currentColor 15%, transparent)',
+            color: 'inherit',
             fontSize: 15,
             lineHeight: 1.6,
             maxHeight: '20vh',
             overflowY: 'auto',
           }}
         >
-          <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#666', marginBottom: 8, letterSpacing: 1 }}>
+          <div style={{ fontSize: 11, textTransform: 'uppercase', opacity: 0.5, marginBottom: 8, letterSpacing: 1 }}>
             Presenter Notes — Slide {slideIndex + 1}{currentTitle ? `: ${currentTitle}` : ''}
           </div>
           {currentNotes ? (
             <div style={{ whiteSpace: 'pre-wrap' }}>{currentNotes}</div>
           ) : (
-            <div style={{ color: '#555', fontStyle: 'italic' }}>No notes for this slide.</div>
+            <div style={{ opacity: 0.4, fontStyle: 'italic' }}>No notes for this slide.</div>
           )}
         </div>
       )}
