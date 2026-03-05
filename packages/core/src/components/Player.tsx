@@ -179,96 +179,161 @@ export function Player({
         {children}
       </Scene>
 
-      {controls && <PlayerControls
-        playing={playing}
-        progress={progress}
-        currentTime={currentTime}
-        totalTime={totalTime}
-        frame={frame}
-        bg={controlsBackground}
-        fg={controlsColor}
-        accent={controlsAccent}
-        onTogglePlay={togglePlay}
-        onStepBack={stepBackward}
-        onStepForward={stepForward}
-        onScrub={handleScrub}
-        onScrubDrag={handleScrubDrag}
+      {controls && <ControlBar
+        playing={playing} progress={progress}
+        time={`${currentTime}s / ${totalTime}s · F${frame}`}
+        bg={controlsBackground} fg={controlsColor} accent={controlsAccent}
+        onTogglePlay={togglePlay} onStepBack={stepBackward} onStepForward={stepForward}
+        onScrub={handleScrub} onScrubDrag={handleScrubDrag}
       />}
     </div>
   );
 }
 
-/* ── SVG icon paths (Material Design) ── */
-const ICON = {
-  play:     'M8 5v14l11-7z',
-  pause:    'M6 19h4V5H6v14zm8-14v14h4V5h-4z',
-  skipBack: 'M6 6h2v12H6zm3.5 6l8.5 6V6z',
-  skipFwd:  'M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z',
-};
-
-function Icon({ d }: { d: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d={d} />
-    </svg>
-  );
-}
-
-/* ── Scoped CSS (injected once) ── */
-const CONTROLS_CLASS = 'elucim-ctrl';
-const controlsCSS = `
-.${CONTROLS_CLASS} { display:flex; align-items:center; gap:10px; height:36px; padding:0 12px; box-sizing:border-box; font:11px/36px system-ui,sans-serif; }
-.${CONTROLS_CLASS} .btn-group { display:flex; align-items:center; gap:2px; }
-.${CONTROLS_CLASS} button { all:unset; cursor:pointer; display:flex; align-items:center; justify-content:center; width:28px; height:28px; }
-.${CONTROLS_CLASS} .scrub { flex:1; height:28px; display:flex; align-items:center; cursor:pointer; }
-.${CONTROLS_CLASS} .track { flex:1; height:4px; border-radius:2px; position:relative; }
-.${CONTROLS_CLASS} .fill { position:absolute; left:0; top:0; height:100%; border-radius:2px; }
-.${CONTROLS_CLASS} .handle { position:absolute; top:50%; width:10px; height:10px; border-radius:50%; box-sizing:border-box; transform:translate(-50%,-50%); }
-.${CONTROLS_CLASS} .time { white-space:nowrap; font-variant-numeric:tabular-nums; }
-`;
-let cssInjected = false;
-
-function PlayerControls({
-  playing, progress, currentTime, totalTime, frame,
-  bg, fg, accent,
-  onTogglePlay, onStepBack, onStepForward, onScrub, onScrubDrag,
-}: {
-  playing: boolean; progress: number; currentTime: string; totalTime: string; frame: number;
+/**
+ * Flat flexbox controls bar with explicit resets.
+ * Layout: [▶][◀][▶] [────●────────] [0.00s / 4.97s · F0]
+ * Every element uses inline styles with all relevant properties reset
+ * to prevent host-page CSS (e.g. Starlight) from interfering.
+ */
+function ControlBar({ playing, progress, time, bg, fg, accent, onTogglePlay, onStepBack, onStepForward, onScrub, onScrubDrag }: {
+  playing: boolean; progress: number; time: string;
   bg: string; fg: string; accent: string;
   onTogglePlay: () => void; onStepBack: () => void; onStepForward: () => void;
   onScrub: (e: React.MouseEvent<HTMLDivElement>) => void;
   onScrubDrag: (e: React.MouseEvent<HTMLDivElement>) => void;
 }) {
-  const styleRef = useRef<HTMLStyleElement | null>(null);
-  useEffect(() => {
-    if (!cssInjected) {
-      const el = document.createElement('style');
-      el.textContent = controlsCSS;
-      document.head.appendChild(el);
-      styleRef.current = el;
-      cssInjected = true;
-    }
-  }, []);
+  const h = 36;
+  // Shared reset for every child — kills inherited margins/padding from host CSS
+  const reset: React.CSSProperties = { margin: 0, padding: 0, border: 'none', boxSizing: 'border-box' as const };
+
+  const iconBtn = (onClick: () => void, label: string, icon: React.ReactNode, testId?: string): React.ReactNode => (
+    <button
+      onClick={onClick}
+      title={label}
+      data-testid={testId}
+      style={{
+        ...reset,
+        background: 'none',
+        color: fg,
+        cursor: 'pointer',
+        width: 28,
+        height: h,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      {icon}
+    </button>
+  );
+
+  const svgIcon = (d: string, size = 14) => (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none" style={reset}>
+      <path d={d} fill={fg} />
+    </svg>
+  );
+
+  const playIcon = svgIcon('M3 1 L3 13 L12 7 Z');
+  const pauseIcon = (
+    <svg width={14} height={14} viewBox="0 0 14 14" fill="none" style={reset}>
+      <rect x={2} y={1} width={3.5} height={12} rx={1} fill={fg} />
+      <rect x={8.5} y={1} width={3.5} height={12} rx={1} fill={fg} />
+    </svg>
+  );
+  const skipBackIcon = (
+    <svg width={14} height={14} viewBox="0 0 14 14" fill="none" style={reset}>
+      <rect x={1} y={2} width={2.5} height={10} rx={0.5} fill={fg} />
+      <path d="M13 2 L13 12 L5 7 Z" fill={fg} />
+    </svg>
+  );
+  const skipFwdIcon = (
+    <svg width={14} height={14} viewBox="0 0 14 14" fill="none" style={reset}>
+      <path d="M1 2 L1 12 L9 7 Z" fill={fg} />
+      <rect x={10.5} y={2} width={2.5} height={10} rx={0.5} fill={fg} />
+    </svg>
+  );
 
   return (
-    <div className={CONTROLS_CLASS} style={{ background: bg, color: fg }} data-testid="elucim-controls">
-      <div className="btn-group">
-        <button onClick={onTogglePlay} data-testid="elucim-play-btn" title={playing ? 'Pause' : 'Play'}>
-          <Icon d={playing ? ICON.pause : ICON.play} />
-        </button>
-        <button onClick={onStepBack} title="Step backward"><Icon d={ICON.skipBack} /></button>
-        <button onClick={onStepForward} title="Step forward"><Icon d={ICON.skipFwd} /></button>
-      </div>
+    <div
+      data-testid="elucim-controls"
+      style={{
+        ...reset,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 0,
+        height: h,
+        padding: '0 10px',
+        background: bg,
+        color: fg,
+        userSelect: 'none',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontSize: 12,
+        lineHeight: '1',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Transport buttons — tightly grouped */}
+      {iconBtn(onTogglePlay, playing ? 'Pause' : 'Play', playing ? pauseIcon : playIcon, 'elucim-play-btn')}
+      {iconBtn(onStepBack, 'Step backward', skipBackIcon)}
+      {iconBtn(onStepForward, 'Step forward', skipFwdIcon)}
 
-      <div className="scrub" onClick={onScrub} onMouseMove={onScrubDrag} data-testid="elucim-scrubbar">
-        <div className="track" style={{ background: fg + '33' }}>
-          <div className="fill" style={{ width: `${progress * 100}%`, background: accent, transition: playing ? 'none' : 'width 0.05s' }} />
-          <div className="handle" style={{ left: `${progress * 100}%`, background: accent, border: `2px solid ${fg}` }} data-testid="elucim-scrub-handle" />
+      {/* Scrub bar — fills remaining space */}
+      <div
+        onClick={onScrub}
+        onMouseMove={onScrubDrag}
+        data-testid="elucim-scrubbar"
+        style={{
+          ...reset,
+          flex: 1,
+          height: h,
+          display: 'flex',
+          alignItems: 'center',
+          cursor: 'pointer',
+          position: 'relative',
+          marginLeft: 8,
+          marginRight: 8,
+        }}
+      >
+        {/* Track background */}
+        <div style={{ ...reset, flex: 1, height: 4, background: fg + '33', borderRadius: 2, position: 'relative' }}>
+          {/* Track fill */}
+          <div style={{ ...reset, position: 'absolute', left: 0, top: 0, height: '100%', width: `${progress * 100}%`, background: accent, borderRadius: 2 }} />
+          {/* Handle */}
+          <div
+            data-testid="elucim-scrub-handle"
+            style={{
+              ...reset,
+              position: 'absolute',
+              left: `${progress * 100}%`,
+              top: '50%',
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              background: accent,
+              border: `2px solid ${fg}`,
+              transform: 'translate(-50%, -50%)',
+              pointerEvents: 'none',
+            }}
+          />
         </div>
       </div>
 
-      <span className="time" data-testid="elucim-frame-display">
-        {currentTime}s / {totalTime}s · F{frame}
+      {/* Time display */}
+      <span
+        data-testid="elucim-frame-display"
+        style={{
+          ...reset,
+          fontSize: 11,
+          color: fg,
+          fontVariantNumeric: 'tabular-nums',
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+          lineHeight: `${h}px`,
+        }}
+      >
+        {time}
       </span>
     </div>
   );
