@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { ElucimContext, type ElucimContextValue } from '../context';
+import { useInsidePresentation } from './Presentation';
 
 export interface SceneProps {
   /** Width in pixels. Default: 1920 */
@@ -89,17 +90,21 @@ export function Scene({
     height,
   };
 
+  const insidePresentation = useInsidePresentation();
+  const effectiveBg = insidePresentation ? 'transparent' : `var(--elucim-scene-bg, ${background})`;
+
   return (
     <ElucimContext.Provider value={contextValue}>
       <div
         className={className}
         style={{
           position: 'relative',
-          width,
+          width: insidePresentation ? '100%' : width,
+          height: insidePresentation ? '100%' : undefined,
           maxWidth: '100%',
-          aspectRatio: `${width} / ${height}`,
+          aspectRatio: insidePresentation ? undefined : `${width} / ${height}`,
           overflow: 'hidden',
-          background: `var(--elucim-scene-bg, ${background})`,
+          background: effectiveBg,
           color: 'var(--elucim-scene-fg, #e0e0e0)',
           ...style,
         }}

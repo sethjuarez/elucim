@@ -8,6 +8,7 @@ export {
   Presentation, type PresentationProps,
   Slide, type SlideProps,
   usePresentationContext,
+  useInsidePresentation,
   type TransitionType,
 } from './components/Presentation';
 

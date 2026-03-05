@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Scene, type SceneProps } from './Scene';
+import { useInsidePresentation } from './Presentation';
 
 export interface PlayerProps extends Omit<SceneProps, 'frame' | 'autoPlay'> {
   /** Show controls bar. Default: true */
@@ -156,12 +157,15 @@ export function Player({
   const currentTime = (frame / fps).toFixed(2);
   const totalTime = ((durationInFrames - 1) / fps).toFixed(2);
 
+  const insidePresentation = useInsidePresentation();
+
   return (
     <div
       ref={containerRef}
       tabIndex={0}
       style={{
-        width,
+        width: insidePresentation ? '100%' : width,
+        height: insidePresentation ? '100%' : undefined,
         maxWidth: '100%',
         outline: 'none',
         fontFamily: 'system-ui, sans-serif',

@@ -30,6 +30,11 @@ export function usePresentationContext() {
   return ctx;
 }
 
+/** Returns true when rendered inside a <Presentation>. Safe to call anywhere. */
+export function useInsidePresentation(): boolean {
+  return useContext(PresentationContext) !== null;
+}
+
 // ─── Slide ───────────────────────────────────────────────────────────────────
 
 export interface SlideProps {
@@ -457,6 +462,8 @@ export function Presentation({
             zIndex: 100,
             opacity: 0.6,
             transition: 'opacity 0.2s',
+            outline: 'none',
+            scrollMargin: 0,
           }}
           onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '1'; }}
           onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.6'; }}
@@ -489,6 +496,8 @@ export function Presentation({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              outline: 'none',
+              scrollMargin: 0,
             }}
             onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '1'; }}
             onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.5'; }}
@@ -520,6 +529,8 @@ export function Presentation({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              outline: 'none',
+              scrollMargin: 0,
             }}
             onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '1'; }}
             onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.5'; }}

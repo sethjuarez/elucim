@@ -42,21 +42,6 @@
   will-change: contents;
 }
 
-/* Prevent focus-driven scroll when clicking presentation buttons */
-[data-testid="elucim-presentation"] button {
-  scroll-margin: 0;
-}
-[data-testid="elucim-slide"] [data-testid="elucim-player"],
-[data-testid="elucim-slide"] [data-testid="elucim-scene"] {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100%;
-}
-[data-testid="elucim-slide"] [data-testid="elucim-scene"] {
-  --elucim-scene-bg: transparent !important;
-  background: transparent !important;
-}
-
 /* Presentation fills the LiveDemo edge-to-edge — no padding, no border */
 .live-demo:has([data-testid="elucim-presentation"]) {
   border: none;
@@ -68,23 +53,9 @@
 }
 
 /* Suppress focus ring inside presentations */
-[data-testid="elucim-presentation"]:focus,
-[data-testid="elucim-presentation"] button:focus {
+[data-testid="elucim-presentation"]:focus {
   outline: none !important;
   box-shadow: none !important;
-}
-
-/* Theme-aware Presentation HUD */
-[data-theme='light'] [data-testid="elucim-presentation"] button {
-  color: #333;
-}
-[data-theme='dark'] [data-testid="elucim-presentation"] button {
-  color: #e0e0e0;
-}
-
-/* Keep presentation stable during button clicks */
-[data-testid="elucim-presentation"] button:focus-visible {
-  outline: none !important;
 }
 
 /* Round the controls bar bottom corners inside the demo */
