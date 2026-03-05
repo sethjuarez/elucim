@@ -96,7 +96,8 @@ export function Scene({
         style={{
           position: 'relative',
           width,
-          height,
+          maxWidth: '100%',
+          aspectRatio: `${width} / ${height}`,
           overflow: 'hidden',
           background,
           ...style,
@@ -104,8 +105,8 @@ export function Scene({
         data-testid="elucim-scene"
       >
         <svg
-          width={width}
-          height={height}
+          width="100%"
+          height="100%"
           viewBox={`0 0 ${width} ${height}`}
           xmlns="http://www.w3.org/2000/svg"
           style={{ position: 'absolute', top: 0, left: 0 }}

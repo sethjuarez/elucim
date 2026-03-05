@@ -166,6 +166,7 @@ export function Player({
       tabIndex={0}
       style={{
         width: maxDisplayWidth,
+        maxWidth: '100%',
         outline: 'none',
         fontFamily: 'system-ui, sans-serif',
       }}

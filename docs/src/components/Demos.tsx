@@ -405,30 +405,30 @@ export function QuickStartDemo() {
 
 export function HeroDemo() {
   return (
-    <Player width={600} height={300} fps={30} durationInFrames={150} autoPlay loop
+    <Player width={600} height={200} fps={30} durationInFrames={150} autoPlay loop
             background="transparent">
-      <Axes origin={[300, 180]} xRange={[-4, 4]} yRange={[-2, 2]} scale={50}
+      <Axes origin={[300, 110]} xRange={[-4, 4]} yRange={[-1.5, 1.5]} scale={50}
             color="#888" labelColor="#666" showGrid={false} />
       <Sequence from={0} durationInFrames={150}>
         <Draw duration={50}>
           <FunctionPlot fn={(x: number) => Math.sin(x)} domain={[-4, 4]}
-                        origin={[300, 180]} scale={50} color="#6c5ce7" strokeWidth={2.5} />
+                        origin={[300, 110]} scale={50} color="#6c5ce7" strokeWidth={2.5} />
         </Draw>
       </Sequence>
       <Sequence from={30} durationInFrames={120}>
         <Draw duration={50}>
           <FunctionPlot fn={(x: number) => Math.cos(x)} domain={[-4, 4]}
-                        origin={[300, 180]} scale={50} color="#ff6b6b" strokeWidth={2} />
+                        origin={[300, 110]} scale={50} color="#ff6b6b" strokeWidth={2} />
         </Draw>
       </Sequence>
       <Sequence from={60} durationInFrames={90}>
         <FadeIn duration={20}>
-          <LaTeX expression="f(x) = \\sin(x)" x={480} y={100} fontSize={16} color="#6c5ce7" />
+          <LaTeX expression="f(x) = \\sin(x)" x={480} y={40} fontSize={16} color="#6c5ce7" />
         </FadeIn>
       </Sequence>
       <Sequence from={75} durationInFrames={75}>
         <FadeIn duration={20}>
-          <LaTeX expression="g(x) = \\cos(x)" x={480} y={140} fontSize={16} color="#ff6b6b" />
+          <LaTeX expression="g(x) = \\cos(x)" x={480} y={70} fontSize={16} color="#ff6b6b" />
         </FadeIn>
       </Sequence>
     </Player>

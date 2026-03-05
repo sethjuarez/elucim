@@ -28,15 +28,14 @@
   border-radius: 12px;
 }
 
-/* Make Player fill container width */
+/* Make Player responsive but constrained */
 .live-demo-content [data-testid="elucim-player"] {
-  width: 100% !important;
   max-width: 100%;
 }
 
 .live-demo-content [data-testid="elucim-player"] svg {
-  width: 100% !important;
-  height: auto !important;
+  max-width: 100%;
+  height: auto;
 }
 
 /* Round the controls bar bottom corners inside the demo */
