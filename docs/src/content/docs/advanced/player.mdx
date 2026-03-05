@@ -83,3 +83,34 @@ The Player's root element can be styled with `className` and `style`. The contro
 :::tip
 For embedding in a blog or docs site, set `controls={true}` and `loop={true}` so readers can replay the animation. For a cinematic feel, use `autoPlay={true}` and `controls={false}`.
 :::
+
+## Theme-Aware Defaults
+
+The Player automatically adapts to light and dark themes using the CSS `light-dark()` function. Out of the box, the controls bar picks appropriate colors for both themes — no custom CSS required.
+
+| Default | Light | Dark |
+|---------|-------|------|
+| Controls background | `#f5f5f5` | `#1a1a2e` |
+| Controls text | `#333` | `#e0e0e0` |
+| Scrubber accent | `#6c5ce7` | `#4ecdc4` |
+
+These defaults work because the Player sets `color-scheme: light dark` on its container, allowing the browser to resolve `light-dark()` values based on the active theme.
+
+To override, pass `controlsBackground`, `controlsColor`, or `controlsAccent` (or use your own CSS).
+
+### Inside a Presentation
+
+When a Player is rendered inside a `<Slide>`, it automatically detects the Presentation context and adjusts its behavior:
+
+- Background becomes transparent (inherits the slide/presentation background)
+- Width and height expand to fill the slide
+- Set `controls={false}` to hide the controls bar — the Presentation provides its own HUD and navigation
+
+```tsx
+<Slide title="My Slide">
+  <Player width={1920} height={1080} fps={30} durationInFrames={90}
+          autoPlay loop controls={false}>
+    {/* slide content */}
+  </Player>
+</Slide>
+```

@@ -105,3 +105,15 @@ function Timer() {
   );
 }
 ```
+
+## useInsidePresentation()
+
+Returns `true` when the component is rendered inside a `<Presentation>`. This is useful for components that need to adapt their behavior (e.g., transparent backgrounds, fill sizing) depending on whether they're standalone or embedded in a slide.
+
+```ts
+import { useInsidePresentation } from '@elucim/core';
+
+const isInSlide = useInsidePresentation(); // true inside <Presentation>, false otherwise
+```
+
+This hook is safe to call anywhere — it never throws, even outside a Presentation context. The core `<Scene>` and `<Player>` components use this internally to auto-adjust when embedded in slides (transparent background, fill sizing, no aspect ratio constraints).

@@ -118,3 +118,34 @@ function SlideCounter() {
 :::tip
 Each `<Slide>` typically contains its own `<Player>` so that every slide has independent animation playback. The slide's `notes` prop is only visible when `showNotes` is enabled — perfect for a dual-screen presenter setup.
 :::
+
+## Theming
+
+The Presentation component is fully theme-aware. All UI elements (navigation arrows, fullscreen button, HUD text, progress dots) use `currentColor` and CSS `color-mix()`, so they automatically adapt to any light or dark color scheme.
+
+### Background
+
+Pass a CSS custom property for the `background` prop to let your site's theme control the slide background:
+
+```tsx
+<Presentation background="var(--slide-bg, #1a1a2e)" />
+```
+
+### Players Inside Slides
+
+Players inside a Presentation automatically detect the context and become transparent with fill sizing. Always set `controls={false}` so the Presentation's own HUD handles navigation:
+
+```tsx
+<Slide title="Animated Math">
+  <Player width={700} height={400} fps={30} durationInFrames={90}
+          autoPlay loop controls={false}>
+    <FadeIn duration={25}>
+      <Text x={350} y={150} fill="currentColor" fontSize={36} textAnchor="middle">
+        Theme-aware text
+      </Text>
+    </FadeIn>
+  </Player>
+</Slide>
+```
+
+Using `fill="currentColor"` in your slide content ensures text and shapes inherit the theme color automatically.
