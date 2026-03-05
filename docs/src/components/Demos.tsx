@@ -141,7 +141,7 @@ export function AxesDemo() {
                       origin={[250, 200]} scale={50} color="#6c5ce7" strokeWidth={2.5} draw={40} />
       </Sequence>
       <Sequence from={50} durationInFrames={70}>
-        <FunctionPlot fn={(x: number) => 0.5 * x * x - 1} domain={[-3, 3]}
+        <FunctionPlot fn={(x: number) => 0.2 * x * x - 1} domain={[-4, 4]}
                       origin={[250, 200]} scale={50} color="#ff6b6b" strokeWidth={2} draw={40} />
       </Sequence>
     </Player>
