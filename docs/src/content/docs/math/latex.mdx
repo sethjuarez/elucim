@@ -3,6 +3,7 @@ title: LaTeX (KaTeX)
 description: Render LaTeX math expressions inside SVG scenes using KaTeX.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 import LiveDemo from '@components/LiveDemo.tsx';
 import { LaTeXDemo } from '@components/Demos.tsx';
 
@@ -28,16 +29,44 @@ The `<LaTeX>` primitive renders a LaTeX math expression at a given position usin
 
 ## Code Example
 
-```jsx
-<LaTeX
-  expression="\\int_{0}^{\\infty} e^{-x^2} \\, dx = \\frac{\\sqrt{\\pi}}{2}"
-  x={60}
-  y={100}
-  fontSize={24}
-  color="#e2e8f0"
-  fadeIn
-/>
-```
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, FadeIn, LaTeX } from '@elucim/core';
+
+    <Player width={500} height={300} fps={30} durationInFrames={60}>
+      <FadeIn duration={20}>
+        <LaTeX expression="E = mc^2" x={250} y={100} fontSize={36} color="#6c5ce7" />
+      </FadeIn>
+      <FadeIn duration={20}>
+        <LaTeX expression="\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}"
+               x={250} y={200} fontSize={28} color="#ff6b6b" />
+      </FadeIn>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
+      "children": [
+        {
+          "type": "latex",
+          "expression": "E = mc^2",
+          "x": 250, "y": 100, "fontSize": 36, "color": "#6c5ce7",
+          "fadeIn": { "duration": 20 }
+        },
+        {
+          "type": "latex",
+          "expression": "\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}",
+          "x": 250, "y": 200, "fontSize": 28, "color": "#ff6b6b",
+          "fadeIn": { "duration": 20 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 :::caution
 KaTeX CSS must be loaded in your HTML `<head>` for expressions to render correctly. Add the stylesheet from a CDN or bundle it locally.

@@ -3,6 +3,7 @@ title: Axes & Function Plots
 description: Draw 2D coordinate systems and plot mathematical functions.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 import LiveDemo from '@components/LiveDemo.tsx';
 import { AxesDemo } from '@components/Demos.tsx';
 
@@ -40,27 +41,43 @@ import { AxesDemo } from '@components/Demos.tsx';
 
 ## Code Example
 
-```jsx
-<Axes
-  origin={[200, 175]}
-  xRange={[-4, 4]}
-  yRange={[-3, 3]}
-  scale={40}
-  showGrid
-  gridColor="#334155"
-  color="#94a3b8"
-  labelColor="#94a3b8"
-/>
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, Draw, Axes, FunctionPlot } from '@elucim/core';
 
-<FunctionPlot
-  fn={(x) => Math.sin(x)}
-  domain={[-4, 4]}
-  origin={[200, 175]}
-  scale={40}
-  color="#818cf8"
-  strokeWidth={2}
-/>
-```
+    <Player width={500} height={350} fps={30} durationInFrames={90}>
+      <Axes origin={[250, 200]} xRange={[-4, 4]} yRange={[-2, 3]} scale={50}
+            color="currentColor" labelColor="currentColor" showGrid />
+      <Draw duration={40}>
+        <FunctionPlot fn={(x) => Math.sin(x)} domain={[-4, 4]}
+                      origin={[250, 200]} scale={50} color="#6c5ce7" strokeWidth={2.5} />
+      </Draw>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 350, "fps": 30, "durationInFrames": 90,
+      "children": [
+        {
+          "type": "axes",
+          "origin": [250, 200], "domain": [-4, 4], "range": [-2, 3], "scale": 50,
+          "showGrid": true
+        },
+        {
+          "type": "functionPlot",
+          "fn": "sin(x)", "domain": [-4, 4],
+          "origin": [250, 200], "scale": 50,
+          "color": "#6c5ce7", "strokeWidth": 2.5,
+          "draw": { "duration": 40 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 :::tip
 Keep `origin` and `scale` identical on both `<Axes>` and `<FunctionPlot>` so the curve aligns with the grid.

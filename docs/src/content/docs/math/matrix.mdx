@@ -3,6 +3,7 @@ title: Matrix
 description: Render matrices with bracket notation for linear algebra visualizations.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 import LiveDemo from '@components/LiveDemo.tsx';
 import { MatrixDemo } from '@components/Demos.tsx';
 
@@ -27,22 +28,39 @@ The `<Matrix>` primitive renders a two-dimensional array of values surrounded by
 
 ## Code Example
 
-```jsx
-<Matrix
-  values={[
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 1],
-  ]}
-  x={120}
-  y={60}
-  cellSize={44}
-  color="#e2e8f0"
-  bracketColor="#818cf8"
-  fontSize={18}
-  fadeIn
-/>
-```
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, FadeIn, Matrix } from '@elucim/core';
+
+    <Player width={500} height={300} fps={30} durationInFrames={60}>
+      <FadeIn duration={20}>
+        <Matrix
+          values={[[1, 0, 0], [0, 'cos θ', '-sin θ'], [0, 'sin θ', 'cos θ']]}
+          x={250} y={150} cellSize={55}
+          color="currentColor" bracketColor="#6c5ce7"
+        />
+      </FadeIn>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
+      "children": [
+        {
+          "type": "matrix",
+          "values": [[1, 0, 0], [0, "cos θ", "-sin θ"], [0, "sin θ", "cos θ"]],
+          "x": 250, "y": 150, "cellSize": 55,
+          "bracketColor": "#6c5ce7",
+          "fadeIn": { "duration": 20 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 :::tip
 Cell values can be strings — use `"a₁₁"` or `"…"` for symbolic or abbreviated entries.

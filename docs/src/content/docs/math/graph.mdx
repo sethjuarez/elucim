@@ -3,6 +3,7 @@ title: Graph
 description: Render node-and-edge graphs for discrete math and network visualizations.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 import LiveDemo from '@components/LiveDemo.tsx';
 import { GraphDemo } from '@components/Demos.tsx';
 
@@ -27,24 +28,53 @@ The `<Graph>` primitive draws a node-and-edge graph from declarative data. Use i
 
 ## Code Example
 
-```jsx
-<Graph
-  nodes={[
-    { id: 'a', x: 80,  y: 80,  label: 'A' },
-    { id: 'b', x: 280, y: 80,  label: 'B' },
-    { id: 'c', x: 180, y: 240, label: 'C' },
-  ]}
-  edges={[
-    { from: 'a', to: 'b', directed: true, label: '5' },
-    { from: 'b', to: 'c', directed: true, label: '3' },
-    { from: 'c', to: 'a', directed: true, label: '7' },
-  ]}
-  nodeColor="#818cf8"
-  edgeColor="#475569"
-  labelColor="#f8fafc"
-  fadeIn
-/>
-```
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, FadeIn, Graph } from '@elucim/core';
+
+    <Player width={500} height={350} fps={30} durationInFrames={60}>
+      <FadeIn duration={25}>
+        <Graph
+          nodes={[
+            { id: 'a', x: 100, y: 175, label: 'A', color: '#6c5ce7', radius: 22 },
+            { id: 'b', x: 250, y: 80, label: 'B', color: '#ff6b6b', radius: 22 },
+            { id: 'c', x: 400, y: 175, label: 'C', color: '#4ecdc4', radius: 22 },
+          ]}
+          edges={[
+            { from: 'a', to: 'b', directed: true, label: '4' },
+            { from: 'b', to: 'c', directed: true, label: '2' },
+          ]}
+          edgeColor="currentColor" labelColor="#fff"
+        />
+      </FadeIn>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 350, "fps": 30, "durationInFrames": 60,
+      "children": [
+        {
+          "type": "graph",
+          "nodes": [
+            { "id": "a", "x": 100, "y": 175, "label": "A", "color": "#6c5ce7", "radius": 22 },
+            { "id": "b", "x": 250, "y": 80, "label": "B", "color": "#ff6b6b", "radius": 22 },
+            { "id": "c", "x": 400, "y": 175, "label": "C", "color": "#4ecdc4", "radius": 22 }
+          ],
+          "edges": [
+            { "from": "a", "to": "b", "directed": true, "label": "4" },
+            { "from": "b", "to": "c", "directed": true, "label": "2" }
+          ],
+          "labelColor": "#fff",
+          "fadeIn": { "duration": 25 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 :::tip
 Set `directed` on individual edges to mix directed and undirected edges in the same graph.

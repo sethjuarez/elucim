@@ -5,6 +5,7 @@ description: Render SVG circles with optional stroke and fill styling.
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { CircleDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 The `<Circle>` primitive draws an SVG circle at a given center point with a specified radius. Use it for dots, nodes, highlights, and any round shape in your scenes.
 
@@ -26,18 +27,41 @@ The `<Circle>` primitive draws an SVG circle at a given center point with a spec
 
 ## Code Example
 
-```jsx
-<Circle cx={200} cy={150} r={40} fill="#4f46e5" />
+<Tabs syncKey="code-style">
+  <TabItem label="React">
+    ```jsx
+    import { Player, FadeIn, Draw, Circle } from '@elucim/core';
 
-<Circle
-  cx={100}
-  cy={100}
-  r={60}
-  fill="none"
-  stroke="#f59e0b"
-  strokeWidth={3}
-/>
-```
+    <Player width={500} height={300} fps={30} durationInFrames={60}>
+      <FadeIn duration={20}>
+        <Circle cx={150} cy={150} r={60} stroke="#6c5ce7" strokeWidth={3} fill="none" />
+      </FadeIn>
+      <Draw duration={30}>
+        <Circle cx={350} cy={150} r={60} stroke="#ff6b6b" strokeWidth={3} fill="none" />
+      </Draw>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
+      "children": [
+        {
+          "type": "circle", "cx": 150, "cy": 150, "r": 60,
+          "stroke": "#6c5ce7", "strokeWidth": 3, "fill": "none",
+          "fadeIn": { "duration": 20 }
+        },
+        {
+          "type": "circle", "cx": 350, "cy": 150, "r": 60,
+          "stroke": "#ff6b6b", "strokeWidth": 3, "fill": "none",
+          "draw": { "duration": 30 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 :::tip
 `Circle` works with the **Draw** animation to progressively reveal its stroke, creating a satisfying drawing effect.

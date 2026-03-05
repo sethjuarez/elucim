@@ -5,6 +5,7 @@ description: Draw straight lines between two points with configurable stroke sty
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { LineDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 The `<Line>` primitive renders a straight line between two points. It supports solid and dashed strokes, making it useful for connectors, axes, guides, and dividers.
 
@@ -27,21 +28,41 @@ The `<Line>` primitive renders a straight line between two points. It supports s
 
 ## Code Example
 
-```jsx
-{/* Solid line */}
-<Line x1={50} y1={50} x2={350} y2={50} stroke="#334155" strokeWidth={2} />
+<Tabs syncKey="code-style">
+  <TabItem label="React">
+    ```jsx
+    import { Player, Draw, Line } from '@elucim/core';
 
-{/* Dashed line */}
-<Line
-  x1={50}
-  y1={100}
-  x2={350}
-  y2={100}
-  stroke="#94a3b8"
-  strokeWidth={1.5}
-  strokeDasharray="6 3"
-/>
-```
+    <Player width={500} height={300} fps={30} durationInFrames={60}>
+      <Draw duration={30}>
+        <Line x1={50} y1={250} x2={450} y2={50} stroke="#6c5ce7" strokeWidth={3} />
+      </Draw>
+      <Draw duration={25}>
+        <Line x1={50} y1={50} x2={450} y2={250} stroke="#ff6b6b" strokeWidth={2} />
+      </Draw>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
+      "children": [
+        {
+          "type": "line", "x1": 50, "y1": 250, "x2": 450, "y2": 50,
+          "stroke": "#6c5ce7", "strokeWidth": 3,
+          "draw": { "duration": 30 }
+        },
+        {
+          "type": "line", "x1": 50, "y1": 50, "x2": 450, "y2": 250,
+          "stroke": "#ff6b6b", "strokeWidth": 2,
+          "draw": { "duration": 25 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 :::note
 Use `strokeDasharray` to create dashed or dotted lines. The value `"6 3"` draws 6px dashes with 3px gaps. Use `"2 2"` for a dotted effect.

@@ -3,6 +3,7 @@ title: Vectors & Vector Fields
 description: Draw individual vectors and animated vector fields in math coordinates.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 import LiveDemo from '@components/LiveDemo.tsx';
 import { VectorDemo } from '@components/Demos.tsx';
 
@@ -42,32 +43,42 @@ import { VectorDemo } from '@components/Demos.tsx';
 
 ## Code Example
 
-```jsx
-{/* Single vector */}
-<Vector
-  from={[0, 0]}
-  to={[3, 2]}
-  origin={[200, 175]}
-  scale={40}
-  color="#818cf8"
- 
-  labelOffset={[8, -8]}
-/>
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, FadeIn, Axes, Vector } from '@elucim/core';
 
-{/* Vector field */}
-<VectorField
-  fn={(x, y) => [-y, x]}
-  domain={[-4, 4]}
-  range={[-3, 3]}
-  origin={[200, 175]}
-  scale={40}
-  color="#34d399"
-  arrowScale={0.4}
-  normalize
-  spacing={1}
-  fadeIn
-/>
-```
+    <Player width={500} height={350} fps={30} durationInFrames={60}>
+      <Axes origin={[250, 200]} xRange={[-4, 4]} yRange={[-3, 3]} scale={50}
+            color="currentColor" labelColor="currentColor" />
+      <FadeIn duration={20}>
+        <Vector from={[0, 0]} to={[3, 2]} origin={[250, 200]} scale={50}
+                color="#6c5ce7" strokeWidth={2.5} label="v" />
+      </FadeIn>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 350, "fps": 30, "durationInFrames": 60,
+      "children": [
+        {
+          "type": "axes",
+          "origin": [250, 200], "domain": [-4, 4], "range": [-3, 3], "scale": 50
+        },
+        {
+          "type": "vector",
+          "from": [0, 0], "to": [3, 2],
+          "origin": [250, 200], "scale": 50,
+          "color": "#6c5ce7", "strokeWidth": 2.5, "label": "v",
+          "fadeIn": { "duration": 20 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 :::note
 Vector labels render as plain SVG text. Use a separate `<LaTeX>` node if you need math-formatted labels.

@@ -5,6 +5,7 @@ description: Draw directional arrows between two points with configurable head s
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { ArrowDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 The `<Arrow>` primitive draws a line with an arrowhead pointing from the start point to the end point. Use it for directed relationships, flow diagrams, and annotations.
 
@@ -28,29 +29,39 @@ The `<Arrow>` primitive draws a line with an arrowhead pointing from the start p
 
 ## Code Example
 
-```jsx
-{/* Simple arrow */}
-<Arrow x1={50} y1={150} x2={350} y2={150} stroke="#4f46e5" strokeWidth={2} />
+<Tabs syncKey="code-style">
+  <TabItem label="React">
+    ```jsx
+    import { Player, FadeIn, Arrow } from '@elucim/core';
 
-{/* Large arrowhead */}
-<Arrow
-  x1={100}
-  y1={50}
-  x2={300}
-  y2={250}
-  stroke="#ef4444"
-  strokeWidth={2}
-  headSize={14}
-/>
-
-{/* Dashed arrow */}
-<Arrow
-  x1={50}
-  y1={200}
-  x2={350}
-  y2={200}
-  stroke="#94a3b8"
-  strokeDasharray="6 3"
-/>
-```
+    <Player width={500} height={300} fps={30} durationInFrames={60}>
+      <FadeIn duration={20}>
+        <Arrow x1={50} y1={150} x2={200} y2={150} stroke="#6c5ce7" strokeWidth={2} headSize={10} />
+      </FadeIn>
+      <FadeIn duration={20}>
+        <Arrow x1={230} y1={150} x2={350} y2={80} stroke="#ff6b6b" strokeWidth={2} headSize={8} />
+      </FadeIn>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
+      "children": [
+        {
+          "type": "arrow", "x1": 50, "y1": 150, "x2": 200, "y2": 150,
+          "stroke": "#6c5ce7", "strokeWidth": 2, "headSize": 10,
+          "fadeIn": { "duration": 20 }
+        },
+        {
+          "type": "arrow", "x1": 230, "y1": 150, "x2": 350, "y2": 80,
+          "stroke": "#ff6b6b", "strokeWidth": 2, "headSize": 8,
+          "fadeIn": { "duration": 20 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 

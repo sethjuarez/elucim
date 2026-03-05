@@ -5,6 +5,7 @@ description: Control the timing of multiple child animations.
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { StaggerDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 <LiveDemo client:load height="250px">
   <StaggerDemo />
@@ -59,4 +60,45 @@ A semantic grouping component — all children start at the same frame. Use `Par
   </Transform>
 </Parallel>
 ```
+
+## Code Example
+
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, Stagger, FadeIn, Rect } from '@elucim/core';
+
+    <Player width={500} height={250} fps={30} durationInFrames={90}>
+      <Stagger staggerDelay={8}>
+        {[0, 1, 2, 3, 4].map(i => (
+          <FadeIn key={i} duration={15}>
+            <Rect x={40 + i * 90} y={80} width={70} height={70}
+                  stroke={['#6c5ce7', '#a29bfe', '#74b9ff', '#ff6b6b', '#ffd93d'][i]}
+                  strokeWidth={2} rx={8} />
+          </FadeIn>
+        ))}
+      </Stagger>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL JSON">
+    ```json
+    {
+      "width": 500, "height": 250, "fps": 30, "durationInFrames": 90,
+      "children": [
+        {
+          "type": "stagger", "staggerDelay": 8,
+          "children": [
+            { "type": "rect", "x": 40, "y": 80, "width": 70, "height": 70, "stroke": "#6c5ce7", "rx": 8, "fadeIn": { "duration": 15 } },
+            { "type": "rect", "x": 130, "y": 80, "width": 70, "height": 70, "stroke": "#a29bfe", "rx": 8, "fadeIn": { "duration": 15 } },
+            { "type": "rect", "x": 220, "y": 80, "width": 70, "height": 70, "stroke": "#74b9ff", "rx": 8, "fadeIn": { "duration": 15 } },
+            { "type": "rect", "x": 310, "y": 80, "width": 70, "height": 70, "stroke": "#ff6b6b", "rx": 8, "fadeIn": { "duration": 15 } },
+            { "type": "rect", "x": 400, "y": 80, "width": 70, "height": 70, "stroke": "#ffd93d", "rx": 8, "fadeIn": { "duration": 15 } }
+          ]
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 

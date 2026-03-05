@@ -3,6 +3,8 @@ title: Imperative Timeline
 description: Build animation sequences programmatically.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 ## Overview
 
 The `Timeline` class lets you build animation sequences imperatively instead of with JSX. This is useful for dynamic or data-driven animations where the structure isn't known at author time.
@@ -32,6 +34,45 @@ const tl = new Timeline(fps);
 - **`add`** — layers an animation at the current cursor position (parallel). The cursor does not move.
 - **`wait`** — advances the cursor by the given number of seconds (converted to frames using the timeline's fps).
 - **`compile`** — finalizes the timeline and returns the list of actions with their computed start frames, plus the total frame count.
+
+## Code Example
+
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, useCurrentFrame, interpolate, Circle } from '@elucim/core';
+
+    function AnimatedCircle() {
+      const frame = useCurrentFrame();
+      const x = interpolate(frame, [0, 60], [100, 400], { easing: 'easeInOutCubic' });
+      return <Circle cx={x} cy={125} r={30} fill="#6c5ce7" />;
+    }
+
+    <Player width={500} height={250} fps={30} durationInFrames={90}>
+      <AnimatedCircle />
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL JSON">
+    ```json
+    // The imperative timeline using useCurrentFrame and interpolate
+    // is a React-only feature. For DSL-based animations, use the
+    // declarative animation properties (fadeIn, draw, transform, etc.)
+    {
+      "width": 500, "height": 250, "fps": 30, "durationInFrames": 90,
+      "children": [
+        {
+          "type": "circle", "cx": 250, "cy": 125, "r": 30, "fill": "#6c5ce7",
+          "transform": {
+            "fromTranslateX": -150, "toTranslateX": 150,
+            "easing": "easeInOutCubic"
+          }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Example
 

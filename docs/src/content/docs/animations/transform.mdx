@@ -5,6 +5,7 @@ description: Spatial motion and color/opacity transitions.
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { TransformDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 <LiveDemo client:load height="250px">
   <TransformDemo />
@@ -61,4 +62,58 @@ Transitions visual properties — fill color, scale, and opacity — between two
   <Rect x={150} y={100} width={100} height={100} />
 </Morph>
 ```
+
+## Code Example
+
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, Transform, Morph, Circle, Rect } from '@elucim/core';
+
+    <Player width={500} height={250} fps={30} durationInFrames={90}>
+      <Transform
+        from={{ scale: 0.5, opacity: 0.3 }}
+        to={{ scale: 1.2, rotate: 360, opacity: 1 }}
+        duration={60}
+      >
+        <Circle cx={150} cy={125} r={40} stroke="#6c5ce7" strokeWidth={3} fill="rgba(108,92,231,0.2)" />
+      </Transform>
+      <Morph
+        from={{ fill: '#ff6b6b', opacity: 0.3 }}
+        to={{ fill: '#4ecdc4', scale: 1.3, opacity: 1 }}
+        duration={50}
+      >
+        <Rect x={310} y={85} width={80} height={80} stroke="#ff6b6b" strokeWidth={2} rx={6} />
+      </Morph>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL JSON">
+    ```json
+    {
+      "width": 500, "height": 250, "fps": 30, "durationInFrames": 90,
+      "children": [
+        {
+          "type": "circle", "cx": 150, "cy": 125, "r": 40,
+          "stroke": "#6c5ce7", "strokeWidth": 3, "fill": "rgba(108,92,231,0.2)",
+          "transform": {
+            "fromScale": 0.5, "toScale": 1.2,
+            "fromOpacity": 0.3, "toOpacity": 1,
+            "rotate": 360
+          }
+        },
+        {
+          "type": "rect", "x": 310, "y": 85, "width": 80, "height": 80,
+          "stroke": "#ff6b6b", "strokeWidth": 2, "rx": 6,
+          "morph": {
+            "fromColor": "#ff6b6b", "toColor": "#4ecdc4",
+            "fromOpacity": 0.3, "toOpacity": 1,
+            "fromScale": 1, "toScale": 1.3
+          }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 

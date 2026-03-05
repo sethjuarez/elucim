@@ -5,6 +5,7 @@ description: Animate elements in and out with opacity transitions.
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { FadeDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 <LiveDemo client:load height="250px">
   <FadeDemo />
@@ -47,4 +48,44 @@ Animates children from `opacity: 1` to `opacity: 0` over the given duration.
   <Circle cx={200} cy={150} r={60} fill="#ff6b6b" />
 </FadeOut>
 ```
+
+## Code Example
+
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, FadeIn, FadeOut, Sequence, Circle, Text } from '@elucim/core';
+
+    <Player width={500} height={250} fps={30} durationInFrames={90}>
+      <FadeIn duration={30}>
+        <Circle cx={125} cy={125} r={50} stroke="#6c5ce7" strokeWidth={3} fill="rgba(108,92,231,0.2)" />
+      </FadeIn>
+      <Sequence from={60} durationInFrames={30}>
+        <FadeOut duration={30}>
+          <Circle cx={375} cy={125} r={50} stroke="#ff6b6b" strokeWidth={3} fill="rgba(255,107,107,0.2)" />
+        </FadeOut>
+      </Sequence>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL JSON">
+    ```json
+    {
+      "width": 500, "height": 250, "fps": 30, "durationInFrames": 90,
+      "children": [
+        {
+          "type": "circle", "cx": 125, "cy": 125, "r": 50,
+          "stroke": "#6c5ce7", "strokeWidth": 3, "fill": "rgba(108,92,231,0.2)",
+          "fadeIn": { "duration": 30 }
+        },
+        {
+          "type": "circle", "cx": 375, "cy": 125, "r": 50,
+          "stroke": "#ff6b6b", "strokeWidth": 3, "fill": "rgba(255,107,107,0.2)",
+          "fadeOut": { "duration": 30 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 

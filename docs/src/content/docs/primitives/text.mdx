@@ -5,6 +5,7 @@ description: Render styled text labels at any position in your scene.
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { TextDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 The `<Text>` primitive places a text label at a given position. Control font size, weight, alignment, and color to add labels, titles, annotations, and axis markers to your scenes.
 
@@ -28,29 +29,45 @@ The `<Text>` primitive places a text label at a given position. Control font siz
 
 ## Code Example
 
-```jsx
-{/* Simple label */}
-<Text x={200} y={150} fontSize={24} fill="#1e293b">
-  Hello, Elucim!
-</Text>
+<Tabs syncKey="code-style">
+  <TabItem label="React">
+    ```jsx
+    import { Player, Write, FadeIn, Text } from '@elucim/core';
 
-{/* Centered title */}
-<Text
-  x={200}
-  y={40}
-  fontSize={32}
-  fontWeight="bold"
-  textAnchor="middle"
-  fill="#4f46e5"
->
-  Chart Title
-</Text>
-
-{/* Right-aligned annotation */}
-<Text x={380} y={280} fontSize={12} textAnchor="end" fill="#94a3b8">
-  Source: dataset.csv
-</Text>
-```
+    <Player width={500} height={300} fps={30} durationInFrames={90}>
+      <Write duration={30}>
+        <Text x={250} y={80} fill="#6c5ce7" fontSize={32} textAnchor="middle" fontWeight="bold">
+          Hello Elucim
+        </Text>
+      </Write>
+      <FadeIn duration={20}>
+        <Text x={250} y={140} fill="#a29bfe" fontSize={16} textAnchor="middle">
+          Animate concepts. Illuminate understanding.
+        </Text>
+      </FadeIn>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 300, "fps": 30, "durationInFrames": 90,
+      "children": [
+        {
+          "type": "text", "x": 250, "y": 80, "content": "Hello Elucim",
+          "fill": "#6c5ce7", "fontSize": 32, "textAnchor": "middle", "fontWeight": "bold",
+          "write": { "duration": 30 }
+        },
+        {
+          "type": "text", "x": 250, "y": 140, "content": "Animate concepts. Illuminate understanding.",
+          "fill": "#a29bfe", "fontSize": 16, "textAnchor": "middle",
+          "fadeIn": { "duration": 20 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 :::tip
 Use `textAnchor="middle"` when centering text on a known x coordinate — this avoids manually calculating text width offsets.

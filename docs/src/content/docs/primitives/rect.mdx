@@ -5,6 +5,7 @@ description: Draw rectangles with optional rounded corners and stroke styling.
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { RectDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 The `<Rect>` primitive renders an SVG rectangle. It supports rounded corners, fill, stroke, and dashed outlines — useful for bounding boxes, containers, highlights, and background regions.
 
@@ -29,30 +30,39 @@ The `<Rect>` primitive renders an SVG rectangle. It supports rounded corners, fi
 
 ## Code Example
 
-```jsx
-{/* Filled rectangle */}
-<Rect x={50} y={50} width={200} height={120} fill="#e0e7ff" stroke="#4f46e5" />
+<Tabs syncKey="code-style">
+  <TabItem label="React">
+    ```jsx
+    import { Player, FadeIn, Rect } from '@elucim/core';
 
-{/* Rounded rectangle */}
-<Rect
-  x={100}
-  y={80}
-  width={180}
-  height={100}
-  fill="none"
-  stroke="#f59e0b"
-  strokeWidth={2}
-  rx={12}
-/>
-
-{/* Dashed outline */}
-<Rect
-  x={60}
-  y={40}
-  width={280}
-  height={200}
-  stroke="#94a3b8"
-  strokeDasharray="8 4"
-/>
-```
+    <Player width={500} height={300} fps={30} durationInFrames={60}>
+      <FadeIn duration={20}>
+        <Rect x={50} y={50} width={180} height={100} stroke="#6c5ce7" strokeWidth={2} fill="rgba(108,92,231,0.15)" rx={8} />
+      </FadeIn>
+      <FadeIn duration={20}>
+        <Rect x={280} y={80} width={120} height={120} stroke="#ff6b6b" strokeWidth={2} fill="none" />
+      </FadeIn>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
+      "children": [
+        {
+          "type": "rect", "x": 50, "y": 50, "width": 180, "height": 100,
+          "stroke": "#6c5ce7", "strokeWidth": 2, "fill": "rgba(108,92,231,0.15)", "rx": 8,
+          "fadeIn": { "duration": 20 }
+        },
+        {
+          "type": "rect", "x": 280, "y": 80, "width": 120, "height": 120,
+          "stroke": "#ff6b6b", "strokeWidth": 2, "fill": "none",
+          "fadeIn": { "duration": 20 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 

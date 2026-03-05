@@ -3,6 +3,8 @@ title: Easing Functions
 description: Reference for all built-in easing curves.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 ## Built-in Easings
 
 | Function | Family | Description |
@@ -85,3 +87,40 @@ const value = interpolate(progress, [0, 1], [0, 300], {
   <Circle cx={200} cy={150} r={40} fill="#4f9eff" />
 </Transform>
 ```
+
+## Code Example
+
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, Transform, Circle, easing } from '@elucim/core';
+
+    <Player width={500} height={250} fps={30} durationInFrames={90}>
+      <Transform
+        from={{ translateX: -150 }}
+        to={{ translateX: 150 }}
+        duration={60}
+        easing={easing.easeInOutCubic}
+      >
+        <Circle cx={250} cy={125} r={20} fill="#6c5ce7" />
+      </Transform>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL JSON">
+    ```json
+    {
+      "width": 500, "height": 250, "fps": 30, "durationInFrames": 90,
+      "children": [
+        {
+          "type": "circle", "cx": 250, "cy": 125, "r": 20, "fill": "#6c5ce7",
+          "transform": {
+            "fromTranslateX": -150, "toTranslateX": 150,
+            "easing": "easeInOutCubic"
+          }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>

@@ -5,6 +5,7 @@ description: Progressively reveal strokes and text.
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { DrawDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 <LiveDemo client:load height="250px">
   <DrawDemo />
@@ -47,4 +48,42 @@ Reveals text with a combined opacity and scale animation.
   <Text x={200} y={150} fontSize={24} fill="#fff">Hello</Text>
 </Write>
 ```
+
+## Code Example
+
+<Tabs>
+  <TabItem label="React">
+    ```jsx
+    import { Player, Draw, Write, Circle, Rect, Text } from '@elucim/core';
+
+    <Player width={500} height={250} fps={30} durationInFrames={90}>
+      <Draw duration={40}>
+        <Circle cx={125} cy={125} r={60} stroke="#6c5ce7" strokeWidth={3} fill="none" />
+      </Draw>
+      <Write duration={30}>
+        <Text x={125} y={130} fill="#6c5ce7" fontSize={16} textAnchor="middle">Draw</Text>
+      </Write>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL JSON">
+    ```json
+    {
+      "width": 500, "height": 250, "fps": 30, "durationInFrames": 90,
+      "children": [
+        {
+          "type": "circle", "cx": 125, "cy": 125, "r": 60,
+          "stroke": "#6c5ce7", "strokeWidth": 3, "fill": "none",
+          "draw": { "duration": 40 }
+        },
+        {
+          "type": "text", "x": 125, "y": 130, "content": "Draw",
+          "fill": "#6c5ce7", "fontSize": 16, "textAnchor": "middle",
+          "write": { "duration": 30 }
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
 
