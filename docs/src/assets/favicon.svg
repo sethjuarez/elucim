@@ -2,4 +2,6 @@
   <circle cx="32" cy="32" r="25" fill="none" stroke="#6c5ce7" stroke-width="5.5"/>
   <path d="M 11 32 C 16.5 20.5, 25 20.5, 32 32 C 39 43.5, 47.5 43.5, 53 32"
         fill="none" stroke="#6c5ce7" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M 11 32 C 16.5 43.5, 25 43.5, 32 32 C 39 20.5, 47.5 20.5, 53 32"
+        fill="none" stroke="#00cec9" stroke-width="1.8" stroke-linecap="round"/>
 </svg>
