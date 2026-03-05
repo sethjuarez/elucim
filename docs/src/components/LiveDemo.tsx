@@ -7,12 +7,14 @@ import React from 'react';
 export default function LiveDemo({
   children,
   height = 'auto',
+  className,
 }: {
   children: React.ReactNode;
   height?: string | number;
+  className?: string;
 }) {
   return (
-    <div className="live-demo">
+    <div className={`live-demo${className ? ` ${className}` : ''}`}>
       <div className="live-demo-content" style={{ minHeight: height }}>
         {children}
       </div>

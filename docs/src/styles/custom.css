@@ -63,6 +63,25 @@
   --elucim-scene-bg: #0d0d1a;
   --elucim-scene-fg: #e0e0e0;
 }
+
+/* Hero demo — clean, no border chrome */
+.live-demo.live-demo-hero {
+  border: none;
+  margin: 0;
+  background: transparent;
+}
+
+.live-demo.live-demo-hero .live-demo-content {
+  padding: 0;
+}
+
+.live-demo.live-demo-hero [data-testid="elucim-scene"] {
+  border-radius: 12px;
+}
+
+.live-demo.live-demo-hero [data-testid="elucim-controls"] {
+  border-radius: 0 0 12px 12px;
+}
 .props-table {
   font-size: 0.9rem;
 }
