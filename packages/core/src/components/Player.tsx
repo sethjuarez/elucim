@@ -156,14 +156,12 @@ export function Player({
   const currentTime = (frame / fps).toFixed(2);
   const totalTime = ((durationInFrames - 1) / fps).toFixed(2);
 
-  const maxDisplayWidth = width;
-
   return (
     <div
       ref={containerRef}
       tabIndex={0}
       style={{
-        width: maxDisplayWidth,
+        width,
         maxWidth: '100%',
         outline: 'none',
         fontFamily: 'system-ui, sans-serif',
@@ -181,76 +179,97 @@ export function Player({
         {children}
       </Scene>
 
-      {controls && (() => {
-        const btnStyle: React.CSSProperties = {
-          background: 'none',
-          border: 'none',
-          color: controlsColor,
-          cursor: 'pointer',
-          fontSize: 14,
-          lineHeight: '32px',
-          width: 32,
-          height: 32,
-          padding: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        };
-        return (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            height: 40,
-            padding: '0 12px',
-            background: controlsBackground,
-            color: controlsColor,
-            fontSize: 13,
-            boxSizing: 'border-box',
-            overflow: 'hidden',
-          }}
-          data-testid="elucim-controls"
-        >
-          {/* Button group — tightly packed */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-            <button onClick={togglePlay} style={btnStyle}
-              data-testid="elucim-play-btn" title={playing ? 'Pause' : 'Play'}>
-              {playing ? '⏸' : '▶'}
-            </button>
-            <button onClick={stepBackward} style={btnStyle} title="Step backward">◀</button>
-            <button onClick={stepForward} style={btnStyle} title="Step forward">▶</button>
-          </div>
+      {controls && <PlayerControls
+        playing={playing}
+        progress={progress}
+        currentTime={currentTime}
+        totalTime={totalTime}
+        frame={frame}
+        bg={controlsBackground}
+        fg={controlsColor}
+        accent={controlsAccent}
+        onTogglePlay={togglePlay}
+        onStepBack={stepBackward}
+        onStepForward={stepForward}
+        onScrub={handleScrub}
+        onScrubDrag={handleScrubDrag}
+      />}
+    </div>
+  );
+}
 
-          {/* Scrub bar */}
-          <div
-            onClick={handleScrub}
-            onMouseMove={handleScrubDrag}
-            style={{ flex: 1, height: 32, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-            data-testid="elucim-scrubbar"
-          >
-            <div style={{ flex: 1, height: 4, background: controlsColor + '33', borderRadius: 2, position: 'relative' }}>
-              <div style={{
-                position: 'absolute', left: 0, top: 0, height: '100%',
-                width: `${progress * 100}%`, background: controlsAccent, borderRadius: 2,
-                transition: playing ? 'none' : 'width 0.05s',
-              }} />
-              <div style={{
-                position: 'absolute', left: `${progress * 100}%`, top: '50%',
-                transform: 'translate(-50%, -50%)', width: 10, height: 10,
-                borderRadius: '50%', boxSizing: 'border-box',
-                background: controlsAccent, border: `2px solid ${controlsColor}`,
-              }} data-testid="elucim-scrub-handle" />
-            </div>
-          </div>
+/* ── SVG icon paths (Material Design) ── */
+const ICON = {
+  play:     'M8 5v14l11-7z',
+  pause:    'M6 19h4V5H6v14zm8-14v14h4V5h-4z',
+  skipBack: 'M6 6h2v12H6zm3.5 6l8.5 6V6z',
+  skipFwd:  'M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z',
+};
 
-          <span style={{ fontSize: 12, lineHeight: '32px', minWidth: 110, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
-            data-testid="elucim-frame-display">
-            {currentTime}s / {totalTime}s &middot; F{frame}
-          </span>
+function Icon({ d }: { d: string }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d={d} />
+    </svg>
+  );
+}
+
+/* ── Scoped CSS (injected once) ── */
+const CONTROLS_CLASS = 'elucim-ctrl';
+const controlsCSS = `
+.${CONTROLS_CLASS} { display:flex; align-items:center; gap:10px; height:36px; padding:0 12px; box-sizing:border-box; font:11px/36px system-ui,sans-serif; }
+.${CONTROLS_CLASS} .btn-group { display:flex; align-items:center; gap:2px; }
+.${CONTROLS_CLASS} button { all:unset; cursor:pointer; display:flex; align-items:center; justify-content:center; width:28px; height:28px; }
+.${CONTROLS_CLASS} .scrub { flex:1; height:28px; display:flex; align-items:center; cursor:pointer; }
+.${CONTROLS_CLASS} .track { flex:1; height:4px; border-radius:2px; position:relative; }
+.${CONTROLS_CLASS} .fill { position:absolute; left:0; top:0; height:100%; border-radius:2px; }
+.${CONTROLS_CLASS} .handle { position:absolute; top:50%; width:10px; height:10px; border-radius:50%; box-sizing:border-box; transform:translate(-50%,-50%); }
+.${CONTROLS_CLASS} .time { white-space:nowrap; font-variant-numeric:tabular-nums; }
+`;
+let cssInjected = false;
+
+function PlayerControls({
+  playing, progress, currentTime, totalTime, frame,
+  bg, fg, accent,
+  onTogglePlay, onStepBack, onStepForward, onScrub, onScrubDrag,
+}: {
+  playing: boolean; progress: number; currentTime: string; totalTime: string; frame: number;
+  bg: string; fg: string; accent: string;
+  onTogglePlay: () => void; onStepBack: () => void; onStepForward: () => void;
+  onScrub: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onScrubDrag: (e: React.MouseEvent<HTMLDivElement>) => void;
+}) {
+  const styleRef = useRef<HTMLStyleElement | null>(null);
+  useEffect(() => {
+    if (!cssInjected) {
+      const el = document.createElement('style');
+      el.textContent = controlsCSS;
+      document.head.appendChild(el);
+      styleRef.current = el;
+      cssInjected = true;
+    }
+  }, []);
+
+  return (
+    <div className={CONTROLS_CLASS} style={{ background: bg, color: fg }} data-testid="elucim-controls">
+      <div className="btn-group">
+        <button onClick={onTogglePlay} data-testid="elucim-play-btn" title={playing ? 'Pause' : 'Play'}>
+          <Icon d={playing ? ICON.pause : ICON.play} />
+        </button>
+        <button onClick={onStepBack} title="Step backward"><Icon d={ICON.skipBack} /></button>
+        <button onClick={onStepForward} title="Step forward"><Icon d={ICON.skipFwd} /></button>
+      </div>
+
+      <div className="scrub" onClick={onScrub} onMouseMove={onScrubDrag} data-testid="elucim-scrubbar">
+        <div className="track" style={{ background: fg + '33' }}>
+          <div className="fill" style={{ width: `${progress * 100}%`, background: accent, transition: playing ? 'none' : 'width 0.05s' }} />
+          <div className="handle" style={{ left: `${progress * 100}%`, background: accent, border: `2px solid ${fg}` }} data-testid="elucim-scrub-handle" />
         </div>
-        );
-      })()}
+      </div>
+
+      <span className="time" data-testid="elucim-frame-display">
+        {currentTime}s / {totalTime}s · F{frame}
+      </span>
     </div>
   );
 }
