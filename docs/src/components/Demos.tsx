@@ -150,7 +150,7 @@ export function AxesDemo() {
 
 export function VectorDemo() {
   return (
-    <Player width={500} height={350} fps={30} durationInFrames={90} autoPlay loop>
+    <Player width={500} height={400} fps={30} durationInFrames={90} autoPlay loop>
       <Axes origin={[250, 200]} domain={[-4, 4]} range={[-3, 3]} scale={50}
             axisColor="currentColor" labelColor="currentColor" />
       <FadeIn duration={20}>
