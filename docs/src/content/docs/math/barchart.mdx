@@ -1,0 +1,56 @@
+---
+title: BarChart
+description: Render animated bar charts for data visualization scenes.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { BarChartDemo } from '@components/Demos.tsx';
+
+The `<BarChart>` primitive draws a vertical bar chart from an array of labeled values. Use it for statistics, comparisons, and any data-driven visualization.
+
+<LiveDemo client:visible label="Live Demo" height="300px">
+  <BarChartDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `bars` | `{ label: string, value: number, color?: string }[]` | — | Array of bar definitions |
+| `x` | `number` | `0` | X position of the chart |
+| `y` | `number` | `0` | Y position of the chart |
+| `width` | `number` | `400` | Total chart width in pixels |
+| `height` | `number` | `250` | Total chart height in pixels |
+| `barColor` | `string` | `'#4f46e5'` | Default fill color for bars |
+| `labelColor` | `string` | `'currentColor'` | Color of bar labels |
+| `showValues` | `boolean` | `true` | Display the value above each bar |
+| `valueFormat` | `'number' \| 'percent'` | `'number'` | Format values as plain numbers or percentages |
+| `maxValue` | `number` | `undefined` | Override the automatic y-axis maximum |
+| `gap` | `number` | `0.2` | Gap between bars as a fraction of bar width (0–1) |
+| `labelFontSize` | `number` | `12` | Font size for labels |
+
+## Code Example
+
+```jsx
+<BarChart
+  bars={[
+    { label: 'Jan', value: 30 },
+    { label: 'Feb', value: 55, color: '#818cf8' },
+    { label: 'Mar', value: 42 },
+    { label: 'Apr', value: 68, color: '#34d399' },
+  ]}
+  x={40}
+  y={20}
+  width={320}
+  height={220}
+  barColor="#6366f1"
+  labelColor="#94a3b8"
+  showValues
+  gap={0.25}
+/>
+```
+
+:::tip
+Set a per-bar `color` to highlight specific values, or use the global `barColor` for a uniform look.
+:::
+

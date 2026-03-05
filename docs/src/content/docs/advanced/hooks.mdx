@@ -1,0 +1,107 @@
+---
+title: Hooks Reference
+description: React hooks for reading animation state and mapping frame values.
+---
+
+Elucim provides three core hooks for building custom animated components. All hooks must be called inside a `<Scene>` or `<Player>`.
+
+## useCurrentFrame()
+
+Returns the current frame number, starting at `0` and going up to `durationInFrames - 1`.
+
+```ts
+import { useCurrentFrame } from '@elucim/core';
+
+const frame = useCurrentFrame(); // 0, 1, 2, … durationInFrames - 1
+```
+
+This is the primary hook for driving custom animations — read the frame, compute derived values, and render accordingly.
+
+```tsx
+function PulsingDot() {
+  const frame = useCurrentFrame();
+  const radius = 20 + Math.sin(frame * 0.1) * 10;
+  return <circle cx={200} cy={200} r={radius} fill="#4fc3f7" />;
+}
+```
+
+## interpolate()
+
+Maps a frame value through input/output ranges with optional easing and extrapolation. This is a pure function, not a hook — but it's most commonly used alongside `useCurrentFrame()`.
+
+```ts
+import { interpolate } from '@elucim/core';
+
+const value = interpolate(frame, inputRange, outputRange, options?);
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `frame` | `number` | The current value (typically from `useCurrentFrame()`) |
+| `inputRange` | `readonly number[]` | Breakpoints on the input axis (min 2 values, ascending) |
+| `outputRange` | `readonly number[]` | Corresponding output values (same length as `inputRange`) |
+| `options` | `InterpolateOptions` | Optional easing and extrapolation config |
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `easing` | `EasingFunction` | `linear` | Easing function applied to each segment |
+| `extrapolateLeft` | `'clamp' \| 'extend'` | `'clamp'` | Behavior when `frame` is below the first input value |
+| `extrapolateRight` | `'clamp' \| 'extend'` | `'clamp'` | Behavior when `frame` is above the last input value |
+
+### Examples
+
+```ts
+// Fade in over the first 30 frames
+const opacity = interpolate(frame, [0, 30], [0, 1]);
+
+// Move from left to right, then stay put
+const x = interpolate(frame, [0, 60], [0, 400], {
+  easing: easeOutCubic,
+  extrapolateRight: 'clamp',
+});
+
+// Multi-segment: appear, hold, disappear
+const alpha = interpolate(frame, [0, 20, 80, 100], [0, 1, 1, 0]);
+```
+
+:::tip
+With `extrapolateLeft: 'clamp'` (the default), frames before the first input value return the first output value. Use `'extend'` to continue the curve beyond the defined range.
+:::
+
+## useElucimContext()
+
+Returns the full scene context — frame, timing, and dimensions.
+
+```ts
+import { useElucimContext } from '@elucim/core';
+
+const { frame, fps, durationInFrames, width, height } = useElucimContext();
+```
+
+### Return Value
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `frame` | `number` | Current frame (same as `useCurrentFrame()`) |
+| `fps` | `number` | Frames per second |
+| `durationInFrames` | `number` | Total duration in frames |
+| `width` | `number` | Scene width in pixels |
+| `height` | `number` | Scene height in pixels |
+
+Use this when you need more than just the frame — for example, to compute time in seconds (`frame / fps`) or to position elements relative to the scene center (`width / 2`).
+
+```tsx
+function Timer() {
+  const { frame, fps, width } = useElucimContext();
+  const seconds = (frame / fps).toFixed(1);
+  return (
+    <text x={width - 20} y={30} fill="#94a3b8" textAnchor="end" fontSize={16}>
+      {seconds}s
+    </text>
+  );
+}
+```

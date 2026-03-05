@@ -9,3 +9,5 @@ playwright-report/
 screenshots/
 *.local
 .DS_Store
+docs/.astro/
+docs/dist/

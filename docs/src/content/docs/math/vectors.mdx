@@ -1,0 +1,75 @@
+---
+title: Vectors & Vector Fields
+description: Draw individual vectors and animated vector fields in math coordinates.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { VectorDemo } from '@components/Demos.tsx';
+
+`<Vector>` draws a single arrow between two points in math coordinates, while `<VectorField>` visualizes a two-dimensional field of arrows defined by a function.
+
+<LiveDemo client:visible label="Live Demo" height="350px">
+  <VectorDemo client:visible />
+</LiveDemo>
+
+## Vector Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `from` | `[number, number]` | `[0, 0]` | Start point in math coordinates |
+| `to` | `[number, number]` | — | End point in math coordinates |
+| `origin` | `[number, number]` | `[200, 200]` | Pixel position of the coordinate origin |
+| `scale` | `number` | `40` | Pixels per unit |
+| `color` | `string` | `'currentColor'` | Arrow color |
+| `strokeWidth` | `number` | `2` | Stroke width |
+| `label` | `string` | `undefined` | Text label rendered near the arrow |
+| `labelOffset` | `[number, number]` | `[0, -10]` | Pixel offset for the label |
+
+## VectorField Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `fn` | `(x: number, y: number) => [number, number]` | — | Function mapping each point to a direction |
+| `domain` | `[number, number]` | `[-5, 5]` | x-range of the field |
+| `range` | `[number, number]` | `[-5, 5]` | y-range of the field |
+| `origin` | `[number, number]` | `[200, 200]` | Pixel position of the coordinate origin |
+| `scale` | `number` | `40` | Pixels per unit |
+| `color` | `string` | `'#4f46e5'` | Arrow color |
+| `arrowScale` | `number` | `1` | Multiplier for arrow length |
+| `normalize` | `boolean` | `false` | Normalize all arrows to the same length |
+| `spacing` | `number` | `1` | Grid spacing between arrows in math units |
+| `fadeIn` | `boolean` | `false` | Animate arrows in on mount |
+
+## Code Example
+
+```jsx
+{/* Single vector */}
+<Vector
+  from={[0, 0]}
+  to={[3, 2]}
+  origin={[200, 175]}
+  scale={40}
+  color="#818cf8"
+  label="v"
+  labelOffset={[8, -8]}
+/>
+
+{/* Vector field */}
+<VectorField
+  fn={(x, y) => [-y, x]}
+  domain={[-4, 4]}
+  range={[-3, 3]}
+  origin={[200, 175]}
+  scale={40}
+  color="#34d399"
+  arrowScale={0.4}
+  normalize
+  spacing={1}
+  fadeIn
+/>
+```
+
+:::note
+Vector labels render as plain SVG text. Use a separate `<LaTeX>` node if you need math-formatted labels.
+:::
+

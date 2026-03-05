@@ -1,0 +1,52 @@
+---
+title: Graph
+description: Render node-and-edge graphs for discrete math and network visualizations.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { GraphDemo } from '@components/Demos.tsx';
+
+The `<Graph>` primitive draws a node-and-edge graph from declarative data. Use it for trees, networks, state machines, and any discrete-math diagram.
+
+<LiveDemo client:visible label="Live Demo" height="350px">
+  <GraphDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `nodes` | `{ id: string, x: number, y: number, label?: string, color?: string, radius?: number }[]` | — | Array of node definitions |
+| `edges` | `{ from: string, to: string, directed?: boolean, label?: string, color?: string, weight?: number }[]` | — | Array of edge definitions |
+| `nodeColor` | `string` | `'#4f46e5'` | Default fill color for nodes |
+| `edgeColor` | `string` | `'#94a3b8'` | Default stroke color for edges |
+| `labelColor` | `string` | `'#e2e8f0'` | Color for node and edge labels |
+| `nodeRadius` | `number` | `18` | Default node radius in pixels |
+| `edgeWidth` | `number` | `2` | Default edge stroke width |
+| `fadeIn` | `boolean` | `false` | Animate the graph in on mount |
+
+## Code Example
+
+```jsx
+<Graph
+  nodes={[
+    { id: 'a', x: 80,  y: 80,  label: 'A' },
+    { id: 'b', x: 280, y: 80,  label: 'B' },
+    { id: 'c', x: 180, y: 240, label: 'C' },
+  ]}
+  edges={[
+    { from: 'a', to: 'b', directed: true, label: '5' },
+    { from: 'b', to: 'c', directed: true, label: '3' },
+    { from: 'c', to: 'a', directed: true, label: '7' },
+  ]}
+  nodeColor="#818cf8"
+  edgeColor="#475569"
+  labelColor="#f8fafc"
+  fadeIn
+/>
+```
+
+:::tip
+Set `directed` on individual edges to mix directed and undirected edges in the same graph.
+:::
+

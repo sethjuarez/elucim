@@ -1,0 +1,62 @@
+---
+title: Stagger & Parallel
+description: Control the timing of multiple child animations.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { StaggerDemo } from '@components/Demos.tsx';
+
+<LiveDemo client:load height="250px">
+  <StaggerDemo />
+</LiveDemo>
+
+## Stagger
+
+Reveals children one by one, inserting a fixed delay between each child's start time.
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `staggerDelay` | `number` | Frames between each child's start |
+| `children` | `ReactNode` | Animation elements to stagger |
+
+### Example
+
+```tsx
+<Stagger staggerDelay={10}>
+  <FadeIn duration={20}>
+    <Circle cx={100} cy={150} r={30} fill="#4f9eff" />
+  </FadeIn>
+  <FadeIn duration={20}>
+    <Circle cx={200} cy={150} r={30} fill="#ff6b6b" />
+  </FadeIn>
+  <FadeIn duration={20}>
+    <Circle cx={300} cy={150} r={30} fill="#50fa7b" />
+  </FadeIn>
+</Stagger>
+```
+
+## Parallel
+
+A semantic grouping component — all children start at the same frame. Use `Parallel` to mark animations that should play concurrently.
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `children` | `ReactNode` | Animation elements to run concurrently |
+
+### Example
+
+```tsx
+<Parallel>
+  <FadeIn duration={30}>
+    <Circle cx={150} cy={150} r={40} fill="#4f9eff" />
+  </FadeIn>
+  <Transform from={{ translateX: 100 }} to={{ translateX: 0 }} duration={30}>
+    <Rect x={250} y={110} width={80} height={80} fill="#ff6b6b" />
+  </Transform>
+</Parallel>
+```
+

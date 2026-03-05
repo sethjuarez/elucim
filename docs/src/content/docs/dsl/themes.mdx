@@ -1,0 +1,105 @@
+---
+title: Themes
+description: Pre-built color themes and custom theme creation for the Builder API.
+---
+
+Themes provide a consistent color palette for presentations built with the [Builder API](/dsl/builder-api/). Two themes ship with `@elucim/dsl` — `darkTheme` and `lightTheme`.
+
+## Usage
+
+```ts
+import { presentation, darkTheme, lightTheme } from '@elucim/dsl';
+
+const doc = presentation('My Talk', darkTheme).slide('Intro', s => {
+  s.title('Hello');
+}).build();
+```
+
+The theme is passed to the `SlideBuilder`, which uses it for default colors on titles, subtitles, boxes, arrows, and other elements.
+
+## Theme Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `background` | `string` | Slide background color |
+| `title` | `string` | Title text color |
+| `subtitle` | `string` | Subtitle / secondary text color |
+| `primary` | `string` | Primary accent (arrows, highlights) |
+| `secondary` | `string` | Secondary accent |
+| `tertiary` | `string` | Third accent |
+| `muted` | `string` | Muted / annotation color |
+| `text` | `string` | Default body text color |
+| `boxFill` | `string` | Fill color for diagram boxes |
+| `boxStroke` | `string` | Stroke color for diagram boxes |
+| `success` | `string` | Positive / success color |
+| `warning` | `string` | Warning / highlight color |
+| `error` | `string` | Error / negative color |
+| `palette` | `string[]` | 8-color sequential palette for data vis and accents |
+
+## Color Values
+
+| Property | Dark Theme | Light Theme |
+|----------|-----------|-------------|
+| `background` | `#0a0a1e` | `#f8fafc` |
+| `title` | `#e0e7ff` | `#1e293b` |
+| `subtitle` | `#94a3b8` | `#64748b` |
+| `primary` | `#4fc3f7` | `#2563eb` |
+| `secondary` | `#a78bfa` | `#7c3aed` |
+| `tertiary` | `#f472b6` | `#db2777` |
+| `muted` | `#64748b` | `#94a3b8` |
+| `text` | `#c8d6e5` | `#334155` |
+| `boxFill` | `rgba(79,195,247,0.12)` | `rgba(37,99,235,0.08)` |
+| `boxStroke` | `#4fc3f7` | `#2563eb` |
+| `success` | `#34d399` | `#16a34a` |
+| `warning` | `#fbbf24` | `#d97706` |
+| `error` | `#f87171` | `#dc2626` |
+
+### Palette Colors
+
+| Index | Dark Theme | Light Theme |
+|-------|-----------|-------------|
+| 0 | `#4fc3f7` | `#2563eb` |
+| 1 | `#a78bfa` | `#7c3aed` |
+| 2 | `#f472b6` | `#db2777` |
+| 3 | `#34d399` | `#16a34a` |
+| 4 | `#fbbf24` | `#d97706` |
+| 5 | `#fb923c` | `#ea580c` |
+| 6 | `#6366f1` | `#4f46e5` |
+| 7 | `#22d3ee` | `#0891b2` |
+
+## Custom Themes
+
+Create a custom theme by implementing the `Theme` interface:
+
+```ts
+import { presentation } from '@elucim/dsl';
+import type { Theme } from '@elucim/dsl';
+
+const solarized: Theme = {
+  background: '#002b36',
+  title: '#fdf6e3',
+  subtitle: '#93a1a1',
+  primary: '#268bd2',
+  secondary: '#2aa198',
+  tertiary: '#d33682',
+  muted: '#586e75',
+  text: '#eee8d5',
+  boxFill: 'rgba(38,139,210,0.15)',
+  boxStroke: '#268bd2',
+  success: '#859900',
+  warning: '#b58900',
+  error: '#dc322f',
+  palette: [
+    '#268bd2', '#2aa198', '#d33682', '#859900',
+    '#b58900', '#cb4b16', '#6c71c4', '#93a1a1',
+  ],
+};
+
+const doc = presentation('Solarized Talk', solarized)
+  .slide('Hello', s => s.title('Custom colors!'))
+  .build();
+```
+
+:::tip
+When creating a custom theme, start by copying `darkTheme` or `lightTheme` and adjusting the colors. The `palette` array is used by `boxRow`, `boxColumn`, `barChart`, and other helpers to cycle through colors automatically.
+:::

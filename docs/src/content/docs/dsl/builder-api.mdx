@@ -1,0 +1,182 @@
+---
+title: Builder API
+description: A fluent TypeScript API for generating ElucimDocument JSON programmatically.
+---
+
+The Builder API provides a chainable TypeScript interface for constructing presentation documents. Instead of writing raw JSON, you describe slides with method calls and get a fully valid `ElucimDocument` at the end.
+
+## Getting Started
+
+```ts
+import { presentation, darkTheme } from '@elucim/dsl';
+
+const doc = presentation('My Talk', darkTheme)
+  .slide('Introduction', s => {
+    s.title('Welcome');
+    s.subtitle('A quick overview');
+  })
+  .slide('The Math', s => {
+    s.title('Key Equation');
+    s.wait(5);
+    s.latex('E = mc^2', { y: 350, fontSize: 48 });
+  })
+  .build();
+```
+
+Call `.build()` to get an `ElucimDocument`, or `.toJSON()` to get a JSON string.
+
+## presentation()
+
+Entry point for building a presentation.
+
+```ts
+function presentation(
+  title: string,
+  theme?: Theme,
+  opts?: PresentationOptions
+): PresentationBuilder
+```
+
+### PresentationOptions
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `width` | `number` | `900` | Slide width |
+| `height` | `number` | `640` | Slide height |
+| `fps` | `number` | `30` | Frames per second for each slide's player |
+| `transition` | `string` | `'fade'` | `'none'` \| `'fade'` \| `'slide-left'` \| `'slide-up'` \| `'zoom'` |
+| `transitionDuration` | `number` | `10` | Transition duration in frames |
+| `showHud` | `boolean` | `true` | Show slide counter |
+| `showNotes` | `boolean` | `true` | Show presenter notes |
+
+### PresentationBuilder Methods
+
+| Method | Description |
+|--------|-------------|
+| `.slide(title, build, opts?)` | Add a slide. `build` receives a `SlideBuilder`. Optional `opts: { notes?, background? }` |
+| `.build()` | Returns the final `ElucimDocument` |
+| `.toJSON(pretty?)` | Returns a JSON string (pretty-printed by default) |
+
+## SlideBuilder
+
+The `build` callback for each slide receives a `SlideBuilder` with methods for adding content.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `width` | `number` | Slide width |
+| `height` | `number` | Slide height |
+| `fps` | `number` | Frames per second |
+| `cx` | `number` | Horizontal center (`width / 2`) |
+| `cy` | `number` | Vertical center (`height / 2`) |
+| `frame` | `number` | Current animation-frame cursor position |
+
+### Timing
+
+| Method | Description |
+|--------|-------------|
+| `wait(frames)` | Advance the frame cursor by N frames |
+| `at(frame)` | Set the frame cursor to an absolute position |
+
+### Text
+
+| Method | Description |
+|--------|-------------|
+| `title(content, opts?)` | Add a centered title. Options: `y`, `fontSize`, `color` |
+| `subtitle(content, opts?)` | Add a centered subtitle. Options: `y`, `fontSize`, `color` |
+| `text(content, opts)` | Add text at `x`, `y`. Options: `fontSize`, `color`, `anchor`, `fontWeight`, `fontFamily`, `fadeIn`, `advance` |
+| `latex(expression, opts?)` | Add a LaTeX expression. Options: `x`, `y`, `fontSize`, `color`, `fadeIn`, `advance` |
+
+### Shapes
+
+| Method | Description |
+|--------|-------------|
+| `arrow(x1, y1, x2, y2, opts?)` | Draw an arrow. Options: `color`, `strokeWidth`, `headSize`, `dashed`, `fadeIn`, `advance` |
+| `line(x1, y1, x2, y2, opts?)` | Draw a line. Options: `color`, `strokeWidth`, `dashed`, `fadeIn`, `advance` |
+| `rect(x, y, w, h, opts?)` | Draw a rectangle. Options: `fill`, `stroke`, `strokeWidth`, `rx`, `dashed`, `fadeIn`, `advance` |
+| `circle(cx, cy, r, opts?)` | Draw a circle. Options: `fill`, `stroke`, `strokeWidth`, `fadeIn`, `advance` |
+
+### Data Visualizations
+
+| Method | Description |
+|--------|-------------|
+| `barChart(bars, opts)` | Add a bar chart. `bars: { label, value, color? }[]`. Options: `x`, `y`, `width`, `height` |
+| `matrix(values, opts?)` | Add a matrix. `values: (number\|string)[][]`. Options: `x`, `y`, `cellSize`, `color`, `bracketColor`, `fontSize`, `fadeIn` |
+| `graph(nodes, edges, opts?)` | Add a node-and-edge graph. Options: `nodeColor`, `edgeColor`, `labelColor`, `nodeRadius`, `edgeWidth`, `fadeIn` |
+
+### Layout Helpers
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `boxRow(labels, opts?)` | `{ x, y, w, h, cx, cy }[]` | Create a horizontal row of labeled boxes |
+| `boxColumn(labels, opts?)` | `{ x, y, w, h, cx, cy }[]` | Create a vertical column of labeled boxes |
+| `connectDown(positions, opts?)` | `this` | Draw downward arrows between stacked positions |
+| `connectRows(from, to, opts?)` | `this` | Draw arrows connecting two rows of positions |
+
+### Raw Node Insertion
+
+| Method | Description |
+|--------|-------------|
+| `add(node, advanceFrames?)` | Insert a raw DSL node at the current frame cursor |
+| `addAt(frame, node)` | Insert a raw node at a specific frame (doesn't move cursor) |
+| `addAll(nodes, advanceFrames?)` | Insert multiple raw nodes at the current frame |
+
+All methods return `this` for chaining (except `boxRow` / `boxColumn` which return position arrays).
+
+## Full Example
+
+```ts
+import { presentation, darkTheme } from '@elucim/dsl';
+import fs from 'fs';
+
+const t = darkTheme;
+
+const doc = presentation('Linear Algebra', darkTheme, {
+  width: 900,
+  height: 640,
+  fps: 30,
+  showNotes: true,
+})
+  .slide('Vectors', s => {
+    s.title('What is a Vector?');
+    s.wait(5);
+    s.subtitle('A quantity with magnitude and direction');
+    s.wait(10);
+    s.arrow(200, 400, 500, 200, { color: t.primary, strokeWidth: 3 });
+    s.wait(5);
+    s.latex('\\vec{v} = \\begin{bmatrix} 3 \\\\ 2 \\end{bmatrix}', {
+      x: 600, y: 300, fontSize: 28, color: t.text,
+    });
+  }, { notes: 'Introduce vectors as arrows in 2D space.' })
+
+  .slide('Matrix Multiplication', s => {
+    s.title('Matrices Transform Vectors');
+    s.wait(5);
+    s.matrix([[2, 1], [0, 3]], { x: 200, y: 250, cellSize: 50, color: t.secondary });
+    s.wait(5);
+    s.latex('\\times', { x: 380, y: 290, fontSize: 32 });
+    s.wait(3);
+    s.matrix([['x'], ['y']], { x: 430, y: 250, cellSize: 50, color: t.primary });
+    s.wait(5);
+    s.arrow(520, 290, 580, 290, { color: t.muted });
+    s.matrix([['2x + y'], ['3y']], { x: 620, y: 250, cellSize: 80, color: t.success });
+  }, { notes: 'Show how a 2×2 matrix transforms a 2D vector.' })
+
+  .build();
+
+// Write to disk
+fs.writeFileSync('linear-algebra.json', JSON.stringify(doc, null, 2));
+```
+
+Run with:
+
+```bash
+npx tsx my-script.ts
+```
+
+This generates a valid `ElucimDocument` JSON file that can be rendered with [`<DslRenderer>`](/dsl/renderer/).
+
+:::tip
+The Builder API handles frame timing, sequence wrapping, and fade-in animations automatically — you just describe *what* to show and *when*.
+:::

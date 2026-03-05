@@ -1,0 +1,68 @@
+---
+title: Axes & Function Plots
+description: Draw 2D coordinate systems and plot mathematical functions.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { AxesDemo } from '@components/Demos.tsx';
+
+`<Axes>` creates a 2D coordinate system with labeled tick marks, and `<FunctionPlot>` draws a mathematical function curve on those axes. Together they form the foundation for any math visualization.
+
+<LiveDemo client:visible label="Live Demo" height="350px">
+  <AxesDemo client:visible />
+</LiveDemo>
+
+## Axes Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `origin` | `[number, number]` | `[200, 200]` | Pixel position of the origin |
+| `xRange` | `[number, number]` | `[-5, 5]` | Visible range on the x-axis |
+| `yRange` | `[number, number]` | `[-5, 5]` | Visible range on the y-axis |
+| `scale` | `number` | `40` | Pixels per unit |
+| `color` | `string` | `'currentColor'` | Axis line color |
+| `labelColor` | `string` | `'currentColor'` | Tick label color |
+| `showGrid` | `boolean` | `false` | Show background grid lines |
+| `gridColor` | `string` | `'#e2e8f0'` | Grid line color |
+| `tickSize` | `number` | `6` | Length of tick marks in pixels |
+
+## FunctionPlot Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `fn` | `(x: number) => number` | — | The function to plot |
+| `domain` | `[number, number]` | `[-5, 5]` | x-domain to evaluate |
+| `origin` | `[number, number]` | `[200, 200]` | Pixel position of the origin (must match Axes) |
+| `scale` | `number` | `40` | Pixels per unit (must match Axes) |
+| `color` | `string` | `'#4f46e5'` | Stroke color of the curve |
+| `strokeWidth` | `number` | `2` | Stroke width |
+| `samples` | `number` | `200` | Number of evaluation points |
+
+## Code Example
+
+```jsx
+<Axes
+  origin={[200, 175]}
+  xRange={[-4, 4]}
+  yRange={[-3, 3]}
+  scale={40}
+  showGrid
+  gridColor="#334155"
+  color="#94a3b8"
+  labelColor="#94a3b8"
+/>
+
+<FunctionPlot
+  fn={(x) => Math.sin(x)}
+  domain={[-4, 4]}
+  origin={[200, 175]}
+  scale={40}
+  color="#818cf8"
+  strokeWidth={2}
+/>
+```
+
+:::tip
+Keep `origin` and `scale` identical on both `<Axes>` and `<FunctionPlot>` so the curve aligns with the grid.
+:::
+

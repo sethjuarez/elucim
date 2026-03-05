@@ -1,0 +1,45 @@
+---
+title: Circle
+description: Render SVG circles with optional stroke and fill styling.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { CircleDemo } from '@components/Demos.tsx';
+
+The `<Circle>` primitive draws an SVG circle at a given center point with a specified radius. Use it for dots, nodes, highlights, and any round shape in your scenes.
+
+<LiveDemo client:visible label="Live Demo" height="300px">
+  <CircleDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `cx` | `number` | `0` | X coordinate of the circle center |
+| `cy` | `number` | `0` | Y coordinate of the circle center |
+| `r` | `number` | `10` | Radius of the circle |
+| `fill` | `string` | `'none'` | Fill color |
+| `stroke` | `string` | `'currentColor'` | Stroke color |
+| `strokeWidth` | `number` | `1` | Width of the stroke |
+| `opacity` | `number` | `1` | Opacity from 0 to 1 |
+
+## Code Example
+
+```jsx
+<Circle cx={200} cy={150} r={40} fill="#4f46e5" />
+
+<Circle
+  cx={100}
+  cy={100}
+  r={60}
+  fill="none"
+  stroke="#f59e0b"
+  strokeWidth={3}
+/>
+```
+
+:::tip
+`Circle` works with the **Draw** animation to progressively reveal its stroke, creating a satisfying drawing effect.
+:::
+

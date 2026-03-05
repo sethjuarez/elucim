@@ -1,0 +1,50 @@
+---
+title: Draw & Write
+description: Progressively reveal strokes and text.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { DrawDemo } from '@components/Demos.tsx';
+
+<LiveDemo client:load height="250px">
+  <DrawDemo />
+</LiveDemo>
+
+## Draw
+
+Progressively reveals the stroke of a shape using `strokeDashoffset`. Works best with stroke-based shapes such as `Circle`, `Line`, `Arrow`, `Rect`, and `Polygon`.
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `duration` | `number` | Length of the animation in frames |
+| `children` | `ReactNode` | Stroke-based shapes to reveal |
+
+### Example
+
+```tsx
+<Draw duration={45}>
+  <Circle cx={200} cy={150} r={60} stroke="#4f9eff" strokeWidth={3} fill="none" />
+</Draw>
+```
+
+## Write
+
+Reveals text with a combined opacity and scale animation.
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `duration` | `number` | Length of the animation in frames |
+| `children` | `ReactNode` | `Text` elements to reveal |
+
+### Example
+
+```tsx
+<Write duration={30}>
+  <Text x={200} y={150} fontSize={24} fill="#fff">Hello</Text>
+</Write>
+```
+

@@ -1,0 +1,22 @@
+{
+  "name": "@elucim/docs",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/react": "^4.2.0",
+    "@astrojs/starlight": "^0.34.0",
+    "astro": "^5.5.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@elucim/core": "workspace:*",
+    "@elucim/dsl": "workspace:*",
+    "katex": "^0.16.33",
+    "sharp": "^0.33.0"
+  }
+}

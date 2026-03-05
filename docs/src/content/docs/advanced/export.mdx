@@ -1,0 +1,95 @@
+---
+title: Video Export
+description: Render Elucim animations to WebM or MP4 directly in the browser.
+---
+
+Elucim can export animations as video files without any server-side rendering. The export pipeline captures each frame by rendering the SVG scene to a `<canvas>`, then encodes the frame sequence using the browser's `MediaRecorder` API.
+
+## exportAnimation()
+
+The high-level function that renders all frames and triggers a browser download.
+
+```ts
+import { exportAnimation } from '@elucim/core';
+
+await exportAnimation(svgElement, renderFrame, {
+  fps: 60,
+  totalFrames: 300,
+  width: 1920,
+  height: 1080,
+  format: 'webm',
+  bitrate: 5_000_000,
+  onProgress: (frame, total) => console.log(`${frame}/${total}`),
+});
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `svgElement` | `SVGSVGElement` | Reference to the SVG element to capture |
+| `renderFrame` | `(frame: number) => void \| Promise<void>` | Function that updates the scene to a given frame |
+| `options` | `ExportOptions` | Export configuration (see below) |
+
+### ExportOptions
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `fps` | `number` | `60` | Frames per second |
+| `totalFrames` | `number` | **required** | Number of frames to capture |
+| `width` | `number` | `1920` | Output width in pixels |
+| `height` | `number` | `1080` | Output height in pixels |
+| `format` | `'webm' \| 'mp4'` | `'webm'` | Output format |
+| `bitrate` | `number` | `5_000_000` | Video bitrate in bits/second |
+| `onProgress` | `(frame, total) => void` | — | Progress callback |
+
+## useExport() Hook
+
+A React hook that wraps `exportAnimation` with state management for progress tracking and cancellation.
+
+```tsx
+import { useExport } from '@elucim/core';
+
+function ExportButton({ svgRef, setFrame }) {
+  const { isExporting, progress, currentFrame, startExport, cancel } = useExport();
+
+  const handleExport = () =>
+    startExport(svgRef.current!, setFrame, {
+      fps: 60,
+      totalFrames: 300,
+      format: 'webm',
+    });
+
+  return (
+    <div>
+      {isExporting ? (
+        <>
+          <progress value={progress} max={1} />
+          <span>Frame {currentFrame}</span>
+          <button onClick={cancel}>Cancel</button>
+        </>
+      ) : (
+        <button onClick={handleExport}>Export Video</button>
+      )}
+    </div>
+  );
+}
+```
+
+### Return Value
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `isExporting` | `boolean` | Whether an export is in progress |
+| `progress` | `number` | Export progress from `0` to `1` |
+| `currentFrame` | `number` | The frame currently being captured |
+| `startExport` | `(svg, setFrame, opts) => Promise<void>` | Begin exporting |
+| `cancel` | `() => void` | Cancel the current export |
+
+## Browser Support
+
+Export relies on `HTMLCanvasElement`, `MediaRecorder`, and the `video/webm` MIME type. This works in Chrome, Edge, and Firefox. Safari support for `MediaRecorder` may vary — check [caniuse.com](https://caniuse.com/mediarecorder) for the latest status.
+
+:::note
+MP4 output depends on the browser supporting the `video/mp4` codec in `MediaRecorder`. If unavailable, fall back to `webm`.
+:::

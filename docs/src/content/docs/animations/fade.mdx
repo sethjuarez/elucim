@@ -1,0 +1,50 @@
+---
+title: FadeIn & FadeOut
+description: Animate elements in and out with opacity transitions.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { FadeDemo } from '@components/Demos.tsx';
+
+<LiveDemo client:load height="250px">
+  <FadeDemo />
+</LiveDemo>
+
+## FadeIn
+
+Animates children from `opacity: 0` to `opacity: 1` over the given duration.
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `duration` | `number` | Length of the animation in frames |
+| `children` | `ReactNode` | Elements to fade in |
+
+### Example
+
+```tsx
+<FadeIn duration={30}>
+  <Circle cx={200} cy={150} r={60} fill="#4f9eff" />
+</FadeIn>
+```
+
+## FadeOut
+
+Animates children from `opacity: 1` to `opacity: 0` over the given duration.
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `duration` | `number` | Length of the animation in frames |
+| `children` | `ReactNode` | Elements to fade out |
+
+### Example
+
+```tsx
+<FadeOut duration={30}>
+  <Circle cx={200} cy={150} r={60} fill="#ff6b6b" />
+</FadeOut>
+```
+

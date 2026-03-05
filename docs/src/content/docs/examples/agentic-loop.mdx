@@ -1,0 +1,100 @@
+---
+title: '"From Words to Agents" Presentation'
+description: A 12-slide animated presentation about LLMs and agentic AI, built with the Builder API.
+---
+
+"From Words to Agents" is a 12-slide presentation that walks through the full LLM pipeline — from tokenization to the agentic loop. Unlike the [Calculus example](/examples/calculus/), this deck is built entirely with the **Builder API** in TypeScript, demonstrating how to generate complex presentations programmatically.
+
+## Slides
+
+1. **From Words to Agents** — Title slide with the next-token equation
+2. **Tokenization** — Breaking text into BPE tokens
+3. **Embeddings** — Token IDs to high-dimensional vectors
+4. **Attention** — Query, Key, Value mechanism with softmax
+5. **Transformer Block** — Attention → FFN → LayerNorm architecture
+6. **Deep Representations** — Stacked transformer layers
+7. **Next Token Prediction** — Logits, softmax, and sampling
+8. **Autoregressive Loop** — Iterative token generation
+9. **Structured Output** — Constrained generation (JSON, code)
+10. **The Agentic Loop** — Observe → Think → Act → Observe cycle
+11. **The Complete Pipeline** — End-to-end summary diagram
+12. **Thank You** — Closing slide
+
+## Builder Code Snippet
+
+Here's how the first few slides are constructed:
+
+```ts
+import { presentation, darkTheme } from '@elucim/dsl';
+
+const t = darkTheme;
+
+const doc = presentation('From Words to Agents', darkTheme, { showNotes: true })
+  .slide('From Words to Agents', s => {
+    s.title('From Words to Agents', { y: 200, fontSize: 36 });
+    s.subtitle('How LLMs Think, Speak, and Act', { y: 250, fontSize: 20 });
+    s.wait(5);
+    s.latex('P(w_t \\mid w_1, w_2, \\ldots, w_{t-1})', {
+      y: 330, fontSize: 32, color: t.warning,
+    });
+    s.at(75);
+    s.text('A visual journey through language models', {
+      x: s.cx, y: 520, fontSize: 14, color: t.muted,
+    });
+  }, { notes: 'Title slide — introduce the journey from tokens to agents.' })
+
+  .slide('Tokenization', s => {
+    s.title('Step 1: Tokenization');
+    s.subtitle('Breaking text into pieces the model can understand');
+    s.wait(5);
+    s.text('"The cat sat on the mat"', {
+      x: s.cx, y: 155, fontSize: 18, color: t.warning, fontFamily: 'monospace',
+    });
+    s.wait(5);
+    s.arrow(s.cx, 170, s.cx, 195, { color: t.muted });
+    s.wait(3);
+    const tokens = s.boxRow(['The', 'cat', 'sat', 'on', 'the', 'mat'], {
+      y: 205, boxWidth: 75, boxHeight: 36, gap: 10,
+      fontSize: 14, fontFamily: 'monospace',
+    });
+    s.wait(5);
+    s.connectDown(tokens, { color: t.muted });
+    // ... token IDs, vocabulary explanation
+  }, { notes: 'BPE tokenization — how text becomes numbers.' })
+
+  .slide('Embeddings', s => {
+    s.title('Step 2: Token Embeddings');
+    s.subtitle('Each token ID becomes a high-dimensional vector');
+    s.wait(5);
+    s.boxRow(['3797'], {
+      y: 150, boxWidth: 80, boxHeight: 36,
+      colors: ['rgba(167,139,250,0.2)'],
+      fontSize: 14, fontFamily: 'monospace',
+    });
+    s.wait(5);
+    s.arrow(s.cx, 195, s.cx, 225, { color: t.muted });
+    s.wait(3);
+    s.matrix([['0.12', '-0.45', '0.78', '...']], {
+      x: 300, y: 240, cellSize: 65, color: t.primary,
+    });
+  }, { notes: 'Embedding lookup — from discrete IDs to continuous vectors.' })
+
+  // ... 9 more slides
+  .build();
+```
+
+## Running the Builder
+
+```bash
+npx tsx packages/dsl/examples/build-agentic-loop.ts
+```
+
+This outputs a valid `ElucimDocument` JSON that can be rendered with [`<DslRenderer>`](/dsl/renderer/).
+
+## Source
+
+The full builder script is available at [`packages/dsl/examples/build-agentic-loop.ts`](https://github.com/elucim/elucim/blob/main/packages/dsl/examples/build-agentic-loop.ts).
+
+:::tip
+The Builder API handles frame sequencing and fade-in timing automatically. Each method call like `s.title()` or `s.boxRow()` inserts nodes at the current frame cursor, then advances it — so you can think in terms of *what appears* rather than *at which frame*.
+:::

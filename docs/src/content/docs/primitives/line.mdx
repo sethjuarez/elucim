@@ -1,0 +1,49 @@
+---
+title: Line
+description: Draw straight lines between two points with configurable stroke styling.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { LineDemo } from '@components/Demos.tsx';
+
+The `<Line>` primitive renders a straight line between two points. It supports solid and dashed strokes, making it useful for connectors, axes, guides, and dividers.
+
+<LiveDemo client:visible label="Live Demo" height="300px">
+  <LineDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `x1` | `number` | `0` | X coordinate of the start point |
+| `y1` | `number` | `0` | Y coordinate of the start point |
+| `x2` | `number` | `0` | X coordinate of the end point |
+| `y2` | `number` | `0` | Y coordinate of the end point |
+| `stroke` | `string` | `'currentColor'` | Stroke color |
+| `strokeWidth` | `number` | `1` | Width of the stroke |
+| `strokeDasharray` | `string` | `undefined` | Dash pattern (e.g. `"6 3"`) |
+| `opacity` | `number` | `1` | Opacity from 0 to 1 |
+
+## Code Example
+
+```jsx
+{/* Solid line */}
+<Line x1={50} y1={50} x2={350} y2={50} stroke="#334155" strokeWidth={2} />
+
+{/* Dashed line */}
+<Line
+  x1={50}
+  y1={100}
+  x2={350}
+  y2={100}
+  stroke="#94a3b8"
+  strokeWidth={1.5}
+  strokeDasharray="6 3"
+/>
+```
+
+:::note
+Use `strokeDasharray` to create dashed or dotted lines. The value `"6 3"` draws 6px dashes with 3px gaps. Use `"2 2"` for a dotted effect.
+:::
+

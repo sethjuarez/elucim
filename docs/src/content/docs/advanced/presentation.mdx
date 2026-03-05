@@ -1,0 +1,113 @@
+---
+title: Presentation Mode
+description: Build multi-slide animated presentations with transitions, keyboard navigation, and presenter notes.
+---
+
+The `<Presentation>` component turns Elucim into a full slide-deck system. Each `<Slide>` can contain its own `<Player>` with independent animations, and transitions handle movement between slides.
+
+## Presentation Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `width` | `number` | `1920` | Slide width in pixels |
+| `height` | `number` | `1080` | Slide height in pixels |
+| `background` | `string` | `'#0d0d1a'` | Default background color for all slides |
+| `transition` | `string` | `'none'` | Transition type: `'none'` \| `'fade'` \| `'slide-left'` \| `'slide-up'` \| `'zoom'` |
+| `transitionDuration` | `number` | `400` | Transition duration in milliseconds |
+| `showHUD` | `boolean` | `true` | Show the slide counter overlay |
+| `showNotes` | `boolean` | `false` | Show the presenter notes panel |
+| `startSlide` | `number` | `0` | Zero-based index of the initial slide |
+| `onSlideChange` | `(index: number) => void` | — | Callback fired when the active slide changes |
+| `children` | `React.ReactNode` | — | Must be `<Slide>` components |
+
+## Slide Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `title` | `string` | — | Slide title (displayed in the HUD and presenter view) |
+| `notes` | `string` | — | Presenter notes (shown when `showNotes` is enabled) |
+| `background` | `string` | — | Background color override for this slide |
+| `children` | `React.ReactNode` | — | Slide content — any Elucim components, HTML, or a `<Player>` |
+
+## Basic Usage
+
+```tsx
+import { Presentation, Slide, Player, FadeIn, Text, LaTeX } from '@elucim/core';
+
+<Presentation
+  width={1920}
+  height={1080}
+  transition="fade"
+  transitionDuration={500}
+  showHUD
+>
+  <Slide title="Welcome" notes="Introduce the topic">
+    <Player width={1920} height={1080} fps={30} durationInFrames={90}>
+      <FadeIn duration={30}>
+        <Text x={960} y={540} fill="#fff" fontSize={64} textAnchor="middle">
+          Welcome to Elucim
+        </Text>
+      </FadeIn>
+    </Player>
+  </Slide>
+
+  <Slide title="The Math" notes="Show the core equation">
+    <Player width={1920} height={1080} fps={30} durationInFrames={60}>
+      <FadeIn duration={20}>
+        <LaTeX expression="e^{i\\pi} + 1 = 0" x={960} y={500} fontSize={48} />
+      </FadeIn>
+    </Player>
+  </Slide>
+</Presentation>
+```
+
+## Navigation
+
+| Input | Action |
+|-------|--------|
+| `→` / `↓` | Next slide |
+| `←` / `↑` | Previous slide |
+| `Space` | Next slide |
+| Click navigation buttons | Next / previous slide |
+| `F` | Toggle fullscreen |
+
+## Presentation Context
+
+Use `usePresentationContext()` inside any component rendered within a `<Presentation>` to access slide state and navigation:
+
+```tsx
+import { usePresentationContext } from '@elucim/core';
+
+function SlideCounter() {
+  const { slideIndex, totalSlides, goTo, next, prev, isFullscreen, toggleFullscreen } =
+    usePresentationContext();
+
+  return (
+    <div>
+      Slide {slideIndex + 1} / {totalSlides}
+      <button onClick={prev}>Prev</button>
+      <button onClick={next}>Next</button>
+      <button onClick={toggleFullscreen}>
+        {isFullscreen ? 'Exit' : 'Fullscreen'}
+      </button>
+      <button onClick={() => goTo(0)}>Go to start</button>
+    </div>
+  );
+}
+```
+
+### Context API
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `slideIndex` | `number` | Current slide index (zero-based) |
+| `totalSlides` | `number` | Total number of slides |
+| `goTo(index)` | `(number) => void` | Jump to a specific slide |
+| `next()` | `() => void` | Advance to the next slide |
+| `prev()` | `() => void` | Go back to the previous slide |
+| `isFullscreen` | `boolean` | Whether the presentation is in fullscreen mode |
+| `toggleFullscreen()` | `() => void` | Toggle fullscreen on/off |
+
+:::tip
+Each `<Slide>` typically contains its own `<Player>` so that every slide has independent animation playback. The slide's `notes` prop is only visible when `showNotes` is enabled — perfect for a dual-screen presenter setup.
+:::

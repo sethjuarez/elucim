@@ -1,0 +1,87 @@
+---
+title: Easing Functions
+description: Reference for all built-in easing curves.
+---
+
+## Built-in Easings
+
+| Function | Family | Description |
+|----------|--------|-------------|
+| `linear` | — | Constant speed, no acceleration |
+| `easeInQuad` | Quadratic | Accelerates from zero |
+| `easeOutQuad` | Quadratic | Decelerates to zero |
+| `easeInOutQuad` | Quadratic | Accelerates then decelerates |
+| `easeInCubic` | Cubic | Accelerates from zero (steeper) |
+| `easeOutCubic` | Cubic | Decelerates to zero (steeper) |
+| `easeInOutCubic` | Cubic | Accelerates then decelerates (steeper) |
+| `easeInQuart` | Quartic | Strong acceleration from zero |
+| `easeOutQuart` | Quartic | Strong deceleration to zero |
+| `easeInOutQuart` | Quartic | Strong acceleration then deceleration |
+| `easeInSine` | Sine | Gentle acceleration from zero |
+| `easeOutSine` | Sine | Gentle deceleration to zero |
+| `easeInOutSine` | Sine | Gentle acceleration then deceleration |
+| `easeInExpo` | Exponential | Explosive acceleration from zero |
+| `easeOutExpo` | Exponential | Explosive deceleration to zero |
+| `easeInOutExpo` | Exponential | Explosive acceleration then deceleration |
+| `easeInBack` | Back | Pulls back before accelerating |
+| `easeOutBack` | Back | Overshoots then settles |
+| `easeInOutBack` | Back | Pulls back, overshoots, then settles |
+| `easeInElastic` | Elastic | Spring-like wind-up |
+| `easeOutElastic` | Elastic | Spring-like overshoot oscillation |
+| `easeInOutElastic` | Elastic | Spring-like on both ends |
+| `easeInBounce` | Bounce | Bounces at the start |
+| `easeOutBounce` | Bounce | Bounces at the end |
+| `easeInOutBounce` | Bounce | Bounces at both ends |
+
+## Custom Easings
+
+### cubicBezier
+
+Define a custom cubic-bezier curve, matching the CSS `cubic-bezier()` syntax.
+
+```ts
+import { cubicBezier } from 'elucim';
+
+const myEasing = cubicBezier(0.25, 0.1, 0.25, 1.0);
+```
+
+### spring
+
+Physics-based spring easing.
+
+```ts
+import { spring } from 'elucim';
+
+const mySpring = spring({ mass: 1, stiffness: 100, damping: 10 });
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `mass` | `number` | Mass of the object |
+| `stiffness` | `number` | Spring stiffness constant |
+| `damping` | `number` | Friction / damping coefficient |
+
+## Usage
+
+### With `interpolate()`
+
+```ts
+import { interpolate, easeOutCubic } from 'elucim';
+
+const value = interpolate(progress, [0, 1], [0, 300], {
+  easing: easeOutCubic,
+});
+```
+
+### With the `Transform` easing prop
+
+```tsx
+<Transform
+  from={{ translateX: -100 }}
+  to={{ translateX: 0 }}
+  duration={30}
+  easing={easeOutBack}
+>
+  <Circle cx={200} cy={150} r={40} fill="#4f9eff" />
+</Transform>
+```

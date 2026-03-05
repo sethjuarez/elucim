@@ -1,0 +1,64 @@
+---
+title: Transform & Morph
+description: Spatial motion and color/opacity transitions.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { TransformDemo } from '@components/Demos.tsx';
+
+<LiveDemo client:load height="250px">
+  <TransformDemo />
+</LiveDemo>
+
+## Transform
+
+Animates spatial properties — position, scale, rotation, and opacity — between two states. Use `Transform` for any motion that moves or resizes an element.
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `from` | `{ translateX?, translateY?, scale?, rotate?, opacity? }` | Starting state |
+| `to` | `{ translateX?, translateY?, scale?, rotate?, opacity? }` | Ending state |
+| `duration` | `number` | Length of the animation in frames |
+| `easing` | `EasingFunction` | Easing curve (default: `linear`) |
+
+### Example
+
+```tsx
+<Transform
+  from={{ translateX: -100, opacity: 0 }}
+  to={{ translateX: 0, opacity: 1 }}
+  duration={30}
+  easing={easeOutCubic}
+>
+  <Circle cx={200} cy={150} r={40} fill="#4f9eff" />
+</Transform>
+```
+
+## Morph
+
+Transitions visual properties — fill color, scale, and opacity — between two states. Use `Morph` when the element stays in place but changes appearance.
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `from` | `{ fill?, scale?, opacity? }` | Starting visual state |
+| `to` | `{ fill?, scale?, opacity? }` | Ending visual state |
+| `duration` | `number` | Length of the animation in frames |
+| `easing` | `EasingFunction` | Easing curve (default: `linear`) |
+
+### Example
+
+```tsx
+<Morph
+  from={{ fill: "#ff6b6b", opacity: 0.5 }}
+  to={{ fill: "#4f9eff", opacity: 1 }}
+  duration={45}
+  easing={easeInOutQuad}
+>
+  <Rect x={150} y={100} width={100} height={100} />
+</Morph>
+```
+

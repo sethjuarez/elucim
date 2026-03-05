@@ -1,0 +1,58 @@
+---
+title: Rect
+description: Draw rectangles with optional rounded corners and stroke styling.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { RectDemo } from '@components/Demos.tsx';
+
+The `<Rect>` primitive renders an SVG rectangle. It supports rounded corners, fill, stroke, and dashed outlines — useful for bounding boxes, containers, highlights, and background regions.
+
+<LiveDemo client:visible label="Live Demo" height="300px">
+  <RectDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `x` | `number` | `0` | X coordinate of the top-left corner |
+| `y` | `number` | `0` | Y coordinate of the top-left corner |
+| `width` | `number` | `0` | Width of the rectangle |
+| `height` | `number` | `0` | Height of the rectangle |
+| `fill` | `string` | `'none'` | Fill color |
+| `stroke` | `string` | `'currentColor'` | Stroke color |
+| `strokeWidth` | `number` | `1` | Width of the stroke |
+| `rx` | `number` | `0` | Corner radius for rounded rectangles |
+| `strokeDasharray` | `string` | `undefined` | Dash pattern (e.g. `"6 3"`) |
+| `opacity` | `number` | `1` | Opacity from 0 to 1 |
+
+## Code Example
+
+```jsx
+{/* Filled rectangle */}
+<Rect x={50} y={50} width={200} height={120} fill="#e0e7ff" stroke="#4f46e5" />
+
+{/* Rounded rectangle */}
+<Rect
+  x={100}
+  y={80}
+  width={180}
+  height={100}
+  fill="none"
+  stroke="#f59e0b"
+  strokeWidth={2}
+  rx={12}
+/>
+
+{/* Dashed outline */}
+<Rect
+  x={60}
+  y={40}
+  width={280}
+  height={200}
+  stroke="#94a3b8"
+  strokeDasharray="8 4"
+/>
+```
+

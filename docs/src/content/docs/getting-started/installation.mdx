@@ -1,0 +1,51 @@
+---
+title: Installation
+description: Install Elucim and set up your first project.
+---
+
+## Install Packages
+
+```bash
+# Core library
+pnpm add @elucim/core react react-dom
+
+# DSL package (optional — for JSON-based authoring)
+pnpm add @elucim/dsl
+```
+
+## KaTeX (for LaTeX rendering)
+
+If you plan to use the `<LaTeX>` component or the DSL `latex` node type, add the KaTeX CSS to your HTML:
+
+```html
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.33/dist/katex.min.css" />
+```
+
+## TypeScript
+
+Elucim is written in TypeScript and ships full type definitions. No extra `@types/` packages needed.
+
+## Monorepo / Workspace Setup
+
+If you're working in a monorepo with pnpm workspaces:
+
+```yaml
+# pnpm-workspace.yaml
+packages:
+  - packages/*
+```
+
+```json
+// packages/my-app/package.json
+{
+  "dependencies": {
+    "@elucim/core": "workspace:*",
+    "@elucim/dsl": "workspace:*"
+  }
+}
+```
+
+## Next Steps
+
+Head to the [Quick Start](/getting-started/quick-start/) to build your first animated scene.

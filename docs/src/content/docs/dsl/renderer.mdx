@@ -1,0 +1,82 @@
+---
+title: DslRenderer Component
+description: Render an ElucimDocument JSON object as a live React component.
+---
+
+The `<DslRenderer>` component takes an `ElucimDocument` and renders it as a fully interactive Elucim scene or presentation — no JSX authoring required.
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `dsl` | `ElucimDocument` | **required** | The DSL document to render |
+| `className` | `string` | — | CSS class for the root wrapper |
+| `style` | `React.CSSProperties` | — | Inline styles for the root wrapper |
+
+## Usage
+
+```tsx
+import { DslRenderer } from '@elucim/dsl';
+import type { ElucimDocument } from '@elucim/dsl';
+
+const doc: ElucimDocument = {
+  version: '1.0',
+  root: {
+    type: 'player',
+    width: 800,
+    height: 600,
+    fps: 30,
+    durationInFrames: 90,
+    background: '#0a0a1e',
+    children: [
+      {
+        type: 'fadeIn',
+        duration: 30,
+        children: [
+          { type: 'circle', cx: 400, cy: 300, r: 60, stroke: '#4fc3f7', strokeWidth: 3 },
+        ],
+      },
+    ],
+  },
+};
+
+export default function MyAnimation() {
+  return <DslRenderer dsl={doc} style={{ maxWidth: 800 }} />;
+}
+```
+
+## Loading from a JSON File
+
+```tsx
+import { DslRenderer } from '@elucim/dsl';
+import doc from './my-animation.json';
+
+export default function Page() {
+  return <DslRenderer dsl={doc} />;
+}
+```
+
+## Automatic Validation
+
+`DslRenderer` validates the document before rendering. If the document is invalid, it displays an error message instead of crashing — making it safe to use with user-supplied or AI-generated JSON.
+
+```tsx
+// Invalid document — missing required "version" field
+<DslRenderer dsl={{ root: { type: 'player' } } as any} />
+// → Renders an error message describing what's wrong
+```
+
+## Presentations
+
+If the root node is a `presentation`, the renderer outputs a full slide deck with navigation, transitions, and optional presenter notes — all driven by the JSON:
+
+```tsx
+import { DslRenderer } from '@elucim/dsl';
+import presentation from './calculus-explained.json';
+
+<DslRenderer dsl={presentation} className="my-deck" />
+```
+
+:::tip
+Combine `DslRenderer` with the [Builder API](/dsl/builder-api/) to generate documents in TypeScript and render them without manually writing JSON.
+:::

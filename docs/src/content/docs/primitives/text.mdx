@@ -1,0 +1,58 @@
+---
+title: Text
+description: Render styled text labels at any position in your scene.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { TextDemo } from '@components/Demos.tsx';
+
+The `<Text>` primitive places a text label at a given position. Control font size, weight, alignment, and color to add labels, titles, annotations, and axis markers to your scenes.
+
+<LiveDemo client:visible label="Live Demo" height="300px">
+  <TextDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `x` | `number` | `0` | X coordinate of the text anchor point |
+| `y` | `number` | `0` | Y coordinate of the text baseline |
+| `content` | `string` (children) | `''` | The text to display |
+| `fill` | `string` | `'currentColor'` | Text color |
+| `fontSize` | `number` | `16` | Font size in pixels |
+| `fontFamily` | `string` | `'sans-serif'` | Font family |
+| `fontWeight` | `string \| number` | `'normal'` | Font weight (e.g. `'bold'`, `600`) |
+| `textAnchor` | `'start' \| 'middle' \| 'end'` | `'start'` | Horizontal alignment relative to `x` |
+| `opacity` | `number` | `1` | Opacity from 0 to 1 |
+
+## Code Example
+
+```jsx
+{/* Simple label */}
+<Text x={200} y={150} fontSize={24} fill="#1e293b">
+  Hello, Elucim!
+</Text>
+
+{/* Centered title */}
+<Text
+  x={200}
+  y={40}
+  fontSize={32}
+  fontWeight="bold"
+  textAnchor="middle"
+  fill="#4f46e5"
+>
+  Chart Title
+</Text>
+
+{/* Right-aligned annotation */}
+<Text x={380} y={280} fontSize={12} textAnchor="end" fill="#94a3b8">
+  Source: dataset.csv
+</Text>
+```
+
+:::tip
+Use `textAnchor="middle"` when centering text on a known x coordinate — this avoids manually calculating text width offsets.
+:::
+

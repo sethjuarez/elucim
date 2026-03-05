@@ -1,0 +1,66 @@
+---
+title: Quick Start
+description: Build your first Elucim animated scene in under 5 minutes.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { QuickStartDemo } from '@components/Demos.tsx';
+
+## Your First Scene
+
+Every Elucim scene starts with a `<Player>` — it manages the animation timeline, playback controls, and rendering surface.
+
+```tsx
+import { Player, Sequence, FadeIn, Circle, Text } from '@elucim/core';
+
+function MyFirstScene() {
+  return (
+    <Player width={500} height={350} fps={30} durationInFrames={120}>
+      <Sequence from={0} durationInFrames={60}>
+        <FadeIn duration={20}>
+          <Circle cx={250} cy={175} r={80}
+                  stroke="#6c5ce7" strokeWidth={3} fill="none" />
+        </FadeIn>
+      </Sequence>
+      <Sequence from={30} durationInFrames={90}>
+        <FadeIn duration={20}>
+          <Text x={250} y={180} fill="#fff"
+                fontSize={24} textAnchor="middle">
+            Hello World
+          </Text>
+        </FadeIn>
+      </Sequence>
+    </Player>
+  );
+}
+```
+
+<LiveDemo client:visible label="Result" height="350px">
+  <QuickStartDemo client:visible />
+</LiveDemo>
+
+## What's Happening
+
+1. **`<Player>`** creates a 500×350 SVG canvas running at 30fps for 4 seconds (120 frames)
+2. **`<Sequence from={0}>`** starts the circle at frame 0
+3. **`<FadeIn duration={20}>`** fades the circle in over 20 frames (~0.67s)
+4. **`<Sequence from={30}>`** starts the text at frame 30 (1 second in)
+5. The circle and text overlap — multiple `Sequence` blocks run concurrently
+
+## Key Props
+
+| Prop | Description |
+|------|-------------|
+| `width` / `height` | Canvas dimensions in pixels |
+| `fps` | Frames per second (30 or 60 recommended) |
+| `durationInFrames` | Total animation length |
+| `autoPlay` | Start playing immediately |
+| `loop` | Loop when finished |
+| `controls` | Show play/pause/scrub bar (default: `true`) |
+
+## Next Steps
+
+- Learn about [Core Concepts](/getting-started/core-concepts/) — frames, sequences, and the coordinate system
+- Explore all [Primitives](/primitives/circle/) — shapes, text, and math objects
+- Try [Animations](/animations/fade/) — FadeIn, Draw, Transform, Stagger, and more
+

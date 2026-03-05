@@ -1,0 +1,78 @@
+---
+title: '"The Calculus of Change" Presentation'
+description: A 10-slide animated presentation covering calculus, trigonometry, vectors, matrices, and graph theory.
+---
+
+"The Calculus of Change" is a 10-slide presentation built entirely with **raw JSON DSL**. It demonstrates how to create a full educational deck — complete with animated titles, function plots, vector fields, matrix displays, and LaTeX equations — without writing any React code.
+
+## Slides
+
+1. **The Calculus of Change** — Title slide with animated text and decorative elements
+2. **Functions: The Building Blocks** — Plotting `sin(x)` on labeled axes
+3. **The Derivative: Instantaneous Rate of Change** — Function with tangent line visualization
+4. **Trigonometric Functions** — Sine and cosine curves
+5. **Vectors: Direction and Magnitude** — 2D vector arrows with labels
+6. **Vector Fields: Flow and Force** — Grid of computed vector arrows
+7. **Matrices: Linear Transformations** — Bracketed matrix display
+8. **Graph Theory: Networks** — Node-and-edge graph with colored connections
+9. **Euler's Identity: The Most Beautiful Equation** — LaTeX rendering of `e^{iπ} + 1 = 0`
+10. **Thank You** — Closing slide with palette-colored dots
+
+## Structure
+
+Each slide wraps its animated content inside a `player` node with `autoPlay: true` and `loop: false`, so animations play once when you navigate to the slide. The presentation uses `fade` transitions with a frame-based duration.
+
+## First Slide JSON
+
+Here's the structure of the title slide — a representative example of how DSL slides are composed:
+
+```json
+{
+  "type": "slide",
+  "title": "The Calculus of Change",
+  "notes": "Title slide -- set the stage for a journey through calculus concepts.",
+  "background": "#0a0a1e",
+  "children": [
+    {
+      "type": "player",
+      "width": 900,
+      "height": 650,
+      "fps": 30,
+      "durationInFrames": 150,
+      "background": "#0a0a1e",
+      "controls": false,
+      "autoPlay": true,
+      "loop": false,
+      "children": [
+        {
+          "type": "fadeIn",
+          "duration": 40,
+          "easing": "easeOutCubic",
+          "children": [
+            {
+              "type": "text",
+              "x": 450,
+              "y": 220,
+              "content": "The Calculus of Change",
+              "fill": "#e0e7ff",
+              "fontSize": 46,
+              "fontWeight": 700,
+              "textAnchor": "middle"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Each subsequent child in the player adds more animated elements — sequences offset by `from` frames, LaTeX expressions, decorative shapes, and more.
+
+## Source
+
+The full JSON file is available at [`packages/dsl/examples/calculus-explained.json`](https://github.com/elucim/elucim/blob/main/packages/dsl/examples/calculus-explained.json).
+
+:::tip
+This example is a great starting point for understanding the DSL structure. Try modifying a single slide's colors or text and re-rendering with [`<DslRenderer>`](/dsl/renderer/).
+:::

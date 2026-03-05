@@ -1,0 +1,50 @@
+---
+title: Matrix
+description: Render matrices with bracket notation for linear algebra visualizations.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { MatrixDemo } from '@components/Demos.tsx';
+
+The `<Matrix>` primitive renders a two-dimensional array of values surrounded by square brackets, perfect for linear algebra and systems-of-equations scenes.
+
+<LiveDemo client:visible label="Live Demo" height="300px">
+  <MatrixDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `values` | `(number \| string)[][]` | — | 2D array of cell values |
+| `x` | `number` | `0` | X position of the matrix |
+| `y` | `number` | `0` | Y position of the matrix |
+| `cellSize` | `number` | `40` | Width and height of each cell in pixels |
+| `color` | `string` | `'currentColor'` | Text color for cell values |
+| `bracketColor` | `string` | `'currentColor'` | Color of the surrounding brackets |
+| `fontSize` | `number` | `16` | Font size of cell values |
+| `fadeIn` | `boolean` | `false` | Animate the matrix in on mount |
+
+## Code Example
+
+```jsx
+<Matrix
+  values={[
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 0, 1],
+  ]}
+  x={120}
+  y={60}
+  cellSize={44}
+  color="#e2e8f0"
+  bracketColor="#818cf8"
+  fontSize={18}
+  fadeIn
+/>
+```
+
+:::tip
+Cell values can be strings — use `"a₁₁"` or `"…"` for symbolic or abbreviated entries.
+:::
+

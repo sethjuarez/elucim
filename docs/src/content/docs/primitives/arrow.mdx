@@ -1,0 +1,56 @@
+---
+title: Arrow
+description: Draw directional arrows between two points with configurable head size.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { ArrowDemo } from '@components/Demos.tsx';
+
+The `<Arrow>` primitive draws a line with an arrowhead pointing from the start point to the end point. Use it for directed relationships, flow diagrams, and annotations.
+
+<LiveDemo client:visible label="Live Demo" height="300px">
+  <ArrowDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `x1` | `number` | `0` | X coordinate of the start point |
+| `y1` | `number` | `0` | Y coordinate of the start point |
+| `x2` | `number` | `0` | X coordinate of the end point (arrow tip) |
+| `y2` | `number` | `0` | Y coordinate of the end point (arrow tip) |
+| `stroke` | `string` | `'currentColor'` | Stroke color |
+| `strokeWidth` | `number` | `1` | Width of the stroke |
+| `headSize` | `number` | `8` | Size of the arrowhead in pixels |
+| `strokeDasharray` | `string` | `undefined` | Dash pattern (e.g. `"6 3"`) |
+| `opacity` | `number` | `1` | Opacity from 0 to 1 |
+
+## Code Example
+
+```jsx
+{/* Simple arrow */}
+<Arrow x1={50} y1={150} x2={350} y2={150} stroke="#4f46e5" strokeWidth={2} />
+
+{/* Large arrowhead */}
+<Arrow
+  x1={100}
+  y1={50}
+  x2={300}
+  y2={250}
+  stroke="#ef4444"
+  strokeWidth={2}
+  headSize={14}
+/>
+
+{/* Dashed arrow */}
+<Arrow
+  x1={50}
+  y1={200}
+  x2={350}
+  y2={200}
+  stroke="#94a3b8"
+  strokeDasharray="6 3"
+/>
+```
+

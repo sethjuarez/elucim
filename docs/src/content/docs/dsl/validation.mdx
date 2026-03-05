@@ -1,0 +1,107 @@
+---
+title: Validation
+description: Validate ElucimDocument JSON before rendering to catch errors early.
+---
+
+The `validate` function checks an `ElucimDocument` for structural errors, missing fields, unknown node types, and unsafe math expressions — all before rendering.
+
+## Usage
+
+```ts
+import { validate } from '@elucim/dsl';
+
+const result = validate(myDocument);
+
+if (result.valid) {
+  console.log('Document is valid!');
+} else {
+  for (const error of result.errors) {
+    console.error(`[${error.severity}] ${error.path}: ${error.message}`);
+  }
+}
+```
+
+## Return Type
+
+```ts
+interface ValidationResult {
+  valid: boolean;
+  errors: ValidationError[];
+}
+
+interface ValidationError {
+  path: string;       // JSON path to the issue, e.g. "root.children[0].type"
+  message: string;    // Human-readable description
+  severity: 'error' | 'warning';
+}
+```
+
+The `valid` field is `true` only when there are **no errors** (warnings are allowed).
+
+## What Gets Checked
+
+| Check | Severity | Example |
+|-------|----------|---------|
+| `version` field present and `'1.0'` | error | Missing or wrong version |
+| `root` node exists and has a valid type | error | No root, or unknown root type |
+| All node `type` values are recognized | error | `"type": "sparkle"` |
+| Required fields per node type | error | `circle` missing `cx` |
+| Numeric props are numbers | error | `"r": "big"` |
+| `inputRange` / `outputRange` lengths match | error | Mismatched interpolate ranges |
+| Math expression safety (no dangerous code) | error | `fn: "process.exit()"` |
+| Unused or unknown props | warning | Typo like `"strokWidth"` |
+
+## Example with Errors
+
+```ts
+import { validate } from '@elucim/dsl';
+
+const result = validate({
+  version: '2.0',
+  root: {
+    type: 'player',
+    width: 800,
+    height: 600,
+    fps: 30,
+    durationInFrames: 90,
+    children: [
+      { type: 'sparkle', cx: 100, cy: 100 },
+      { type: 'circle', r: 50 },
+    ],
+  },
+});
+
+console.log(result.valid); // false
+console.log(result.errors);
+// [
+//   { path: 'version', message: 'Expected version "1.0", got "2.0"', severity: 'error' },
+//   { path: 'root.children[0].type', message: 'Unknown node type "sparkle"', severity: 'error' },
+//   { path: 'root.children[1]', message: 'circle requires "cx" and "cy"', severity: 'error' },
+// ]
+```
+
+## Programmatic Use
+
+Validation is useful for:
+
+- **CI pipelines** — validate JSON files before deployment
+- **AI agents** — check generated documents before rendering
+- **Editors** — show inline errors as the user types
+
+```ts
+import { validate } from '@elucim/dsl';
+import fs from 'fs';
+
+const doc = JSON.parse(fs.readFileSync('animation.json', 'utf-8'));
+const { valid, errors } = validate(doc);
+
+if (!valid) {
+  console.error('Validation failed:');
+  errors.forEach(e => console.error(`  ${e.path}: ${e.message}`));
+  process.exit(1);
+}
+```
+
+:::note
+`DslRenderer` calls `validate` automatically and displays errors inline. You only need to call `validate` directly if you want to check documents outside of a React render.
+:::

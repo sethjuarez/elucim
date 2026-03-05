@@ -1,0 +1,59 @@
+---
+title: Elucim
+description: Animate concepts. Illuminate understanding. A React library for creating 3Blue1Brown-style animated explanations on the web.
+template: splash
+hero:
+  tagline: A React library for creating animated math & concept explanations — 3Blue1Brown-style, for the web.
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: Get Started
+      link: /getting-started/installation/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/elucim/elucim
+      icon: external
+      variant: minimal
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { HeroDemo } from '@components/Demos.tsx';
+
+<LiveDemo client:visible label="Live — Axes + Function Plots + LaTeX" height="300px">
+  <HeroDemo client:visible />
+</LiveDemo>
+
+## Why Elucim?
+
+Build animated, interactive math visualizations **in React** — no video editing needed. Perfect for:
+
+- 📐 **Educational content** — derivatives, integrals, linear algebra, graph theory
+- 🤖 **AI-generated visuals** — JSON DSL + Builder API for agent-authored content
+- 🎓 **Presentations** — multi-slide animated decks with presenter notes
+- 📹 **Video export** — render to WebM/MP4 directly in the browser
+
+## What's Included
+
+| Package | Description |
+|---------|-------------|
+| `@elucim/core` | 14 primitives, 7 animation types, Player, Presentation, easing, hooks |
+| `@elucim/dsl` | JSON DSL schema, renderer, validator, fluent Builder API, themes |
+
+## Quick Example
+
+```tsx
+import { Player, FadeIn, Circle, Text } from '@elucim/core';
+
+<Player width={800} height={600} fps={30} durationInFrames={90}>
+  <FadeIn duration={20}>
+    <Circle cx={400} cy={300} r={80} stroke="#6c5ce7" strokeWidth={3} />
+  </FadeIn>
+  <FadeIn duration={20}>
+    <Text x={400} y={305} fill="#fff" fontSize={24} textAnchor="middle">
+      Hello World
+    </Text>
+  </FadeIn>
+</Player>
+```
+

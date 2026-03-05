@@ -1,0 +1,146 @@
+---
+title: JSON DSL Overview
+description: Describe Elucim scenes and presentations as JSON documents with the @elucim/dsl package.
+---
+
+The `@elucim/dsl` package lets you describe Elucim scenes and presentations as **JSON documents** instead of JSX. This is ideal for AI-generated content, server-side authoring, and storing animations in databases or files.
+
+## ElucimDocument
+
+Every DSL document is an `ElucimDocument` object:
+
+```ts
+interface ElucimDocument {
+  $schema?: string;         // Optional JSON Schema URL for editor autocomplete
+  version: '1.0';           // DSL version (required)
+  root: RootNode;           // Top-level node: scene, player, or presentation
+}
+```
+
+The `root` can be a **scene**, **player**, or **presentation** node. Presentations contain **slide** children, and each slide typically wraps a **player** node.
+
+## Minimal Example
+
+```json
+{
+  "version": "1.0",
+  "root": {
+    "type": "player",
+    "width": 800,
+    "height": 600,
+    "fps": 30,
+    "durationInFrames": 90,
+    "background": "#0a0a1e",
+    "children": [
+      {
+        "type": "fadeIn",
+        "duration": 30,
+        "children": [
+          {
+            "type": "circle",
+            "cx": 400,
+            "cy": 300,
+            "r": 60,
+            "stroke": "#4fc3f7",
+            "strokeWidth": 3
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Node Types
+
+Every node has a `"type"` field. The full set of supported types:
+
+### Container Nodes
+
+| Type | Description |
+|------|-------------|
+| `scene` | Root scene with `width`, `height`, `fps`, `durationInFrames`, `children` |
+| `player` | Scene with playback controls (`controls`, `loop`, `autoPlay`) |
+| `presentation` | Multi-slide deck with transitions and HUD |
+| `slide` | Individual slide with `title`, `notes`, `background`, `children` |
+| `sequence` | Timed container — offsets children by `from` frame |
+| `group` | Groups children without timing changes |
+
+### Primitive Nodes
+
+| Type | Description |
+|------|-------------|
+| `circle` | SVG circle (`cx`, `cy`, `r`, `fill`, `stroke`) |
+| `line` | SVG line (`x1`, `y1`, `x2`, `y2`) |
+| `arrow` | Line with arrowhead (`x1`, `y1`, `x2`, `y2`, `headSize`) |
+| `rect` | Rectangle (`x`, `y`, `width`, `height`, `rx`, `ry`) |
+| `polygon` | Polygon from a `points` array |
+| `text` | Text label (`x`, `y`, `content`, `fontSize`) |
+
+### Math & Data Nodes
+
+| Type | Description |
+|------|-------------|
+| `axes` | 2D coordinate system with ticks and optional grid |
+| `functionPlot` | Plot a math expression as a curve |
+| `vector` | Arrow from origin to a point, with optional label |
+| `vectorField` | Grid of vectors computed from an expression |
+| `matrix` | Bracketed matrix display |
+| `graph` | Node-and-edge graph visualization |
+| `latex` | LaTeX expression rendered via KaTeX |
+| `barChart` | Labeled bar chart |
+
+### Animation Nodes
+
+| Type | Description |
+|------|-------------|
+| `fadeIn` | Fade children in over `duration` frames |
+| `fadeOut` | Fade children out |
+| `draw` | Progressively draw SVG strokes |
+| `write` | Write-on text effect |
+| `transform` | Animate translate, scale, rotate, opacity |
+| `morph` | Morph between color/opacity/scale states |
+| `stagger` | Stagger children with a frame delay between each |
+| `parallel` | Animate all children simultaneously |
+
+## Presentation Structure
+
+Presentations use `"type": "presentation"` at the root, with `"slide"` children. Each slide contains a `"player"` node for its animated content:
+
+```json
+{
+  "version": "1.0",
+  "root": {
+    "type": "presentation",
+    "width": 900,
+    "height": 650,
+    "transition": "fade",
+    "transitionDuration": 10,
+    "showHud": true,
+    "slides": [
+      {
+        "type": "slide",
+        "title": "Slide One",
+        "notes": "Presenter notes here",
+        "children": [
+          {
+            "type": "player",
+            "width": 900,
+            "height": 650,
+            "fps": 30,
+            "durationInFrames": 120,
+            "children": [ /* ... */ ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Next Steps
+
+- [DslRenderer](/dsl/renderer/) — render a document in React
+- [Validation](/dsl/validation/) — validate documents before rendering
+- [Builder API](/dsl/builder-api/) — generate DSL documents with TypeScript
+- [Themes](/dsl/themes/) — pre-built color themes

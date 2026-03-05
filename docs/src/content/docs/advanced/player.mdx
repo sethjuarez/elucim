@@ -1,0 +1,85 @@
+---
+title: Player Component
+description: Full API reference for the Player — the playback container for Elucim animations.
+---
+
+The `<Player>` is the main playback container for Elucim animations. It wraps a `<Scene>`, adds a playback timeline, controls bar, and keyboard shortcuts. Every standalone animation needs a Player.
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `width` | `number` | `1920` | Scene width in pixels |
+| `height` | `number` | `1080` | Scene height in pixels |
+| `fps` | `number` | `60` | Frames per second |
+| `durationInFrames` | `number` | **required** | Total frames in the animation |
+| `background` | `string` | `'#000'` | Background color |
+| `controls` | `boolean` | `true` | Show the controls bar (play/pause, scrubber, frame counter) |
+| `loop` | `boolean` | `true` | Loop playback when it reaches the end |
+| `autoPlay` | `boolean` | `false` | Start playing automatically on mount |
+| `className` | `string` | — | CSS class for the root element |
+| `style` | `React.CSSProperties` | — | Inline styles for the root element |
+| `children` | `React.ReactNode` | — | Elucim primitives, animations, and math components |
+
+## Basic Usage
+
+```tsx
+import { Player, FadeIn, Circle, Text } from '@elucim/core';
+
+<Player width={800} height={600} fps={30} durationInFrames={90}>
+  <FadeIn duration={20}>
+    <Circle cx={400} cy={300} r={80} stroke="#6c5ce7" strokeWidth={3} />
+  </FadeIn>
+  <FadeIn duration={20}>
+    <Text x={400} y={305} fill="#fff" fontSize={24} textAnchor="middle">
+      Hello World
+    </Text>
+  </FadeIn>
+</Player>
+```
+
+## Keyboard Controls
+
+When the Player is focused, the following keyboard shortcuts are available:
+
+| Key | Action |
+|-----|--------|
+| `Space` | Play / Pause |
+| `←` | Seek backward 1 frame |
+| `→` | Seek forward 1 frame |
+| `Shift + ←` | Seek backward 10 frames |
+| `Shift + →` | Seek forward 10 frames |
+| `Home` | Jump to the first frame |
+| `End` | Jump to the last frame |
+
+## Sizing Behavior
+
+The Player renders an SVG with a `viewBox` of `0 0 {width} {height}`, so it scales responsively to fit its container while preserving the aspect ratio. The `width` and `height` props define the **coordinate system**, not the CSS size.
+
+```tsx
+{/* 16:9 coordinate space, but fills its parent container */}
+<Player width={1920} height={1080} fps={60} durationInFrames={300}>
+  {/* coordinates go from 0,0 to 1920,1080 */}
+</Player>
+```
+
+## CSS Customization
+
+The Player's root element can be styled with `className` and `style`. The controls bar inherits from the Player's container, so you can scope custom styles to your class:
+
+```tsx
+<Player
+  className="my-player"
+  style={{ maxWidth: 800, margin: '0 auto' }}
+  width={1920}
+  height={1080}
+  fps={60}
+  durationInFrames={180}
+>
+  {/* ... */}
+</Player>
+```
+
+:::tip
+For embedding in a blog or docs site, set `controls={true}` and `loop={true}` so readers can replay the animation. For a cinematic feel, use `autoPlay={true}` and `controls={false}`.
+:::

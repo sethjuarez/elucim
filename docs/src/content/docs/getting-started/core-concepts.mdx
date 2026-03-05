@@ -1,0 +1,101 @@
+---
+title: Core Concepts
+description: Understand the building blocks — frames, sequences, the coordinate system, and how elements compose.
+---
+
+## The Frame Model
+
+Elucim animations are **frame-based**, not time-based. Every animation is defined in terms of frames:
+
+```
+frame 0       frame 30      frame 60      frame 90
+|─────────────|─────────────|─────────────|
+  circle fades in  text appears   both visible
+```
+
+Convert between frames and seconds:
+- **frames = seconds × fps** → 2 seconds at 30fps = 60 frames
+- **seconds = frames / fps** → 90 frames at 30fps = 3 seconds
+
+## The Coordinate System
+
+Elucim uses **SVG coordinates**:
+- Origin `(0, 0)` is the **top-left** corner
+- X increases **rightward**
+- Y increases **downward**
+
+```
+(0,0) ────────────────── (width, 0)
+  │                          │
+  │     (cx, cy) = center    │
+  │                          │
+(0, height) ──────── (width, height)
+```
+
+For math primitives like `<Axes>`, you specify an `origin` point that becomes the mathematical `(0,0)`, and a `scale` factor that maps math units to pixels.
+
+## Composition Model
+
+Elucim has three layers of composition:
+
+### 1. Primitives (Mobjects)
+The visual elements: `Circle`, `Line`, `Arrow`, `Rect`, `Text`, `Polygon`, `Axes`, `FunctionPlot`, `Vector`, `VectorField`, `Matrix`, `Graph`, `LaTeX`, `BarChart`.
+
+### 2. Animations
+Wrappers that animate their children: `FadeIn`, `FadeOut`, `Draw`, `Write`, `Transform`, `Morph`, `Stagger`, `Parallel`.
+
+### 3. Timing
+- **`<Sequence from={N} durationInFrames={D}>`** — Offsets children to start at frame N
+- **`<Player>`** — Root container that drives the global frame counter
+- Multiple `Sequence` blocks run **concurrently** — they don't block each other
+
+### Composition Example
+
+```tsx
+<Player width={800} height={600} fps={30} durationInFrames={120}>
+  {/* Layer 1: Background axes (immediate) */}
+  <Axes origin={[400, 300]} xRange={[-5, 5]} yRange={[-3, 3]} scale={50} />
+
+  {/* Layer 2: Function appears at frame 20 */}
+  <Sequence from={20} durationInFrames={100}>
+    <Draw duration={40}>
+      <FunctionPlot fn={(x) => Math.sin(x)}
+                    domain={[-5, 5]} origin={[400, 300]} scale={50}
+                    color="#6c5ce7" />
+    </Draw>
+  </Sequence>
+
+  {/* Layer 3: Label at frame 50 */}
+  <Sequence from={50} durationInFrames={70}>
+    <FadeIn duration={15}>
+      <LaTeX expression="f(x) = \sin(x)" x={600} y={100} fontSize={20} />
+    </FadeIn>
+  </Sequence>
+</Player>
+```
+
+## Hooks
+
+Two hooks let you create custom animated components:
+
+- **`useCurrentFrame()`** — Returns the current frame number (0 to durationInFrames-1)
+- **`interpolate(frame, inputRange, outputRange, options?)`** — Maps a frame to a value with easing
+
+```tsx
+function PulsingDot() {
+  const frame = useCurrentFrame();
+  const scale = interpolate(frame, [0, 30, 60], [1, 1.5, 1]);
+  const opacity = interpolate(frame, [0, 15], [0, 1]);
+
+  return (
+    <circle cx={250} cy={250} r={20 * scale}
+            fill="#6c5ce7" opacity={opacity} />
+  );
+}
+```
+
+## Next Steps
+
+- Browse [Primitives](/primitives/circle/) for all shape types
+- Learn about [Animations](/animations/fade/) for motion effects
+- See [Advanced > Player](/advanced/player/) for full Player API

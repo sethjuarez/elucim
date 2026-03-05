@@ -1,0 +1,56 @@
+---
+title: Imperative Timeline
+description: Build animation sequences programmatically.
+---
+
+## Overview
+
+The `Timeline` class lets you build animation sequences imperatively instead of with JSX. This is useful for dynamic or data-driven animations where the structure isn't known at author time.
+
+## API
+
+### Constructor
+
+```ts
+const tl = new Timeline(fps);
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `fps` | `number` | Frames per second for the timeline |
+
+### Methods
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `play` | `play(type, id, opts?)` | Add an animation and advance the cursor past it |
+| `add` | `add(type, id, opts?)` | Add an animation at the current cursor without advancing |
+| `wait` | `wait(seconds)` | Insert a pause (in seconds) at the current cursor |
+| `compile` | `compile()` | Returns `{ actions, totalFrames }` |
+
+- **`play`** — appends an animation sequentially. The cursor moves forward by its duration, so the next call starts after it finishes.
+- **`add`** — layers an animation at the current cursor position (parallel). The cursor does not move.
+- **`wait`** — advances the cursor by the given number of seconds (converted to frames using the timeline's fps).
+- **`compile`** — finalizes the timeline and returns the list of actions with their computed start frames, plus the total frame count.
+
+## Example
+
+```ts
+import { Timeline } from 'elucim';
+
+const tl = new Timeline(30);
+
+tl.play('fadeIn', 'title', { duration: 30 });
+tl.wait(0.5);
+tl.play('draw', 'axis', { duration: 45 });
+tl.add('fadeIn', 'label-x', { duration: 20 });
+tl.add('fadeIn', 'label-y', { duration: 20 });
+tl.wait(1);
+tl.play('fadeOut', 'title', { duration: 30 });
+
+const { actions, totalFrames } = tl.compile();
+// actions: ordered list with { type, id, startFrame, opts }
+// totalFrames: total length of the compiled timeline
+```
+
+In this example, `label-x` and `label-y` fade in concurrently (both added with `add`), while the rest of the sequence plays one step at a time.

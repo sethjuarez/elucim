@@ -1,0 +1,45 @@
+---
+title: LaTeX (KaTeX)
+description: Render LaTeX math expressions inside SVG scenes using KaTeX.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { LaTeXDemo } from '@components/Demos.tsx';
+
+The `<LaTeX>` primitive renders a LaTeX math expression at a given position using KaTeX. It embeds the rendered HTML inside an SVG `<foreignObject>`, so it works alongside all other Elucim primitives.
+
+<LiveDemo client:visible label="Live Demo" height="300px">
+  <LaTeXDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `expression` | `string` | — | LaTeX expression to render (e.g. `"\\frac{1}{2}"`) |
+| `x` | `number` | `0` | X position in pixels |
+| `y` | `number` | `0` | Y position in pixels |
+| `fontSize` | `number` | `20` | Font size in pixels |
+| `color` | `string` | `'currentColor'` | Text color |
+| `width` | `number` | `300` | Width of the foreignObject container |
+| `height` | `number` | `100` | Height of the foreignObject container |
+| `fadeIn` | `boolean` | `false` | Animate in on mount |
+| `align` | `string` | `'center'` | Text alignment (`'left'`, `'center'`, `'right'`) |
+
+## Code Example
+
+```jsx
+<LaTeX
+  expression="\\int_{0}^{\\infty} e^{-x^2} \\, dx = \\frac{\\sqrt{\\pi}}{2}"
+  x={60}
+  y={100}
+  fontSize={24}
+  color="#e2e8f0"
+  fadeIn
+/>
+```
+
+:::caution
+KaTeX CSS must be loaded in your HTML `<head>` for expressions to render correctly. Add the stylesheet from a CDN or bundle it locally.
+:::
+
