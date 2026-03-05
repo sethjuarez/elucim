@@ -538,41 +538,59 @@ export function CalcTitleDemo() {
 }
 
 export function AgenticDemo() {
+  // Nodes form a diamond: top, right, bottom, left
+  const nodes = [
+    { label: 'Observe', x: 300, y: 120, color: '#4fc3f7' },
+    { label: 'Think', x: 450, y: 200, color: '#a78bfa' },
+    { label: 'Act', x: 300, y: 280, color: '#f472b6' },
+    { label: 'Reflect', x: 150, y: 200, color: '#34d399' },
+  ];
+  const R = 38;
+  // Compute arrow start/end at circle edges
+  const edgePoint = (from: typeof nodes[0], to: typeof nodes[0], inward: boolean) => {
+    const dx = to.x - from.x, dy = to.y - from.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const ux = dx / len, uy = dy / len;
+    return inward ? { x: to.x - R * ux, y: to.y - R * uy }
+                  : { x: from.x + R * ux, y: from.y + R * uy };
+  };
+  const arrows = nodes.map((n, i) => {
+    const next = nodes[(i + 1) % nodes.length];
+    const s = edgePoint(n, next, false);
+    const e = edgePoint(n, next, true);
+    return { x1: s.x, y1: s.y, x2: e.x, y2: e.y, color: n.color };
+  });
+
   return (
     <Player width={600} height={350} fps={30} durationInFrames={120} autoPlay loop>
       {/* Title */}
       <Sequence from={0} durationInFrames={120}>
         <FadeIn duration={20}>
-          <Text x={300} y={40} fill="#e0e7ff" fontSize={24} fontWeight="bold" textAnchor="middle">
+          <Text x={300} y={40} fill="#6c5ce7" fontSize={24} fontWeight="bold" textAnchor="middle">
             The Agentic Loop
           </Text>
         </FadeIn>
       </Sequence>
-      {/* Cycle: Observe → Think → Act → Observe */}
+      {/* Cycle: Observe → Think → Act → Reflect */}
       <Sequence from={15} durationInFrames={105}>
         <Stagger staggerDelay={12}>
-          {[
-            { label: 'Observe', x: 300, y: 120, color: '#4fc3f7' },
-            { label: 'Think', x: 450, y: 200, color: '#a78bfa' },
-            { label: 'Act', x: 300, y: 280, color: '#f472b6' },
-            { label: 'Reflect', x: 150, y: 200, color: '#34d399' },
-          ].map((node, i) => (
+          {nodes.map((node, i) => (
             <FadeIn key={i} duration={15}>
-              <Circle cx={node.x} cy={node.y} r={35} stroke={node.color} strokeWidth={2}
-                      fill={`${node.color}22`} />
-              <Text x={node.x} y={node.y + 5} fill={node.color} fontSize={12}
+              <Circle cx={node.x} cy={node.y} r={R} stroke={node.color} strokeWidth={2.5}
+                      fill={`${node.color}40`} />
+              <Text x={node.x} y={node.y + 5} fill={node.color} fontSize={13}
                     textAnchor="middle" fontWeight="bold">{node.label}</Text>
             </FadeIn>
           ))}
         </Stagger>
       </Sequence>
-      {/* Arrows connecting cycle */}
+      {/* Arrows connecting cycle — start/end at circle edges */}
       <Sequence from={60} durationInFrames={60}>
         <FadeIn duration={20}>
-          <Arrow x1={335} y1={130} x2={415} y2={175} stroke="currentColor" strokeWidth={1.5} headSize={6} />
-          <Arrow x1={445} y1={230} x2={335} y2={268} stroke="currentColor" strokeWidth={1.5} headSize={6} />
-          <Arrow x1={265} y1={268} x2={155} y2={230} stroke="currentColor" strokeWidth={1.5} headSize={6} />
-          <Arrow x1={155} y1={170} x2={265} y2={130} stroke="currentColor" strokeWidth={1.5} headSize={6} />
+          {arrows.map((a, i) => (
+            <Arrow key={i} x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2}
+                   stroke={a.color} strokeWidth={2} headSize={7} />
+          ))}
         </FadeIn>
       </Sequence>
     </Player>
