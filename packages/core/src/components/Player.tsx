@@ -156,9 +156,7 @@ export function Player({
   const currentTime = (frame / fps).toFixed(2);
   const totalTime = ((durationInFrames - 1) / fps).toFixed(2);
 
-  // Scale to fit within reasonable display size
   const maxDisplayWidth = width;
-  const controlBarHeight = controls ? 52 : 0;
 
   return (
     <div
@@ -183,121 +181,73 @@ export function Player({
         {children}
       </Scene>
 
-      {controls && (
+      {controls && (() => {
+        const btnStyle: React.CSSProperties = {
+          background: 'none',
+          border: 'none',
+          color: controlsColor,
+          cursor: 'pointer',
+          fontSize: 14,
+          lineHeight: '32px',
+          width: 32,
+          height: 32,
+          padding: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        };
+        return (
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            padding: '8px 12px',
+            height: 40,
+            padding: '0 12px',
             background: controlsBackground,
             color: controlsColor,
-            height: controlBarHeight,
-            boxSizing: 'border-box',
             fontSize: 13,
+            boxSizing: 'border-box',
+            overflow: 'hidden',
           }}
           data-testid="elucim-controls"
         >
-          {/* Play/Pause */}
-          <button
-            onClick={togglePlay}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: controlsColor,
-              cursor: 'pointer',
-              fontSize: 18,
-              padding: '2px 6px',
-            }}
-            data-testid="elucim-play-btn"
-            title={playing ? 'Pause' : 'Play'}
-          >
+          <button onClick={togglePlay} style={btnStyle}
+            data-testid="elucim-play-btn" title={playing ? 'Pause' : 'Play'}>
             {playing ? '⏸' : '▶'}
           </button>
-
-          {/* Step backward */}
-          <button
-            onClick={stepBackward}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: controlsColor,
-              cursor: 'pointer',
-              fontSize: 14,
-              padding: '2px 4px',
-            }}
-            title="Step backward"
-          >
-            ◀
-          </button>
-
-          {/* Step forward */}
-          <button
-            onClick={stepForward}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: controlsColor,
-              cursor: 'pointer',
-              fontSize: 14,
-              padding: '2px 4px',
-            }}
-            title="Step forward"
-          >
-            ▶
-          </button>
+          <button onClick={stepBackward} style={btnStyle} title="Step backward">◀</button>
+          <button onClick={stepForward} style={btnStyle} title="Step forward">▶</button>
 
           {/* Scrub bar */}
           <div
             onClick={handleScrub}
             onMouseMove={handleScrubDrag}
-            style={{
-              flex: 1,
-              height: 6,
-              background: controlsColor + '33',
-              borderRadius: 3,
-              cursor: 'pointer',
-              position: 'relative',
-            }}
+            style={{ flex: 1, height: 32, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
             data-testid="elucim-scrubbar"
           >
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                height: '100%',
-                width: `${progress * 100}%`,
-                background: controlsAccent,
-                borderRadius: 3,
+            <div style={{ flex: 1, height: 4, background: controlsColor + '33', borderRadius: 2, position: 'relative' }}>
+              <div style={{
+                position: 'absolute', left: 0, top: 0, height: '100%',
+                width: `${progress * 100}%`, background: controlsAccent, borderRadius: 2,
                 transition: playing ? 'none' : 'width 0.05s',
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                left: `${progress * 100}%`,
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                background: controlsAccent,
-                border: `2px solid ${controlsColor}`,
-              }}
-              data-testid="elucim-scrub-handle"
-            />
+              }} />
+              <div style={{
+                position: 'absolute', left: `${progress * 100}%`, top: '50%',
+                transform: 'translate(-50%, -50%)', width: 10, height: 10,
+                borderRadius: '50%', boxSizing: 'border-box',
+                background: controlsAccent, border: `2px solid ${controlsColor}`,
+              }} data-testid="elucim-scrub-handle" />
+            </div>
           </div>
 
-          {/* Frame counter / time display */}
-          <span
-            style={{ fontSize: 12, minWidth: 120, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
-            data-testid="elucim-frame-display"
-          >
+          <span style={{ fontSize: 12, lineHeight: '32px', minWidth: 110, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+            data-testid="elucim-frame-display">
             {currentTime}s / {totalTime}s &middot; F{frame}
           </span>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
