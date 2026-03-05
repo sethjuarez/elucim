@@ -502,12 +502,12 @@ export function Presentation({
               background: 'color-mix(in srgb, currentColor 15%, transparent)',
               border: 'none',
               margin: 0,
+              padding: 0,
               color: 'inherit',
               borderRadius: '50%',
-              width: 44,
-              height: 44,
+              width: 32,
+              height: 32,
               cursor: 'pointer',
-              fontSize: 20,
               zIndex: 100,
               opacity: 0.5,
               transition: 'opacity 0.2s',
@@ -521,7 +521,9 @@ export function Presentation({
             onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.5'; }}
             title="Previous slide"
           >
-            ‹
+            <svg width={16} height={16} viewBox="0 0 16 16" fill="none" style={{ display: 'block' }}>
+              <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         )}
         {slideIndex < totalSlides - 1 && (
@@ -536,12 +538,12 @@ export function Presentation({
               background: 'color-mix(in srgb, currentColor 15%, transparent)',
               border: 'none',
               margin: 0,
+              padding: 0,
               color: 'inherit',
               borderRadius: '50%',
-              width: 44,
-              height: 44,
+              width: 32,
+              height: 32,
               cursor: 'pointer',
-              fontSize: 20,
               zIndex: 100,
               opacity: 0.5,
               transition: 'opacity 0.2s',
@@ -555,7 +557,9 @@ export function Presentation({
             onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.5'; }}
             title="Next slide"
           >
-            ›
+            <svg width={16} height={16} viewBox="0 0 16 16" fill="none" style={{ display: 'block' }}>
+              <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         )}
       </div>
