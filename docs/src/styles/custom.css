@@ -45,8 +45,8 @@
 /* Presentation fills the LiveDemo edge-to-edge — no padding, no border */
 .live-demo:has([data-testid="elucim-presentation"]) {
   border: none;
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 0;
+  overflow: visible;
 }
 .live-demo:has([data-testid="elucim-presentation"]) .live-demo-content {
   padding: 0;

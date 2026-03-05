@@ -426,7 +426,7 @@ export function Presentation({
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               {/* Progress dots */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, lineHeight: 0 }}>
                 {slides.map((_, i) => (
                   <div
                     key={i}
@@ -437,6 +437,9 @@ export function Presentation({
                       background: i === slideIndex ? '#4ecdc4' : 'currentColor',
                       opacity: i === slideIndex ? 1 : 0.3,
                       transition: 'background 0.3s, opacity 0.3s',
+                      margin: 0,
+                      padding: 0,
+                      flexShrink: 0,
                     }}
                   />
                 ))}
@@ -463,6 +466,7 @@ export function Presentation({
             width: 30,
             height: 30,
             padding: 0,
+            margin: 0,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -494,6 +498,7 @@ export function Presentation({
               transform: 'translateY(-50%)',
               background: 'color-mix(in srgb, currentColor 15%, transparent)',
               border: 'none',
+              margin: 0,
               color: 'inherit',
               borderRadius: '50%',
               width: 44,
@@ -527,6 +532,7 @@ export function Presentation({
               transform: 'translateY(-50%)',
               background: 'color-mix(in srgb, currentColor 15%, transparent)',
               border: 'none',
+              margin: 0,
               color: 'inherit',
               borderRadius: '50%',
               width: 44,
