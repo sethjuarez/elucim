@@ -167,7 +167,7 @@ Player and Scene automatically adapt to light and dark themes using CSS `light-d
 
 ## Documentation
 
-Full docs with live interactive examples: [github.com/sethjuarez/elucim](https://github.com/sethjuarez/elucim)
+Full docs with live interactive examples: [elucim.com](https://elucim.com)
 
 ## License
 
