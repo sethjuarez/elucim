@@ -152,6 +152,10 @@
   align-items: center;
 }
 
+.code-result-section > * {
+  min-width: 0;
+}
+
 @media (max-width: 48rem) {
   .code-result-section {
     grid-template-columns: 1fr;
@@ -167,6 +171,11 @@
 .result-side {
   display: flex;
   justify-content: center;
+  width: 100%;
+}
+
+.result-side .live-demo {
+  width: 100%;
 }
 
 /* ─── Demo gallery ───────────────────────────────────────────── */
