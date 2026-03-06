@@ -1,14 +1,125 @@
 /* Elucim docs — custom styles */
 
+/* ─── Typography ─────────────────────────────────────────────── */
 :root {
   --sl-color-accent-low: #1a1a3a;
   --sl-color-accent: #6c5ce7;
   --sl-color-accent-high: #a29bfe;
-  --sl-font-system: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --sl-font-system: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --sl-font-system-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
 
-/* Live demo container */
+/* ─── Hero gradient background ───────────────────────────────── */
+[data-theme='light'] .hero {
+  background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 100%);
+}
+[data-theme='dark'] .hero {
+  background: linear-gradient(180deg, #0d0d1a 0%, #1a1a2e 60%, #0d0d1a 100%);
+}
+
+/* Tighten hero tagline */
+.hero .tagline {
+  font-size: 1.25rem !important;
+  max-width: 28ch;
+  opacity: 0.75;
+}
+
+/* ─── Install pill ───────────────────────────────────────────── */
+.install-pill {
+  display: flex;
+  justify-content: center;
+  margin: 2rem auto 1rem;
+  max-width: 400px;
+}
+
+.install-pill figure {
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Hide the terminal window header (three dots + "Terminal window" text) */
+.install-pill figcaption,
+.install-pill .header {
+  display: none !important;
+}
+
+.install-pill pre {
+  border-radius: 999px !important;
+  padding: 0.65rem 2rem !important;
+  font-size: 0.95rem !important;
+  border: 1px solid var(--sl-color-gray-5) !important;
+  background: var(--sl-color-gray-7) !important;
+  width: 100%;
+  text-align: center;
+  margin: 0 !important;
+}
+
+[data-theme='dark'] .install-pill pre {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+
+/* Hide copy button inside the pill */
+.install-pill button {
+  display: none !important;
+}
+
+/* ─── Homepage feature cards ─────────────────────────────────── */
+.homepage-features {
+  max-width: 56rem;
+  margin: 2.5rem auto 3rem;
+  padding: 0 1rem;
+}
+
+.feature-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 48rem) {
+  .feature-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.feature {
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--sl-color-gray-5);
+  background: var(--sl-color-gray-7, #f8f8fa);
+  transition: border-color 0.2s;
+}
+
+.feature:hover {
+  border-color: var(--sl-color-accent);
+}
+
+[data-theme='dark'] .feature {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+}
+
+[data-theme='dark'] .feature:hover {
+  border-color: var(--sl-color-accent);
+}
+
+.feature h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--sl-color-white);
+}
+
+.feature p {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* ─── Live demo container ────────────────────────────────────── */
 .live-demo {
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 12px;

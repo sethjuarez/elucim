@@ -1,9 +1,9 @@
 ---
 title: Elucim
-description: Animate concepts. Illuminate understanding. A React library for creating 3Blue1Brown-style animated explanations on the web.
+description: Animated explanations for the web. A React library for creating 3Blue1Brown-style visualizations.
 template: splash
 hero:
-  tagline: A React library for creating animated math & concept explanations — 3Blue1Brown-style, for the web.
+  tagline: Animated explanations for the web.
   image:
     html: <img src="/logo.svg" alt="Elucim logo" width="300" height="300" />
   actions:
@@ -12,7 +12,7 @@ hero:
       icon: right-arrow
       variant: primary
     - text: View on GitHub
-      link: https://github.com/elucim/elucim
+      link: https://github.com/sethjuarez/elucim
       icon: external
       variant: minimal
 ---
@@ -24,36 +24,43 @@ import { CalcTitleDemo } from '@components/Demos.tsx';
   <CalcTitleDemo client:visible />
 </LiveDemo>
 
-## Why Elucim?
+<div class="install-pill">
 
-Build animated, interactive math visualizations **in React** — no video editing needed. Perfect for:
-
-- 📐 **Educational content** — derivatives, integrals, linear algebra, graph theory
-- 🤖 **AI-generated visuals** — JSON DSL + Builder API for agent-authored content
-- 🎓 **Presentations** — multi-slide animated decks with presenter notes
-- 📹 **Video export** — render to WebM/MP4 directly in the browser
-
-## What's Included
-
-| Package | Description |
-|---------|-------------|
-| `@elucim/core` | 14 primitives, 7 animation types, Player, Presentation, easing, hooks |
-| `@elucim/dsl` | JSON DSL schema, renderer, validator, fluent Builder API, themes |
-
-## Quick Example
-
-```tsx
-import { Player, FadeIn, Circle, Text } from '@elucim/core';
-
-<Player width={800} height={600} fps={30} durationInFrames={90}>
-  <FadeIn duration={20}>
-    <Circle cx={400} cy={300} r={80} stroke="#6c5ce7" strokeWidth={3} />
-  </FadeIn>
-  <FadeIn duration={20}>
-    <Text x={400} y={305} fill="#fff" fontSize={24} textAnchor="middle">
-      Hello World
-    </Text>
-  </FadeIn>
-</Player>
+```sh
+npm install @elucim/core
 ```
+
+</div>
+
+<div class="homepage-features">
+
+<div class="feature-row">
+
+<div class="feature">
+
+### React-native primitives
+
+Circles, axes, function plots, vectors, matrices, LaTeX — all as composable React components with SVG rendering.
+
+</div>
+
+<div class="feature">
+
+### Declarative animations
+
+FadeIn, Draw, Transform, Morph, Stagger — compose frame-perfect animations without timelines or callbacks.
+
+</div>
+
+<div class="feature">
+
+### JSON DSL for agents
+
+Describe entire scenes as JSON. Built for AI agents and content pipelines that need to generate visuals programmatically.
+
+</div>
+
+</div>
+
+</div>
 
