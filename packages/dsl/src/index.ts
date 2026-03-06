@@ -11,6 +11,7 @@ export type {
   SequenceNode,
   GroupNode,
   ElementNode,
+  BezierCurveNode,
   CircleNode,
   LineNode,
   ArrowNode,

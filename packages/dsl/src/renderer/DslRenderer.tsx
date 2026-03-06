@@ -4,7 +4,7 @@ import {
   Scene, Player,
   Presentation, Slide,
   Sequence,
-  Circle, Line, Arrow, Rect, Text, Polygon,
+  BezierCurve, Circle, Line, Arrow, Rect, Text, Polygon,
   Image, Group,
   Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
   FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel,
@@ -143,6 +143,25 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
       );
 
     // Primitives
+    case 'bezierCurve':
+      return (
+        <BezierCurve
+          key={key}
+          x1={node.x1} y1={node.y1}
+          cx1={node.cx1} cy1={node.cy1}
+          cx2={node.cx2} cy2={node.cy2}
+          x2={node.x2} y2={node.y2}
+          stroke={node.stroke} strokeWidth={node.strokeWidth}
+          fill={node.fill}
+          strokeDasharray={node.strokeDasharray}
+          opacity={node.opacity}
+          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
+          easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
+        />
+      );
     case 'circle':
       return (
         <Circle

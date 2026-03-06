@@ -1,3 +1,4 @@
+export { BezierCurve, type BezierCurveProps } from './BezierCurve';
 export { Circle, type CircleProps } from './Circle';
 export { Line, type LineProps } from './Line';
 export { Arrow, type ArrowProps } from './Arrow';
