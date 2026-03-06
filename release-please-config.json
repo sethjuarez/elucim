@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "bump-minor-pre-major": true,
+  "separate-pull-requests": false,
+  "group-pull-request-title-pattern": "chore: release ${branch}",
+  "changelog-sections": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance Improvements" },
+    { "type": "docs", "section": "Documentation", "hidden": true },
+    { "type": "chore", "section": "Miscellaneous", "hidden": true }
+  ],
+  "packages": {
+    "packages/core": {
+      "component": "core",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "packages/dsl": {
+      "component": "dsl",
+      "changelog-path": "CHANGELOG.md"
+    }
+  },
+  "plugins": [
+    {
+      "type": "node-workspace",
+      "merge": false
+    },
+    {
+      "type": "linked-versions",
+      "groupName": "elucim",
+      "components": ["core", "dsl"]
+    }
+  ]
+}

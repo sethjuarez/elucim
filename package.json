@@ -6,7 +6,6 @@
     "dev:explorer": "pnpm --filter @elucim/explorer dev",
     "dev:docs": "pnpm --filter @elucim/docs dev",
     "build": "pnpm --filter @elucim/core build && pnpm --filter @elucim/dsl build",
-    "release": "pnpm build && pnpm changeset publish",
     "test": "pnpm --filter @elucim/core test && pnpm --filter @elucim/dsl test",
     "test:dsl": "pnpm --filter @elucim/dsl test",
     "test:e2e": "pnpm --filter @elucim/e2e test",
@@ -15,7 +14,5 @@
   "engines": {
     "node": ">=18"
   },
-  "devDependencies": {
-    "@changesets/cli": "^2.30.0"
-  }
+  "devDependencies": {}
 }

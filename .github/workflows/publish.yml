@@ -4,15 +4,33 @@ on:
   push:
     branches: [main]
 
-# OIDC trusted publishing — no npm tokens needed
 permissions:
   contents: write
-  id-token: write
   pull-requests: write
+  id-token: write
 
 jobs:
-  release:
+  release-please:
     runs-on: ubuntu-latest
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      core_release: ${{ steps.release.outputs['packages/core--release_created'] }}
+      dsl_release: ${{ steps.release.outputs['packages/dsl--release_created'] }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  publish:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -30,11 +48,10 @@ jobs:
       - run: pnpm build
       - run: pnpm test
 
-      - name: Create Release PR or Publish
-        uses: changesets/action@v1
-        with:
-          title: "chore: version packages"
-          commit: "chore: version packages"
-          publish: pnpm run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish @elucim/core
+        if: ${{ needs.release-please.outputs.core_release == 'true' }}
+        run: pnpm --filter @elucim/core publish --access public --no-git-checks --provenance
+
+      - name: Publish @elucim/dsl
+        if: ${{ needs.release-please.outputs.dsl_release == 'true' }}
+        run: pnpm --filter @elucim/dsl publish --access public --no-git-checks --provenance
