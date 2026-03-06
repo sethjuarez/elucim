@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.2.1](https://github.com/sethjuarez/elucim/compare/core-v0.2.0...core-v0.2.1) (2026-03-06)
+
+
+### Bug Fixes
+
+* add missing keywords for new primitives in package metadata ([5d9d8aa](https://github.com/sethjuarez/elucim/commit/5d9d8aa71cd7a9bd8bb0a8652df27a8aa0e91199))
+
 ## [0.2.0](https://github.com/sethjuarez/elucim/compare/core-v0.1.3...core-v0.2.0) (2026-03-06)
 
 
