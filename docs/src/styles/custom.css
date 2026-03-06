@@ -126,6 +126,126 @@
   opacity: 0.8;
 }
 
+/* ─── Badge row ──────────────────────────────────────────────── */
+.badge-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem auto 0;
+  flex-wrap: wrap;
+}
+
+.badge-row a,
+.badge-row img {
+  display: inline-block;
+  height: 20px;
+}
+
+/* ─── Code → Result section ──────────────────────────────────── */
+.code-result-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 56rem;
+  margin: 3rem auto 2rem;
+  padding: 0 1rem;
+  align-items: center;
+}
+
+@media (max-width: 48rem) {
+  .code-result-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.code-side pre {
+  font-size: 0.8rem !important;
+  border-radius: 12px !important;
+  margin: 0 !important;
+}
+
+.result-side {
+  display: flex;
+  justify-content: center;
+}
+
+/* ─── Demo gallery ───────────────────────────────────────────── */
+.demo-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  max-width: 56rem;
+  margin: 1.5rem auto 3rem;
+  padding: 0 1rem;
+}
+
+@media (max-width: 48rem) {
+  .demo-gallery {
+    grid-template-columns: 1fr;
+  }
+}
+
+.demo-card {
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+  margin: 0 !important;
+}
+
+.demo-card:hover {
+  border-color: var(--sl-color-accent);
+}
+
+[data-theme='dark'] .demo-card {
+  border-color: rgba(255,255,255,0.08);
+}
+
+[data-theme='dark'] .demo-card:hover {
+  border-color: var(--sl-color-accent);
+}
+
+.demo-label {
+  display: block;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--sl-color-accent) !important;
+  text-decoration: none !important;
+  border-top: 1px solid var(--sl-color-gray-5);
+}
+
+[data-theme='dark'] .demo-label {
+  border-top-color: rgba(255,255,255,0.08);
+}
+
+.demo-label:hover {
+  text-decoration: underline !important;
+}
+
+/* Compact demo — no border/margin on the LiveDemo wrapper */
+.live-demo.live-demo-compact {
+  border: none;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.live-demo.live-demo-compact .live-demo-content {
+  padding: 0.25rem;
+}
+
+/* ─── "See it in action" heading ─────────────────────────────── */
+.sl-markdown-content > .sl-heading-wrapper:has(+ .demo-gallery) {
+  text-align: center;
+  margin-top: 3rem;
+  margin-bottom: 0;
+}
+
+.sl-markdown-content > .sl-heading-wrapper:has(+ .demo-gallery) .sl-anchor-link {
+  display: none !important;
+}
+
 /* ─── Live demo container ────────────────────────────────────── */
 .live-demo {
   border: 1px solid var(--sl-color-gray-5);

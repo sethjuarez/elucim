@@ -364,6 +364,23 @@ export function StaggerDemo() {
 
 // ─── Quick Start Demo ───────────────────────────────────────────────
 
+export function CodeResultDemo() {
+  return (
+    <Player width={400} height={300} fps={30} durationInFrames={90} autoPlay loop>
+      <FadeIn duration={20}>
+        <Circle cx={200} cy={140} r={60} stroke="#6c5ce7" strokeWidth={3} fill="none" />
+      </FadeIn>
+      <Sequence from={15} durationInFrames={75}>
+        <FadeIn duration={20}>
+          <Text x={200} y={148} fill="currentColor" fontSize={20} textAnchor="middle">
+            Hello World
+          </Text>
+        </FadeIn>
+      </Sequence>
+    </Player>
+  );
+}
+
 export function QuickStartDemo() {
   return (
     <Player width={500} height={350} fps={30} durationInFrames={120} autoPlay loop>

@@ -18,7 +18,7 @@ hero:
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
-import { HeroDemo } from '@components/Demos.tsx';
+import { HeroDemo, CodeResultDemo, AxesDemo, GraphDemo, BarChartDemo, LaTeXDemo } from '@components/Demos.tsx';
 
 <LiveDemo client:visible height="auto" className="live-demo-hero">
   <HeroDemo client:visible />
@@ -30,6 +30,12 @@ import { HeroDemo } from '@components/Demos.tsx';
 npm install @elucim/core
 ```
 
+</div>
+
+<div class="badge-row">
+  <a href="https://www.npmjs.com/package/@elucim/core"><img src="https://img.shields.io/npm/v/@elucim/core?color=6c5ce7&label=npm" alt="npm version" /></a>
+  <a href="https://github.com/sethjuarez/elucim/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@elucim/core?color=a29bfe" alt="license" /></a>
+  <a href="https://github.com/sethjuarez/elucim"><img src="https://img.shields.io/github/stars/sethjuarez/elucim?style=flat&color=74b9ff&label=stars" alt="stars" /></a>
 </div>
 
 <div class="homepage-features">
@@ -60,6 +66,75 @@ Describe scenes as JSON. Built for AI agents and content pipelines that generate
 
 </div>
 
+</div>
+
+</div>
+
+<div class="code-result-section">
+
+<div class="code-side">
+
+```tsx
+import { Player, FadeIn, Circle, Text } from '@elucim/core';
+
+<Player width={400} height={300} fps={30}
+        durationInFrames={90} autoPlay loop>
+  <FadeIn duration={20}>
+    <Circle cx={200} cy={140} r={60}
+            stroke="#6c5ce7" strokeWidth={3}
+            fill="none" />
+  </FadeIn>
+  <FadeIn duration={20}>
+    <Text x={200} y={148} fill="currentColor"
+          fontSize={20} textAnchor="middle">
+      Hello World
+    </Text>
+  </FadeIn>
+</Player>
+```
+
+</div>
+
+<div class="result-side">
+
+<LiveDemo client:visible height="auto" className="live-demo-compact">
+  <CodeResultDemo client:visible />
+</LiveDemo>
+
+</div>
+
+</div>
+
+## See it in action
+
+<div class="demo-gallery">
+
+<div class="demo-card">
+  <LiveDemo client:visible height="auto" className="live-demo-compact">
+    <AxesDemo client:visible />
+  </LiveDemo>
+  <a href="/math/axes/" class="demo-label">Axes & Plots →</a>
+</div>
+
+<div class="demo-card">
+  <LiveDemo client:visible height="auto" className="live-demo-compact">
+    <GraphDemo client:visible />
+  </LiveDemo>
+  <a href="/math/graph/" class="demo-label">Graph Theory →</a>
+</div>
+
+<div class="demo-card">
+  <LiveDemo client:visible height="auto" className="live-demo-compact">
+    <BarChartDemo client:visible />
+  </LiveDemo>
+  <a href="/math/barchart/" class="demo-label">Bar Charts →</a>
+</div>
+
+<div class="demo-card">
+  <LiveDemo client:visible height="auto" className="live-demo-compact">
+    <LaTeXDemo client:visible />
+  </LiveDemo>
+  <a href="/math/latex/" class="demo-label">LaTeX →</a>
 </div>
 
 </div>
