@@ -141,44 +141,6 @@
   height: 20px;
 }
 
-/* ─── Code → Result section ──────────────────────────────────── */
-.code-result-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  max-width: 56rem;
-  margin: 3rem auto 2rem;
-  padding: 0 1rem;
-  align-items: center;
-}
-
-.code-result-section > * {
-  min-width: 0;
-}
-
-@media (max-width: 48rem) {
-  .code-result-section {
-    grid-template-columns: 1fr;
-  }
-}
-
-.code-side pre {
-  font-size: 0.72rem !important;
-  border-radius: 12px !important;
-  margin: 0 !important;
-  overflow-x: hidden !important;
-}
-
-.result-side {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-.result-side .live-demo {
-  width: 100%;
-}
-
 /* ─── Demo gallery ───────────────────────────────────────────── */
 .demo-gallery {
   display: grid;

@@ -18,7 +18,7 @@ hero:
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
-import { HeroDemo, CodeResultDemo, AxesDemo, GraphDemo, BarChartDemo, LaTeXDemo } from '@components/Demos.tsx';
+import { HeroDemo, AxesDemo, GraphDemo, BarChartDemo, LaTeXDemo } from '@components/Demos.tsx';
 
 <LiveDemo client:visible height="auto" className="live-demo-hero">
   <HeroDemo client:visible />
@@ -65,45 +65,6 @@ FadeIn, Draw, Transform, Morph, Stagger — frame-perfect animations without tim
 Describe scenes as JSON. Built for AI agents and content pipelines that generate visuals programmatically.
 
 </div>
-
-</div>
-
-</div>
-
-<div class="code-result-section">
-
-<div class="code-side">
-
-```tsx
-import {
-  Player, FadeIn, Circle, Text
-} from '@elucim/core';
-
-<Player width={400} height={300}
-  fps={30} durationInFrames={90}
-  autoPlay loop>
-  <FadeIn duration={20}>
-    <Circle cx={200} cy={140} r={60}
-      stroke="#6c5ce7" strokeWidth={3}
-      fill="none" />
-  </FadeIn>
-  <FadeIn duration={20}>
-    <Text x={200} y={148}
-      fill="currentColor" fontSize={20}
-      textAnchor="middle">
-      Hello World
-    </Text>
-  </FadeIn>
-</Player>
-```
-
-</div>
-
-<div class="result-side">
-
-<LiveDemo client:visible height="auto" className="live-demo-compact">
-  <CodeResultDemo client:visible />
-</LiveDemo>
 
 </div>
 

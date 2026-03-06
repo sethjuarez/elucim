@@ -381,6 +381,53 @@ export function CodeResultDemo() {
   );
 }
 
+const codeSnippet = `import { Player, FadeIn, Circle, Text }
+  from '@elucim/core';
+
+<Player width={400} height={300}
+  durationInFrames={90} autoPlay loop>
+  <FadeIn>
+    <Circle cx={200} cy={140} r={60}
+      stroke="#6c5ce7" fill="none" />
+  </FadeIn>
+  <FadeIn>
+    <Text x={200} y={148}
+      fontSize={20} textAnchor="middle">
+      Hello World
+    </Text>
+  </FadeIn>
+</Player>`;
+
+export function CodeResultTabs() {
+  const [tab, setTab] = React.useState<'result' | 'code'>('result');
+
+  return (
+    <div className="code-tabs">
+      <div className="code-tabs-header">
+        <button
+          className={`code-tab ${tab === 'result' ? 'active' : ''}`}
+          onClick={() => setTab('result')}
+        >
+          Result
+        </button>
+        <button
+          className={`code-tab ${tab === 'code' ? 'active' : ''}`}
+          onClick={() => setTab('code')}
+        >
+          Code
+        </button>
+      </div>
+      <div className="code-tabs-body">
+        {tab === 'result' ? (
+          <CodeResultDemo />
+        ) : (
+          <pre className="code-tabs-pre"><code>{codeSnippet}</code></pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function QuickStartDemo() {
   return (
     <Player width={500} height={350} fps={30} durationInFrames={120} autoPlay loop>
