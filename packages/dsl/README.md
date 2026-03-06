@@ -238,7 +238,7 @@ const doc = presentation(darkTheme)
 ## Related
 
 - **[@elucim/core](https://www.npmjs.com/package/@elucim/core)** — The React rendering engine (peer dependency)
-- **[Elucim on GitHub](https://github.com/sethjuarez/elucim)** — Full docs with live interactive examples
+- **[Elucim Docs](https://elucim.com)** — Full docs with live interactive examples
 
 ## License
 

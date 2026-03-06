@@ -9,7 +9,7 @@
     "url": "https://github.com/sethjuarez/elucim.git",
     "directory": "packages/dsl"
   },
-  "homepage": "https://github.com/sethjuarez/elucim#readme",
+  "homepage": "https://elucim.com",
   "bugs": "https://github.com/sethjuarez/elucim/issues",
   "keywords": [
     "react",
