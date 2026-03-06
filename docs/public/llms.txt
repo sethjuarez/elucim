@@ -1,0 +1,120 @@
+# Elucim
+
+> Elucim is a React library for creating animated math and concept visualizations — 3Blue1Brown-style, built for the web. It provides SVG primitives, animation components, a frame-driven Player, slide Presentations, and a JSON DSL for AI-generated content.
+
+## Packages
+
+- `@elucim/core`: React components for animated visualizations — primitives, animations, Player, Presentation, hooks, easing, export
+- `@elucim/dsl`: JSON DSL schema, DslRenderer component, validator, fluent Builder API, and themes for declarative/AI-generated content
+
+## Core Concepts
+
+Elucim is frame-based. A `Player` defines `fps` and `durationInFrames`, wrapping a `Scene` (SVG viewport). Components inside use `useCurrentFrame()` to read the current frame and `interpolate()` to map frame ranges to values. `Sequence` offsets children in time. Animations (`FadeIn`, `Draw`, `Transform`, `Stagger`) wrap primitives to animate them.
+
+## Components
+
+### Playback
+- `Player`: Interactive player with controls, scrubber, play/pause, keyboard shortcuts. Props: `width`, `height`, `fps`, `durationInFrames`, `controls`, `loop`, `autoPlay`, `background`
+- `Scene`: Raw SVG scene (used internally by Player). Props: `width`, `height`, `background`
+- `Sequence`: Time-offset wrapper. Props: `from` (start frame), `durationInFrames`
+
+### Primitives
+- `Circle`: SVG circle. Props: `cx`, `cy`, `r`, `stroke`, `fill`, `strokeWidth`, `fadeIn`, `draw`
+- `Rect`: Rectangle. Props: `x`, `y`, `width`, `height`, `rx`, `stroke`, `fill`
+- `Line`: Line segment. Props: `x1`, `y1`, `x2`, `y2`, `stroke`, `strokeWidth`
+- `Arrow`: Line with arrowhead. Props: `x1`, `y1`, `x2`, `y2`, `headSize`, `stroke`
+- `Text`: SVG text. Props: `x`, `y`, `fill`, `fontSize`, `textAnchor`, `fontWeight`
+- `Polygon`: Arbitrary polygon. Props: `points` (array of [x,y])
+
+### Math Visualizations
+- `Axes`: Coordinate axes. Props: `origin`, `domain`, `range`, `scale`, `axisColor`, `labelColor`
+- `FunctionPlot`: Plot a function on axes. Props: `fn` (function), `domain`, `origin`, `scale`, `color`
+- `Vector`: Mathematical vector. Props: `from`, `to`, `color`, `label`
+- `VectorField`: Grid of arrows. Props: `fn` (vector function), `domain`, `range`, `scale`
+- `Matrix`: Matrix display with brackets. Props: `values` (2D array), `x`, `y`, `color`
+- `Graph`: Graph theory visualization. Props: `nodes` (GraphNode[]), `edges` (GraphEdge[])
+- `LaTeX`: LaTeX math expressions via KaTeX. Props: `expression`, `x`, `y`, `fontSize`, `color`, `align`
+- `BarChart`: Animated bar chart. Props: `bars` (BarDef[]), `x`, `y`, `width`, `height`
+
+### Animations
+- `FadeIn` / `FadeOut`: Opacity transitions. Props: `duration`, `easing`
+- `Draw`: Progressive stroke drawing. Props: `duration`, `easing`
+- `Write`: Stroke draw + fill fade. Props: `duration`, `easing`
+- `Transform`: Animate position/scale/rotation/opacity. Props: `translate`, `scale`, `rotate`, `opacity`, `duration`, `easing`
+- `Morph`: Color/scale morphing. Props: `fromColor`, `toColor`, `fromScale`, `toScale`, `duration`
+- `Stagger`: Sequential delayed entrance. Props: `staggerDelay`
+- `Parallel`: Run animations simultaneously
+- `Timeline`: Imperative animation sequencing
+
+### Presentations
+- `Presentation`: Slide-deck system. Props: `width`, `height`, `background`, `transition` (`none`|`fade`|`slide-left`|`slide-up`|`zoom`), `transitionDuration`, `showHUD`, `showNotes`, `startSlide`
+- `Slide`: Individual slide. Props: `title`, `notes`, `background`
+
+## Hooks
+
+- `useCurrentFrame()`: Returns current frame number (0-based)
+- `interpolate(frame, inputRange, outputRange, options?)`: Map frames to values with easing
+- `useElucimContext()`: Returns `{ frame, fps, durationInFrames, width, height }`
+- `usePresentationContext()`: Returns `{ slideIndex, totalSlides, goTo, next, prev, isFullscreen, toggleFullscreen }`
+- `useInsidePresentation()`: Returns boolean — true inside a Presentation
+
+## Easing
+
+Named: `linear`, `easeInQuad`, `easeOutQuad`, `easeInOutQuad`, `easeInCubic`, `easeOutCubic`, `easeInOutCubic`, `easeInQuart`, `easeOutQuart`, `easeInOutQuart`, `easeInSine`, `easeOutSine`, `easeInOutSine`, `easeInExpo`, `easeOutExpo`, `easeInOutExpo`, `easeInBack`, `easeOutBack`, `easeOutElastic`, `easeOutBounce`
+
+Generators: `spring({ stiffness, damping, mass })`, `cubicBezier(x1, y1, x2, y2)`
+
+## DSL
+
+The JSON DSL allows declarative animation definitions:
+
+```json
+{
+  "version": "1.0",
+  "root": {
+    "type": "player",
+    "width": 800, "height": 600, "fps": 30, "durationInFrames": 90,
+    "children": [
+      { "type": "circle", "cx": 400, "cy": 300, "r": 80, "stroke": "#6c5ce7", "draw": 60 }
+    ]
+  }
+}
+```
+
+Render with `<DslRenderer dsl={doc} />`. Validate with `validate(doc)`. Math expressions in `functionPlot.fn` use safe evaluation (sin, cos, sqrt, etc.).
+
+### Builder API
+
+```typescript
+import { presentation, darkTheme } from '@elucim/dsl';
+
+const doc = presentation(darkTheme)
+  .size(1920, 1080)
+  .transition('fade', 500)
+  .slide('Welcome', (s) => { s.title('Hello World'); })
+  .build();
+```
+
+## Docs
+
+- [Installation](https://elucim.com/getting-started/installation/)
+- [Quick Start](https://elucim.com/getting-started/quick-start/)
+- [Core Concepts](https://elucim.com/getting-started/core-concepts/)
+- [Player API](https://elucim.com/advanced/player/)
+- [Presentation Mode](https://elucim.com/advanced/presentation/)
+- [Hooks Reference](https://elucim.com/advanced/hooks/)
+- [DSL Overview](https://elucim.com/dsl/overview/)
+- [Builder API](https://elucim.com/dsl/builder-api/)
+
+## Examples
+
+- [Calculus Visualization](https://elucim.com/examples/calculus/): Derivatives, tangent lines, animated function plots
+- [Agentic Loop](https://elucim.com/examples/agentic-loop/): AI agent workflow diagram with staggered animations
+- [Recipes](https://elucim.com/examples/recipes/): Common patterns and techniques
+
+## Optional
+
+- [Animation Easing Reference](https://elucim.com/animations/easing/): Full easing function gallery
+- [Export / Video](https://elucim.com/advanced/export/): Render animations to WebM/MP4
+- [DSL Validation](https://elucim.com/dsl/validation/): Schema validation details
+- [DSL Themes](https://elucim.com/dsl/themes/): Built-in dark/light themes for Builder API
