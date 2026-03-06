@@ -19,6 +19,9 @@
     "yaml",
     "visualization",
     "elucim",
+    "image",
+    "group",
+    "transforms",
     "declarative"
   ],
   "publishConfig": {

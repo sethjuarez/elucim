@@ -19,6 +19,9 @@
     "svg",
     "manim",
     "3blue1brown",
+    "image",
+    "group",
+    "transforms",
     "presentation",
     "latex"
   ],
