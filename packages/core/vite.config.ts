@@ -6,7 +6,7 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [
     react(),
-    dts({ rollupTypes: true }),
+    dts({ rollupTypes: false }),
   ],
   build: {
     lib: {
