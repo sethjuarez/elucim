@@ -6,7 +6,7 @@ import { readFileSync } from 'fs';
 const pkg = JSON.parse(readFileSync(new URL('../packages/core/package.json', import.meta.url), 'utf-8'));
 
 export default defineConfig({
-  site: 'https://elucim.dev',
+  site: 'https://elucim.com',
   integrations: [
     starlight({
       title: `Elucim v${pkg.version}`,
