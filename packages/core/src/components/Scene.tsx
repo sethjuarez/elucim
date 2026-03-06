@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { ElucimContext, type ElucimContextValue } from '../context';
 import { useInsidePresentation } from './Presentation';
+import { sortByZIndex } from '../primitives/transform';
 
 export interface SceneProps {
   /** Width in pixels. Default: 1920 */
@@ -118,7 +119,7 @@ export function Scene({
           xmlns="http://www.w3.org/2000/svg"
           style={{ position: 'absolute', top: 0, left: 0 }}
         >
-          {children}
+          {sortByZIndex(children)}
         </svg>
       </div>
     </ElucimContext.Provider>

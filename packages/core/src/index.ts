@@ -34,7 +34,10 @@ export { Matrix, type MatrixProps } from './primitives/Matrix';
 export { Graph, type GraphProps, type GraphNode, type GraphEdge } from './primitives/Graph';
 export { LaTeX, type LaTeXProps } from './primitives/LaTeX';
 export { BarChart, type BarChartProps, type BarDef } from './primitives/BarChart';
+export { Image, type ImageProps } from './primitives/Image';
+export { Group, type GroupProps } from './primitives/Group';
 export { useAnimation, type AnimationProps } from './primitives/animation';
+export { buildTransform, withTransform, sortByZIndex, type SpatialProps, type BaseElementProps } from './primitives/transform';
 
 // Easing
 export {

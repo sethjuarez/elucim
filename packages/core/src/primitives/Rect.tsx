@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAnimation, type AnimationProps } from './animation';
+import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface RectProps extends AnimationProps {
+export interface RectProps extends AnimationProps, SpatialProps, BaseElementProps {
   x: number;
   y: number;
   width: number;
@@ -32,13 +33,17 @@ export function Rect({
   fadeOut,
   draw,
   easing,
+  rotation,
+  rotationOrigin,
+  scale,
+  translate,
 }: RectProps) {
   const perimeter = 2 * (width + height);
   const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, perimeter);
 
   const dasharray = anim.strokeDasharray ?? userDasharray;
 
-  return (
+  const el = (
     <rect
       x={x}
       y={y}
@@ -55,4 +60,6 @@ export function Rect({
       data-testid="elucim-rect"
     />
   );
+
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x + width / 2, y + height / 2]);
 }

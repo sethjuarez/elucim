@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAnimation, type AnimationProps } from './animation';
+import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface CircleProps extends AnimationProps {
+export interface CircleProps extends AnimationProps, SpatialProps, BaseElementProps {
   cx: number;
   cy: number;
   r: number;
@@ -23,11 +24,15 @@ export function Circle({
   fadeOut,
   draw,
   easing,
+  rotation,
+  rotationOrigin,
+  scale,
+  translate,
 }: CircleProps) {
   const circumference = 2 * Math.PI * r;
   const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, circumference);
 
-  return (
+  const el = (
     <circle
       cx={cx}
       cy={cy}
@@ -41,4 +46,6 @@ export function Circle({
       data-testid="elucim-circle"
     />
   );
+
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [cx, cy]);
 }

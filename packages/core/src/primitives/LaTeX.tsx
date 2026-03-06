@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import katex from 'katex';
 import { useAnimation, type AnimationProps } from './animation';
+import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface LaTeXProps extends AnimationProps {
+export interface LaTeXProps extends AnimationProps, SpatialProps, BaseElementProps {
   /** LaTeX expression string (e.g., "\\frac{a}{b}") */
   expression: string;
   /** SVG x position */
@@ -30,6 +31,10 @@ export function LaTeX({
   fadeIn,
   fadeOut,
   easing,
+  rotation,
+  rotationOrigin,
+  scale,
+  translate,
 }: LaTeXProps) {
   const anim = useAnimation({ fadeIn, fadeOut, easing });
 
@@ -55,7 +60,7 @@ export function LaTeX({
     : align === 'right' ? -foWidth
     : 0;
 
-  return (
+  const el = (
     <foreignObject
       x={x + offsetX}
       y={y - fontSize * 1.5}
@@ -80,4 +85,6 @@ export function LaTeX({
       />
     </foreignObject>
   );
+
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x, y]);
 }

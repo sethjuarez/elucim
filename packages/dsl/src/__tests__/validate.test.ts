@@ -397,4 +397,117 @@ describe('DSL Validator', () => {
       expect(result.valid).toBe(false);
     });
   });
+
+  describe('image node validation', () => {
+    const wrap = (child: unknown) => ({
+      version: '1.0',
+      root: { type: 'scene', durationInFrames: 60, children: [child] },
+    });
+
+    it('accepts a valid image node', () => {
+      const result = validate(wrap({
+        type: 'image',
+        src: 'https://example.com/photo.png',
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 150,
+      }));
+      expect(result.valid).toBe(true);
+    });
+
+    it('rejects image without src', () => {
+      const result = validate(wrap({
+        type: 'image',
+        x: 0, y: 0, width: 200, height: 150,
+      }));
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.message.includes('"src"'))).toBe(true);
+    });
+
+    it('rejects image without width or height', () => {
+      const result = validate(wrap({
+        type: 'image',
+        src: 'https://example.com/photo.png',
+        x: 0, y: 0,
+      }));
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.message.includes('"width"'))).toBe(true);
+      expect(result.errors.some(e => e.message.includes('"height"'))).toBe(true);
+    });
+
+    it('accepts image with clip options', () => {
+      const result = validate(wrap({
+        type: 'image',
+        src: 'https://example.com/photo.png',
+        x: 10, y: 20, width: 100, height: 100,
+        borderRadius: 8,
+        clipShape: 'circle',
+      }));
+      expect(result.valid).toBe(true);
+    });
+
+    it('rejects image with invalid clipShape', () => {
+      const result = validate(wrap({
+        type: 'image',
+        src: 'https://example.com/photo.png',
+        x: 10, y: 20, width: 100, height: 100,
+        clipShape: 'triangle',
+      }));
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.message.includes('clipShape'))).toBe(true);
+    });
+  });
+
+  describe('group node validation', () => {
+    const wrap = (child: unknown) => ({
+      version: '1.0',
+      root: { type: 'scene', durationInFrames: 60, children: [child] },
+    });
+
+    it('accepts a valid group node', () => {
+      const result = validate(wrap({
+        type: 'group',
+        children: [
+          { type: 'circle', cx: 50, cy: 50, r: 20 },
+          { type: 'rect', x: 0, y: 0, width: 40, height: 40 },
+        ],
+      }));
+      expect(result.valid).toBe(true);
+    });
+
+    it('rejects group without children', () => {
+      const result = validate(wrap({
+        type: 'group',
+      }));
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.message.includes('children'))).toBe(true);
+    });
+  });
+
+  describe('spatial props validation', () => {
+    const wrap = (child: unknown) => ({
+      version: '1.0',
+      root: { type: 'scene', durationInFrames: 60, children: [child] },
+    });
+
+    it('accepts spatial props on circle', () => {
+      const result = validate(wrap({
+        type: 'circle', cx: 100, cy: 100, r: 50,
+        rotation: 45,
+        rotationOrigin: [100, 100],
+        scale: 1.5,
+        translate: [10, 20],
+      }));
+      expect(result.valid).toBe(true);
+    });
+
+    it('accepts zIndex on any node', () => {
+      const result = validate(wrap({
+        type: 'rect', x: 0, y: 0, width: 100, height: 50,
+        zIndex: 5,
+      }));
+      expect(result.valid).toBe(true);
+    });
+  });
 });

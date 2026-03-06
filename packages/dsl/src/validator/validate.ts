@@ -54,7 +54,7 @@ export function validate(doc: unknown): ValidationResult {
 const VALID_ROOT_TYPES = ['scene', 'player', 'presentation'];
 const VALID_ELEMENT_TYPES = [
   'sequence', 'group',
-  'circle', 'line', 'arrow', 'rect', 'polygon', 'text',
+  'circle', 'line', 'arrow', 'rect', 'polygon', 'text', 'image',
   'axes', 'functionPlot', 'vectorField', 'vector', 'matrix', 'graph', 'latex', 'barChart',
   'fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel',
   'player', 'scene',
@@ -177,6 +177,7 @@ function validateElementNode(node: Record<string, unknown>, path: string, errors
     case 'rect': validateRect(node, path, errors); break;
     case 'polygon': validatePolygon(node, path, errors); break;
     case 'text': validateText(node, path, errors); break;
+    case 'image': validateImage(node, path, errors); break;
     case 'axes': validateAxes(node, path, errors); break;
     case 'functionPlot': validateFunctionPlot(node, path, errors); break;
     case 'vector': validateVector(node, path, errors); break;
@@ -184,8 +185,9 @@ function validateElementNode(node: Record<string, unknown>, path: string, errors
     case 'matrix': validateMatrix(node, path, errors); break;
     case 'graph': validateGraph(node, path, errors); break;
     case 'latex': validateLaTeX(node, path, errors); break;
+    case 'barChart': validateBarChart(node, path, errors); break;
     case 'sequence': validateSequence(node, path, errors); break;
-    case 'group':
+    case 'group': validateGroup(node, path, errors); break;
     case 'parallel':
       validateChildren(node, path, errors); break;
     case 'fadeIn': case 'fadeOut': case 'draw': case 'write':
@@ -261,7 +263,7 @@ function validateAxes(node: Record<string, unknown>, path: string, errors: Valid
   optionalTuple2(node, 'domain', path, errors);
   optionalTuple2(node, 'range', path, errors);
   optionalTuple2(node, 'origin', path, errors);
-  validateAnimationProps(node, path, errors);
+  validateAnimationPropsNoScale(node, path, errors);
 }
 
 function validateFunctionPlot(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
@@ -274,7 +276,7 @@ function validateFunctionPlot(node: Record<string, unknown>, path: string, error
     }
   }
   optionalTuple2(node, 'domain', path, errors);
-  validateAnimationProps(node, path, errors);
+  validateAnimationPropsNoScale(node, path, errors);
 }
 
 function validateVector(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
@@ -282,7 +284,7 @@ function validateVector(node: Record<string, unknown>, path: string, errors: Val
     errors.push({ path: `${path}.to`, message: 'Vector requires a "to" array of [number, number]', severity: 'error' });
   }
   optionalTuple2(node, 'from', path, errors);
-  validateAnimationProps(node, path, errors);
+  validateAnimationPropsNoScale(node, path, errors);
 }
 
 function validateVectorField(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
@@ -296,7 +298,7 @@ function validateVectorField(node: Record<string, unknown>, path: string, errors
   }
   optionalTuple2(node, 'domain', path, errors);
   optionalTuple2(node, 'range', path, errors);
-  validateAnimationProps(node, path, errors);
+  validateAnimationPropsNoScale(node, path, errors);
 }
 
 function validateMatrix(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
@@ -420,6 +422,85 @@ function validateAnimationProps(node: Record<string, unknown>, path: string, err
   optionalPositiveNum(node, 'fadeOut', path, errors);
   optionalPositiveNum(node, 'draw', path, errors);
   validateEasing(node, path, errors);
+  validateSpatialProps(node, path, errors);
+}
+
+// Spatial props validation for nodes whose `scale` already means "pixels per unit"
+function validateAnimationPropsNoScale(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  optionalPositiveNum(node, 'fadeIn', path, errors);
+  optionalPositiveNum(node, 'fadeOut', path, errors);
+  optionalPositiveNum(node, 'draw', path, errors);
+  validateEasing(node, path, errors);
+  validateSpatialPropsNoScale(node, path, errors);
+}
+
+const VALID_CLIP_SHAPES = ['none', 'circle', 'ellipse'];
+
+function validateSpatialProps(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  optionalNumber(node, 'rotation', path, errors);
+  optionalTuple2(node, 'rotationOrigin', path, errors);
+  optionalTuple2(node, 'translate', path, errors);
+  optionalNumber(node, 'zIndex', path, errors);
+  // scale can be a number or [number, number]
+  if (node.scale !== undefined) {
+    const s = node.scale;
+    if (typeof s === 'number') {
+      // ok
+    } else if (Array.isArray(s) && s.length === 2 && typeof s[0] === 'number' && typeof s[1] === 'number') {
+      // ok
+    } else {
+      errors.push({ path: `${path}.scale`, message: '"scale" must be a number or [number, number]', severity: 'error' });
+    }
+  }
+}
+
+function validateSpatialPropsNoScale(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  optionalNumber(node, 'rotation', path, errors);
+  optionalTuple2(node, 'rotationOrigin', path, errors);
+  optionalTuple2(node, 'translate', path, errors);
+  optionalNumber(node, 'zIndex', path, errors);
+}
+
+function validateImage(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  if (typeof node.src !== 'string') {
+    errors.push({ path: `${path}.src`, message: 'Image requires a "src" string', severity: 'error' });
+  }
+  requireNumber(node, 'x', path, errors);
+  requireNumber(node, 'y', path, errors);
+  requirePositiveNum(node, 'width', path, errors);
+  requirePositiveNum(node, 'height', path, errors);
+  optionalString(node, 'preserveAspectRatio', path, errors);
+  if (node.borderRadius !== undefined) {
+    if (typeof node.borderRadius !== 'number' || (node.borderRadius as number) < 0) {
+      errors.push({ path: `${path}.borderRadius`, message: '"borderRadius" must be a number >= 0', severity: 'error' });
+    }
+  }
+  if (node.clipShape !== undefined) {
+    if (!VALID_CLIP_SHAPES.includes(node.clipShape as string)) {
+      errors.push({
+        path: `${path}.clipShape`,
+        message: `Invalid clipShape "${node.clipShape}". Must be one of: ${VALID_CLIP_SHAPES.join(', ')}`,
+        severity: 'error',
+      });
+    }
+  }
+  validateAnimationProps(node, path, errors);
+}
+
+function validateGroup(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  validateChildren(node, path, errors);
+  validateAnimationProps(node, path, errors);
+}
+
+function validateBarChart(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  requireNumber(node, 'x', path, errors);
+  requireNumber(node, 'y', path, errors);
+  requirePositiveNum(node, 'width', path, errors);
+  requirePositiveNum(node, 'height', path, errors);
+  if (!Array.isArray(node.bars)) {
+    errors.push({ path: `${path}.bars`, message: 'BarChart requires a "bars" array', severity: 'error' });
+  }
+  validateAnimationProps(node, path, errors);
 }
 
 function validateEasing(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
@@ -492,6 +573,12 @@ function optionalPositiveInt(node: Record<string, unknown>, field: string, path:
 function optionalString(node: Record<string, unknown>, field: string, path: string, errors: ValidationError[]) {
   if (node[field] !== undefined && typeof node[field] !== 'string') {
     errors.push({ path: `${path}.${field}`, message: `"${field}" must be a string`, severity: 'error' });
+  }
+}
+
+function optionalNumber(node: Record<string, unknown>, field: string, path: string, errors: ValidationError[]) {
+  if (node[field] !== undefined && typeof node[field] !== 'number') {
+    errors.push({ path: `${path}.${field}`, message: `"${field}" must be a number`, severity: 'error' });
   }
 }
 

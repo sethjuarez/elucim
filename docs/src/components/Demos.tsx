@@ -5,7 +5,7 @@
 import React from 'react';
 import {
   Player, Sequence, Scene,
-  Circle, Line, Arrow, Rect, Text, Polygon,
+  Circle, Line, Arrow, Rect, Text, Polygon, Image, Group,
   Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
   FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel,
   Presentation, Slide,
@@ -126,6 +126,39 @@ export function PolygonDemo() {
           stroke="#6c5ce7" strokeWidth={2.5} fill="rgba(108,92,231,0.1)" draw={30}
         />
       </Sequence>
+    </Player>
+  );
+}
+
+export function ImageDemo() {
+  return (
+    <Player width={500} height={350} fps={30} durationInFrames={120} autoPlay loop>
+      <FadeIn duration={20}>
+        <Image
+          src="https://raw.githubusercontent.com/sethjuarez/elucim/main/docs/public/logo.svg"
+          x={150} y={50} width={200} height={200}
+          borderRadius={20}
+        />
+      </FadeIn>
+      <Sequence from={30} durationInFrames={90}>
+        <FadeIn duration={20}>
+          <Text x={250} y={300} fill="currentColor" fontSize={20} textAnchor="middle">
+            Image with rounded corners
+          </Text>
+        </FadeIn>
+      </Sequence>
+    </Player>
+  );
+}
+
+export function GroupDemo() {
+  return (
+    <Player width={500} height={350} fps={30} durationInFrames={120} autoPlay loop>
+      <Group rotation={15} fadeIn={30}>
+        <Rect x={150} y={75} width={200} height={200} stroke="#6c5ce7" fill="none" strokeWidth={2} />
+        <Circle cx={250} cy={175} r={50} stroke="#e17055" fill="none" strokeWidth={2} />
+        <Text x={250} y={180} fill="currentColor" fontSize={16} textAnchor="middle">Grouped</Text>
+      </Group>
     </Player>
   );
 }

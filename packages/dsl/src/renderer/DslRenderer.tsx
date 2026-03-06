@@ -5,6 +5,7 @@ import {
   Presentation, Slide,
   Sequence,
   Circle, Line, Arrow, Rect, Text, Polygon,
+  Image, Group,
   Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
   FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel,
 } from '@elucim/core';
@@ -128,7 +129,18 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
         </Sequence>
       );
     case 'group':
-      return <React.Fragment key={key}>{node.children.map((child, i) => renderElement(child, i))}</React.Fragment>;
+      return (
+        <Group
+          key={key}
+          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
+          easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
+        >
+          {node.children.map((child, i) => renderElement(child, i))}
+        </Group>
+      );
 
     // Primitives
     case 'circle':
@@ -140,6 +152,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     case 'line':
@@ -152,6 +167,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     case 'arrow':
@@ -164,6 +182,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     case 'rect':
@@ -177,6 +198,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     case 'polygon':
@@ -189,6 +213,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     case 'text':
@@ -202,9 +229,30 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
         >
           {node.content}
         </Text>
+      );
+
+    case 'image':
+      return (
+        <Image
+          key={key}
+          src={node.src}
+          x={node.x} y={node.y} width={node.width} height={node.height}
+          preserveAspectRatio={node.preserveAspectRatio}
+          borderRadius={node.borderRadius}
+          clipShape={node.clipShape}
+          opacity={node.opacity}
+          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
+          easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
+        />
       );
 
     // Math
@@ -220,6 +268,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           labelColor={node.labelColor} labelFontSize={node.labelFontSize}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     case 'functionPlot': {
@@ -234,6 +285,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           draw={node.draw}
           easing={resolveEasing(node.easing)}
           opacity={node.opacity}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     }
@@ -248,6 +302,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           labelColor={node.labelColor} labelFontSize={node.labelFontSize}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     case 'vectorField': {
@@ -262,6 +319,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           normalize={node.normalize} maxLength={node.maxLength}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     }
@@ -276,6 +336,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           fontSize={node.fontSize}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     case 'graph':
@@ -288,6 +351,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           labelColor={node.labelColor} labelFontSize={node.labelFontSize}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     case 'latex':
@@ -299,6 +365,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           color={node.color} fontSize={node.fontSize} align={node.align}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
     case 'barChart':
@@ -313,6 +382,9 @@ function renderElement(node: ElementNode, key: number): React.ReactNode {
           gap={node.gap} valueFormat={node.valueFormat}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+          zIndex={node.zIndex}
         />
       );
 

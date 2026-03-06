@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAnimation, type AnimationProps } from './animation';
+import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface PolygonProps extends AnimationProps {
+export interface PolygonProps extends AnimationProps, SpatialProps, BaseElementProps {
   /** Array of [x, y] points */
   points: [number, number][];
   /** Fill color. Default: 'none' */
@@ -30,6 +31,10 @@ export function Polygon({
   fadeOut,
   draw,
   easing,
+  rotation,
+  rotationOrigin,
+  scale,
+  translate,
 }: PolygonProps) {
   // Compute perimeter for draw animation
   let perimeter = 0;
@@ -49,7 +54,12 @@ export function Polygon({
 
   const Element = closed ? 'polygon' : 'polyline';
 
-  return (
+  const xs = points.map(([px]) => px);
+  const ys = points.map(([, py]) => py);
+  const centerX = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const centerY = (Math.min(...ys) + Math.max(...ys)) / 2;
+
+  const el = (
     <Element
       points={pointsStr}
       fill={fill}
@@ -62,4 +72,6 @@ export function Polygon({
       data-testid="elucim-polygon"
     />
   );
+
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [centerX, centerY]);
 }

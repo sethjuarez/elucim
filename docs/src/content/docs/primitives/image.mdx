@@ -1,0 +1,110 @@
+---
+title: Image
+description: Embed raster and vector images with clipping, rounded corners, and animation support.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { ImageDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+The `<Image>` primitive embeds an external image (PNG, JPEG, SVG, WebP, or GIF) into your scene. It supports rounded corners, circular/elliptical clipping, and all the standard spatial and animation props.
+
+<LiveDemo client:visible height="350px">
+  <ImageDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `src` | `string` | — | **Required.** Image URL or data URI |
+| `x` | `number` | — | **Required.** X coordinate of the top-left corner |
+| `y` | `number` | — | **Required.** Y coordinate of the top-left corner |
+| `width` | `number` | — | **Required.** Rendered width |
+| `height` | `number` | — | **Required.** Rendered height |
+| `preserveAspectRatio` | `string` | `'xMidYMid meet'` | SVG aspect-ratio keyword |
+| `borderRadius` | `number` | `0` | Corner radius for rounded images |
+| `clipShape` | `'none' \| 'circle' \| 'ellipse'` | `'none'` | Clip the image to a shape |
+| `opacity` | `number` | `1` | Opacity from 0 to 1 |
+| `rotation` | `number` | `0` | Rotation in degrees |
+| `rotationOrigin` | `[number, number]` | element center | Center point for rotation |
+| `scale` | `number \| [number, number]` | `1` | Uniform or per-axis scale |
+| `translate` | `[number, number]` | `[0, 0]` | Translation offset `[dx, dy]` |
+| `fadeIn` | `number` | — | Fade in over N frames |
+| `fadeOut` | `number` | — | Fade out over N frames |
+| `zIndex` | `number` | `0` | Rendering order (higher = on top) |
+
+## Code Examples
+
+### Basic image
+
+<Tabs syncKey="code-style">
+  <TabItem label="React">
+    ```jsx
+    import { Player, Image } from '@elucim/core';
+
+    <Player width={500} height={300} fps={30} durationInFrames={60}>
+      <Image src="/photo.png" x={100} y={50} width={300} height={200} />
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
+      "children": [
+        {
+          "type": "image", "src": "/photo.png",
+          "x": 100, "y": 50, "width": 300, "height": 200
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### Circular clip
+
+```jsx
+<Image
+  src="/avatar.png"
+  x={200} y={100} width={100} height={100}
+  clipShape="circle"
+/>
+```
+
+### Rounded corners
+
+```jsx
+<Image
+  src="/thumbnail.jpg"
+  x={50} y={50} width={400} height={250}
+  borderRadius={20}
+/>
+```
+
+### Rotated image
+
+```jsx
+<Image
+  src="/diagram.svg"
+  x={100} y={50} width={200} height={200}
+  rotation={15}
+/>
+```
+
+### Image with fade-in animation
+
+```jsx
+<FadeIn duration={30}>
+  <Image src="/hero.png" x={0} y={0} width={500} height={300} />
+</FadeIn>
+```
+
+:::tip
+**Supported formats:** PNG, JPEG, SVG, WebP, and GIF. You can also use inline data URIs (e.g. `src="data:image/png;base64,…"`).
+:::
+
+:::caution
+**CORS:** When loading images from external domains, make sure the server sends appropriate CORS headers. Images blocked by CORS will not render in the SVG context.
+:::

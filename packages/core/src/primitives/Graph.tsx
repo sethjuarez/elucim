@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAnimation, type AnimationProps } from './animation';
+import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
 export interface GraphNode {
   id: string;
@@ -18,7 +19,7 @@ export interface GraphEdge {
   label?: string;
 }
 
-export interface GraphProps extends AnimationProps {
+export interface GraphProps extends AnimationProps, SpatialProps, BaseElementProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
   /** Default node color. Default: '#6c5ce7' */
@@ -50,12 +51,22 @@ export function Graph({
   fadeIn,
   fadeOut,
   easing,
+  rotation,
+  rotationOrigin,
+  scale,
+  translate,
 }: GraphProps) {
   const anim = useAnimation({ fadeIn, fadeOut, easing });
 
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
-  return (
+  const xs = nodes.map((n) => n.x);
+  const ys = nodes.map((n) => n.y);
+  const defaultOrigin: [number, number] = nodes.length > 0
+    ? [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2]
+    : [0, 0];
+
+  const el = (
     <g opacity={anim.opacity} data-testid="elucim-graph">
       {/* Edges */}
       {edges.map((edge, i) => {
@@ -138,6 +149,8 @@ export function Graph({
       })}
     </g>
   );
+
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, defaultOrigin);
 }
 
 /** Internal arrowhead for directed edges */

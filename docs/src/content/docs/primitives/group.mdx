@@ -1,0 +1,128 @@
+---
+title: Group
+description: Composable container for grouping, transforming, and animating multiple primitives together.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { GroupDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+The `<Group>` primitive is a composable container that wraps multiple child elements into a single unit. Spatial transforms (rotation, scale, translation) and animations (fade-in, fade-out) applied to the group affect **all children at once**, making it easy to move, rotate, or reveal composite shapes as one.
+
+<LiveDemo client:visible height="350px">
+  <GroupDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `React.ReactNode` | — | **Required.** Child elements to group |
+| `rotation` | `number` | `0` | Rotation in degrees (applied to all children) |
+| `rotationOrigin` | `[number, number]` | group center | Center point for rotation |
+| `scale` | `number \| [number, number]` | `1` | Uniform or per-axis scale |
+| `translate` | `[number, number]` | `[0, 0]` | Translation offset `[dx, dy]` |
+| `fadeIn` | `number` | — | Fade the entire group in over N frames |
+| `fadeOut` | `number` | — | Fade the entire group out over N frames |
+| `easing` | `EasingFunction` | — | Easing function for animations |
+| `opacity` | `number` | `1` | Opacity from 0 to 1 |
+| `zIndex` | `number` | `0` | Rendering order (higher = on top) |
+
+## Code Examples
+
+### Basic grouping
+
+<Tabs syncKey="code-style">
+  <TabItem label="React">
+    ```jsx
+    import { Player, Group, Circle, Text } from '@elucim/core';
+
+    <Player width={500} height={300} fps={30} durationInFrames={60}>
+      <Group>
+        <Circle cx={250} cy={130} r={50} stroke="#6c5ce7" fill="none" strokeWidth={2} />
+        <Text x={250} y={220} fill="currentColor" fontSize={18} textAnchor="middle">
+          Grouped together
+        </Text>
+      </Group>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
+      "children": [
+        {
+          "type": "group",
+          "children": [
+            {
+              "type": "circle", "cx": 250, "cy": 130, "r": 50,
+              "stroke": "#6c5ce7", "fill": "none", "strokeWidth": 2
+            },
+            {
+              "type": "text", "x": 250, "y": 220, "fill": "currentColor",
+              "fontSize": 18, "textAnchor": "middle", "content": "Grouped together"
+            }
+          ]
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+### Group with rotation
+
+All children rotate together around the group center:
+
+```jsx
+<Group rotation={45}>
+  <Rect x={200} y={100} width={100} height={100} stroke="#6c5ce7" fill="none" strokeWidth={2} />
+  <Circle cx={250} cy={150} r={30} stroke="#ff6b6b" fill="none" strokeWidth={2} />
+</Group>
+```
+
+### Group with fade-in
+
+Reveal all children at once with a single animation:
+
+```jsx
+<Group fadeIn={30}>
+  <Circle cx={150} cy={150} r={40} stroke="#6c5ce7" fill="none" strokeWidth={2} />
+  <Arrow x1={200} y1={150} x2={300} y2={150} stroke="currentColor" strokeWidth={2} />
+  <Circle cx={350} cy={150} r={40} stroke="#ff6b6b" fill="none" strokeWidth={2} />
+</Group>
+```
+
+### Nested groups
+
+Groups can be nested for hierarchical transforms:
+
+```jsx
+<Group translate={[100, 50]}>
+  <Group rotation={30}>
+    <Rect x={0} y={0} width={80} height={80} stroke="#6c5ce7" fill="none" strokeWidth={2} />
+    <Text x={40} y={45} fill="currentColor" fontSize={12} textAnchor="middle">Inner</Text>
+  </Group>
+  <Text x={40} y={120} fill="currentColor" fontSize={12} textAnchor="middle">Outer</Text>
+</Group>
+```
+
+### Composite shape
+
+Build reusable composite shapes by grouping primitives:
+
+```jsx
+function LabeledNode({ x, y, label, color }) {
+  return (
+    <Group translate={[x, y]}>
+      <Circle cx={0} cy={0} r={30} stroke={color} fill="none" strokeWidth={2} />
+      <Text x={0} y={5} fill="currentColor" fontSize={14} textAnchor="middle">{label}</Text>
+    </Group>
+  );
+}
+```
+
+:::tip
+`Group` is the recommended way to apply a single animation to multiple elements. Instead of wrapping each child in `<FadeIn>`, wrap them all in a `<Group fadeIn={30}>`.
+:::

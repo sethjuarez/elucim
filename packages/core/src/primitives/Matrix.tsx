@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAnimation, type AnimationProps } from './animation';
+import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface MatrixProps extends AnimationProps {
+export interface MatrixProps extends AnimationProps, SpatialProps, BaseElementProps {
   /** 2D array of numbers or strings */
   values: (number | string)[][];
   /** Top-left position in SVG coordinates */
@@ -31,6 +32,10 @@ export function Matrix({
   fadeIn,
   fadeOut,
   easing,
+  rotation,
+  rotationOrigin,
+  scale,
+  translate,
 }: MatrixProps) {
   const anim = useAnimation({ fadeIn, fadeOut, easing });
 
@@ -42,7 +47,7 @@ export function Matrix({
   const bracketStroke = 2;
   const padding = 4;
 
-  return (
+  const el = (
     <g
       transform={`translate(${x}, ${y})`}
       opacity={anim.opacity}
@@ -83,4 +88,6 @@ export function Matrix({
       )}
     </g>
   );
+
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x, y]);
 }

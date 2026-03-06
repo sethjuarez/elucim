@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAnimation, type AnimationProps } from './animation';
+import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface TextProps extends AnimationProps {
+export interface TextProps extends AnimationProps, SpatialProps, BaseElementProps {
   x: number;
   y: number;
   children: string;
@@ -28,10 +29,14 @@ export function Text({
   fadeIn,
   fadeOut,
   easing,
+  rotation,
+  rotationOrigin,
+  scale,
+  translate,
 }: TextProps) {
   const anim = useAnimation({ fadeIn, fadeOut, easing });
 
-  return (
+  const el = (
     <text
       x={x}
       y={y}
@@ -47,4 +52,6 @@ export function Text({
       {children}
     </text>
   );
+
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x, y]);
 }

@@ -2,8 +2,9 @@ import React, { useMemo } from 'react';
 import { useCurrentFrame } from '../hooks/useCurrentFrame';
 import { interpolate } from '../hooks/interpolate';
 import type { EasingFunction } from '../easing/types';
+import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface FunctionPlotProps {
+export interface FunctionPlotProps extends SpatialProps, BaseElementProps {
   /** The function to plot: (x) => y */
   fn: (x: number) => number;
   /** X domain [min, max]. Default: [-5, 5] */
@@ -44,6 +45,9 @@ export function FunctionPlot({
   draw,
   easing,
   opacity = 1,
+  rotation,
+  rotationOrigin,
+  translate,
 }: FunctionPlotProps) {
   const frame = useCurrentFrame();
 
@@ -113,7 +117,7 @@ export function FunctionPlot({
     dashOffset = approxLength * (1 - progress);
   }
 
-  return (
+  const el = (
     <path
       d={pathData}
       fill="none"
@@ -127,4 +131,6 @@ export function FunctionPlot({
       data-testid="elucim-function-plot"
     />
   );
+
+  return withTransform(el, { rotation, rotationOrigin, translate }, origin);
 }

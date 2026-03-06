@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { useAnimation, type AnimationProps } from './animation';
+import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface AxesProps extends AnimationProps {
+export interface AxesProps extends AnimationProps, SpatialProps, BaseElementProps {
   /** X-axis domain [min, max]. Default: [-5, 5] */
   domain?: [number, number];
   /** Y-axis range [min, max]. Default: [-5, 5] */
@@ -49,6 +50,9 @@ export function Axes({
   fadeOut,
   draw,
   easing,
+  rotation,
+  rotationOrigin,
+  translate,
 }: AxesProps) {
   const anim = useAnimation({ fadeIn, fadeOut, draw, easing });
   const [ox, oy] = origin;
@@ -78,7 +82,7 @@ export function Axes({
   // Arrowhead size
   const arrowSize = 8;
 
-  return (
+  const el = (
     <g opacity={anim.opacity} data-testid="elucim-axes">
       {/* Grid lines */}
       {showGrid && (
@@ -185,6 +189,8 @@ export function Axes({
       )}
     </g>
   );
+
+  return withTransform(el, { rotation, rotationOrigin, translate }, origin);
 }
 
 /** Convert math coordinates to SVG coordinates for use with Axes */

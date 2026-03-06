@@ -74,7 +74,16 @@ export interface SequenceNode {
 
 export interface GroupNode {
   type: 'group';
+  id?: string;
   children: ElementNode[];
+  fadeIn?: number;
+  fadeOut?: number;
+  easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 // ─── Primitive Nodes ────────────────────────────────────────────────────────
@@ -93,6 +102,11 @@ export interface CircleNode {
   fadeOut?: number;
   draw?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface LineNode {
@@ -110,6 +124,11 @@ export interface LineNode {
   fadeOut?: number;
   draw?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface ArrowNode {
@@ -128,6 +147,11 @@ export interface ArrowNode {
   fadeOut?: number;
   draw?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface RectNode {
@@ -148,6 +172,11 @@ export interface RectNode {
   fadeOut?: number;
   draw?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface PolygonNode {
@@ -163,6 +192,11 @@ export interface PolygonNode {
   fadeOut?: number;
   draw?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface TextNode {
@@ -181,6 +215,11 @@ export interface TextNode {
   fadeIn?: number;
   fadeOut?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 // ─── Math Nodes ─────────────────────────────────────────────────────────────
@@ -204,6 +243,10 @@ export interface AxesNode {
   fadeOut?: number;
   draw?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface FunctionPlotNode {
@@ -220,6 +263,10 @@ export interface FunctionPlotNode {
   draw?: number;
   easing?: EasingSpec;
   opacity?: number;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface VectorNode {
@@ -240,6 +287,10 @@ export interface VectorNode {
   fadeOut?: number;
   draw?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface VectorFieldNode {
@@ -260,6 +311,10 @@ export interface VectorFieldNode {
   fadeIn?: number;
   fadeOut?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface GraphNodeDef {
@@ -293,6 +348,11 @@ export interface GraphNode {
   fadeIn?: number;
   fadeOut?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface MatrixNode {
@@ -308,6 +368,11 @@ export interface MatrixNode {
   fadeIn?: number;
   fadeOut?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface LaTeXNode {
@@ -323,6 +388,11 @@ export interface LaTeXNode {
   fadeIn?: number;
   fadeOut?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 export interface BarChartBarDef {
@@ -349,9 +419,38 @@ export interface BarChartNode {
   fadeIn?: number;
   fadeOut?: number;
   easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
 }
 
 // ─── Animation Wrapper Nodes ────────────────────────────────────────────────
+
+export interface ImageNode {
+  type: 'image';
+  id?: string;
+  src: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  preserveAspectRatio?: string;
+  borderRadius?: number;
+  clipShape?: 'none' | 'circle' | 'ellipse';
+  opacity?: number;
+  fadeIn?: number;
+  fadeOut?: number;
+  easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
+}
+
+// ─── Animation Wrapper Nodes (continued) ────────────────────────────────────
 
 export interface FadeInNode {
   type: 'fadeIn';
@@ -462,6 +561,7 @@ export type ElementNode =
   | RectNode
   | PolygonNode
   | TextNode
+  | ImageNode
   // Math
   | AxesNode
   | FunctionPlotNode

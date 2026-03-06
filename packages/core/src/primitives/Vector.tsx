@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAnimation, type AnimationProps } from './animation';
+import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface VectorProps extends AnimationProps {
+export interface VectorProps extends AnimationProps, SpatialProps, BaseElementProps {
   /** Start point in math coordinates [x, y] */
   from?: [number, number];
   /** End point in math coordinates [x, y] */
@@ -45,6 +46,9 @@ export function Vector({
   fadeOut,
   draw,
   easing,
+  rotation,
+  rotationOrigin,
+  translate,
 }: VectorProps) {
   const [ox, oy] = origin;
   const x1 = ox + from[0] * scale;
@@ -63,7 +67,7 @@ export function Vector({
   const p2x = x2 - headSize * Math.cos(angle + headAngle);
   const p2y = y2 - headSize * Math.sin(angle + headAngle);
 
-  return (
+  const el = (
     <g opacity={anim.opacity} data-testid="elucim-vector">
       <line
         x1={x1}
@@ -94,4 +98,6 @@ export function Vector({
       )}
     </g>
   );
+
+  return withTransform(el, { rotation, rotationOrigin, translate }, [(x1 + x2) / 2, (y1 + y2) / 2]);
 }
