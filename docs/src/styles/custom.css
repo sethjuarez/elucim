@@ -111,6 +111,11 @@
   color: var(--sl-color-white);
 }
 
+/* Hide Starlight's auto-generated heading anchor links inside feature cards */
+.feature .sl-anchor-link {
+  display: none !important;
+}
+
 .feature p {
   font-size: 0.875rem;
   line-height: 1.55;
@@ -225,13 +230,8 @@
 
 .live-demo.live-demo-hero [data-testid="elucim-scene"] {
   border-radius: 12px;
-  background: #fff !important;
-  --elucim-scene-bg: #fff;
-}
-
-[data-theme='dark'] .live-demo.live-demo-hero [data-testid="elucim-scene"] {
-  background: #0d0d1a !important;
-  --elucim-scene-bg: #0d0d1a;
+  background: var(--sl-color-bg) !important;
+  --elucim-scene-bg: var(--sl-color-bg);
 }
 
 .live-demo.live-demo-hero [data-testid="elucim-controls"] {

@@ -393,30 +393,80 @@ export function QuickStartDemo() {
 // ─── Hero Demo ──────────────────────────────────────────────────────
 
 export function HeroDemo() {
-  const sinExpr = 'f(x) = \\sin(x)';
-  const cosExpr = 'g(x) = \\cos(x)';
   return (
-    <Player width={600} height={200} fps={30} durationInFrames={150} autoPlay loop
-            background="transparent">
-      <Axes origin={[300, 110]} domain={[-4, 4]} range={[-1.5, 1.5]} scale={50}
-            axisColor="currentColor" labelColor="currentColor" showGrid={false} />
-      <Sequence from={0} durationInFrames={150}>
-        <FunctionPlot fn={(x: number) => Math.sin(x)} domain={[-4, 4]}
-                      origin={[300, 110]} scale={50} color="#6c5ce7" strokeWidth={2.5} draw={50} />
-      </Sequence>
-      <Sequence from={30} durationInFrames={120}>
-        <FunctionPlot fn={(x: number) => Math.cos(x)} domain={[-4, 4]}
-                      origin={[300, 110]} scale={50} color="#ff6b6b" strokeWidth={2} draw={50} />
-      </Sequence>
-      <Sequence from={60} durationInFrames={90}>
-        <FadeIn duration={20}>
-          <LaTeX expression={sinExpr} x={480} y={40} fontSize={16} color="#6c5ce7" />
+    <Player width={600} height={360} fps={30} durationInFrames={210} autoPlay loop>
+      {/* Title */}
+      <Sequence from={0} durationInFrames={210}>
+        <FadeIn duration={25}>
+          <Text x={300} y={38} fill="#6c5ce7" fontSize={22} fontWeight="bold" textAnchor="middle">
+            What you can build with Elucim
+          </Text>
         </FadeIn>
       </Sequence>
-      <Sequence from={75} durationInFrames={75}>
-        <FadeIn duration={20}>
-          <LaTeX expression={cosExpr} x={480} y={70} fontSize={16} color="#ff6b6b" />
+
+      {/* Step 1: Primitives — circle + arrow */}
+      <Sequence from={15} durationInFrames={195}>
+        <FadeIn duration={15}>
+          <Text x={82} y={75} fill="#888" fontSize={11} textAnchor="middle">
+            Primitives
+          </Text>
         </FadeIn>
+      </Sequence>
+      <Sequence from={25} durationInFrames={185}>
+        <Circle cx={82} cy={130} r={35} stroke="#6c5ce7" strokeWidth={2.5} fill="none" draw={25} />
+      </Sequence>
+      <Sequence from={40} durationInFrames={170}>
+        <FadeIn duration={15}>
+          <Arrow x1={50} y1={190} x2={115} y2={190} stroke="#a29bfe" strokeWidth={2} headSize={8} />
+        </FadeIn>
+      </Sequence>
+
+      {/* Step 2: Math — axes + sine curve */}
+      <Sequence from={55} durationInFrames={155}>
+        <FadeIn duration={15}>
+          <Text x={300} y={75} fill="#888" fontSize={11} textAnchor="middle">
+            Math visualizations
+          </Text>
+        </FadeIn>
+      </Sequence>
+      <Sequence from={65} durationInFrames={145}>
+        <Axes origin={[300, 145]} domain={[-3.5, 3.5]} range={[-1.2, 1.2]} scale={35}
+              axisColor="currentColor" labelColor="currentColor" showGrid={false} tickSize={0} showLabels={false} />
+        <FunctionPlot fn={Math.sin} domain={[-3.5, 3.5]} origin={[300, 145]} scale={35}
+                      color="#6c5ce7" strokeWidth={2.5} draw={35} />
+      </Sequence>
+
+      {/* Step 3: LaTeX */}
+      <Sequence from={105} durationInFrames={105}>
+        <FadeIn duration={15}>
+          <Text x={518} y={75} fill="#888" fontSize={11} textAnchor="middle">
+            LaTeX equations
+          </Text>
+        </FadeIn>
+      </Sequence>
+      <Sequence from={115} durationInFrames={95}>
+        <FadeIn duration={20}>
+          <LaTeX expression="e^{i\pi} + 1 = 0" x={518} y={135} fontSize={18} color="#6c5ce7" />
+        </FadeIn>
+      </Sequence>
+
+      {/* Step 4: Full scene — bar chart at the bottom */}
+      <Sequence from={140} durationInFrames={70}>
+        <FadeIn duration={15}>
+          <Text x={300} y={235} fill="#888" fontSize={11} textAnchor="middle">
+            Compose into animated scenes
+          </Text>
+        </FadeIn>
+      </Sequence>
+      <Sequence from={150} durationInFrames={60}>
+        <Stagger staggerDelay={6}>
+          <Rect x={120} y={255} width={40} height={45} fill="#6c5ce7" rx={3} fadeIn={12} />
+          <Rect x={175} y={230} width={40} height={70} fill="#a29bfe" rx={3} fadeIn={12} />
+          <Rect x={230} y={245} width={40} height={55} fill="#6c5ce7" rx={3} fadeIn={12} />
+          <Rect x={285} y={210} width={40} height={90} fill="#a29bfe" rx={3} fadeIn={12} />
+          <Rect x={340} y={235} width={40} height={65} fill="#6c5ce7" rx={3} fadeIn={12} />
+          <Rect x={395} y={220} width={40} height={80} fill="#a29bfe" rx={3} fadeIn={12} />
+        </Stagger>
       </Sequence>
     </Player>
   );
