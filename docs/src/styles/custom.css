@@ -9,12 +9,11 @@
   --sl-font-system-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
 
-/* ─── Hero gradient background ───────────────────────────────── */
-[data-theme='light'] .hero {
-  background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 100%);
-}
-[data-theme='dark'] .hero {
-  background: linear-gradient(180deg, #0d0d1a 0%, #1a1a2e 60%, #0d0d1a 100%);
+/* ─── Hero — remove default Starlight box background ─────────── */
+.hero {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Tighten hero tagline */
@@ -226,6 +225,13 @@
 
 .live-demo.live-demo-hero [data-testid="elucim-scene"] {
   border-radius: 12px;
+  background: #fff !important;
+  --elucim-scene-bg: #fff;
+}
+
+[data-theme='dark'] .live-demo.live-demo-hero [data-testid="elucim-scene"] {
+  background: #0d0d1a !important;
+  --elucim-scene-bg: #0d0d1a;
 }
 
 .live-demo.live-demo-hero [data-testid="elucim-controls"] {
