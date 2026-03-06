@@ -1,5 +1,42 @@
 # @elucim/core
 
+## [0.2.0](https://github.com/sethjuarez/elucim/compare/core-v0.1.3...core-v0.2.0) (2026-03-06)
+
+
+### Features
+
+* add Image and Group primitives, universal transforms, z-index ([4564e2b](https://github.com/sethjuarez/elucim/commit/4564e2b518320820ce8a14c812172b6419485bc2))
+* add interactive Explorer app + video export system ([c858cca](https://github.com/sethjuarez/elucim/commit/c858cca30245e7ef9c7390d354bc9528a96e8d13))
+* add LaTeX, VectorField, and Polygon primitives ([2fea0b2](https://github.com/sethjuarez/elucim/commit/2fea0b228b509796eda21956bdebd72699263875))
+* add npm publishing with GitHub Actions OIDC ([e42388f](https://github.com/sethjuarez/elucim/commit/e42388fdfeba5db1c056300aad8dc6ec9f2c094c))
+* add Presentation/Slide mode with transitions, HUD, keyboard nav, and presenter notes ([1d96f2d](https://github.com/sethjuarez/elucim/commit/1d96f2dcd2bb359feb65150537724bbacf223023))
+* auto theme-aware defaults in core via light-dark() CSS ([4c148c5](https://github.com/sethjuarez/elucim/commit/4c148c5bc8371aae70dd4bf030389b57c1a727c0))
+* **core:** add BarChart component and strokeDasharray support ([bc5683f](https://github.com/sethjuarez/elucim/commit/bc5683f1b724ae058dbf4ff4ac136858718decd2))
+* make Presentation component fully theme-aware in core ([9171443](https://github.com/sethjuarez/elucim/commit/9171443406284ce87e15a0e797d04ccc384ed369))
+* Phase 1 core engine — Scene, Sequence, Player, Mobjects, easing ([8911966](https://github.com/sethjuarez/elucim/commit/89119669af0b4dd41c7bcc5e23992287a35119b8))
+* Phase 2 math primitives — Axes, FunctionPlot, Vector, Matrix, Graph ([bea646c](https://github.com/sethjuarez/elucim/commit/bea646c3d1adb0397b3ad113eb4e547e6ae9e86c))
+* Phase 3 animation system — FadeIn, FadeOut, Write, Transform, Morph, Stagger ([075bed3](https://github.com/sethjuarez/elucim/commit/075bed349533548d0aeb155f8647e841d3fb7934))
+* remove HUD bar background, use inherited theme colors ([70f9195](https://github.com/sethjuarez/elucim/commit/70f9195e993432a661fed9a675185e9d8e59ef29))
+* switch to npm OIDC trusted publishing (no tokens) ([d2ae5ba](https://github.com/sethjuarez/elucim/commit/d2ae5ba568713561cf490ed4508328b5a1cc3ade))
+* theme-aware Player controls via CSS custom properties ([7a4e84b](https://github.com/sethjuarez/elucim/commit/7a4e84b8842624fcb00512d60da1d69f4f6c2a75))
+* theme-aware Scene backgrounds via CSS custom properties ([22cab30](https://github.com/sethjuarez/elucim/commit/22cab30bcb157be324b99d6d44ca06a32a873207))
+
+
+### Bug Fixes
+
+* animation demos, LaTeX rendering, matrix centering, example pages ([61499f7](https://github.com/sethjuarez/elucim/commit/61499f78bff02e83cd20f65270b6a729628ed2b7))
+* eliminate slide transition bump caused by margin injection ([71a13bc](https://github.com/sethjuarez/elucim/commit/71a13bc71cf5113f36aa038832dd08db8f5bf468))
+* group transport buttons tightly in controls bar ([02c3a61](https://github.com/sethjuarez/elucim/commit/02c3a617121e157439a59e55cac24e086c3df29f))
+* LaTeX centering and demo positioning ([b336b7d](https://github.com/sethjuarez/elucim/commit/b336b7d920c87dc6b0e9e9d09365f4108d57c099))
+* presentation HUD dots alignment, fullscreen button, transition stability ([0180434](https://github.com/sethjuarez/elucim/commit/0180434fb2aa802efb7f6441c3d3e1a53ea3536c))
+* rebuild controls bar with flexbox + CSS resets ([7efcba2](https://github.com/sethjuarez/elucim/commit/7efcba254d72f8b988ba57b07767711788e1f6e0))
+* remove build warnings by disabling rollupTypes for core ([65e2ddb](https://github.com/sethjuarez/elucim/commit/65e2ddbeb0495e1f4bcb06dfb5ee894fa001b2f9))
+* replace Unicode nav arrows with SVG chevrons, shrink circle ([c7e4b59](https://github.com/sethjuarez/elucim/commit/c7e4b593edfe1d67c6b0d120459180623797ed96))
+* reset Starlight margin injection on Presentation dots and buttons ([f31caaf](https://github.com/sethjuarez/elucim/commit/f31caaf9fd5b54b69773558f7e2b0c13fdf0aa45))
+* responsive Scene/Player sizing and compact homepage demo ([09e7df9](https://github.com/sethjuarez/elucim/commit/09e7df96f1302df812cfbdb46aef28cc4097b2e7))
+* theme-aware Player controls and transparent demo backgrounds ([da42103](https://github.com/sethjuarez/elucim/commit/da421036c3a6a7a66a566a48ce9a746bd30fabad))
+* uniform controls bar layout with consistent sizing ([89c9535](https://github.com/sethjuarez/elucim/commit/89c95353341c5bcb61881c95c922bf32cdbebe86))
+
 ## 0.1.3
 
 ### Patch Changes
