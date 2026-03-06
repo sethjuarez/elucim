@@ -460,12 +460,12 @@ export function HeroDemo() {
       </Sequence>
       <Sequence from={150} durationInFrames={60}>
         <Stagger staggerDelay={6}>
-          <Rect x={120} y={255} width={40} height={45} fill="#6c5ce7" rx={3} fadeIn={12} />
-          <Rect x={175} y={230} width={40} height={70} fill="#a29bfe" rx={3} fadeIn={12} />
-          <Rect x={230} y={245} width={40} height={55} fill="#6c5ce7" rx={3} fadeIn={12} />
-          <Rect x={285} y={210} width={40} height={90} fill="#a29bfe" rx={3} fadeIn={12} />
-          <Rect x={340} y={235} width={40} height={65} fill="#6c5ce7" rx={3} fadeIn={12} />
-          <Rect x={395} y={220} width={40} height={80} fill="#a29bfe" rx={3} fadeIn={12} />
+          <Rect x={120} y={305} width={40} height={45} fill="#6c5ce7" rx={3} fadeIn={12} />
+          <Rect x={175} y={280} width={40} height={70} fill="#a29bfe" rx={3} fadeIn={12} />
+          <Rect x={230} y={295} width={40} height={55} fill="#6c5ce7" rx={3} fadeIn={12} />
+          <Rect x={285} y={260} width={40} height={90} fill="#a29bfe" rx={3} fadeIn={12} />
+          <Rect x={340} y={285} width={40} height={65} fill="#6c5ce7" rx={3} fadeIn={12} />
+          <Rect x={395} y={270} width={40} height={80} fill="#a29bfe" rx={3} fadeIn={12} />
         </Stagger>
       </Sequence>
     </Player>
