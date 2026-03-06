@@ -1,17 +1,17 @@
-name: Publish to npm
+name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
 
 # OIDC trusted publishing — no npm tokens needed
 permissions:
-  contents: read
+  contents: write
   id-token: write
+  pull-requests: write
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,18 +30,11 @@ jobs:
       - run: pnpm build
       - run: pnpm test
 
-      # Publish @elucim/core first (dsl depends on it)
-      - name: Publish @elucim/core
-        run: cd packages/core && npm publish
-
-      # Resolve workspace:* to real version before publishing dsl
-      - name: Publish @elucim/dsl
-        run: |
-          CORE_VERSION=$(node -p "require('./packages/core/package.json').version")
-          cd packages/dsl
-          node -e "
-            const pkg = require('./package.json');
-            pkg.dependencies['@elucim/core'] = '^' + process.argv[1];
-            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-          " "$CORE_VERSION"
-          npm publish
+      - name: Create Release PR or Publish
+        uses: changesets/action@v1
+        with:
+          title: "chore: version packages"
+          commit: "chore: version packages"
+          publish: pnpm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
