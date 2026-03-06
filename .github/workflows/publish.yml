@@ -5,7 +5,7 @@ on:
     tags:
       - 'v*'
 
-# Required for npm OIDC provenance
+# OIDC trusted publishing — no npm tokens needed
 permissions:
   contents: read
   id-token: write
@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
@@ -32,22 +32,16 @@ jobs:
 
       # Publish @elucim/core first (dsl depends on it)
       - name: Publish @elucim/core
-        run: pnpm --filter @elucim/core publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: cd packages/core && npm publish
 
-      # Update dsl's dependency from workspace:* to the actual version
-      - name: Update dsl workspace dependency
+      # Resolve workspace:* to real version before publishing dsl
+      - name: Publish @elucim/dsl
         run: |
+          CORE_VERSION=$(node -p "require('./packages/core/package.json').version")
           cd packages/dsl
-          CORE_VERSION=$(node -p "require('../core/package.json').version")
           node -e "
             const pkg = require('./package.json');
-            pkg.dependencies['@elucim/core'] = '^' + '$CORE_VERSION';
+            pkg.dependencies['@elucim/core'] = '^' + process.argv[1];
             require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-          "
-
-      - name: Publish @elucim/dsl
-        run: pnpm --filter @elucim/dsl publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          " "$CORE_VERSION"
+          npm publish

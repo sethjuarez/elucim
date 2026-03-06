@@ -22,8 +22,7 @@
     "declarative"
   ],
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
