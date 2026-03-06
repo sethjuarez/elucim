@@ -90,13 +90,8 @@
   border: 1px solid var(--sl-color-gray-5);
   background: var(--sl-color-gray-7, #f8f8fa);
   transition: border-color 0.2s;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Reset Starlight's lobotomized owl margin inside feature cards */
-.feature > * + * {
-  margin-top: 0 !important;
+  height: 100%;
+  margin: 0 !important;
 }
 
 .feature:hover {
