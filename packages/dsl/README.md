@@ -1,10 +1,19 @@
 # @elucim/dsl
 
-> JSON-based DSL for creating Elucim diagrams — designed for AI agents.
+> Declarative JSON DSL for animated visualizations — perfect for AI agents.
 
-## Overview
+[![npm version](https://img.shields.io/npm/v/@elucim/dsl)](https://www.npmjs.com/package/@elucim/dsl)
+[![license](https://img.shields.io/npm/l/@elucim/dsl)](https://github.com/sethjuarez/elucim/blob/main/LICENSE)
 
-`@elucim/dsl` lets you describe animated diagrams as JSON documents. An AI agent (or any code) produces a JSON object conforming to the schema, and the `<DslRenderer>` component renders it as a fully interactive Elucim visualization.
+`@elucim/dsl` lets you describe animated diagrams as JSON documents. An AI agent (or any code) produces a JSON object conforming to the schema, and the `<DslRenderer>` component renders it as a fully interactive [Elucim](https://www.npmjs.com/package/@elucim/core) visualization — no React knowledge required.
+
+## Install
+
+```bash
+npm install @elucim/dsl @elucim/core react react-dom
+# or
+pnpm add @elucim/dsl @elucim/core react react-dom
+```
 
 ## Quick Start
 
@@ -206,3 +215,31 @@ Example prompt:
 > "Create an Elucim DSL JSON document that shows a coordinate system with sin(x) and cos(x) plotted, 
 > with the sin curve drawing first, then the cos curve drawing 30 frames later, 
 > and a LaTeX label fading in at the end."
+
+## Fluent Builder API
+
+Build presentations programmatically with a chainable TypeScript API:
+
+```tsx
+import { presentation, darkTheme } from '@elucim/dsl';
+
+const doc = presentation(darkTheme)
+  .size(1920, 1080)
+  .transition('fade', 500)
+  .slide('Welcome', (s) => {
+    s.title('Hello World');
+  })
+  .slide('Math', (s) => {
+    s.latex('e^{i\\pi} + 1 = 0', { x: 960, y: 500, fontSize: 48, color: '#fdcb6e' });
+  })
+  .build();
+```
+
+## Related
+
+- **[@elucim/core](https://www.npmjs.com/package/@elucim/core)** — The React rendering engine (peer dependency)
+- **[Elucim on GitHub](https://github.com/sethjuarez/elucim)** — Full docs with live interactive examples
+
+## License
+
+[MIT](https://github.com/sethjuarez/elucim/blob/main/LICENSE)
