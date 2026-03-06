@@ -747,6 +747,20 @@ export function AgenticDemo() {
 
 // ─── Presentation ───────────────────────────────────────────────────
 
+export function TransformsDemo() {
+  return (
+    <Player width={500} height={300} fps={30} durationInFrames={90} autoPlay loop>
+      <Group rotation={15} translate={[50, 0]} fadeIn={20}>
+        <Rect x={125} y={50} width={200} height={200} stroke="#6c5ce7" fill="none" strokeWidth={2} />
+        <Circle cx={225} cy={150} r={50} stroke="#e17055" fill="none" strokeWidth={2} />
+        <Text x={225} y={155} fill="currentColor" fontSize={14} textAnchor="middle">rotated group</Text>
+      </Group>
+      <Circle cx={400} cy={150} r={30} stroke="#00b894" fill="none" strokeWidth={2} zIndex={2} />
+      <Text x={400} y={200} fill="currentColor" fontSize={12} textAnchor="middle">zIndex: 2</Text>
+    </Player>
+  );
+}
+
 export function PresentationDemo() {
   const euler = "e^{i\\pi} + 1 = 0";
   return (

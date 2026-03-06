@@ -61,6 +61,8 @@ Elucim has three layers of composition:
 ### 1. Primitives
 The visual elements: `Circle`, `Line`, `Arrow`, `Rect`, `Text`, `Polygon`, `Axes`, `FunctionPlot`, `Vector`, `VectorField`, `Matrix`, `Graph`, `LaTeX`, `BarChart`.
 
+All primitives accept **spatial transforms** (`rotation`, `scale`, `translate`) and **stacking** (`zIndex`) as props. See [Transforms & Composition](/getting-started/transforms/) for details.
+
 ### 2. Animations
 Wrappers that animate their children: `FadeIn`, `FadeOut`, `Draw`, `Write`, `Transform`, `Morph`, `Stagger`, `Parallel`.
 
@@ -117,5 +119,6 @@ function PulsingDot() {
 ## Next Steps
 
 - Browse [Primitives](/primitives/circle/) for all shape types
+- Read [Transforms & Composition](/getting-started/transforms/) for rotation, scale, zIndex, and grouping
 - Learn about [Animations](/animations/fade/) for motion effects
 - See [Advanced > Player](/advanced/player/) for full Player API
