@@ -17,7 +17,7 @@ concurrency:
 jobs:
   build:
     # Skip docs deploy on release-please version commits (only bumps package.json versions)
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore: release main') }}
+    if: "!startsWith(github.event.head_commit.message, 'chore: release main')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
