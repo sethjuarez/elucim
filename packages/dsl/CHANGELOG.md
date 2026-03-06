@@ -1,5 +1,19 @@
 # @elucim/dsl
 
+## [0.2.1](https://github.com/sethjuarez/elucim/compare/dsl-v0.2.0...dsl-v0.2.1) (2026-03-06)
+
+
+### Bug Fixes
+
+* add missing keywords for new primitives in package metadata ([5d9d8aa](https://github.com/sethjuarez/elucim/commit/5d9d8aa71cd7a9bd8bb0a8652df27a8aa0e91199))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.2.1
+
 ## [0.2.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.1.3...dsl-v0.2.0) (2026-03-06)
 
 
