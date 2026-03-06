@@ -1,6 +1,6 @@
 {
   "name": "@elucim/dsl",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "JSON/YAML DSL for declarative Elucim animations — define visualizations without writing React code",
   "type": "module",
   "license": "MIT",
