@@ -1,5 +1,31 @@
 # @elucim/dsl
 
+## [0.2.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.1.3...dsl-v0.2.0) (2026-03-06)
+
+
+### Features
+
+* add @elucim/dsl package — JSON DSL for AI agents ([33365b6](https://github.com/sethjuarez/elucim/commit/33365b65811f3307c34544b8c54a84e9dfa34655))
+* add 12-slide 'From Words to Agents' presentation ([cf0b83a](https://github.com/sethjuarez/elucim/commit/cf0b83a3a628a67fe0c7355e974743786df12fba))
+* add complex calculus presentation DSL example (9 slides) ([9021016](https://github.com/sethjuarez/elucim/commit/90210165f22a427afa70ec427eec5fedfdc6ab26))
+* add Image and Group primitives, universal transforms, z-index ([4564e2b](https://github.com/sethjuarez/elucim/commit/4564e2b518320820ce8a14c812172b6419485bc2))
+* add npm publishing with GitHub Actions OIDC ([e42388f](https://github.com/sethjuarez/elucim/commit/e42388fdfeba5db1c056300aad8dc6ec9f2c094c))
+* **dsl:** add fluent builder API, BarChart/dashed-line DSL support ([c344bab](https://github.com/sethjuarez/elucim/commit/c344bab0039242bd8cb9804f2b743297a7d38f02))
+* switch to npm OIDC trusted publishing (no tokens) ([d2ae5ba](https://github.com/sethjuarez/elucim/commit/d2ae5ba568713561cf490ed4508328b5a1cc3ade))
+
+
+### Bug Fixes
+
+* calculus presentation visual fixes (yClamp, unicode, coordinates) ([943a9b3](https://github.com/sethjuarez/elucim/commit/943a9b3c994834391c0b826e78a41de95118b713))
+* replace plain text vector label with LaTeX node for e^{iπ} = -1 on slide 9 ([9006e2a](https://github.com/sethjuarez/elucim/commit/9006e2aa6ec53c673c6639fcc1c9e5835021e4c5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.2.0
+
 ## 0.1.3
 
 ### Patch Changes
