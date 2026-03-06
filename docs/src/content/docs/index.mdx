@@ -75,18 +75,22 @@ Describe scenes as JSON. Built for AI agents and content pipelines that generate
 <div class="code-side">
 
 ```tsx
-import { Player, FadeIn, Circle, Text } from '@elucim/core';
+import {
+  Player, FadeIn, Circle, Text
+} from '@elucim/core';
 
-<Player width={400} height={300} fps={30}
-        durationInFrames={90} autoPlay loop>
+<Player width={400} height={300}
+  fps={30} durationInFrames={90}
+  autoPlay loop>
   <FadeIn duration={20}>
     <Circle cx={200} cy={140} r={60}
-            stroke="#6c5ce7" strokeWidth={3}
-            fill="none" />
+      stroke="#6c5ce7" strokeWidth={3}
+      fill="none" />
   </FadeIn>
   <FadeIn duration={20}>
-    <Text x={200} y={148} fill="currentColor"
-          fontSize={20} textAnchor="middle">
+    <Text x={200} y={148}
+      fill="currentColor" fontSize={20}
+      textAnchor="middle">
       Hello World
     </Text>
   </FadeIn>

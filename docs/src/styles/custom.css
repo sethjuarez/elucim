@@ -163,9 +163,10 @@
 }
 
 .code-side pre {
-  font-size: 0.8rem !important;
+  font-size: 0.72rem !important;
   border-radius: 12px !important;
   margin: 0 !important;
+  overflow-x: hidden !important;
 }
 
 .result-side {
