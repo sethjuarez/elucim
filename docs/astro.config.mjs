@@ -1,24 +1,46 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
-import { readFileSync } from 'fs';
-
-const pkg = JSON.parse(readFileSync(new URL('../packages/core/package.json', import.meta.url), 'utf-8'));
 
 export default defineConfig({
   site: 'https://elucim.com',
   integrations: [
     starlight({
-      title: `Elucim v${pkg.version}`,
-      description: 'Animate concepts. Illuminate understanding. A React library for 3Blue1Brown-style animated explanations on the web.',
+      title: 'Elucim',
+      description: 'Animated explanations for the web. A React library for creating 3Blue1Brown-style visualizations.',
       logo: {
         src: './src/assets/logo.svg',
       },
       favicon: '/favicon.svg',
+      editLink: {
+        baseUrl: 'https://github.com/sethjuarez/elucim/edit/main/docs/',
+      },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/sethjuarez/elucim' },
       ],
       head: [
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'preconnect',
+            href: 'https://fonts.googleapis.com',
+          },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'preconnect',
+            href: 'https://fonts.gstatic.com',
+            crossorigin: '',
+          },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'stylesheet',
+            href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+          },
+        },
         {
           tag: 'link',
           attrs: {
