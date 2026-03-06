@@ -11,11 +11,12 @@ A JavaScript/TypeScript library for creating animated concept explanations — 3
 | **Phase 1: Core Engine** | ✅ Complete | Scene, Sequence, Player, interpolate, 20+ easing functions, SVG primitives |
 | **Phase 2: Math Primitives** | ✅ Complete | Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX (KaTeX) |
 | **Phase 3: Animation System** | ✅ Complete | FadeIn/Out, Draw, Write, Transform, Morph, Stagger, Parallel, Timeline DSL |
-| **Phase 4: New Primitives** | ✅ Complete | Polygon, VectorField, LaTeX rendering |
+| **Phase 4: New Primitives** | ✅ Complete | Polygon, VectorField, LaTeX, Image, Group, BarChart |
 | **Phase 5: Tooling** | ✅ Complete | Interactive Explorer, Video Export, VitePress docs site |
 | **Phase 6: Presentation** | ✅ Complete | Slide mode, transitions, HUD, keyboard nav, presenter notes |
 | **Phase 7: DSL** | ✅ Complete | JSON DSL for AI agents, safe math evaluator, validator, DslRenderer |
-| **Testing** | ✅ Complete | 110 Playwright visual tests + 203 Vitest unit tests |
+| **Phase 8: Composability** | ✅ Complete | Universal SpatialProps (rotation, scale, translate), z-index stacking, Group container |
+| **Testing** | ✅ Complete | 110 Playwright visual tests + 279 Vitest unit tests |
 
 ## Quick Start
 
@@ -33,9 +34,8 @@ packages/
   core/       — Library: components, hooks, primitives, animations, export
   demo/       — Demo playground with 15+ interactive scenes
   explorer/   — Storybook-style primitive browser with live controls
-  docs/       — VitePress documentation site
+  docs/       — Starlight (Astro) documentation site
   e2e/        — Playwright visual regression tests
-docs/         — Developer guide (creating-visuals.md)
 ```
 
 ## Running Tests
@@ -85,6 +85,9 @@ First-class visual primitives that know how to animate themselves:
 - Geometric shapes (Circle, Line, Arrow, Polygon)
 - Math & data (Axes, FunctionPlot, Graph, Vector, Matrix)
 - Text & LaTeX rendering
+- Image embedding (PNG, JPEG, SVG, WebP, GIF)
+- Composable Group containers
+- Universal spatial transforms: rotation, scale, translate, zIndex
 - Each primitive can `fadeIn`, `write`, `transform`, `morph`, `trace`
 
 ### 2. React-Based & Declarative (from Remotion)
@@ -248,10 +251,8 @@ The primitive abstraction is renderer-independent:
 ## Open Questions
 
 - Rendering strategy: pure SVG vs. hybrid SVG+Canvas for performance at scale
-- LaTeX: KaTeX (fast, limited) vs. MathJax (full, slow)?
 - Should the imperative DSL be first-class or a thin wrapper?
 - Remotion interop: deep integration vs. standalone?
-- Licensing: fully MIT, or Remotion-style (free for individuals, paid for companies)?
 
 ---
 

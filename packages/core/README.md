@@ -20,19 +20,24 @@ pnpm add @elucim/core
 ## Quick Start
 
 ```tsx
-import { Player, FadeIn, Circle, Text } from '@elucim/core';
+import { Player, FadeIn, Circle, Text, Group, Transform } from '@elucim/core';
 
 function MyAnimation() {
   return (
     <Player width={800} height={600} fps={30} durationInFrames={90} autoPlay loop>
-      <FadeIn duration={20}>
-        <Circle cx={400} cy={280} r={80} stroke="#6c5ce7" strokeWidth={3} fill="none" />
-      </FadeIn>
-      <FadeIn duration={20}>
-        <Text x={400} y={290} fill="#e0e0e0" fontSize={24} textAnchor="middle">
-          Hello Elucim
-        </Text>
-      </FadeIn>
+      <Group translate={[400, 280]}>
+        <Transform rotate={{ from: 0, to: 360 }} duration={90}>
+          <FadeIn duration={20}>
+            <Circle cx={0} cy={0} r={80} stroke="#6c5ce7" strokeWidth={3} fill="none" />
+            <Circle cx={60} cy={0} r={12} fill="#6c5ce7" />
+          </FadeIn>
+        </Transform>
+        <FadeIn duration={20}>
+          <Text x={0} y={10} fill="#e0e0e0" fontSize={24} textAnchor="middle">
+            Hello Elucim
+          </Text>
+        </FadeIn>
+      </Group>
     </Player>
   );
 }
@@ -58,6 +63,22 @@ function MyAnimation() {
 | `Arrow` | Line with arrowhead |
 | `Polygon` | Arbitrary polygon from point arrays |
 | `Text` | SVG text element |
+| `Image` | Embed images (PNG, JPEG, SVG, WebP, GIF) with `borderRadius`, `clipShape`, and transform support |
+| `Group` | Composable container that applies shared transforms, animations, and z-index sorting to children |
+
+### 🔄 Transforms & Composition
+
+All primitives support universal spatial transform props:
+
+| Prop | Description |
+|------|-------------|
+| `rotation` | Rotate element (degrees) |
+| `rotationOrigin` | `[cx, cy]` center of rotation |
+| `scale` | Uniform scale factor |
+| `translate` | `[dx, dy]` offset |
+| `zIndex` | Stacking order (higher renders on top) |
+
+These compose with animations — use static `rotation={45}` for a fixed rotation, or wrap in `<Transform rotate={{from:0, to:360}}>` for animated rotation.
 
 ### 📊 Math Visualizations
 

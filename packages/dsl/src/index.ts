@@ -39,6 +39,7 @@ export type {
   GraphEdgeDef,
   BarChartNode,
   BarChartBarDef,
+  ImageNode,
 } from './schema/types';
 
 // Math expression evaluator

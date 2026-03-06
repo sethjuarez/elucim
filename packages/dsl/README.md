@@ -126,6 +126,8 @@ Every document has this structure:
 | `rect` | `x`, `y`, `width`, `height` | Rectangle |
 | `polygon` | `points` (array of [x,y]) | Polygon/polyline |
 | `text` | `x`, `y`, `content` | Text element |
+| `image` | `src`, `x`, `y`, `width`, `height` | Embed external images (PNG, SVG, etc.) |
+| `barChart` | `bars` | Animated bar chart with labels and colors |
 
 #### Math Visualizations
 | Type | Required Props | Description |
@@ -154,7 +156,7 @@ Every document has this structure:
 | Type | Key Props | Description |
 |------|----------|-------------|
 | `sequence` | `from`, `durationInFrames` | Time-offset wrapper |
-| `group` | `children` | Logical grouping |
+| `group` | `children` | Logical grouping with shared transforms (rotation, scale, translate) and zIndex sorting of children |
 
 ### Inline Animation Props
 
@@ -163,6 +165,15 @@ All primitives support these optional animation props directly:
 - `fadeOut?: number` — Fade out over N frames
 - `draw?: number` — Progressive stroke draw over N frames
 - `easing?: string | { type, ... }` — Easing function
+
+### Spatial Transform Props
+
+All primitives and groups support these optional spatial transform props:
+- `rotation?: number` — Rotate element in degrees
+- `rotationOrigin?: [number, number]` — Center of rotation [cx, cy]
+- `scale?: number` — Uniform scale factor
+- `translate?: [number, number]` — Offset [dx, dy]
+- `zIndex?: number` — Stacking order (higher renders on top)
 
 ### Easing
 
