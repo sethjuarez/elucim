@@ -1,0 +1,53 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Required for npm OIDC provenance
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test
+
+      # Publish @elucim/core first (dsl depends on it)
+      - name: Publish @elucim/core
+        run: pnpm --filter @elucim/core publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Update dsl's dependency from workspace:* to the actual version
+      - name: Update dsl workspace dependency
+        run: |
+          cd packages/dsl
+          CORE_VERSION=$(node -p "require('../core/package.json').version")
+          node -e "
+            const pkg = require('./package.json');
+            pkg.dependencies['@elucim/core'] = '^' + '$CORE_VERSION';
+            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - name: Publish @elucim/dsl
+        run: pnpm --filter @elucim/dsl publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

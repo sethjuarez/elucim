@@ -8,5 +8,6 @@
       "@elucim/core": ["../core/src/index.ts"]
     }
   },
-  "include": ["src", "../core/src"]
+  "include": ["src", "../core/src"],
+  "exclude": ["src/**/__tests__/**", "src/**/*.test.ts"]
 }

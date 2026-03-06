@@ -1,7 +1,31 @@
 {
   "name": "@elucim/core",
   "version": "0.1.0",
+  "description": "React library for animated math and concept visualizations — 3Blue1Brown-style for the web",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sethjuarez/elucim.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/sethjuarez/elucim#readme",
+  "bugs": "https://github.com/sethjuarez/elucim/issues",
+  "keywords": [
+    "react",
+    "animation",
+    "math",
+    "visualization",
+    "svg",
+    "manim",
+    "3blue1brown",
+    "presentation",
+    "latex"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
