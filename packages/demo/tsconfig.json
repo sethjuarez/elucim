@@ -9,5 +9,6 @@
       "@elucim/dsl": ["../dsl/src/index.ts"]
     }
   },
-  "include": ["src", "../core/src", "../dsl/src"]
+  "include": ["src", "../core/src", "../dsl/src"],
+  "exclude": ["../**/src/**/__tests__/**", "../**/src/**/*.test.ts"]
 }
