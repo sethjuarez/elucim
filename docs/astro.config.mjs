@@ -1,19 +1,22 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
+import { readFileSync } from 'fs';
+
+const pkg = JSON.parse(readFileSync(new URL('../packages/core/package.json', import.meta.url), 'utf-8'));
 
 export default defineConfig({
   site: 'https://elucim.dev',
   integrations: [
     starlight({
-      title: 'Elucim',
+      title: `Elucim v${pkg.version}`,
       description: 'Animate concepts. Illuminate understanding. A React library for 3Blue1Brown-style animated explanations on the web.',
       logo: {
         src: './src/assets/logo.svg',
       },
       favicon: '/favicon.svg',
       social: [
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/elucim/elucim' },
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/sethjuarez/elucim' },
       ],
       head: [
         {
