@@ -1,5 +1,19 @@
 # @elucim/dsl
 
+## [0.4.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.3.0...dsl-v0.4.0) (2026-03-14)
+
+
+### Features
+
+* add integration features — presets, theme tokens, poster mode, imperative ref, headless rendering ([97775ef](https://github.com/sethjuarez/elucim/commit/97775efc3bc26a5f3c45665f99bcb9282a9fc3f8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.4.0
+
 ## [0.3.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.2.1...dsl-v0.3.0) (2026-03-14)
 
 
