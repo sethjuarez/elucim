@@ -1,5 +1,19 @@
 # @elucim/dsl
 
+## [0.3.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.2.1...dsl-v0.3.0) (2026-03-14)
+
+
+### Features
+
+* add BezierCurve primitive with quadratic and cubic support ([f480887](https://github.com/sethjuarez/elucim/commit/f480887703521adbeb8c1d08a2e3babc5ebbce67))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.3.0
+
 ## [0.2.1](https://github.com/sethjuarez/elucim/compare/dsl-v0.2.0...dsl-v0.2.1) (2026-03-06)
 
 
