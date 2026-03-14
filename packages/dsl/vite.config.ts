@@ -20,7 +20,7 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'react/jsx-runtime', '@elucim/core'],
+      external: ['react', 'react-dom', 'react-dom/server', 'react/jsx-runtime', '@elucim/core'],
     },
   },
 });
