@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, forwardRef } from 'react';
 import { ElucimContext, type ElucimContextValue } from '../context';
 import { useInsidePresentation } from './Presentation';
 import { sortByZIndex } from '../primitives/transform';
@@ -32,19 +32,23 @@ export interface SceneProps {
 /**
  * Root composition component.
  * Provides frame clock and dimensions to all children via context.
+ * Forwards ref to the inner SVG element.
  */
-export function Scene({
-  width = 1920,
-  height = 1080,
-  fps = 60,
-  durationInFrames,
-  background = 'light-dark(#f5f5fa, #0d0d1a)',
-  children,
-  autoPlay = false,
-  frame: controlledFrame,
-  className,
-  style,
-}: SceneProps) {
+export const Scene = forwardRef<SVGSVGElement, SceneProps>(function Scene(
+  {
+    width = 1920,
+    height = 1080,
+    fps = 60,
+    durationInFrames,
+    background = 'light-dark(#f5f5fa, #0d0d1a)',
+    children,
+    autoPlay = false,
+    frame: controlledFrame,
+    className,
+    style,
+  },
+  ref
+) {
   const [internalFrame, setInternalFrame] = useState(0);
   const isControlled = controlledFrame !== undefined;
   const frame = isControlled ? controlledFrame : internalFrame;
@@ -113,6 +117,7 @@ export function Scene({
         data-testid="elucim-scene"
       >
         <svg
+          ref={ref}
           width="100%"
           height="100%"
           viewBox={`0 0 ${width} ${height}`}
@@ -124,4 +129,4 @@ export function Scene({
       </div>
     </ElucimContext.Provider>
   );
-}
+});

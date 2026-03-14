@@ -35,7 +35,7 @@ import {
   spring,
 } from '@elucim/core';
 import { DslRenderer } from '@elucim/dsl';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { ElucimDocument, DslRendererRef } from '@elucim/dsl';
 import calculusExplained from '../../dsl/examples/calculus-explained.json';
 import agenticLoop from '../../dsl/examples/agentic-loop.json';
 
@@ -959,6 +959,120 @@ const invalidDsl = {
   },
 };
 
+// ─── CutReady Integration Demos ──────────────────────────────────────────────
+
+const presetCardDsl: ElucimDocument = {
+  version: '1.0',
+  root: {
+    type: 'player',
+    preset: 'card',
+    durationInFrames: 60,
+    fps: 30,
+    children: [
+      { type: 'rect', x: 20, y: 20, width: 600, height: 320, fill: '#1a1a3e', rx: 12 },
+      { type: 'circle', cx: 320, cy: 180, r: 80, fill: '#4a9eff', opacity: 0.8 },
+      { type: 'text', content: 'Card Preset (640×360)', x: 320, y: 180, fontSize: 24, fill: '#fff', textAnchor: 'middle' },
+    ],
+  },
+};
+
+const presetSlideDsl: ElucimDocument = {
+  version: '1.0',
+  root: {
+    type: 'scene',
+    preset: 'slide',
+    durationInFrames: 60,
+    fps: 30,
+    children: [
+      { type: 'rect', x: 0, y: 0, width: 1280, height: 720, fill: '#0d0d2a' },
+      { type: 'circle', cx: 640, cy: 360, r: 150, fill: '#ff6b6b', opacity: 0.7 },
+      { type: 'text', content: 'Slide Preset (1280×720)', x: 640, y: 360, fontSize: 48, fill: '#fff', textAnchor: 'middle' },
+    ],
+  },
+};
+
+const presetSquareDsl: ElucimDocument = {
+  version: '1.0',
+  root: {
+    type: 'scene',
+    preset: 'square',
+    durationInFrames: 60,
+    fps: 30,
+    children: [
+      { type: 'rect', x: 0, y: 0, width: 600, height: 600, fill: '#1a2a1a' },
+      { type: 'circle', cx: 300, cy: 300, r: 120, fill: '#6bff6b', opacity: 0.7 },
+      { type: 'text', content: 'Square (600×600)', x: 300, y: 300, fontSize: 32, fill: '#fff', textAnchor: 'middle' },
+    ],
+  },
+};
+
+const posterDsl: ElucimDocument = {
+  version: '1.0',
+  root: {
+    type: 'player',
+    preset: 'card',
+    durationInFrames: 90,
+    fps: 30,
+    children: [
+      { type: 'rect', x: 0, y: 0, width: 640, height: 360, fill: '#1a1a2e' },
+      { type: 'circle', cx: 320, cy: 180, r: 60, fill: '#ff9f43' },
+      { type: 'text', content: 'Poster Mode — Static Frame', x: 320, y: 180, fontSize: 20, fill: '#fff', textAnchor: 'middle' },
+    ],
+  },
+};
+
+const richErrorDsl = {
+  version: '1.0',
+  root: {
+    type: 'scene',
+    preset: 'banana',
+    children: [
+      { type: 'circle', cx: 'NaN', cy: 100 },
+      { type: 'unknown_element' },
+      { type: 'rect', width: -10, height: -5 },
+    ],
+  },
+};
+
+function CutReadyRefDemo() {
+  const ref = React.useRef<DslRendererRef>(null);
+  const [info, setInfo] = React.useState('Click a button');
+
+  const dsl: ElucimDocument = {
+    version: '1.0',
+    root: {
+      type: 'player',
+      preset: 'card',
+      durationInFrames: 120,
+      fps: 30,
+      controls: true,
+      children: [
+        { type: 'rect', x: 0, y: 0, width: 640, height: 360, fill: '#0d0d2a' },
+        { type: 'circle', cx: 320, cy: 180, r: 80, fill: '#4a9eff', opacity: 0.8 },
+        { type: 'text', content: 'DslRendererRef Demo', x: 320, y: 180, fontSize: 22, fill: '#fff', textAnchor: 'middle' },
+      ],
+    },
+  };
+
+  return (
+    <div>
+      <DslRenderer ref={ref} dsl={dsl} />
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }} data-testid="ref-controls">
+        <button data-testid="ref-play" onClick={() => { ref.current?.play(); setInfo('Playing'); }}>Play</button>
+        <button data-testid="ref-pause" onClick={() => { ref.current?.pause(); setInfo('Paused'); }}>Pause</button>
+        <button data-testid="ref-seek" onClick={() => { ref.current?.seekToFrame(60); setInfo('Seeked to F60'); }}>Seek F60</button>
+        <button data-testid="ref-info" onClick={() => {
+          const total = ref.current?.getTotalFrames() ?? 0;
+          const playing = ref.current?.isPlaying() ?? false;
+          const svg = ref.current?.getSvgElement();
+          setInfo(`Total: ${total}, Playing: ${playing}, SVG: ${svg?.tagName ?? 'null'}`);
+        }}>Get Info</button>
+      </div>
+      <p data-testid="ref-output" style={{ color: '#aaa', fontSize: 13, marginTop: 4 }}>{info}</p>
+    </div>
+  );
+}
+
 // ─── App ─────────────────────────────────────────────────────────────────────
 
 export function App() {
@@ -1171,6 +1285,72 @@ export function App() {
           12-slide animated presentation covering tokenization, embeddings, attention, transformers, autoregressive generation, tool calling, and the agentic loop — built using the Elucim DSL Builder API.
         </p>
         <DslRenderer dsl={agenticLoop as ElucimDocument} />
+      </section>
+
+      <hr style={{ borderColor: '#333', margin: '32px 0' }} />
+      <h2 style={{ marginBottom: 16 }}>🎬 CutReady Integration</h2>
+      <p style={{ color: '#888', marginBottom: 16 }}>
+        Features for headless rendering, static poster frames, presets, theme tokens, and imperative control.
+      </p>
+
+      <section id="cutready-presets" style={{ marginTop: 24 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>Scene Presets</h3>
+        <p style={{ color: '#666', fontSize: 13, marginBottom: 8 }}>card (640×360), slide (1280×720), square (600×600)</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div data-testid="preset-card"><DslRenderer dsl={presetCardDsl} /></div>
+          <div data-testid="preset-slide"><DslRenderer dsl={presetSlideDsl} /></div>
+          <div data-testid="preset-square"><DslRenderer dsl={presetSquareDsl} /></div>
+        </div>
+      </section>
+
+      <section id="cutready-theme" style={{ marginTop: 24 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>Theme Tokens</h3>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <div data-testid="theme-default">
+            <p style={{ color: '#666', fontSize: 12, marginBottom: 4 }}>Default</p>
+            <DslRenderer dsl={presetCardDsl} />
+          </div>
+          <div data-testid="theme-warm">
+            <p style={{ color: '#666', fontSize: 12, marginBottom: 4 }}>Warm Theme</p>
+            <DslRenderer dsl={presetCardDsl} theme={{ foreground: '#ffeedd', background: '#2d1a0e', accent: '#ff6b35' }} />
+          </div>
+          <div data-testid="theme-cool">
+            <p style={{ color: '#666', fontSize: 12, marginBottom: 4 }}>Cool Theme</p>
+            <DslRenderer dsl={presetCardDsl} theme={{ foreground: '#e0f0ff', background: '#0a1628', accent: '#00bfff' }} />
+          </div>
+        </div>
+      </section>
+
+      <section id="cutready-poster" style={{ marginTop: 24 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>Poster Mode (Static Frames)</h3>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <div data-testid="poster-first">
+            <p style={{ color: '#666', fontSize: 12, marginBottom: 4 }}>poster=&quot;first&quot;</p>
+            <DslRenderer dsl={posterDsl} poster="first" />
+          </div>
+          <div data-testid="poster-last">
+            <p style={{ color: '#666', fontSize: 12, marginBottom: 4 }}>poster=&quot;last&quot;</p>
+            <DslRenderer dsl={posterDsl} poster="last" />
+          </div>
+          <div data-testid="poster-frame45">
+            <p style={{ color: '#666', fontSize: 12, marginBottom: 4 }}>poster=45</p>
+            <DslRenderer dsl={posterDsl} poster={45} />
+          </div>
+        </div>
+      </section>
+
+      <section id="cutready-errors" style={{ marginTop: 24 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>Enhanced Error Reporting</h3>
+        <div data-testid="rich-errors">
+          <DslRenderer dsl={richErrorDsl as any} onError={(errs) => console.log('DSL errors:', errs)} />
+        </div>
+      </section>
+
+      <section id="cutready-ref" style={{ marginTop: 24 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>DslRendererRef — Imperative Control</h3>
+        <div data-testid="ref-demo">
+          <CutReadyRefDemo />
+        </div>
       </section>
     </div>
   );

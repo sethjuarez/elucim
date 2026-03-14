@@ -12,6 +12,10 @@ The `<DslRenderer>` component takes an `ElucimDocument` and renders it as a full
 | `dsl` | `ElucimDocument` | **required** | The DSL document to render |
 | `className` | `string` | — | CSS class for the root wrapper |
 | `style` | `React.CSSProperties` | — | Inline styles for the root wrapper |
+| `theme` | `ElucimTheme` | — | Inject CSS custom properties for theming |
+| `poster` | `'first' \| 'last' \| number` | — | Render a static frame instead of an interactive player |
+| `onError` | `(errors: Array<{path, message}>) => void` | — | Callback fired when DSL validation fails |
+| `ref` | `React.Ref<DslRendererRef>` | — | Imperative handle for programmatic control |
 
 ## Usage
 
@@ -45,6 +49,76 @@ export default function MyAnimation() {
 }
 ```
 
+## Imperative API (DslRendererRef)
+
+Attach a ref to `DslRenderer` for programmatic playback control:
+
+```tsx
+import { useRef } from 'react';
+import { DslRenderer } from '@elucim/dsl';
+import type { DslRendererRef } from '@elucim/dsl';
+
+function MyPlayer({ dsl }) {
+  const ref = useRef<DslRendererRef>(null);
+
+  return (
+    <>
+      <DslRenderer ref={ref} dsl={dsl} />
+      <button onClick={() => ref.current?.play()}>Play</button>
+      <button onClick={() => ref.current?.pause()}>Pause</button>
+      <button onClick={() => ref.current?.seekToFrame(0)}>Reset</button>
+    </>
+  );
+}
+```
+
+### DslRendererRef Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `getSvgElement()` | `SVGSVGElement \| null` | Access the underlying SVG element |
+| `seekToFrame(frame)` | `void` | Jump to a specific frame |
+| `getTotalFrames()` | `number` | Get the total frame count |
+| `play()` | `void` | Start playback |
+| `pause()` | `void` | Stop playback |
+| `isPlaying()` | `boolean` | Whether currently playing |
+
+## Poster Mode
+
+The `poster` prop renders a single static frame without playback controls — useful for thumbnails, social previews, or print.
+
+```tsx
+<DslRenderer dsl={doc} poster="first" />    {/* Frame 0 */}
+<DslRenderer dsl={doc} poster="last" />     {/* Final frame */}
+<DslRenderer dsl={doc} poster={45} />       {/* Frame 45 */}
+```
+
+## Scene Presets
+
+Presets provide shorthand dimensions so you don't have to remember exact pixel values:
+
+| Preset | Width | Height | Use case |
+|--------|-------|--------|----------|
+| `'card'` | 640 | 360 | Social cards, thumbnails |
+| `'slide'` | 1280 | 720 | Slide decks, presentations |
+| `'square'` | 600 | 600 | Social media, avatars |
+
+```json
+{
+  "version": "1.0",
+  "root": {
+    "type": "player",
+    "preset": "card",
+    "durationInFrames": 60,
+    "children": [...]
+  }
+}
+```
+
+:::tip
+Explicit `width`/`height` on the root node override preset values.
+:::
+
 ## Loading from a JSON File
 
 ```tsx
@@ -60,11 +134,47 @@ export default function Page() {
 
 `DslRenderer` validates the document before rendering. If the document is invalid, it displays an error message instead of crashing — making it safe to use with user-supplied or AI-generated JSON.
 
+Errors are grouped by node with a collapsible raw JSON view for debugging.
+
 ```tsx
 // Invalid document — missing required "version" field
 <DslRenderer dsl={{ root: { type: 'player' } } as any} />
 // → Renders an error message describing what's wrong
 ```
+
+### Programmatic Error Handling
+
+Use the `onError` callback to intercept validation failures:
+
+```tsx
+<DslRenderer
+  dsl={doc}
+  onError={(errors) => {
+    errors.forEach(e => console.warn(`${e.path}: ${e.message}`));
+  }}
+/>
+```
+
+## Theme Tokens
+
+The `theme` prop injects CSS custom properties onto the renderer wrapper. Each key becomes `--elucim-{key}`:
+
+```tsx
+<DslRenderer
+  dsl={doc}
+  theme={{
+    foreground: '#ffeedd',
+    background: '#2d1a0e',
+    accent: '#ff6b35',
+  }}
+/>
+```
+
+Custom keys are supported — any key/value pair is converted to a CSS custom property. This is useful for embedding Elucim scenes in themed host pages.
+
+:::tip
+Theme tokens affect the wrapper CSS (borders, backgrounds, spacing). This is different from [Builder API](/dsl/builder-api/) themes, which affect content colors inside the scene.
+:::
 
 ## Presentations
 

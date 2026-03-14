@@ -59,6 +59,10 @@ Validates the DSL document and renders it as React components. If validation fai
 - `dsl: ElucimDocument` — The DSL document to render
 - `className?: string` — CSS class for the wrapper div
 - `style?: CSSProperties` — Inline styles for the wrapper div
+- `theme?: 'light' | 'dark'` — Override the color theme
+- `poster?: number` — Frame number to display as a static poster before playback
+- `onError?: (errors: ValidationError[]) => void` — Callback for validation errors
+- `ref?: React.Ref<DslRendererRef>` — Imperative handle for programmatic control
 
 ### `validate(doc: unknown): ValidationResult`
 
@@ -73,6 +77,27 @@ if (!result.valid) {
   // [{ path: 'root.children[0].cx', message: 'Required numeric field "cx"...', severity: 'error' }]
 }
 ```
+
+### `renderToSvgString(doc, frame, options?)`
+
+Renders a DSL document to an SVG string without a browser DOM — useful for server-side rendering, thumbnails, and static export.
+
+```ts
+import { renderToSvgString } from '@elucim/dsl';
+const svg = renderToSvgString(myDoc, 0);
+```
+
+Uses `react-dom/server` under the hood. Validates the DSL and throws on invalid input.
+
+### `DslRendererRef`
+
+Imperative handle exposed via `ref` on `<DslRenderer>`. Methods:
+
+- `getSvgElement()` — Returns the underlying `SVGSVGElement`
+- `seekToFrame(frame)` — Jump to a specific frame
+- `getTotalFrames()` — Total frame count of the document
+- `play()` / `pause()` — Control playback
+- `isPlaying()` — Whether the animation is currently playing
 
 ### `compileExpression(expr: string)`
 
@@ -114,6 +139,8 @@ Every document has this structure:
 | `scene` | Raw SVG scene (needs external frame control) |
 | `player` | Interactive player with controls, scrub bar, play/pause |
 | `presentation` | Slide-based presentation with transitions |
+
+All root types accept an optional `preset` field: `'card'` (640×360), `'slide'` (1280×720), `'square'` (600×600). When set, `width` and `height` are derived from the preset automatically.
 
 ### Element Types
 
@@ -222,6 +249,10 @@ When instructing an LLM to create Elucim diagrams:
 4. **Use `sequence` nodes** to control timing (offsets in frames)
 5. **Wrap elements in animation nodes** (`fadeIn`, `draw`, `stagger`) for entrance effects
 6. **Use math expression strings** for function plots and vector fields
+
+**Tips:**
+- Use `poster` on `<DslRenderer>` to show a static preview frame before playback starts
+- Use `renderToSvgString(doc, frame)` to generate SVG previews server-side — ideal for thumbnails and social cards
 
 Example prompt:
 > "Create an Elucim DSL JSON document that shows a coordinate system with sin(x) and cos(x) plotted, 

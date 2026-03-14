@@ -15,10 +15,14 @@ export interface ElucimDocument {
 
 export type RootNode = SceneNode | PlayerNode | PresentationNode;
 
+/** Preset dimensions for common scene sizes */
+export type ScenePreset = 'card' | 'slide' | 'square';
+
 // ─── Container Nodes ────────────────────────────────────────────────────────
 
 export interface SceneNode {
   type: 'scene';
+  preset?: ScenePreset;
   width?: number;
   height?: number;
   fps?: number;
@@ -29,6 +33,7 @@ export interface SceneNode {
 
 export interface PlayerNode {
   type: 'player';
+  preset?: ScenePreset;
   width?: number;
   height?: number;
   fps?: number;
@@ -42,6 +47,7 @@ export interface PlayerNode {
 
 export interface PresentationNode {
   type: 'presentation';
+  preset?: ScenePreset;
   width?: number;
   height?: number;
   background?: string;

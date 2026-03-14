@@ -3,7 +3,7 @@
 // Components
 export { Scene, type SceneProps } from './components/Scene';
 export { Sequence, type SequenceProps } from './components/Sequence';
-export { Player, type PlayerProps } from './components/Player';
+export { Player, type PlayerProps, type PlayerRef } from './components/Player';
 export {
   Presentation, type PresentationProps,
   Slide, type SlideProps,
@@ -63,12 +63,14 @@ export { Transform, type TransformProps, Morph, type MorphProps } from './animat
 export { Parallel, Stagger, type StaggerProps } from './animations/Groups';
 export { Timeline, type TimelineAction, type PlayOptions } from './animations/Timeline';
 
-// Export / Video
+// Export / Video / Capture
 export {
   exportAnimation,
   exportWithMediaRecorder,
   svgToCanvas,
   downloadBlob,
   useExport,
+  captureFrame,
   type ExportOptions,
+  type CaptureFrameOptions,
 } from './export';

@@ -52,6 +52,7 @@ export function validate(doc: unknown): ValidationResult {
 // ─── Node validators ────────────────────────────────────────────────────────
 
 const VALID_ROOT_TYPES = ['scene', 'player', 'presentation'];
+const VALID_PRESETS = ['card', 'slide', 'square'];
 const VALID_ELEMENT_TYPES = [
   'sequence', 'group',
   'bezierCurve', 'circle', 'line', 'arrow', 'rect', 'polygon', 'text', 'image',
@@ -82,6 +83,12 @@ function validateContainerNode(node: Record<string, unknown>, path: string, type
   optionalPositiveNum(node, 'fps', path, errors);
   optionalString(node, 'background', path, errors);
 
+  if (node.preset !== undefined) {
+    if (typeof node.preset !== 'string' || !VALID_PRESETS.includes(node.preset)) {
+      errors.push({ path: `${path}.preset`, message: `preset must be one of: ${VALID_PRESETS.join(', ')}. Got "${node.preset}"`, severity: 'error' });
+    }
+  }
+
   if (type === 'player') {
     optionalBoolean(node, 'controls', path, errors);
     optionalBoolean(node, 'loop', path, errors);
@@ -98,6 +105,12 @@ function validatePresentationNode(node: Record<string, unknown>, path: string, e
   optionalPositiveNum(node, 'transitionDuration', path, errors);
   optionalBoolean(node, 'showHud', path, errors);
   optionalBoolean(node, 'showNotes', path, errors);
+
+  if (node.preset !== undefined) {
+    if (typeof node.preset !== 'string' || !VALID_PRESETS.includes(node.preset)) {
+      errors.push({ path: `${path}.preset`, message: `preset must be one of: ${VALID_PRESETS.join(', ')}. Got "${node.preset}"`, severity: 'error' });
+    }
+  }
 
   if (node.transition !== undefined) {
     if (!VALID_TRANSITIONS.includes(node.transition as string)) {

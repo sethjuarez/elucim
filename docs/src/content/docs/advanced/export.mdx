@@ -86,6 +86,56 @@ function ExportButton({ svgRef, setFrame }) {
 | `startExport` | `(svg, setFrame, opts) => Promise<void>` | Begin exporting |
 | `cancel` | `() => void` | Cancel the current export |
 
+## captureFrame()
+
+Captures a single frame as a PNG or JPEG blob — useful for thumbnails, social cards, or saving a snapshot of a specific animation frame.
+
+```ts
+import { captureFrame } from '@elucim/core';
+
+const blob = await captureFrame(svgElement, renderFrame, {
+  width: 1280,
+  height: 720,
+  format: 'png',
+  scale: 2,  // 2x for Retina
+});
+
+// Download the image
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'frame.png';
+a.click();
+```
+
+### CaptureFrameOptions
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `width` | `number` | SVG width | Output width in pixels |
+| `height` | `number` | SVG height | Output height in pixels |
+| `format` | `'png' \| 'jpeg'` | `'png'` | Image format |
+| `quality` | `number` | `0.92` | JPEG quality (0–1) |
+| `scale` | `number` | `1` | Device pixel ratio (2 for Retina) |
+
+## renderToSvgString()
+
+Renders a DSL document to an SVG string without a browser DOM — useful for server-side rendering, thumbnails, and static export.
+
+```ts
+import { renderToSvgString } from '@elucim/dsl';
+
+const svgString = renderToSvgString(doc, 0); // frame 0
+// svgString is a complete <svg>...</svg> string
+
+// Optional: override dimensions
+const svg = renderToSvgString(doc, 30, { width: 800, height: 600 });
+```
+
+:::note
+`renderToSvgString` uses `react-dom/server` under the hood. It validates the DSL and throws on invalid input.
+:::
+
 ## Browser Support
 
 Export relies on `HTMLCanvasElement`, `MediaRecorder`, and the `video/webm` MIME type. This works in Chrome, Edge, and Firefox. Safari support for `MediaRecorder` may vary — check [caniuse.com](https://caniuse.com/mediarecorder) for the latest status.

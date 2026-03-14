@@ -16,11 +16,12 @@ test.describe('Presentation Mode', () => {
   });
 
   test('renders first slide with HUD', async ({ page }) => {
-    const pres = page.locator('[data-testid="elucim-presentation"]');
+    const container = page.locator('#presentation-demo');
+    const pres = container.locator('[data-testid="elucim-presentation"]');
     await expect(pres).toBeVisible();
 
     // HUD shows slide 1/5
-    const hud = page.locator('[data-testid="elucim-presentation-hud"]');
+    const hud = container.locator('[data-testid="elucim-presentation-hud"]');
     await expect(hud).toContainText('1 / 5');
     await expect(hud).toContainText('Welcome');
 
@@ -28,11 +29,12 @@ test.describe('Presentation Mode', () => {
   });
 
   test('next button navigates to slide 2', async ({ page }) => {
-    const nextBtn = page.locator('[data-testid="elucim-next-btn"]');
+    const container = page.locator('#presentation-demo');
+    const nextBtn = container.locator('[data-testid="elucim-next-btn"]');
     await nextBtn.click();
     await page.waitForTimeout(600); // transition
 
-    const hud = page.locator('[data-testid="elucim-presentation-hud"]');
+    const hud = container.locator('[data-testid="elucim-presentation-hud"]');
     await expect(hud).toContainText('2 / 5');
     await expect(hud).toContainText('The Unit Circle');
 
@@ -40,27 +42,29 @@ test.describe('Presentation Mode', () => {
   });
 
   test('prev button navigates back', async ({ page }) => {
+    const container = page.locator('#presentation-demo');
     // Go to slide 2
-    const nextBtn = page.locator('[data-testid="elucim-next-btn"]');
+    const nextBtn = container.locator('[data-testid="elucim-next-btn"]');
     await nextBtn.click();
     await page.waitForTimeout(600);
 
     // Go back to slide 1
-    const prevBtn = page.locator('[data-testid="elucim-prev-btn"]');
+    const prevBtn = container.locator('[data-testid="elucim-prev-btn"]');
     await prevBtn.click();
     await page.waitForTimeout(600);
 
-    const hud = page.locator('[data-testid="elucim-presentation-hud"]');
+    const hud = container.locator('[data-testid="elucim-presentation-hud"]');
     await expect(hud).toContainText('1 / 5');
   });
 
   test('navigates through all 5 slides', async ({ page }) => {
-    const nextBtn = page.locator('[data-testid="elucim-next-btn"]');
+    const container = page.locator('#presentation-demo');
+    const nextBtn = container.locator('[data-testid="elucim-next-btn"]');
 
     for (let i = 2; i <= 5; i++) {
       await nextBtn.click();
       await page.waitForTimeout(600);
-      const hud = page.locator('[data-testid="elucim-presentation-hud"]');
+      const hud = container.locator('[data-testid="elucim-presentation-hud"]');
       await expect(hud).toContainText(`${i} / 5`);
     }
 
@@ -70,33 +74,37 @@ test.describe('Presentation Mode', () => {
   });
 
   test('presenter notes are visible', async ({ page }) => {
-    const notes = page.locator('[data-testid="elucim-presenter-notes"]');
+    const container = page.locator('#presentation-demo');
+    const notes = container.locator('[data-testid="elucim-presenter-notes"]');
     await expect(notes).toBeVisible();
     await expect(notes).toContainText('Introduce Elucim and its purpose');
   });
 
   test('presenter notes update on slide change', async ({ page }) => {
-    const nextBtn = page.locator('[data-testid="elucim-next-btn"]');
+    const container = page.locator('#presentation-demo');
+    const nextBtn = container.locator('[data-testid="elucim-next-btn"]');
     await nextBtn.click();
     await page.waitForTimeout(600);
 
-    const notes = page.locator('[data-testid="elucim-presenter-notes"]');
+    const notes = container.locator('[data-testid="elucim-presenter-notes"]');
     await expect(notes).toContainText('sine, cosine and the unit circle');
   });
 
   test('fullscreen button is present', async ({ page }) => {
-    const fsBtn = page.locator('[data-testid="elucim-fullscreen-btn"]');
+    const container = page.locator('#presentation-demo');
+    const fsBtn = container.locator('[data-testid="elucim-fullscreen-btn"]');
     await expect(fsBtn).toBeVisible();
   });
 
   test('slide 3 shows Taylor Series with LaTeX', async ({ page }) => {
-    const nextBtn = page.locator('[data-testid="elucim-next-btn"]');
+    const container = page.locator('#presentation-demo');
+    const nextBtn = container.locator('[data-testid="elucim-next-btn"]');
     await nextBtn.click();
     await page.waitForTimeout(600);
     await nextBtn.click();
     await page.waitForTimeout(600);
 
-    const hud = page.locator('[data-testid="elucim-presentation-hud"]');
+    const hud = container.locator('[data-testid="elucim-presentation-hud"]');
     await expect(hud).toContainText('Taylor Series');
     await expect(hud).toContainText('3 / 5');
 
@@ -106,13 +114,14 @@ test.describe('Presentation Mode', () => {
   });
 
   test('slide 4 shows vector field', async ({ page }) => {
-    const nextBtn = page.locator('[data-testid="elucim-next-btn"]');
+    const container = page.locator('#presentation-demo');
+    const nextBtn = container.locator('[data-testid="elucim-next-btn"]');
     for (let i = 0; i < 3; i++) {
       await nextBtn.click();
       await page.waitForTimeout(600);
     }
 
-    const hud = page.locator('[data-testid="elucim-presentation-hud"]');
+    const hud = container.locator('[data-testid="elucim-presentation-hud"]');
     await expect(hud).toContainText('Vector Fields');
     await expect(hud).toContainText('4 / 5');
 
@@ -121,10 +130,10 @@ test.describe('Presentation Mode', () => {
   });
 
   test('progress dots reflect current slide', async ({ page }) => {
-    const hud = page.locator('[data-testid="elucim-presentation-hud"]');
+    const container = page.locator('#presentation-demo');
+    const hud = container.locator('[data-testid="elucim-presentation-hud"]');
     // On slide 1, should see 5 dots total
-    const dots = hud.locator('div > div > div'); // progress dots container
-    // Just verify the HUD renders dots by checking for multiple child divs
+    // Just verify the HUD renders by checking for visibility
     await expect(hud).toBeVisible();
   });
 });

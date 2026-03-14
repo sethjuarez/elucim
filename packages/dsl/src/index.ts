@@ -41,6 +41,7 @@ export type {
   BarChartNode,
   BarChartBarDef,
   ImageNode,
+  ScenePreset,
 } from './schema/types';
 
 // Math expression evaluator
@@ -58,7 +59,17 @@ export {
 } from './validator/validate';
 
 // Renderer
-export { DslRenderer, type DslRendererProps } from './renderer/DslRenderer';
+export { DslRenderer, type DslRendererProps, type DslRendererRef, type ElucimTheme } from './renderer/DslRenderer';
+export { renderToSvgString, type RenderToSvgStringOptions } from './renderer/renderToSvgString';
+export {
+  renderRoot,
+  renderScene,
+  renderPlayer,
+  renderPresentation,
+  renderSlide,
+  renderElement,
+  type RenderRootOverrides,
+} from './renderer/renderElements';
 
 // Easing resolver
 export { resolveEasing } from './renderer/resolveEasing';

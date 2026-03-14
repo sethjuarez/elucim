@@ -52,6 +52,8 @@ function MyAnimation() {
 | `Player` | Interactive player with controls, scrubber, play/pause, keyboard shortcuts |
 | `Scene` | Raw SVG scene for embedding in custom playback systems |
 | `Sequence` | Time-offset wrapper — schedule children to appear at specific frames |
+| `captureFrame` | Single-frame capture to PNG/JPEG |
+| `PlayerRef` | Imperative handle type for Player (getSvgElement, play, pause, seek) |
 
 ### 📐 Primitives
 

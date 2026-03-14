@@ -1,486 +1,136 @@
-import React from 'react';
-import type { ElementNode, SceneNode, PlayerNode, PresentationNode, SlideNode } from '../schema/types';
-import {
-  Scene, Player,
-  Presentation, Slide,
-  Sequence,
-  BezierCurve, Circle, Line, Arrow, Rect, Text, Polygon,
-  Image, Group,
-  Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
-  FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel,
-} from '@elucim/core';
-import type { TransitionType } from '@elucim/core';
-import { resolveEasing } from './resolveEasing';
-import { compileExpression, compileVectorExpression } from '../math/evaluator';
+import React, { forwardRef, useRef, useImperativeHandle } from 'react';
 import { validate } from '../validator/validate';
 import type { ElucimDocument } from '../schema/types';
+import { renderRoot } from './renderElements';
 
 // ─── DslRenderer ────────────────────────────────────────────────────────────
+
+export interface ElucimTheme {
+  foreground?: string;
+  background?: string;
+  accent?: string;
+  [key: string]: string | undefined;
+}
+
+export interface DslRendererRef {
+  /** Get the underlying SVG element */
+  getSvgElement(): SVGSVGElement | null;
+  /** Seek to a specific frame */
+  seekToFrame(frame: number): void;
+  /** Get total frames count */
+  getTotalFrames(): number;
+  /** Start playback */
+  play(): void;
+  /** Pause playback */
+  pause(): void;
+  /** Whether currently playing */
+  isPlaying(): boolean;
+}
 
 export interface DslRendererProps {
   dsl: ElucimDocument;
   className?: string;
   style?: React.CSSProperties;
+  /** Inject theme colors as CSS custom properties (e.g. --elucim-foreground) */
+  theme?: ElucimTheme;
+  /** Render a static frame instead of interactive player. 'first' | 'last' | frame number */
+  poster?: 'first' | 'last' | number;
+  /** Callback fired when DSL validation fails */
+  onError?: (errors: Array<{ path: string; message: string }>) => void;
 }
 
-export function DslRenderer({ dsl, className, style }: DslRendererProps) {
+/** Convert theme object to CSS custom properties. */
+function themeToVars(theme?: ElucimTheme): React.CSSProperties {
+  if (!theme) return {};
+  const vars: Record<string, string> = {};
+  for (const [key, value] of Object.entries(theme)) {
+    if (value !== undefined) {
+      vars[`--elucim-${key}`] = value;
+    }
+  }
+  return vars as React.CSSProperties;
+}
+
+export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function DslRenderer(
+  { dsl, className, style, theme, poster, onError },
+  ref
+) {
+  const playerRef = useRef<import('@elucim/core').PlayerRef>(null);
+
+  useImperativeHandle(ref, () => ({
+    getSvgElement: () => playerRef.current?.getSvgElement() ?? null,
+    seekToFrame: (f: number) => playerRef.current?.seekToFrame(f),
+    getTotalFrames: () => playerRef.current?.getTotalFrames() ?? 0,
+    play: () => playerRef.current?.play(),
+    pause: () => playerRef.current?.pause(),
+    isPlaying: () => playerRef.current?.isPlaying() ?? false,
+  }));
+
   const result = validate(dsl);
   if (!result.valid) {
+    const filteredErrors = result.errors
+      .filter(e => e.severity === 'error')
+      .map(e => ({ path: e.path, message: e.message }));
+    onError?.(filteredErrors);
+
+    // Group errors by parent node path for readability
+    const grouped = new Map<string, typeof filteredErrors>();
+    for (const err of filteredErrors) {
+      const parts = err.path.split('.');
+      const parent = parts.length > 1 ? parts.slice(0, -1).join('.') : err.path;
+      const group = grouped.get(parent) ?? [];
+      group.push(err);
+      grouped.set(parent, group);
+    }
+
     return (
       <div
         className={className}
-        style={{ color: '#ff6b6b', fontFamily: 'monospace', padding: 16, ...style }}
+        style={{ color: '#ff6b6b', fontFamily: 'monospace', padding: 16, fontSize: 13, ...style }}
         data-testid="dsl-error"
       >
-        <strong>Elucim DSL Validation Errors:</strong>
-        <ul>
-          {result.errors.filter(e => e.severity === 'error').map((err, i) => (
-            <li key={i}>{err.path}: {err.message}</li>
-          ))}
-        </ul>
+        <strong>Elucim DSL Validation Errors ({filteredErrors.length}):</strong>
+        {[...grouped.entries()].map(([parent, errs]) => (
+          <details key={parent} open style={{ marginTop: 8 }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>{parent} ({errs.length})</summary>
+            <ul style={{ margin: '4px 0', paddingLeft: 20 }}>
+              {errs.map((err, i) => (
+                <li key={i}><code style={{ color: '#ffa07a' }}>{err.path}</code>: {err.message}</li>
+              ))}
+            </ul>
+          </details>
+        ))}
+        <details style={{ marginTop: 12 }}>
+          <summary style={{ cursor: 'pointer', opacity: 0.7 }}>Raw JSON</summary>
+          <pre style={{ fontSize: 11, maxHeight: 300, overflow: 'auto', marginTop: 4, padding: 8, background: 'rgba(0,0,0,0.3)', borderRadius: 4 }}>
+            {JSON.stringify(dsl, null, 2)}
+          </pre>
+        </details>
       </div>
     );
   }
 
+  const themeVars = themeToVars(theme);
+
+  // Resolve poster to a frame override
+  const posterOverrides = poster !== undefined ? resolvePoster(poster, dsl) : undefined;
+
   return (
-    <div className={className} style={style} data-testid="dsl-root">
-      {renderRoot(dsl.root)}
+    <div className={className} style={{ ...themeVars, ...style }} data-testid="dsl-root">
+      {renderRoot(dsl.root, {
+        frame: posterOverrides?.frame,
+        playerRef,
+      })}
     </div>
   );
-}
+});
 
-// ─── Root renderer ──────────────────────────────────────────────────────────
-
-function renderRoot(node: SceneNode | PlayerNode | PresentationNode): React.ReactNode {
-  switch (node.type) {
-    case 'scene':
-      return renderScene(node);
-    case 'player':
-      return renderPlayer(node);
-    case 'presentation':
-      return renderPresentation(node);
+function resolvePoster(poster: 'first' | 'last' | number, dsl: ElucimDocument): { frame: number } {
+  if (poster === 'first') return { frame: 0 };
+  if (poster === 'last') {
+    const root = dsl.root as unknown as Record<string, unknown>;
+    const dur = (root.durationInFrames as number) ?? 1;
+    return { frame: Math.max(0, dur - 1) };
   }
-}
-
-function renderScene(node: SceneNode): React.ReactNode {
-  return (
-    <Scene
-      width={node.width}
-      height={node.height}
-      fps={node.fps}
-      durationInFrames={node.durationInFrames}
-      background={node.background}
-    >
-      {node.children.map((child, i) => renderElement(child, i))}
-    </Scene>
-  );
-}
-
-function renderPlayer(node: PlayerNode): React.ReactNode {
-  return (
-    <Player
-      width={node.width}
-      height={node.height}
-      fps={node.fps}
-      durationInFrames={node.durationInFrames}
-      background={node.background}
-      controls={node.controls}
-      loop={node.loop}
-      autoPlay={node.autoPlay}
-    >
-      {node.children.map((child, i) => renderElement(child, i))}
-    </Player>
-  );
-}
-
-function renderPresentation(node: PresentationNode): React.ReactNode {
-  return (
-    <Presentation
-      width={node.width}
-      height={node.height}
-      background={node.background}
-      transition={node.transition as TransitionType}
-      transitionDuration={node.transitionDuration}
-      showHUD={node.showHud}
-      showNotes={node.showNotes}
-    >
-      {node.slides.map((slide, i) => renderSlide(slide, i))}
-    </Presentation>
-  );
-}
-
-function renderSlide(node: SlideNode, key: number): React.ReactNode {
-  return (
-    <Slide key={key} title={node.title} notes={node.notes} background={node.background}>
-      {node.children?.map((child, i) => renderElement(child, i))}
-    </Slide>
-  );
-}
-
-// ─── Element renderer ───────────────────────────────────────────────────────
-
-function renderElement(node: ElementNode, key: number): React.ReactNode {
-  switch (node.type) {
-    // Structural
-    case 'sequence':
-      return (
-        <Sequence key={key} from={node.from} durationInFrames={node.durationInFrames} name={node.name}>
-          {node.children.map((child, i) => renderElement(child, i))}
-        </Sequence>
-      );
-    case 'group':
-      return (
-        <Group
-          key={key}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        >
-          {node.children.map((child, i) => renderElement(child, i))}
-        </Group>
-      );
-
-    // Primitives
-    case 'bezierCurve':
-      return (
-        <BezierCurve
-          key={key}
-          x1={node.x1} y1={node.y1}
-          cx1={node.cx1} cy1={node.cy1}
-          cx2={node.cx2} cy2={node.cy2}
-          x2={node.x2} y2={node.y2}
-          stroke={node.stroke} strokeWidth={node.strokeWidth}
-          fill={node.fill}
-          strokeDasharray={node.strokeDasharray}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'circle':
-      return (
-        <Circle
-          key={key}
-          cx={node.cx} cy={node.cy} r={node.r}
-          fill={node.fill} stroke={node.stroke} strokeWidth={node.strokeWidth}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'line':
-      return (
-        <Line
-          key={key}
-          x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2}
-          stroke={node.stroke} strokeWidth={node.strokeWidth}
-          strokeDasharray={node.strokeDasharray}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'arrow':
-      return (
-        <Arrow
-          key={key}
-          x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2}
-          stroke={node.stroke} strokeWidth={node.strokeWidth} headSize={node.headSize}
-          strokeDasharray={node.strokeDasharray}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'rect':
-      return (
-        <Rect
-          key={key}
-          x={node.x} y={node.y} width={node.width} height={node.height}
-          fill={node.fill} stroke={node.stroke} strokeWidth={node.strokeWidth}
-          rx={node.rx} ry={node.ry}
-          strokeDasharray={node.strokeDasharray}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'polygon':
-      return (
-        <Polygon
-          key={key}
-          points={node.points}
-          fill={node.fill} stroke={node.stroke} strokeWidth={node.strokeWidth}
-          closed={node.closed}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'text':
-      return (
-        <Text
-          key={key}
-          x={node.x} y={node.y}
-          fill={node.fill} fontSize={node.fontSize}
-          fontFamily={node.fontFamily} fontWeight={node.fontWeight}
-          textAnchor={node.textAnchor} dominantBaseline={node.dominantBaseline}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        >
-          {node.content}
-        </Text>
-      );
-
-    case 'image':
-      return (
-        <Image
-          key={key}
-          src={node.src}
-          x={node.x} y={node.y} width={node.width} height={node.height}
-          preserveAspectRatio={node.preserveAspectRatio}
-          borderRadius={node.borderRadius}
-          clipShape={node.clipShape}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-
-    // Math
-    case 'axes':
-      return (
-        <Axes
-          key={key}
-          domain={node.domain} range={node.range}
-          origin={node.origin} scale={node.scale}
-          showGrid={node.showGrid} showTicks={node.showTicks} showLabels={node.showLabels}
-          tickStep={node.tickStep}
-          axisColor={node.axisColor} gridColor={node.gridColor}
-          labelColor={node.labelColor} labelFontSize={node.labelFontSize}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'functionPlot': {
-      const fn = compileExpression(node.fn);
-      return (
-        <FunctionPlot
-          key={key}
-          fn={(x: number) => fn({ x })}
-          domain={node.domain} yClamp={node.yClamp}
-          origin={node.origin} scale={node.scale}
-          color={node.color} strokeWidth={node.strokeWidth} samples={node.samples}
-          draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          opacity={node.opacity}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    }
-    case 'vector':
-      return (
-        <Vector
-          key={key}
-          from={node.from} to={node.to}
-          origin={node.origin} scale={node.scale}
-          color={node.color} strokeWidth={node.strokeWidth} headSize={node.headSize}
-          label={node.label} labelOffset={node.labelOffset}
-          labelColor={node.labelColor} labelFontSize={node.labelFontSize}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'vectorField': {
-      const vfn = compileVectorExpression(node.fn);
-      return (
-        <VectorField
-          key={key}
-          fn={(x: number, y: number) => vfn({ x, y })}
-          domain={node.domain} range={node.range} step={node.step}
-          origin={node.origin} scale={node.scale} arrowScale={node.arrowScale}
-          color={node.color} strokeWidth={node.strokeWidth} headSize={node.headSize}
-          normalize={node.normalize} maxLength={node.maxLength}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    }
-    case 'matrix':
-      return (
-        <Matrix
-          key={key}
-          values={node.values}
-          x={node.x} y={node.y}
-          cellSize={node.cellSize}
-          color={node.color} bracketColor={node.bracketColor}
-          fontSize={node.fontSize}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'graph':
-      return (
-        <Graph
-          key={key}
-          nodes={node.nodes} edges={node.edges}
-          nodeColor={node.nodeColor} nodeRadius={node.nodeRadius}
-          edgeColor={node.edgeColor} edgeWidth={node.edgeWidth}
-          labelColor={node.labelColor} labelFontSize={node.labelFontSize}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'latex':
-      return (
-        <LaTeX
-          key={key}
-          expression={node.expression}
-          x={node.x} y={node.y}
-          color={node.color} fontSize={node.fontSize} align={node.align}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-    case 'barChart':
-      return (
-        <BarChart
-          key={key}
-          bars={node.bars}
-          x={node.x} y={node.y} width={node.width} height={node.height}
-          barColor={node.barColor} labelColor={node.labelColor}
-          labelFontSize={node.labelFontSize}
-          showValues={node.showValues} maxValue={node.maxValue}
-          gap={node.gap} valueFormat={node.valueFormat}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
-        />
-      );
-
-    // Animation wrappers
-    case 'fadeIn':
-      return (
-        <FadeIn key={key} duration={node.duration} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i))}
-        </FadeIn>
-      );
-    case 'fadeOut':
-      return (
-        <FadeOut key={key} duration={node.duration} totalFrames={node.totalFrames} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i))}
-        </FadeOut>
-      );
-    case 'draw':
-      return (
-        <Draw key={key} duration={node.duration} pathLength={node.pathLength} easing={resolveEasing(node.easing)}>
-          {renderElement(node.children[0], 0) as React.ReactElement}
-        </Draw>
-      );
-    case 'write':
-      return (
-        <Write key={key} duration={node.duration} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i))}
-        </Write>
-      );
-    case 'transform':
-      return (
-        <Transform
-          key={key}
-          duration={node.duration}
-          easing={resolveEasing(node.easing)}
-          translate={node.translate}
-          scale={node.scale}
-          rotate={node.rotate}
-          opacity={node.opacity}
-        >
-          {node.children.map((child, i) => renderElement(child, i))}
-        </Transform>
-      );
-    case 'morph':
-      return (
-        <Morph
-          key={key}
-          duration={node.duration}
-          easing={resolveEasing(node.easing)}
-          fromColor={node.fromColor} toColor={node.toColor}
-          fromOpacity={node.fromOpacity} toOpacity={node.toOpacity}
-          fromScale={node.fromScale} toScale={node.toScale}
-        >
-          {node.children.map((child, i) => renderElement(child, i))}
-        </Morph>
-      );
-    case 'stagger':
-      return (
-        <Stagger key={key} staggerDelay={node.staggerDelay} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i))}
-        </Stagger>
-      );
-    case 'parallel':
-      return (
-        <Parallel key={key}>
-          {node.children.map((child, i) => renderElement(child, i))}
-        </Parallel>
-      );
-
-    // Nested containers
-    case 'scene':
-      return <React.Fragment key={key}>{renderScene(node)}</React.Fragment>;
-    case 'player':
-      return <React.Fragment key={key}>{renderPlayer(node)}</React.Fragment>;
-
-    default: {
-      const _exhaustive: never = node;
-      return null;
-    }
-  }
+  return { frame: poster };
 }

@@ -1,6 +1,21 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Scene, type SceneProps } from './Scene';
 import { useInsidePresentation } from './Presentation';
+
+export interface PlayerRef {
+  /** Get the underlying SVG element */
+  getSvgElement(): SVGSVGElement | null;
+  /** Seek to a specific frame */
+  seekToFrame(frame: number): void;
+  /** Get total frames count */
+  getTotalFrames(): number;
+  /** Start playback */
+  play(): void;
+  /** Pause playback */
+  pause(): void;
+  /** Whether currently playing */
+  isPlaying(): boolean;
+}
 
 export interface PlayerProps extends Omit<SceneProps, 'frame' | 'autoPlay'> {
   /** Show controls bar. Default: true */
@@ -19,26 +34,42 @@ export interface PlayerProps extends Omit<SceneProps, 'frame' | 'autoPlay'> {
 
 /**
  * Interactive player component with scrub bar, play/pause, and keyboard controls.
+ * Forwards ref as PlayerRef with imperative methods.
  */
-export function Player({
-  controls = true,
-  loop = true,
-  autoPlay = false,
-  durationInFrames,
-  fps = 60,
-  width = 1920,
-  height = 1080,
-  controlsBackground = 'light-dark(#ecedf0, #1a1a2e)',
-  controlsColor = 'light-dark(#333, #e0e0e0)',
-  controlsAccent = 'light-dark(#4a7eff, #4a9eff)',
-  children,
-  ...sceneProps
-}: PlayerProps) {
+export const Player = forwardRef<PlayerRef, PlayerProps>(function Player(
+  {
+    controls = true,
+    loop = true,
+    autoPlay = false,
+    durationInFrames,
+    fps = 60,
+    width = 1920,
+    height = 1080,
+    controlsBackground = 'light-dark(#ecedf0, #1a1a2e)',
+    controlsColor = 'light-dark(#333, #e0e0e0)',
+    controlsAccent = 'light-dark(#4a7eff, #4a9eff)',
+    children,
+    ...sceneProps
+  },
+  ref
+) {
   const [frame, setFrame] = useState(0);
   const [playing, setPlaying] = useState(autoPlay);
   const lastTimeRef = useRef<number | null>(null);
   const rafRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    getSvgElement: () => svgRef.current,
+    seekToFrame: (f: number) => {
+      setFrame(Math.max(0, Math.min(f, durationInFrames - 1)));
+    },
+    getTotalFrames: () => durationInFrames,
+    play: () => setPlaying(true),
+    pause: () => setPlaying(false),
+    isPlaying: () => playing,
+  }), [durationInFrames, playing]);
 
   const tick = useCallback(
     (time: number) => {
@@ -174,6 +205,7 @@ export function Player({
       data-testid="elucim-player"
     >
       <Scene
+        ref={svgRef}
         {...sceneProps}
         width={width}
         height={height}
@@ -193,7 +225,7 @@ export function Player({
       />}
     </div>
   );
-}
+});
 
 /**
  * Theme-aware controls bar using CSS custom properties.
