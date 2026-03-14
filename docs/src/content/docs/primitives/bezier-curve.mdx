@@ -1,0 +1,97 @@
+---
+title: BezierCurve
+description: Draw quadratic and cubic Bezier curves with animation support.
+---
+
+import LiveDemo from '@components/LiveDemo.tsx';
+import { BezierCurveDemo } from '@components/Demos.tsx';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+The `<BezierCurve>` primitive renders SVG Bezier curves — either **quadratic** (one control point) or **cubic** (two control points). It supports progressive `draw` animations with accurate length approximation, making it perfect for smooth paths, flow diagrams, and organic shapes.
+
+<LiveDemo client:visible height="300px">
+  <BezierCurveDemo client:visible />
+</LiveDemo>
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `x1` | `number` | — | Start point X |
+| `y1` | `number` | — | Start point Y |
+| `cx1` | `number` | — | First control point X |
+| `cy1` | `number` | — | First control point Y |
+| `cx2` | `number` | `undefined` | Second control point X (makes it cubic) |
+| `cy2` | `number` | `undefined` | Second control point Y (makes it cubic) |
+| `x2` | `number` | — | End point X |
+| `y2` | `number` | — | End point Y |
+| `stroke` | `string` | `'#fff'` | Stroke color |
+| `strokeWidth` | `number` | `2` | Width of the stroke |
+| `fill` | `string` | `'none'` | Fill color |
+| `strokeDasharray` | `string` | `undefined` | Dash pattern (e.g. `"6 3"`) |
+| `opacity` | `number` | `1` | Opacity from 0 to 1 |
+
+## Quadratic vs Cubic
+
+- **Quadratic**: Provide `x1, y1, cx1, cy1, x2, y2` — one control point, simpler curves
+- **Cubic**: Also provide `cx2, cy2` — two control points, S-curves and more complex shapes
+
+## Code Example
+
+<Tabs syncKey="code-style">
+  <TabItem label="React">
+    ```jsx
+    import { Player, Draw, BezierCurve } from '@elucim/core';
+
+    {/* Quadratic Bezier — one control point */}
+    <Player width={500} height={300} fps={30} durationInFrames={90}>
+      <Draw duration={40}>
+        <BezierCurve
+          x1={50} y1={250} cx1={250} cy1={30} x2={450} y2={250}
+          stroke="#6c5ce7" strokeWidth={3}
+        />
+      </Draw>
+    </Player>
+
+    {/* Cubic Bezier — two control points */}
+    <Player width={500} height={300} fps={30} durationInFrames={90}>
+      <Draw duration={40}>
+        <BezierCurve
+          x1={50} y1={150} cx1={150} cy1={20} cx2={350} cy2={280} x2={450} y2={150}
+          stroke="#ff6b6b" strokeWidth={3}
+        />
+      </Draw>
+    </Player>
+    ```
+  </TabItem>
+  <TabItem label="DSL (JSON)">
+    ```json
+    {
+      "width": 500, "height": 300, "fps": 30, "durationInFrames": 90,
+      "children": [
+        {
+          "type": "bezierCurve",
+          "x1": 50, "y1": 250,
+          "cx1": 250, "cy1": 30,
+          "x2": 450, "y2": 250,
+          "stroke": "#6c5ce7", "strokeWidth": 3,
+          "draw": 40
+        },
+        {
+          "type": "bezierCurve",
+          "x1": 50, "y1": 150,
+          "cx1": 150, "cy1": 20,
+          "cx2": 350, "cy2": 280,
+          "x2": 450, "y2": 150,
+          "stroke": "#ff6b6b", "strokeWidth": 3,
+          "draw": 40
+        }
+      ]
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+:::tip
+BezierCurve automatically approximates the curve length (via 64-segment subdivision) so that `draw` animations progress at a visually consistent speed along the entire curve.
+:::

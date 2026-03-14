@@ -62,6 +62,7 @@ function MyAnimation() {
 | `Line` | Line segment |
 | `Arrow` | Line with arrowhead |
 | `Polygon` | Arbitrary polygon from point arrays |
+| `BezierCurve` | Quadratic and cubic Bezier curves with draw animation support |
 | `Text` | SVG text element |
 | `Image` | Embed images (PNG, JPEG, SVG, WebP, GIF) with `borderRadius`, `clipShape`, and transform support |
 | `Group` | Composable container that applies shared transforms, animations, and z-index sorting to children |

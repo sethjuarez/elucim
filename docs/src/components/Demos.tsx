@@ -5,7 +5,7 @@
 import React from 'react';
 import {
   Player, Sequence, Scene,
-  Circle, Line, Arrow, Rect, Text, Polygon, Image, Group,
+  Circle, Line, Arrow, Rect, Text, Polygon, Image, Group, BezierCurve,
   Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
   FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel,
   Presentation, Slide,
@@ -159,6 +159,34 @@ export function GroupDemo() {
         <Circle cx={250} cy={175} r={50} stroke="#e17055" fill="none" strokeWidth={2} />
         <Text x={250} y={180} fill="currentColor" fontSize={16} textAnchor="middle">Grouped</Text>
       </Group>
+    </Player>
+  );
+}
+
+export function BezierCurveDemo() {
+  return (
+    <Player width={500} height={300} fps={30} durationInFrames={120} autoPlay loop>
+      <Draw duration={40}>
+        <BezierCurve
+          x1={50} y1={250} cx1={150} cy1={30} x2={450} y2={250}
+          stroke="#6c5ce7" strokeWidth={3}
+        />
+      </Draw>
+      <Sequence from={30} durationInFrames={90}>
+        <Draw duration={40}>
+          <BezierCurve
+            x1={50} y1={150} cx1={150} cy1={20} cx2={350} cy2={280} x2={450} y2={150}
+            stroke="#ff6b6b" strokeWidth={3}
+          />
+        </Draw>
+      </Sequence>
+      <Sequence from={60} durationInFrames={60}>
+        <FadeIn duration={15}>
+          <Text x={250} y={30} fill="currentColor" fontSize={14} textAnchor="middle">
+            Quadratic (purple) &amp; Cubic (red)
+          </Text>
+        </FadeIn>
+      </Sequence>
     </Player>
   );
 }

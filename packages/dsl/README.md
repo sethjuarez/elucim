@@ -125,6 +125,7 @@ Every document has this structure:
 | `arrow` | `x1`, `y1`, `x2`, `y2` | Line with arrowhead |
 | `rect` | `x`, `y`, `width`, `height` | Rectangle |
 | `polygon` | `points` (array of [x,y]) | Polygon/polyline |
+| `bezierCurve` | `x1`, `y1`, `cx1`, `cy1`, `x2`, `y2` | Quadratic/cubic Bezier curve |
 | `text` | `x`, `y`, `content` | Text element |
 | `image` | `src`, `x`, `y`, `width`, `height` | Embed external images (PNG, SVG, etc.) |
 | `barChart` | `bars` | Animated bar chart with labels and colors |
