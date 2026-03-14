@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.4.1](https://github.com/sethjuarez/elucim/compare/core-v0.4.0...core-v0.4.1) (2026-03-14)
+
+
+### Bug Fixes
+
+* externalize react-dom/server to fix React 19 compatibility ([29a4176](https://github.com/sethjuarez/elucim/commit/29a417620dc6c24588500d1b45caee5c9afb82ff))
+
 ## [0.4.0](https://github.com/sethjuarez/elucim/compare/core-v0.3.0...core-v0.4.0) (2026-03-14)
 
 
