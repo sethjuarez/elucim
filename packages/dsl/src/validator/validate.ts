@@ -54,7 +54,7 @@ export function validate(doc: unknown): ValidationResult {
 const VALID_ROOT_TYPES = ['scene', 'player', 'presentation'];
 const VALID_ELEMENT_TYPES = [
   'sequence', 'group',
-  'circle', 'line', 'arrow', 'rect', 'polygon', 'text', 'image',
+  'bezierCurve', 'circle', 'line', 'arrow', 'rect', 'polygon', 'text', 'image',
   'axes', 'functionPlot', 'vectorField', 'vector', 'matrix', 'graph', 'latex', 'barChart',
   'fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel',
   'player', 'scene',
@@ -171,6 +171,7 @@ function validateElementNode(node: Record<string, unknown>, path: string, errors
   }
 
   switch (type) {
+    case 'bezierCurve': validateBezierCurve(node, path, errors); break;
     case 'circle': validateCircle(node, path, errors); break;
     case 'line': validateLine(node, path, errors); break;
     case 'arrow': validateArrow(node, path, errors); break;
@@ -201,6 +202,19 @@ function validateElementNode(node: Record<string, unknown>, path: string, errors
 }
 
 // ─── Primitive validators ───────────────────────────────────────────────────
+
+function validateBezierCurve(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  requireNumber(node, 'x1', path, errors);
+  requireNumber(node, 'y1', path, errors);
+  requireNumber(node, 'cx1', path, errors);
+  requireNumber(node, 'cy1', path, errors);
+  requireNumber(node, 'x2', path, errors);
+  requireNumber(node, 'y2', path, errors);
+  // cx2 and cy2 are optional (quadratic vs cubic)
+  if (node.cx2 !== undefined) optionalNumber(node, 'cx2', path, errors);
+  if (node.cy2 !== undefined) optionalNumber(node, 'cy2', path, errors);
+  validateAnimationProps(node, path, errors);
+}
 
 function validateCircle(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
   requireNumber(node, 'cx', path, errors);

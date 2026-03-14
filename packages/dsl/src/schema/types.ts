@@ -88,6 +88,33 @@ export interface GroupNode {
 
 // ─── Primitive Nodes ────────────────────────────────────────────────────────
 
+export interface BezierCurveNode {
+  type: 'bezierCurve';
+  id?: string;
+  x1: number;
+  y1: number;
+  cx1: number;
+  cy1: number;
+  cx2?: number;
+  cy2?: number;
+  x2: number;
+  y2: number;
+  stroke?: string;
+  strokeWidth?: number;
+  fill?: string;
+  strokeDasharray?: string;
+  opacity?: number;
+  fadeIn?: number;
+  fadeOut?: number;
+  draw?: number;
+  easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
+}
+
 export interface CircleNode {
   type: 'circle';
   id?: string;
@@ -555,6 +582,7 @@ export type ElementNode =
   | SequenceNode
   | GroupNode
   // Primitives
+  | BezierCurveNode
   | CircleNode
   | LineNode
   | ArrowNode

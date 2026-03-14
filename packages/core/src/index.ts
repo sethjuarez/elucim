@@ -20,6 +20,7 @@ export { interpolate, type InterpolateOptions } from './hooks/interpolate';
 export { useElucimContext, type ElucimContextValue } from './context';
 
 // Primitives
+export { BezierCurve, type BezierCurveProps } from './primitives/BezierCurve';
 export { Circle, type CircleProps } from './primitives/Circle';
 export { Line, type LineProps } from './primitives/Line';
 export { Arrow, type ArrowProps } from './primitives/Arrow';
