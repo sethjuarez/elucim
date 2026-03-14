@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.4.0](https://github.com/sethjuarez/elucim/compare/core-v0.3.0...core-v0.4.0) (2026-03-14)
+
+
+### Features
+
+* add integration features — presets, theme tokens, poster mode, imperative ref, headless rendering ([97775ef](https://github.com/sethjuarez/elucim/commit/97775efc3bc26a5f3c45665f99bcb9282a9fc3f8))
+
 ## [0.3.0](https://github.com/sethjuarez/elucim/compare/core-v0.2.1...core-v0.3.0) (2026-03-14)
 
 
