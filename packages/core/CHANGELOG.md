@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.5.0](https://github.com/sethjuarez/elucim/compare/core-v0.4.1...core-v0.5.0) (2026-03-15)
+
+
+### Miscellaneous
+
+* **core:** Synchronize elucim versions
+
 ## [0.4.1](https://github.com/sethjuarez/elucim/compare/core-v0.4.0...core-v0.4.1) (2026-03-14)
 
 
