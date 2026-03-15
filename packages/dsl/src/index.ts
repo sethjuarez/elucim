@@ -74,6 +74,9 @@ export {
 // Easing resolver
 export { resolveEasing } from './renderer/resolveEasing';
 
+// Color token resolver
+export { resolveColor, SEMANTIC_TOKENS, TOKEN_NAMES } from './renderer/resolveColor';
+
 // Builders — fluent API for programmatic presentation authoring
 export {
   presentation,

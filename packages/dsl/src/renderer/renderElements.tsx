@@ -11,6 +11,7 @@ import {
 } from '@elucim/core';
 import type { TransitionType, PlayerRef } from '@elucim/core';
 import { resolveEasing } from './resolveEasing';
+import { resolveColor } from './resolveColor';
 import { compileExpression, compileVectorExpression } from '../math/evaluator';
 
 // ─── Preset dimensions ─────────────────────────────────────────────────────
@@ -74,7 +75,7 @@ export function renderScene(node: SceneNode, overrides?: RenderRootOverrides): R
       height={height}
       fps={node.fps}
       durationInFrames={node.durationInFrames}
-      background={node.background}
+      background={resolveColor(node.background)}
       {...(hasFrameOverride ? { frame: overrides!.frame, autoPlay: false } : {})}
     >
       {node.children.map((child, i) => renderElement(child, i))}
@@ -91,7 +92,7 @@ export function renderPlayer(node: PlayerNode, overrides?: RenderRootOverrides):
       height={height}
       fps={node.fps}
       durationInFrames={node.durationInFrames}
-      background={node.background}
+      background={resolveColor(node.background)}
       controls={node.controls}
       loop={node.loop}
       autoPlay={node.autoPlay}
@@ -107,7 +108,7 @@ export function renderPresentation(node: PresentationNode): React.ReactNode {
     <Presentation
       width={width}
       height={height}
-      background={node.background}
+      background={resolveColor(node.background)}
       transition={node.transition as TransitionType}
       transitionDuration={node.transitionDuration}
       showHUD={node.showHud}
@@ -120,7 +121,7 @@ export function renderPresentation(node: PresentationNode): React.ReactNode {
 
 export function renderSlide(node: SlideNode, key: number): React.ReactNode {
   return (
-    <Slide key={key} title={node.title} notes={node.notes} background={node.background}>
+    <Slide key={key} title={node.title} notes={node.notes} background={resolveColor(node.background)}>
       {node.children?.map((child, i) => renderElement(child, i))}
     </Slide>
   );
@@ -160,8 +161,8 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           cx1={node.cx1} cy1={node.cy1}
           cx2={node.cx2} cy2={node.cy2}
           x2={node.x2} y2={node.y2}
-          stroke={node.stroke} strokeWidth={node.strokeWidth}
-          fill={node.fill}
+          stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
+          fill={resolveColor(node.fill)}
           strokeDasharray={node.strokeDasharray}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
@@ -176,7 +177,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         <Circle
           key={key}
           cx={node.cx} cy={node.cy} r={node.r}
-          fill={node.fill} stroke={node.stroke} strokeWidth={node.strokeWidth}
+          fill={resolveColor(node.fill)} stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
@@ -190,7 +191,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         <Line
           key={key}
           x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2}
-          stroke={node.stroke} strokeWidth={node.strokeWidth}
+          stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
           strokeDasharray={node.strokeDasharray}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
@@ -205,7 +206,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         <Arrow
           key={key}
           x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2}
-          stroke={node.stroke} strokeWidth={node.strokeWidth} headSize={node.headSize}
+          stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth} headSize={node.headSize}
           strokeDasharray={node.strokeDasharray}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
@@ -220,7 +221,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         <Rect
           key={key}
           x={node.x} y={node.y} width={node.width} height={node.height}
-          fill={node.fill} stroke={node.stroke} strokeWidth={node.strokeWidth}
+          fill={resolveColor(node.fill)} stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
           rx={node.rx} ry={node.ry}
           strokeDasharray={node.strokeDasharray}
           opacity={node.opacity}
@@ -236,7 +237,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         <Polygon
           key={key}
           points={node.points}
-          fill={node.fill} stroke={node.stroke} strokeWidth={node.strokeWidth}
+          fill={resolveColor(node.fill)} stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
           closed={node.closed}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
@@ -251,7 +252,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         <Text
           key={key}
           x={node.x} y={node.y}
-          fill={node.fill} fontSize={node.fontSize}
+          fill={resolveColor(node.fill)} fontSize={node.fontSize}
           fontFamily={node.fontFamily} fontWeight={node.fontWeight}
           textAnchor={node.textAnchor} dominantBaseline={node.dominantBaseline}
           opacity={node.opacity}
@@ -292,8 +293,8 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           origin={node.origin} scale={node.scale}
           showGrid={node.showGrid} showTicks={node.showTicks} showLabels={node.showLabels}
           tickStep={node.tickStep}
-          axisColor={node.axisColor} gridColor={node.gridColor}
-          labelColor={node.labelColor} labelFontSize={node.labelFontSize}
+          axisColor={resolveColor(node.axisColor)} gridColor={resolveColor(node.gridColor)}
+          labelColor={resolveColor(node.labelColor)} labelFontSize={node.labelFontSize}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
@@ -309,7 +310,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           fn={(x: number) => fn({ x })}
           domain={node.domain} yClamp={node.yClamp}
           origin={node.origin} scale={node.scale}
-          color={node.color} strokeWidth={node.strokeWidth} samples={node.samples}
+          color={resolveColor(node.color)} strokeWidth={node.strokeWidth} samples={node.samples}
           draw={node.draw}
           easing={resolveEasing(node.easing)}
           opacity={node.opacity}
@@ -325,9 +326,9 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           key={key}
           from={node.from} to={node.to}
           origin={node.origin} scale={node.scale}
-          color={node.color} strokeWidth={node.strokeWidth} headSize={node.headSize}
+          color={resolveColor(node.color)} strokeWidth={node.strokeWidth} headSize={node.headSize}
           label={node.label} labelOffset={node.labelOffset}
-          labelColor={node.labelColor} labelFontSize={node.labelFontSize}
+          labelColor={resolveColor(node.labelColor)} labelFontSize={node.labelFontSize}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
@@ -343,7 +344,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           fn={(x: number, y: number) => vfn({ x, y })}
           domain={node.domain} range={node.range} step={node.step}
           origin={node.origin} scale={node.scale} arrowScale={node.arrowScale}
-          color={node.color} strokeWidth={node.strokeWidth} headSize={node.headSize}
+          color={resolveColor(node.color)} strokeWidth={node.strokeWidth} headSize={node.headSize}
           normalize={node.normalize} maxLength={node.maxLength}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
@@ -360,7 +361,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           values={node.values}
           x={node.x} y={node.y}
           cellSize={node.cellSize}
-          color={node.color} bracketColor={node.bracketColor}
+          color={resolveColor(node.color)} bracketColor={resolveColor(node.bracketColor)}
           fontSize={node.fontSize}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
@@ -374,9 +375,9 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         <Graph
           key={key}
           nodes={node.nodes} edges={node.edges}
-          nodeColor={node.nodeColor} nodeRadius={node.nodeRadius}
-          edgeColor={node.edgeColor} edgeWidth={node.edgeWidth}
-          labelColor={node.labelColor} labelFontSize={node.labelFontSize}
+          nodeColor={resolveColor(node.nodeColor)} nodeRadius={node.nodeRadius}
+          edgeColor={resolveColor(node.edgeColor)} edgeWidth={node.edgeWidth}
+          labelColor={resolveColor(node.labelColor)} labelFontSize={node.labelFontSize}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
@@ -390,7 +391,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           key={key}
           expression={node.expression}
           x={node.x} y={node.y}
-          color={node.color} fontSize={node.fontSize} align={node.align}
+          color={resolveColor(node.color)} fontSize={node.fontSize} align={node.align}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
@@ -404,7 +405,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           key={key}
           bars={node.bars}
           x={node.x} y={node.y} width={node.width} height={node.height}
-          barColor={node.barColor} labelColor={node.labelColor}
+          barColor={resolveColor(node.barColor)} labelColor={resolveColor(node.labelColor)}
           labelFontSize={node.labelFontSize}
           showValues={node.showValues} maxValue={node.maxValue}
           gap={node.gap} valueFormat={node.valueFormat}
@@ -461,7 +462,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           key={key}
           duration={node.duration}
           easing={resolveEasing(node.easing)}
-          fromColor={node.fromColor} toColor={node.toColor}
+          fromColor={resolveColor(node.fromColor)} toColor={resolveColor(node.toColor)}
           fromOpacity={node.fromOpacity} toOpacity={node.toOpacity}
           fromScale={node.fromScale} toScale={node.toScale}
         >
