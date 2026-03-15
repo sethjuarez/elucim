@@ -1,5 +1,19 @@
 # @elucim/dsl
 
+## [0.5.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.4.1...dsl-v0.5.0) (2026-03-15)
+
+
+### Features
+
+* semantic color tokens in DSL color fields ([3bfce9c](https://github.com/sethjuarez/elucim/commit/3bfce9cb9ea9eee60b6568ad1dfcd0f294e6969d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.5.0
+
 ## [0.4.1](https://github.com/sethjuarez/elucim/compare/dsl-v0.4.0...dsl-v0.4.1) (2026-03-14)
 
 
