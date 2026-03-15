@@ -172,8 +172,25 @@ The `theme` prop injects CSS custom properties onto the renderer wrapper. Each k
 
 Custom keys are supported — any key/value pair is converted to a CSS custom property. This is useful for embedding Elucim scenes in themed host pages.
 
+### Using `$token` syntax in DSL documents
+
+Any color field in a DSL document can reference theme tokens using `$token` syntax. This lets a single JSON document adapt to any host theme:
+
+```json
+{
+  "type": "circle",
+  "cx": 200, "cy": 200, "r": 80,
+  "stroke": "$accent",
+  "fill": "$surface"
+}
+```
+
+At render time, `"$accent"` resolves to `var(--elucim-accent, #4fc3f7)` — using the host's CSS value if set, or falling back to a default.
+
+See [Themes → Semantic Color Tokens](/dsl/themes/#semantic-color-tokens) for the full token reference.
+
 :::tip
-Theme tokens affect the wrapper CSS (borders, backgrounds, spacing). This is different from [Builder API](/dsl/builder-api/) themes, which affect content colors inside the scene.
+The `theme` prop on DslRenderer sets CSS custom properties on the host side. The `$token` syntax inside DSL documents consumes them. Together, they enable theme-adaptive visualizations without modifying the JSON.
 :::
 
 ## Presentations

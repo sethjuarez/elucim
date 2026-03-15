@@ -103,3 +103,91 @@ const doc = presentation('Solarized Talk', solarized)
 :::tip
 When creating a custom theme, start by copying `darkTheme` or `lightTheme` and adjusting the colors. The `palette` array is used by `boxRow`, `boxColumn`, `barChart`, and other helpers to cycle through colors automatically.
 :::
+
+## Semantic Color Tokens
+
+Any color field in a DSL document (`fill`, `stroke`, `color`, `background`, `axisColor`, `labelColor`, `barColor`, `nodeColor`, `edgeColor`, etc.) accepts **`$token` syntax** that resolves to CSS custom properties at render time.
+
+```json
+{
+  "type": "circle",
+  "cx": 200, "cy": 200, "r": 80,
+  "stroke": "$accent",
+  "fill": "$surface"
+}
+```
+
+At render time:
+- `"$accent"` → `var(--elucim-accent, #4fc3f7)`
+- `"$surface"` → `var(--elucim-surface, #1e293b)`
+- `"#ff0000"` → `"#ff0000"` (literal colors are unchanged)
+
+This lets a single DSL document adapt to any host theme without modification.
+
+### Standard Tokens
+
+| Token | CSS Variable | Default Fallback |
+|-------|-------------|-----------------|
+| `$foreground` | `--elucim-foreground` | `#e0e0e0` |
+| `$background` | `--elucim-background` | `#0f172a` |
+| `$accent` | `--elucim-accent` | `#4fc3f7` |
+| `$muted` | `--elucim-muted` | `#64748b` |
+| `$surface` | `--elucim-surface` | `#1e293b` |
+| `$border` | `--elucim-border` | `#334155` |
+| `$primary` | `--elucim-primary` | `#4fc3f7` |
+| `$secondary` | `--elucim-secondary` | `#a78bfa` |
+| `$tertiary` | `--elucim-tertiary` | `#f472b6` |
+| `$success` | `--elucim-success` | `#34d399` |
+| `$warning` | `--elucim-warning` | `#fbbf24` |
+| `$error` | `--elucim-error` | `#f87171` |
+
+Custom tokens also work: `"$brand"` → `var(--elucim-brand)` (no default fallback).
+
+### Providing Token Values
+
+Use the `theme` prop on [DslRenderer](/dsl/renderer/#theme-tokens) to set token values from the host:
+
+```tsx
+<DslRenderer
+  dsl={doc}
+  theme={{
+    foreground: '#1e293b',
+    background: '#f8fafc',
+    accent: '#2563eb',
+  }}
+/>
+```
+
+Or set them with plain CSS on any ancestor element:
+
+```css
+.my-container {
+  --elucim-foreground: #1e293b;
+  --elucim-background: #f8fafc;
+  --elucim-accent: #2563eb;
+}
+```
+
+### Example: Theme-Adaptive Scene
+
+```json
+{
+  "version": "1.0",
+  "root": {
+    "type": "player",
+    "preset": "card",
+    "durationInFrames": 60,
+    "background": "$background",
+    "children": [
+      { "type": "circle", "cx": 320, "cy": 180, "r": 80, "stroke": "$accent", "strokeWidth": 3 },
+      { "type": "text", "content": "Adaptive!", "x": 320, "y": 180, "fill": "$foreground", "fontSize": 24, "textAnchor": "middle" }
+    ]
+  }
+}
+```
+
+This scene renders with blue accents on a dark background by default, but automatically adapts if the host provides different `--elucim-*` values.
+
+:::note
+Semantic tokens (`$accent`) and Builder API themes (`darkTheme`, `lightTheme`) serve different purposes. Tokens are resolved at **render time** via CSS — the JSON stays the same. Builder themes are applied at **build time** — the JSON contains concrete color values.
+:::
