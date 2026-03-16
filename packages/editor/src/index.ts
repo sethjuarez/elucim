@@ -18,6 +18,9 @@ export { useDrag, type DragState } from './canvas/useDrag';
 export { Toolbar, type ToolbarProps } from './toolbar/Toolbar';
 export { ELEMENT_TEMPLATES, getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from './toolbar/templates';
 
+// Inspector
+export { Inspector, type InspectorProps } from './inspector/Inspector';
+
 // Utilities
 export { getElementBounds, mergeBounds, isPointInBounds, type BoundingBox } from './utils/bounds';
 export { computeSnap, type SnapGuide } from './utils/snap';

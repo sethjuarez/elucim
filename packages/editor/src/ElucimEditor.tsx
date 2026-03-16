@@ -3,6 +3,7 @@ import type { ElucimDocument } from '@elucim/dsl';
 import { EditorProvider } from './state/EditorProvider';
 import { ElucimCanvas } from './canvas/ElucimCanvas';
 import { Toolbar } from './toolbar/Toolbar';
+import { Inspector } from './inspector/Inspector';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
@@ -58,6 +59,9 @@ export function ElucimEditor({ initialDocument, className, style }: ElucimEditor
         >
           <ElucimCanvas />
         </div>
+
+        {/* Inspector — right sidebar */}
+        <Inspector />
       </div>
     </EditorProvider>
   );
