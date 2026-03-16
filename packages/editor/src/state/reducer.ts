@@ -139,7 +139,7 @@ function applyMove(element: ElementNode, dx: number, dy: number): ElementNode {
   return moved;
 }
 
-// ─── Resize helpers ────────────────────────────────────────────────────────
+// ─── Resize helpers (property-based) ────────────────────────────────────────
 
 function applyResize(element: ElementNode, handle: string, dx: number, dy: number): ElementNode {
   const resized = { ...element } as any;
@@ -148,52 +148,52 @@ function applyResize(element: ElementNode, handle: string, dx: number, dy: numbe
   const affectsTop = handle.includes('n');
   const affectsBottom = handle.includes('s');
 
-  switch (element.type) {
-    case 'rect':
-    case 'image':
-    case 'barChart': {
-      if (affectsLeft) {
-        resized.x = (resized.x ?? 0) + dx;
-        resized.width = Math.max(1, (resized.width ?? 0) - dx);
-      }
-      if (affectsRight) {
-        resized.width = Math.max(1, (resized.width ?? 0) + dx);
-      }
-      if (affectsTop) {
-        resized.y = (resized.y ?? 0) + dy;
-        resized.height = Math.max(1, (resized.height ?? 0) - dy);
-      }
-      if (affectsBottom) {
-        resized.height = Math.max(1, (resized.height ?? 0) + dy);
-      }
-      break;
-    }
-
-    case 'circle': {
-      // Resize circle by adjusting radius based on the dominant axis
-      const dr = Math.max(Math.abs(dx), Math.abs(dy));
-      const sign = (affectsRight || affectsBottom) ? 1 : -1;
-      resized.r = Math.max(1, (resized.r ?? 0) + sign * dr);
-      break;
-    }
-
-    case 'line':
-    case 'arrow': {
-      // Resize by moving the endpoint closest to the handle
-      if (affectsLeft || affectsTop) {
-        resized.x1 = (resized.x1 ?? 0) + dx;
-        resized.y1 = (resized.y1 ?? 0) + dy;
-      }
-      if (affectsRight || affectsBottom) {
-        resized.x2 = (resized.x2 ?? 0) + dx;
-        resized.y2 = (resized.y2 ?? 0) + dy;
-      }
-      break;
-    }
-
-    default:
-      // For other types, no-op for now
-      break;
+  // 1. Has width/height (rect, image, barChart)
+  if ('width' in resized && typeof resized.width === 'number' &&
+      'height' in resized && typeof resized.height === 'number') {
+    if (affectsLeft) { resized.x = (resized.x ?? 0) + dx; resized.width = Math.max(1, resized.width - dx); }
+    if (affectsRight) { resized.width = Math.max(1, resized.width + dx); }
+    if (affectsTop) { resized.y = (resized.y ?? 0) + dy; resized.height = Math.max(1, resized.height - dy); }
+    if (affectsBottom) { resized.height = Math.max(1, resized.height + dy); }
+  }
+  // 2. Has radius (circle)
+  else if ('r' in resized && typeof resized.r === 'number') {
+    const dr = Math.max(Math.abs(dx), Math.abs(dy));
+    const sign = (affectsRight || affectsBottom) ? 1 : -1;
+    resized.r = Math.max(1, resized.r + sign * dr);
+  }
+  // 3. Has endpoints (line, arrow, bezierCurve)
+  else if ('x1' in resized && typeof resized.x1 === 'number') {
+    if (affectsLeft || affectsTop) { resized.x1 += dx; resized.y1 += dy; }
+    if (affectsRight || affectsBottom) { resized.x2 += dx; resized.y2 += dy; }
+  }
+  // 4. Has points (polygon) — scale all points from centroid
+  else if ('points' in resized && Array.isArray(resized.points) && resized.points.length > 0) {
+    const pts = resized.points as [number, number][];
+    const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+    const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+    // Compute uniform scale factor from drag delta
+    const scaleFactor = 1 + (dx * (affectsRight ? 1 : affectsLeft ? -1 : 0)
+                            + dy * (affectsBottom ? 1 : affectsTop ? -1 : 0)) / 100;
+    resized.points = pts.map(([px, py]) => [
+      cx + (px - cx) * scaleFactor,
+      cy + (py - cy) * scaleFactor,
+    ]);
+  }
+  // 5. Has fontSize (text, latex) — resize via font size
+  else if ('fontSize' in resized && typeof resized.fontSize === 'number') {
+    const delta = (affectsRight || affectsBottom ? 1 : -1) * Math.max(Math.abs(dx), Math.abs(dy)) * 0.1;
+    resized.fontSize = Math.max(4, resized.fontSize + delta);
+  }
+  // 6. Has cellSize (matrix) — resize via cell size
+  else if ('cellSize' in resized && typeof resized.cellSize === 'number') {
+    const delta = (affectsRight || affectsBottom ? 1 : -1) * Math.max(Math.abs(dx), Math.abs(dy)) * 0.2;
+    resized.cellSize = Math.max(10, resized.cellSize + delta);
+  }
+  // 7. Has numeric scale (axes, functionPlot, etc.) — adjust scale
+  else if ('scale' in resized && typeof resized.scale === 'number') {
+    const delta = (affectsRight || affectsBottom ? 1 : -1) * Math.max(Math.abs(dx), Math.abs(dy)) * 0.2;
+    resized.scale = Math.max(5, resized.scale + delta);
   }
 
   return resized as ElementNode;

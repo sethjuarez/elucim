@@ -195,23 +195,38 @@ function TextField({ label, value, onChange }: {
   );
 }
 
-// ─── Position Fields ───────────────────────────────────────────────────────
+// ─── Position Fields (property-based) ──────────────────────────────────────
 
 function PositionFields({ element, onChange }: { element: ElementNode; onChange: (field: string, value: any) => void }) {
   const el = element as any;
   return (
     <>
-      {'x' in el && <NumberField label="X" value={el.x} onChange={v => onChange('x', v)} />}
-      {'y' in el && <NumberField label="Y" value={el.y} onChange={v => onChange('y', v)} />}
+      {/* xy position */}
+      {'x' in el && typeof el.x === 'number' && <NumberField label="X" value={el.x} onChange={v => onChange('x', v)} />}
+      {'y' in el && typeof el.y === 'number' && <NumberField label="Y" value={el.y} onChange={v => onChange('y', v)} />}
+      {/* center+radius */}
       {'cx' in el && <NumberField label="CX" value={el.cx} onChange={v => onChange('cx', v)} />}
       {'cy' in el && <NumberField label="CY" value={el.cy} onChange={v => onChange('cy', v)} />}
       {'r' in el && <NumberField label="R" value={el.r} onChange={v => onChange('r', v)} />}
+      {/* dimensions */}
       {'width' in el && typeof el.width === 'number' && <NumberField label="W" value={el.width} onChange={v => onChange('width', v)} />}
       {'height' in el && typeof el.height === 'number' && <NumberField label="H" value={el.height} onChange={v => onChange('height', v)} />}
+      {/* endpoints */}
       {'x1' in el && <NumberField label="X1" value={el.x1} onChange={v => onChange('x1', v)} />}
       {'y1' in el && <NumberField label="Y1" value={el.y1} onChange={v => onChange('y1', v)} />}
       {'x2' in el && <NumberField label="X2" value={el.x2} onChange={v => onChange('x2', v)} />}
       {'y2' in el && <NumberField label="Y2" value={el.y2} onChange={v => onChange('y2', v)} />}
+      {/* origin (axes, functionPlot, vector, vectorField) */}
+      {Array.isArray(el.origin) && (
+        <>
+          <NumberField label="Origin X" value={el.origin[0]} onChange={v => onChange('origin', [v, el.origin[1]])} />
+          <NumberField label="Origin Y" value={el.origin[1]} onChange={v => onChange('origin', [el.origin[0], v])} />
+        </>
+      )}
+      {/* math scale (distinct from CSS transform scale) */}
+      {'scale' in el && typeof el.scale === 'number' && (
+        <NumberField label="Scale" value={el.scale} onChange={v => onChange('scale', v)} />
+      )}
     </>
   );
 }
@@ -257,71 +272,180 @@ function TransformFields({ element, onChange }: { element: ElementNode; onChange
   );
 }
 
-// ─── Element-Specific Fields ───────────────────────────────────────────────
+// ─── Element-Specific Fields (property-based) ──────────────────────────────
 
 function ElementSpecificFields({ element, onChange }: { element: ElementNode; onChange: (field: string, value: any) => void }) {
   const el = element as any;
+  const sections: React.ReactNode[] = [];
 
-  switch (element.type) {
-    case 'text':
-      return (
-        <InspectorSection title="Content">
-          <TextField label="Text" value={el.content} onChange={v => onChange('content', v)} />
-          <TextField label="Font" value={el.fontFamily} onChange={v => onChange('fontFamily', v)} />
-        </InspectorSection>
-      );
-
-    case 'latex':
-      return (
-        <InspectorSection title="Expression">
-          <TextField label="LaTeX" value={el.expression} onChange={v => onChange('expression', v)} />
-        </InspectorSection>
-      );
-
-    case 'functionPlot':
-      return (
-        <InspectorSection title="Function">
-          <TextField label="f(x)" value={el.fn} onChange={v => onChange('fn', v)} />
-          <NumberField label="Samples" value={el.samples} onChange={v => onChange('samples', v)} />
-        </InspectorSection>
-      );
-
-    case 'image':
-      return (
-        <InspectorSection title="Image">
-          <TextField label="Source" value={el.src} onChange={v => onChange('src', v)} />
-        </InspectorSection>
-      );
-
-    case 'arrow':
-      return (
-        <InspectorSection title="Arrow">
-          <NumberField label="Head Size" value={el.headSize} onChange={v => onChange('headSize', v)} />
-        </InspectorSection>
-      );
-
-    case 'matrix':
-      return (
-        <InspectorSection title="Matrix">
-          <TextField
-            label="Values"
-            value={el.values ? el.values.map((r: any[]) => r.join(', ')).join(' ; ') : ''}
-            onChange={v => {
-              const rows = v.split(';').map((r: string) =>
-                r.trim().split(',').map((c: string) => {
-                  const n = Number(c.trim());
-                  return isNaN(n) ? c.trim() : n;
-                })
-              );
-              onChange('values', rows);
-            }}
-          />
-          <NumberField label="Cell Size" value={el.cellSize ?? 40} onChange={v => onChange('cellSize', v)} />
-          <NumberField label="Font Size" value={el.fontSize ?? 16} onChange={v => onChange('fontSize', v)} />
-        </InspectorSection>
-      );
-
-    default:
-      return null;
+  // Text content
+  if ('content' in el) {
+    sections.push(
+      <InspectorSection key="content" title="Content">
+        <TextField label="Text" value={el.content} onChange={v => onChange('content', v)} />
+        {'fontFamily' in el && <TextField label="Font" value={el.fontFamily} onChange={v => onChange('fontFamily', v)} />}
+        {'textAnchor' in el && <TextField label="Anchor" value={el.textAnchor} onChange={v => onChange('textAnchor', v)} />}
+      </InspectorSection>
+    );
   }
+
+  // LaTeX expression
+  if ('expression' in el) {
+    sections.push(
+      <InspectorSection key="expression" title="Expression">
+        <TextField label="LaTeX" value={el.expression} onChange={v => onChange('expression', v)} />
+      </InspectorSection>
+    );
+  }
+
+  // Function expression (functionPlot, vectorField)
+  if ('fn' in el) {
+    sections.push(
+      <InspectorSection key="function" title="Function">
+        <TextField label="f(x)" value={el.fn} onChange={v => onChange('fn', v)} />
+        {'samples' in el && <NumberField label="Samples" value={el.samples} onChange={v => onChange('samples', v)} />}
+      </InspectorSection>
+    );
+  }
+
+  // Image source
+  if ('src' in el) {
+    sections.push(
+      <InspectorSection key="image" title="Image">
+        <TextField label="Source" value={el.src} onChange={v => onChange('src', v)} />
+      </InspectorSection>
+    );
+  }
+
+  // Arrow head
+  if ('headSize' in el) {
+    sections.push(
+      <InspectorSection key="arrow" title="Arrow">
+        <NumberField label="Head Size" value={el.headSize} onChange={v => onChange('headSize', v)} />
+      </InspectorSection>
+    );
+  }
+
+  // Matrix values
+  if (Array.isArray(el.values)) {
+    sections.push(
+      <InspectorSection key="matrix" title="Matrix">
+        <TextField
+          label="Values"
+          value={el.values ? el.values.map((r: any[]) => r.join(', ')).join(' ; ') : ''}
+          onChange={v => {
+            const rows = v.split(';').map((r: string) =>
+              r.trim().split(',').map((c: string) => {
+                const n = Number(c.trim());
+                return isNaN(n) ? c.trim() : n;
+              })
+            );
+            onChange('values', rows);
+          }}
+        />
+        {'cellSize' in el && <NumberField label="Cell Size" value={el.cellSize ?? 40} onChange={v => onChange('cellSize', v)} />}
+      </InspectorSection>
+    );
+  }
+
+  // Axes-specific
+  if ('showGrid' in el || 'showTicks' in el || 'showLabels' in el || 'tickStep' in el) {
+    sections.push(
+      <InspectorSection key="axes" title="Axes">
+        {'tickStep' in el && <NumberField label="Tick Step" value={el.tickStep} onChange={v => onChange('tickStep', v)} step={0.5} />}
+        {'axisColor' in el && <ColorField label="Axis Color" value={el.axisColor} onChange={v => onChange('axisColor', v)} />}
+        {'gridColor' in el && <ColorField label="Grid Color" value={el.gridColor} onChange={v => onChange('gridColor', v)} />}
+      </InspectorSection>
+    );
+  }
+
+  // Domain/Range (axes, functionPlot, vectorField)
+  if (Array.isArray(el.domain) || Array.isArray(el.range)) {
+    sections.push(
+      <InspectorSection key="domain" title="Domain / Range">
+        {Array.isArray(el.domain) && (
+          <>
+            <NumberField label="Domain Min" value={el.domain[0]} onChange={v => onChange('domain', [v, el.domain[1]])} />
+            <NumberField label="Domain Max" value={el.domain[1]} onChange={v => onChange('domain', [el.domain[0], v])} />
+          </>
+        )}
+        {Array.isArray(el.range) && (
+          <>
+            <NumberField label="Range Min" value={el.range[0]} onChange={v => onChange('range', [v, el.range[1]])} />
+            <NumberField label="Range Max" value={el.range[1]} onChange={v => onChange('range', [el.range[0], v])} />
+          </>
+        )}
+      </InspectorSection>
+    );
+  }
+
+  // Graph nodes/edges
+  if (Array.isArray(el.nodes)) {
+    sections.push(
+      <InspectorSection key="graph" title="Graph">
+        <NumberField label="Nodes" value={el.nodes.length} onChange={() => {}} />
+        {Array.isArray(el.edges) && <NumberField label="Edges" value={el.edges.length} onChange={() => {}} />}
+        {'nodeRadius' in el && <NumberField label="Node Radius" value={el.nodeRadius} onChange={v => onChange('nodeRadius', v)} />}
+        {'nodeColor' in el && <ColorField label="Node Color" value={el.nodeColor} onChange={v => onChange('nodeColor', v)} />}
+        {'edgeColor' in el && <ColorField label="Edge Color" value={el.edgeColor} onChange={v => onChange('edgeColor', v)} />}
+      </InspectorSection>
+    );
+  }
+
+  // BarChart bars
+  if (Array.isArray(el.bars)) {
+    sections.push(
+      <InspectorSection key="barchart" title="Bar Chart">
+        <NumberField label="Bars" value={el.bars.length} onChange={() => {}} />
+        {'barColor' in el && <ColorField label="Bar Color" value={el.barColor} onChange={v => onChange('barColor', v)} />}
+        {'gap' in el && <NumberField label="Gap" value={el.gap} onChange={v => onChange('gap', v)} step={0.1} />}
+        {'maxValue' in el && <NumberField label="Max Value" value={el.maxValue} onChange={v => onChange('maxValue', v)} />}
+      </InspectorSection>
+    );
+  }
+
+  // Vector props
+  if (Array.isArray(el.to) && !Array.isArray(el.nodes)) {
+    sections.push(
+      <InspectorSection key="vector" title="Vector">
+        <NumberField label="To X" value={el.to[0]} onChange={v => onChange('to', [v, el.to[1]])} />
+        <NumberField label="To Y" value={el.to[1]} onChange={v => onChange('to', [el.to[0], v])} />
+        {Array.isArray(el.from) && (
+          <>
+            <NumberField label="From X" value={el.from[0]} onChange={v => onChange('from', [v, el.from[1]])} />
+            <NumberField label="From Y" value={el.from[1]} onChange={v => onChange('from', [el.from[0], v])} />
+          </>
+        )}
+        {'label' in el && <TextField label="Label" value={el.label} onChange={v => onChange('label', v)} />}
+      </InspectorSection>
+    );
+  }
+
+  // BezierCurve control points
+  if ('cx1' in el && typeof el.cx1 === 'number') {
+    sections.push(
+      <InspectorSection key="control" title="Control Points">
+        <NumberField label="CX1" value={el.cx1} onChange={v => onChange('cx1', v)} />
+        <NumberField label="CY1" value={el.cy1} onChange={v => onChange('cy1', v)} />
+        {'cx2' in el && typeof el.cx2 === 'number' && (
+          <>
+            <NumberField label="CX2" value={el.cx2} onChange={v => onChange('cx2', v)} />
+            <NumberField label="CY2" value={el.cy2} onChange={v => onChange('cy2', v)} />
+          </>
+        )}
+      </InspectorSection>
+    );
+  }
+
+  // Polygon points (read-only count; editing individual points is complex)
+  if (Array.isArray(el.points) && !Array.isArray(el.nodes)) {
+    sections.push(
+      <InspectorSection key="polygon" title="Polygon">
+        <NumberField label="Vertices" value={el.points.length} onChange={() => {}} />
+        {'closed' in el && <TextField label="Closed" value={String(el.closed ?? true)} onChange={v => onChange('closed', v === 'true')} />}
+      </InspectorSection>
+    );
+  }
+
+  return sections.length > 0 ? <>{sections}</> : null;
 }

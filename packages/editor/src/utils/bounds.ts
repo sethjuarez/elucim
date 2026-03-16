@@ -11,193 +11,154 @@ export interface BoundingBox {
   rotationCenter?: [number, number];
 }
 
-/**
- * Extract rotation info from an element. Returns the element's rotation
- * and its rotation center — mirroring the defaultOrigin logic in core's
- * withTransform calls for each primitive type.
- */
-function getRotationInfo(
-  element: ElementNode,
-  aabb: { x: number; y: number; width: number; height: number },
-): Pick<BoundingBox, 'rotation' | 'rotationCenter'> {
-  const rotation = ('rotation' in element ? (element.rotation as number) : undefined);
-  if (!rotation) return {};
+// ─── Property helpers ──────────────────────────────────────────────────────
 
-  // Explicit rotationOrigin always wins (matches core's withTransform)
-  const explicitOrigin = ('rotationOrigin' in element ? element.rotationOrigin : undefined) as
-    | [number, number]
-    | undefined;
-  if (explicitOrigin) {
-    return { rotation, rotationCenter: explicitOrigin };
-  }
+type AnyEl = Record<string, any>;
 
-  // Default origin per type — matches core primitive defaults
-  const cx = aabb.x + aabb.width / 2;
-  const cy = aabb.y + aabb.height / 2;
-
-  switch (element.type) {
-    case 'circle':
-      return { rotation, rotationCenter: [element.cx, element.cy] };
-    case 'text':
-    case 'latex':
-      return { rotation, rotationCenter: [element.x, element.y] };
-    case 'line':
-    case 'arrow':
-      return { rotation, rotationCenter: [(element.x1 + element.x2) / 2, (element.y1 + element.y2) / 2] };
-    case 'matrix':
-      return { rotation, rotationCenter: [(element as any).x ?? 0, (element as any).y ?? 0] };
-    case 'axes':
-    case 'functionPlot':
-    case 'vector':
-    case 'vectorField':
-      if ('origin' in element && element.origin) {
-        return { rotation, rotationCenter: element.origin as [number, number] };
-      }
-      return { rotation, rotationCenter: [cx, cy] };
-    case 'graph':
-      if ('origin' in element && element.origin) {
-        return { rotation, rotationCenter: element.origin as [number, number] };
-      }
-      return { rotation, rotationCenter: [cx, cy] };
-    default:
-      return { rotation, rotationCenter: [cx, cy] };
-  }
+function hasNum(el: AnyEl, ...keys: string[]): boolean {
+  return keys.every(k => k in el && typeof el[k] === 'number');
 }
 
+function boundsFromPoints(pts: [number, number][]): { x: number; y: number; width: number; height: number } | null {
+  if (pts.length === 0) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const [px, py] of pts) {
+    if (typeof px !== 'number' || typeof py !== 'number') continue;
+    minX = Math.min(minX, px);
+    minY = Math.min(minY, py);
+    maxX = Math.max(maxX, px);
+    maxY = Math.max(maxY, py);
+  }
+  if (!isFinite(minX)) return null;
+  return { x: minX, y: minY, width: maxX - minX || 1, height: maxY - minY || 1 };
+}
+
+function estimateTextBounds(el: AnyEl): { x: number; y: number; width: number; height: number } {
+  const fontSize = (el.fontSize as number) ?? 16;
+  const content = (el.content ?? el.expression ?? '') as string;
+  const textLen = typeof content === 'string' ? content.length : 5;
+  const estWidth = Math.max(textLen * fontSize * 0.6, fontSize);
+  const estHeight = fontSize * 1.4;
+
+  const anchor = (el.textAnchor as string) ?? 'start';
+  let bx = el.x as number;
+  if (anchor === 'middle') bx -= estWidth / 2;
+  else if (anchor === 'end') bx -= estWidth;
+
+  const baseline = (el.dominantBaseline as string) ?? 'auto';
+  let by = (el.y as number) - fontSize;
+  if (baseline === 'hanging') by = el.y as number;
+  else if (baseline === 'middle' || baseline === 'central') by = (el.y as number) - estHeight / 2;
+
+  return { x: bx, y: by, width: estWidth, height: estHeight };
+}
+
+function originBasedBounds(el: AnyEl): { x: number; y: number; width: number; height: number } {
+  const [ox, oy] = el.origin as [number, number];
+  const s = (typeof el.scale === 'number' ? el.scale : 40);
+  const domain = Array.isArray(el.domain) ? el.domain as [number, number] : [-5, 5];
+  const range = Array.isArray(el.range) ? el.range as [number, number] : domain;
+  const w = (domain[1] - domain[0]) * s;
+  const h = (range[1] - range[0]) * s;
+  return { x: ox - w / 2, y: oy - h / 2, width: w, height: h };
+}
+
+function matrixBounds(el: AnyEl): { x: number; y: number; width: number; height: number } {
+  const mx = (el.x as number) ?? 0;
+  const my = (el.y as number) ?? 0;
+  const cellSize = (el.cellSize as number) ?? 40;
+  const values = el.values as any[][];
+  const rows = values?.length ?? 2;
+  const cols = values?.[0]?.length ?? 2;
+  return { x: mx, y: my, width: cols * cellSize + 20, height: rows * cellSize + 10 };
+}
+
+// ─── Rotation center (property-based) ──────────────────────────────────────
+
+function getRotationInfo(
+  el: AnyEl,
+  aabb: { x: number; y: number; width: number; height: number },
+): Pick<BoundingBox, 'rotation' | 'rotationCenter'> {
+  const rotation = el.rotation as number | undefined;
+  if (!rotation) return {};
+
+  if (Array.isArray(el.rotationOrigin)) {
+    return { rotation, rotationCenter: el.rotationOrigin as [number, number] };
+  }
+
+  // Derive center from positioning properties
+  if (hasNum(el, 'cx', 'cy')) return { rotation, rotationCenter: [el.cx, el.cy] };
+  if (Array.isArray(el.origin)) return { rotation, rotationCenter: el.origin as [number, number] };
+  if (hasNum(el, 'x1', 'y1', 'x2', 'y2')) {
+    return { rotation, rotationCenter: [(el.x1 + el.x2) / 2, (el.y1 + el.y2) / 2] };
+  }
+  if (hasNum(el, 'x', 'y') && ('content' in el || 'expression' in el)) {
+    return { rotation, rotationCenter: [el.x, el.y] };
+  }
+  return { rotation, rotationCenter: [aabb.x + aabb.width / 2, aabb.y + aabb.height / 2] };
+}
+
+// ─── Main bounds computation (property-based) ──────────────────────────────
+
 /**
- * Compute the bounding box for an element based on its type and properties.
- * Includes rotation info so overlays and hit-tests can rotate with the element.
- * Returns null for elements that don't have easily computable bounds.
+ * Property-based bounds detection. Inspects which positioning properties
+ * exist rather than switching on element.type — works uniformly for all
+ * current and future element types.
  */
 export function getElementBounds(element: ElementNode): BoundingBox | null {
+  const el = element as AnyEl;
   let aabb: { x: number; y: number; width: number; height: number } | null = null;
 
-  switch (element.type) {
-    case 'rect':
-    case 'image':
-      aabb = { x: element.x, y: element.y, width: element.width, height: element.height };
-      break;
-
-    case 'circle':
-      aabb = {
-        x: element.cx - element.r,
-        y: element.cy - element.r,
-        width: element.r * 2,
-        height: element.r * 2,
-      };
-      break;
-
-    case 'line':
-    case 'arrow': {
-      const minX = Math.min(element.x1, element.x2);
-      const minY = Math.min(element.y1, element.y2);
-      const maxX = Math.max(element.x1, element.x2);
-      const maxY = Math.max(element.y1, element.y2);
-      aabb = { x: minX, y: minY, width: maxX - minX || 1, height: maxY - minY || 1 };
-      break;
-    }
-
-    case 'text':
-    case 'latex': {
-      const fontSize = ('fontSize' in element ? element.fontSize : 16) ?? 16;
-      const content = ('content' in element ? element.content : '') ?? '';
-      const textLen = typeof content === 'string' ? content.length : 5;
-      const estWidth = textLen * fontSize * 0.6;
-      const estHeight = fontSize * 1.4;
-
-      const anchor = ('textAnchor' in element ? element.textAnchor : 'start') ?? 'start';
-      let bx = element.x;
-      if (anchor === 'middle') bx = element.x - estWidth / 2;
-      else if (anchor === 'end') bx = element.x - estWidth;
-
-      const baseline = ('dominantBaseline' in element ? element.dominantBaseline : 'auto') ?? 'auto';
-      let by = element.y - fontSize;
-      if (baseline === 'hanging') by = element.y;
-      else if (baseline === 'middle' || baseline === 'central') by = element.y - estHeight / 2;
-
-      aabb = { x: bx, y: by, width: estWidth, height: estHeight };
-      break;
-    }
-
-    case 'polygon': {
-      if (!element.points || element.points.length === 0) return null;
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      for (const [px, py] of element.points) {
-        minX = Math.min(minX, px);
-        minY = Math.min(minY, py);
-        maxX = Math.max(maxX, px);
-        maxY = Math.max(maxY, py);
-      }
-      aabb = { x: minX, y: minY, width: maxX - minX || 1, height: maxY - minY || 1 };
-      break;
-    }
-
-    case 'bezierCurve': {
-      const pts = [
-        [element.x1, element.y1],
-        [element.cx1, element.cy1],
-        [element.x2, element.y2],
-      ];
-      if (element.cx2 != null && element.cy2 != null) {
-        pts.push([element.cx2, element.cy2]);
-      }
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      for (const [px, py] of pts) {
-        minX = Math.min(minX, px);
-        minY = Math.min(minY, py);
-        maxX = Math.max(maxX, px);
-        maxY = Math.max(maxY, py);
-      }
-      aabb = { x: minX, y: minY, width: maxX - minX || 1, height: maxY - minY || 1 };
-      break;
-    }
-
-    case 'barChart':
-      aabb = { x: element.x, y: element.y, width: element.width, height: element.height };
-      break;
-
-    case 'axes':
-    case 'functionPlot':
-    case 'vector':
-    case 'vectorField':
-    case 'matrix':
-      if ('x' in element || 'y' in element) {
-        const mx = (element as any).x ?? 0;
-        const my = (element as any).y ?? 0;
-        const cellSize = (element as any).cellSize ?? 40;
-        const values = (element as any).values as any[][] | undefined;
-        const rows = values?.length ?? 2;
-        const cols = values?.[0]?.length ?? 2;
-        aabb = { x: mx, y: my, width: cols * cellSize + 20, height: rows * cellSize + 10 };
-      } else if ('origin' in element && element.origin) {
-        const [ox, oy] = element.origin;
-        const s = ('scale' in element ? (element.scale as number) : 40) ?? 40;
-        aabb = { x: ox - s * 2, y: oy - s * 2, width: s * 4, height: s * 4 };
-      }
-      break;
-
-    case 'graph':
-      if ('origin' in element && element.origin) {
-        const origin = element.origin as [number, number];
-        const [ox, oy] = origin;
-        const s = ('scale' in element ? (element.scale as number) : 40) ?? 40;
-        const d = ('domain' in element && element.domain) ? element.domain as [number, number] : [-5, 5];
-        const width = (d[1] - d[0]) * s;
-        const height = width;
-        aabb = { x: ox - width / 2, y: oy - height / 2, width, height };
-      }
-      break;
-
-    default:
-      return null;
+  // 1. Explicit x/y/width/height (rect, image, barChart)
+  if (hasNum(el, 'x', 'y', 'width', 'height')) {
+    aabb = { x: el.x, y: el.y, width: el.width, height: el.height };
+  }
+  // 2. Center + radius (circle)
+  else if (hasNum(el, 'cx', 'cy', 'r')) {
+    aabb = { x: el.cx - el.r, y: el.cy - el.r, width: el.r * 2, height: el.r * 2 };
+  }
+  // 3. Endpoints (line, arrow, bezierCurve — includes control points)
+  else if (hasNum(el, 'x1', 'y1', 'x2', 'y2')) {
+    const pts: [number, number][] = [[el.x1, el.y1], [el.x2, el.y2]];
+    if (hasNum(el, 'cx1', 'cy1')) pts.push([el.cx1, el.cy1]);
+    if (hasNum(el, 'cx2', 'cy2')) pts.push([el.cx2, el.cy2]);
+    aabb = boundsFromPoints(pts);
+  }
+  // 4. Points array (polygon)
+  else if (Array.isArray(el.points) && el.points.length > 0) {
+    aabb = boundsFromPoints(el.points);
+  }
+  // 5. Text/LaTeX at x,y (estimate from content + fontSize)
+  else if (hasNum(el, 'x', 'y') && ('content' in el || 'expression' in el)) {
+    aabb = estimateTextBounds(el);
+  }
+  // 6. Graph nodes → derive bounds from vertex positions
+  else if (Array.isArray(el.nodes) && el.nodes.length > 0) {
+    const pts = (el.nodes as any[])
+      .filter((n: any) => typeof n.x === 'number' && typeof n.y === 'number')
+      .map((n: any) => [n.x, n.y] as [number, number]);
+    const r = (el.nodeRadius as number) ?? 8;
+    aabb = boundsFromPoints(pts);
+    if (aabb) { aabb.x -= r; aabb.y -= r; aabb.width += r * 2; aabb.height += r * 2; }
+  }
+  // 7. Matrix (values array + optional x/y/cellSize)
+  else if (Array.isArray(el.values)) {
+    aabb = matrixBounds(el);
+  }
+  // 8. Origin-based math elements (axes, functionPlot, vector, vectorField)
+  else if (Array.isArray(el.origin)) {
+    aabb = originBasedBounds(el);
+  }
+  // 9. Positioned with x/y only (fallback)
+  else if (hasNum(el, 'x', 'y')) {
+    aabb = { x: el.x, y: el.y, width: 40, height: 40 };
   }
 
   if (!aabb) return null;
-
-  // Attach rotation info so overlays/hit-tests rotate with the element
-  const rot = getRotationInfo(element, aabb);
-  return { ...aabb, ...rot };
+  return { ...aabb, ...getRotationInfo(el, aabb) };
 }
+
+// ─── Utilities ─────────────────────────────────────────────────────────────
 
 /** Merge multiple bounding boxes into one containing all */
 export function mergeBounds(boxes: BoundingBox[]): BoundingBox | null {
@@ -222,7 +183,6 @@ export function isPointInBounds(px: number, py: number, bounds: BoundingBox, pad
   let testY = py;
 
   if (bounds.rotation && bounds.rotationCenter) {
-    // Un-rotate the point around the rotation center
     const [cx, cy] = bounds.rotationCenter;
     const rad = (-bounds.rotation * Math.PI) / 180;
     const cos = Math.cos(rad);
