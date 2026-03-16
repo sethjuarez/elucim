@@ -8,10 +8,10 @@ import { SelectionOverlay } from './SelectionOverlay';
 import { useDrag } from './useDrag';
 import { useKeyboardShortcuts } from './useKeyboard';
 import { useViewport, screenToScene, fitToView } from './useViewport';
+import { useMeasuredBounds } from './useMeasuredBounds';
 import { DotGrid } from './DotGrid';
 import { Minimap } from './Minimap';
 import { ZoomControls } from './ZoomControls';
-import { getElementBounds } from '../utils/bounds';
 import { exportToJson, importFromJson } from '../utils/io';
 
 export interface ElucimCanvasProps {
@@ -28,6 +28,7 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
   const root = document.root;
   const overlaySvgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const sceneSvgRef = useRef<SVGSVGElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
 
   // Resolve scene dimensions
@@ -118,21 +119,22 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
     dispatch({ type: 'DESELECT_ALL' });
   }, [dispatch, isPanning]);
 
+  // DOM-measured bounds — pixel-perfect for every element type
+  const measuredBounds = useMeasuredBounds(sceneSvgRef, elementIds, children);
+
   // Collect selected element bounds for the overlay
   const selectedBounds = selectedIds
     .map(id => {
-      const idx = elementIds.indexOf(id);
-      if (idx < 0) return null;
-      const bounds = getElementBounds(children[idx]);
+      const bounds = measuredBounds.get(id);
       return bounds ? { id, bounds } : null;
     })
     .filter((b): b is NonNullable<typeof b> => b !== null);
 
   // Build hit-test targets for all elements
-  const hitTargets = children
-    .map((el, i) => {
-      const bounds = getElementBounds(el);
-      return bounds ? { id: elementIds[i], bounds } : null;
+  const hitTargets = elementIds
+    .map(id => {
+      const bounds = measuredBounds.get(id);
+      return bounds ? { id, bounds } : null;
     })
     .filter((t): t is NonNullable<typeof t> => t !== null);
 
@@ -171,6 +173,7 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
       >
         {/* Scene layer */}
         <Scene
+          ref={sceneSvgRef}
           width={width}
           height={height}
           fps={fps}
@@ -179,9 +182,9 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
           frame={currentFrame}
         >
           {children.map((child, i) => (
-            <React.Fragment key={elementIds[i]}>
+            <g key={elementIds[i]} data-measure-id={elementIds[i]}>
               {renderElement(child, i)}
-            </React.Fragment>
+            </g>
           ))}
         </Scene>
 

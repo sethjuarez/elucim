@@ -14,6 +14,7 @@ export { ElucimCanvas, type ElucimCanvasProps } from './canvas/ElucimCanvas';
 export { SelectionOverlay, type SelectionOverlayProps } from './canvas/SelectionOverlay';
 export { useDrag, type DragState } from './canvas/useDrag';
 export { useViewport, fitToView, clampZoom, screenToScene } from './canvas/useViewport';
+export { useMeasuredBounds } from './canvas/useMeasuredBounds';
 export { DotGrid } from './canvas/DotGrid';
 export { Minimap } from './canvas/Minimap';
 export { ZoomControls } from './canvas/ZoomControls';
