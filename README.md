@@ -16,7 +16,8 @@ A JavaScript/TypeScript library for creating animated concept explanations — 3
 | **Phase 6: Presentation** | ✅ Complete | Slide mode, transitions, HUD, keyboard nav, presenter notes |
 | **Phase 7: DSL** | ✅ Complete | JSON DSL for AI agents, safe math evaluator, validator, DslRenderer |
 | **Phase 8: Composability** | ✅ Complete | Universal SpatialProps (rotation, scale, translate), z-index stacking, Group container |
-| **Testing** | ✅ Complete | 110 Playwright visual tests + 279 Vitest unit tests |
+| **Phase 9: Visual Editor** | ✅ Complete | Canvas editor with toolbar, inspector, timeline, theming, marquee selection |
+| **Testing** | ✅ Complete | 34 Playwright e2e tests + 429 Vitest unit tests |
 
 ## Quick Start
 
@@ -27,11 +28,21 @@ pnpm --filter @elucim/explorer dev    # Interactive explorer → http://localhos
 pnpm --filter @elucim/docs dev        # Documentation site → http://localhost:3300
 ```
 
+## Packages
+
+| Package | Description | npm |
+|---------|-------------|-----|
+| **[@elucim/core](./packages/core)** | React components, hooks, primitives, animations, export | [![npm](https://img.shields.io/npm/v/@elucim/core)](https://www.npmjs.com/package/@elucim/core) |
+| **[@elucim/dsl](./packages/dsl)** | JSON DSL for AI agents — describe animations as data | [![npm](https://img.shields.io/npm/v/@elucim/dsl)](https://www.npmjs.com/package/@elucim/dsl) |
+| **[@elucim/editor](./packages/editor)** | Visual canvas editor — Figma-like design tool | [![npm](https://img.shields.io/npm/v/@elucim/editor)](https://www.npmjs.com/package/@elucim/editor) |
+
 ## Monorepo Structure
 
 ```
 packages/
   core/       — Library: components, hooks, primitives, animations, export
+  dsl/        — JSON DSL: schema, validator, renderer, math evaluator, builder API
+  editor/     — Visual editor: canvas, toolbar, inspector, timeline, theming
   demo/       — Demo playground with 15+ interactive scenes
   explorer/   — Storybook-style primitive browser with live controls
   docs/       — Starlight (Astro) documentation site
@@ -41,10 +52,15 @@ packages/
 ## Running Tests
 
 ```bash
-# Unit tests (100 tests)
-pnpm --filter @elucim/core test
+# Unit tests (429 tests across core, dsl, editor)
+pnpm test
 
-# Visual regression tests (90 tests — requires demo running on :3100)
+# Individual packages
+pnpm --filter @elucim/core test
+pnpm --filter @elucim/dsl test
+pnpm --filter @elucim/editor test
+
+# E2e tests (requires demo running on :3100)
 pnpm --filter @elucim/demo dev &
 cd packages/e2e && npx playwright test
 ```

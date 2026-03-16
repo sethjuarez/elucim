@@ -193,6 +193,11 @@ Player and Scene automatically adapt to light and dark themes using CSS `light-d
 
 Full docs with live interactive examples: [elucim.com](https://elucim.com)
 
+## Related
+
+- **[@elucim/dsl](https://www.npmjs.com/package/@elucim/dsl)** — JSON DSL for declaring animations without React
+- **[@elucim/editor](https://www.npmjs.com/package/@elucim/editor)** — Visual canvas editor for Elucim animations
+
 ## License
 
 [MIT](https://github.com/sethjuarez/elucim/blob/main/LICENSE)
