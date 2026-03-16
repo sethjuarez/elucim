@@ -1,0 +1,208 @@
+# Editor Theming
+
+The Elucim editor uses **CSS custom properties** (design tokens) for all UI chrome colors. Every color in the toolbar, inspector, timeline, and canvas overlay is driven by tokens — making the editor fully themeable.
+
+## Quick Theme Override
+
+Pass a `theme` prop to `<ElucimEditor>` with your color overrides:
+
+```tsx
+import { ElucimEditor } from '@elucim/editor';
+
+function App() {
+  return (
+    <ElucimEditor
+      theme={{
+        accent: '#e040fb',
+        bg: '#1e1e2e',
+        surface: '#181825',
+        fg: '#cdd6f4',
+        border: '#45475a',
+      }}
+      style={{ width: '100vw', height: '100vh' }}
+    />
+  );
+}
+```
+
+You only need to override the tokens you want to change — all others keep their defaults.
+
+## Available Tokens
+
+| Token | Default | Description |
+|-------|---------|-------------|
+| `accent` | `#4a9eff` | Primary accent — selection highlights, active buttons, focus rings |
+| `bg` | `#1a1a2e` | Editor background |
+| `surface` | `#12122a` | Deeper surface (minimap, nested panels) |
+| `panel` | `rgba(22,22,42,0.93)` | Floating panel backgrounds (semi-transparent) |
+| `chrome` | `rgba(15,23,42,0.8)` | UI chrome — toolbar, timeline |
+| `fg` | `#e0e0e0` | Primary foreground text |
+| `text-secondary` | `#94a3b8` | Secondary text (labels, descriptions) |
+| `text-muted` | `#64748b` | Muted text (placeholders) |
+| `text-disabled` | `#475569` | Disabled text |
+| `border` | `#334155` | Panel borders, dividers |
+| `border-subtle` | `#1e293b` | Subtle separators |
+| `input-bg` | `#0f172a` | Input field backgrounds |
+| `success` | `#34d399` | Success indicators |
+| `info` | `#4fc3f7` | Info indicators |
+| `error` | `#f87171` | Error indicators |
+
+## Token Naming
+
+Tokens accept either **bare names** or **full CSS variable names**:
+
+```tsx
+// These are equivalent:
+theme={{ accent: '#e040fb' }}
+theme={{ '--elucim-editor-accent': '#e040fb' }}
+```
+
+All tokens resolve to CSS custom properties with the `--elucim-editor-` prefix. For example, the `accent` token becomes `--elucim-editor-accent`.
+
+## Theme Presets
+
+### Dark (Default)
+
+The editor ships with a dark theme inspired by VS Code's dark modern palette. No configuration needed — it's the default.
+
+### Catppuccin Mocha
+
+```tsx
+<ElucimEditor
+  theme={{
+    accent: '#cba6f7',
+    bg: '#1e1e2e',
+    surface: '#181825',
+    panel: 'rgba(30,30,46,0.93)',
+    chrome: 'rgba(24,24,37,0.8)',
+    fg: '#cdd6f4',
+    'text-secondary': '#a6adc8',
+    'text-muted': '#6c7086',
+    border: '#45475a',
+    'border-subtle': '#313244',
+    'input-bg': '#11111b',
+    success: '#a6e3a1',
+    error: '#f38ba8',
+  }}
+/>
+```
+
+### Nord
+
+```tsx
+<ElucimEditor
+  theme={{
+    accent: '#88c0d0',
+    bg: '#2e3440',
+    surface: '#242933',
+    panel: 'rgba(46,52,64,0.93)',
+    chrome: 'rgba(59,66,82,0.8)',
+    fg: '#eceff4',
+    'text-secondary': '#d8dee9',
+    'text-muted': '#81a1c1',
+    border: '#4c566a',
+    'border-subtle': '#3b4252',
+    'input-bg': '#242933',
+    success: '#a3be8c',
+    error: '#bf616a',
+  }}
+/>
+```
+
+## Programmatic Token Access
+
+Use the token helpers to build custom UI that matches the editor theme:
+
+### `v(token)` — Get a CSS Variable Reference
+
+Returns a `var(--token, fallback)` string for use in inline styles:
+
+```tsx
+import { v } from '@elucim/editor';
+
+const style = {
+  color: v('--elucim-editor-accent'),
+  // → 'var(--elucim-editor-accent, #4a9eff)'
+
+  borderColor: v('--elucim-editor-border'),
+  // → 'var(--elucim-editor-border, #334155)'
+};
+```
+
+### `buildThemeVars(overrides)` — Generate CSS Variable Object
+
+Merges user overrides with defaults, returning an object suitable for `style` props:
+
+```tsx
+import { buildThemeVars } from '@elucim/editor';
+
+const vars = buildThemeVars({ accent: '#e040fb', bg: '#1e1e2e' });
+// → {
+//   '--elucim-editor-accent': '#e040fb',
+//   '--elucim-editor-bg': '#1e1e2e',
+//   '--elucim-editor-surface': '#12122a',
+//   ... (all other defaults)
+// }
+```
+
+### `EDITOR_TOKENS` — Token Defaults
+
+The full token registry with default values:
+
+```tsx
+import { EDITOR_TOKENS } from '@elucim/editor';
+
+console.log(EDITOR_TOKENS);
+// { '--elucim-editor-accent': '#4a9eff', '--elucim-editor-bg': '#1a1a2e', ... }
+```
+
+### `makeRotateCursor(color)` — Themed Rotation Cursor
+
+Generates an SVG data-URL cursor for the rotation handle. Since CSS custom properties can't be used inside `url()` data URIs, this function takes a resolved color value:
+
+```tsx
+import { makeRotateCursor } from '@elucim/editor';
+
+const cursor = makeRotateCursor('#e040fb');
+// → 'url("data:image/svg+xml,...") 12 12, pointer'
+```
+
+## Semi-Transparent Token Variants
+
+The editor uses `color-mix()` for translucent versions of tokens. You can use the same technique in custom components:
+
+```css
+/* 20% accent with 80% transparent */
+background: color-mix(in srgb, var(--elucim-editor-accent) 20%, transparent);
+
+/* 50% border */
+border-color: color-mix(in srgb, var(--elucim-editor-border) 50%, transparent);
+```
+
+::: tip
+You can't append hex alpha to a `var()` reference (e.g., `var(--accent)33` is invalid CSS). Use `color-mix()` instead for any semi-transparent token variants.
+:::
+
+## CSS Custom Properties in Your App
+
+Since the editor sets CSS custom properties on its root element, you can also use them in your own CSS:
+
+```css
+.my-custom-panel {
+  background: var(--elucim-editor-panel);
+  color: var(--elucim-editor-fg);
+  border: 1px solid var(--elucim-editor-border);
+  border-radius: 8px;
+}
+
+.my-custom-button {
+  background: var(--elucim-editor-accent);
+  color: white;
+}
+```
+
+## Next Steps
+
+- [Visual Editor](/guide/editor) — Editor overview and quick start
+- [Inspector & Properties](/guide/editor-inspector) — Editing element properties
+- [Editor API Reference](/api/editor) — Full API documentation

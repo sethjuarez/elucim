@@ -95,4 +95,5 @@ function CustomAnimation() {
 - [Basic Shapes](/guide/basic-shapes) — All available primitives
 - [Math Primitives](/guide/math-primitives) — Axes, plots, vectors, and more
 - [Animations](/guide/animations) — FadeIn, Draw, Transform, Stagger
+- [Visual Editor](/guide/editor) — Build scenes visually with the drag-and-drop editor
 - [API Reference](/api/components) — Full API documentation

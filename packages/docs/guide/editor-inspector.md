@@ -1,0 +1,115 @@
+# Inspector & Properties
+
+The inspector is a contextual property panel that appears when you select an element on the canvas. It lets you edit any property of the selected element — position, size, colors, text content, math expressions, and more.
+
+## How It Works
+
+1. **Click an element** on the canvas — the inspector appears next to it
+2. **Edit any property** — changes are applied immediately to the canvas
+3. **Click away** or press **Escape** to dismiss
+
+The inspector **auto-positions** to the right of the selected element, clamped to the viewport so it's always visible. You can also **drag** it anywhere, or **pin** it to keep it in place across selections.
+
+## Element Properties
+
+When an element is selected, the inspector shows all editable properties for that element type. Properties vary by element:
+
+### Shapes
+
+| Property | Applies to | Description |
+|----------|-----------|-------------|
+| `cx`, `cy` | Circle | Center position |
+| `r` | Circle | Radius |
+| `x`, `y` | Rect, Text, Image | Top-left position |
+| `width`, `height` | Rect, Image | Dimensions |
+| `x1`, `y1`, `x2`, `y2` | Line, Arrow | Start and end points |
+| `fill` | All shapes | Fill color |
+| `stroke` | All shapes | Stroke color |
+| `strokeWidth` | All shapes | Stroke thickness |
+| `opacity` | All elements | Transparency (0–1) |
+
+### Text & LaTeX
+
+| Property | Description |
+|----------|-------------|
+| `content` | Text string |
+| `fontSize` | Font size in pixels |
+| `textAnchor` | Alignment: `start`, `middle`, `end` |
+| `expression` | LaTeX math expression string |
+| `color` | Text/LaTeX color |
+
+### Math Visualizations
+
+| Property | Applies to | Description |
+|----------|-----------|-------------|
+| `fn` | FunctionPlot | Math expression like `"sin(x)"` |
+| `domain` | Axes, FunctionPlot | X-axis range `[min, max]` |
+| `range` | Axes | Y-axis range `[min, max]` |
+| `scale` | Axes | Pixels per unit |
+| `to` | Vector | Endpoint `[x, y]` |
+| `values` | Matrix | 2D array of numbers |
+| `nodes`, `edges` | Graph | Graph structure |
+
+### Spatial Transforms
+
+All elements support these universal transform properties:
+
+| Property | Description |
+|----------|-------------|
+| `rotation` | Rotation in degrees |
+| `rotationOrigin` | Center of rotation `[cx, cy]` |
+| `scale` | Uniform scale factor |
+| `translate` | Offset `[dx, dy]` |
+| `zIndex` | Stacking order (higher = on top) |
+
+### Animation Properties
+
+| Property | Description |
+|----------|-------------|
+| `fadeIn` | Fade in over N frames |
+| `fadeOut` | Fade out over N frames |
+| `draw` | Progressive stroke drawing over N frames |
+| `easing` | Easing function name or configuration |
+
+## Canvas Properties
+
+Click on **empty canvas space** to select the canvas itself. The inspector switches to show scene-level properties:
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `width` | 800 | Canvas width in pixels |
+| `height` | 600 | Canvas height in pixels |
+| `background` | `#0d0d1a` | Background color |
+| `fps` | 60 | Frames per second |
+| `durationInFrames` | 300 | Total animation length in frames |
+
+This is how you configure the overall scene dimensions, background, and animation timing — just click the empty canvas and edit.
+
+## Inspector Behavior
+
+### Auto-Positioning
+
+The inspector appears to the right of the selected element by default. If the element is near the right edge, it flips to the left side. The position is always clamped to stay within the viewport.
+
+### Pinning
+
+Click the **pin icon** on the inspector to lock its position. When pinned:
+
+- The inspector stays in place when you select different elements
+- Drag it to your preferred location and pin it there
+
+When unpinned, the inspector repositions itself next to each newly selected element.
+
+### Dragging
+
+Drag the inspector's **header bar** to reposition it anywhere on the canvas.
+
+## Multi-Selection
+
+When multiple elements are selected (via Shift+click or marquee), the inspector shows the **common properties** shared by all selected elements. Editing a property applies the change to all selected elements at once.
+
+## Next Steps
+
+- [Visual Editor](/guide/editor) — Editor overview and quick start
+- [Editor Theming](/guide/editor-theming) — Customize the editor's appearance
+- [Editor API Reference](/api/editor) — Programmatic access to editor state

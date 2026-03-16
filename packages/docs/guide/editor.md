@@ -1,0 +1,185 @@
+# Visual Editor
+
+The Elucim editor is a drop-in React component that lets you visually build animated scenes — add elements, edit properties, preview animations, and export to JSON. Think Figma, but for animated math visualizations.
+
+## Installation
+
+```bash
+# Using pnpm (recommended)
+pnpm add @elucim/editor @elucim/core @elucim/dsl react react-dom
+
+# Using npm
+npm install @elucim/editor @elucim/core @elucim/dsl react react-dom
+```
+
+## Quick Start
+
+```tsx
+import { ElucimEditor } from '@elucim/editor';
+
+function App() {
+  return <ElucimEditor style={{ width: '100vw', height: '100vh' }} />;
+}
+```
+
+This renders a full-screen editor with a toolbar, inspector, timeline, and infinite canvas — ready to use.
+
+### Loading an Existing Scene
+
+Pass an `initialDocument` to open the editor with a pre-built scene:
+
+```tsx
+import { ElucimEditor } from '@elucim/editor';
+import type { ElucimDocument } from '@elucim/dsl';
+
+const myScene: ElucimDocument = {
+  version: '1.0',
+  root: {
+    type: 'player',
+    width: 800,
+    height: 600,
+    fps: 60,
+    durationInFrames: 300,
+    background: '#0d0d1a',
+    children: [
+      { type: 'circle', cx: 400, cy: 300, r: 80, stroke: '#4ecdc4', strokeWidth: 3, fill: 'none' },
+      { type: 'latex', expression: 'e^{i\\pi} + 1 = 0', x: 400, y: 300, fontSize: 24, color: '#ffe66d' },
+    ],
+  },
+};
+
+function App() {
+  return <ElucimEditor initialDocument={myScene} style={{ width: '100vw', height: '100vh' }} />;
+}
+```
+
+## Editor Layout
+
+The editor uses a **floating panel** design — all UI chrome hovers over an infinite canvas:
+
+| Panel | Position | Purpose |
+|-------|----------|---------|
+| **Toolbar** | Top-left | Add elements to the scene from categorized templates |
+| **Inspector** | Contextual | Edit properties of the selected element (auto-positions next to selection) |
+| **Timeline** | Bottom | Play/pause animations, scrub to any frame |
+| **Minimap** | Bottom-right | Bird's-eye view for navigating large scenes |
+| **Zoom Controls** | Bottom-right | Zoom in/out, zoom-to-fit |
+
+All panels are **draggable** — reposition them anywhere on the canvas.
+
+## Adding Elements
+
+Open the **Toolbar** (top-left) and click any template to add it to the scene:
+
+| Category | Elements |
+|----------|----------|
+| **Shapes** | Circle, Rectangle, Line, Arrow, Polygon, Bezier Curve |
+| **Math** | Axes, Function Plot, Vector, Vector Field, Matrix, LaTeX |
+| **Data** | Bar Chart, Graph |
+| **Media** | Text, Image |
+| **Layout** | Group |
+| **Animation** | FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel |
+| **Structure** | Sequence |
+
+Each template inserts a pre-configured element with sensible defaults. Select it and use the [Inspector](/guide/editor-inspector) to customize.
+
+::: tip
+The toolbar is collapsible — click the collapse button to minimize it when you need more canvas space.
+:::
+
+## Selecting Elements
+
+### Single Selection
+
+Click any element on the canvas to select it. A selection box with resize handles appears, and the inspector opens next to the element.
+
+### Multi-Selection
+
+- **Shift+click** — add or remove individual elements from the selection
+- **Marquee select** — click and drag on empty canvas to draw a selection rectangle (like Photoshop's lasso)
+
+### Canvas Selection
+
+Click on empty canvas space to select the **canvas itself**. The inspector switches to show scene-level properties: width, height, background color, FPS, and duration.
+
+Press **Escape** to fully deselect everything.
+
+## Moving & Transforming
+
+- **Drag** a selected element to move it
+- **Resize handles** — drag the corner or edge handles on the selection box to resize
+- **Rotation handle** — drag the circular handle above the selection to rotate (a custom rotation cursor appears)
+
+All transforms support **undo/redo** with `Ctrl+Z` / `Ctrl+Shift+Z` (up to 50 levels of history).
+
+## Canvas Navigation
+
+### Zoom
+
+- **Ctrl+scroll** — zoom in and out (0.1× to 5×)
+- **Zoom controls** (bottom-right) — click `+`/`-` buttons or "Fit" to zoom-to-fit
+
+### Pan
+
+- **Middle-click drag** — pan the canvas
+- **Space + drag** — hold Space and drag to pan
+
+The **dot grid** background adapts to your zoom level, and the **minimap** (bottom-right) shows your current viewport position.
+
+## Animation Playback
+
+The **Timeline** panel at the bottom provides:
+
+- **Play/Pause** button — preview animations in real-time at the scene's FPS
+- **Scrub bar** — drag to seek to any frame
+- **Frame counter** — shows current frame / total frames
+
+## Import & Export
+
+### Export
+
+Press `Ctrl+E` or use the export function programmatically:
+
+```tsx
+import { exportToJson, downloadAsJson } from '@elucim/editor';
+
+// Get JSON string
+const json = exportToJson(document);
+
+// Download as file
+downloadAsJson(document, 'my-animation.json');
+```
+
+### Import
+
+```tsx
+import { importFromJson } from '@elucim/editor';
+
+const document = importFromJson(jsonString);
+```
+
+The exported JSON is a standard [Elucim DSL document](/guide/timeline) — it can be rendered with `<DslRenderer>` from `@elucim/dsl` or loaded back into the editor.
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Delete` / `Backspace` | Delete selected elements |
+| `Ctrl+Z` | Undo |
+| `Ctrl+Shift+Z` | Redo |
+| `Ctrl+A` | Select all |
+| `Escape` | Deselect all |
+| `Space` (hold) | Pan mode |
+| `Ctrl+Scroll` | Zoom in/out |
+| `Ctrl+E` | Export to JSON |
+
+## Error Recovery
+
+If something goes wrong during rendering (for example, an invalid math expression), the editor shows a recovery screen instead of crashing. Click **"Try again"** to reset and continue editing. Your document state is preserved.
+
+## Next Steps
+
+- [Inspector & Properties](/guide/editor-inspector) — Deep dive on editing element properties
+- [Editor Theming](/guide/editor-theming) — Customize editor colors and appearance
+- [Editor API Reference](/api/editor) — Full API documentation
+- [Creating Visuals](/guide/creating-visuals) — Comprehensive guide to building animations

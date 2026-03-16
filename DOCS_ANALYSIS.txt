@@ -1,0 +1,331 @@
+# ELUCIM DOCUMENTATION STRUCTURE & ANALYSIS
+
+## 1. DIRECTORY STRUCTURE (3 levels deep)
+
+D:\projects\elucim\packages\docs/
+├── .vitepress/
+│   ├── config.ts (VitePress configuration)
+│   ├── cache/
+│   └── dist/
+├── guide/
+│   ├── what-is-elucim.md
+│   ├── getting-started.md
+│   ├── creating-visuals.md
+│   ├── basic-shapes.md
+│   ├── scene.md
+│   ├── frames.md
+│   ├── easing.md
+│   ├── sequences.md
+│   ├── animations.md
+│   ├── timeline.md
+│   ├── math-primitives.md
+│   ├── latex.md
+│   └── export.md
+├── api/
+│   ├── components.md
+│   ├── primitives.md
+│   ├── animations.md
+│   ├── hooks.md
+│   ├── easing.md
+│   └── export.md
+├── index.md (homepage)
+├── package.json
+└── node_modules/
+
+## 2. BUILD & DEV SCRIPTS (package.json)
+
+{
+  "name": "@elucim/docs",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.5.0",
+    "vue": "^3.5.0"
+  }
+}
+
+## 3. VITEPRESS CONFIG (.vitepress/config.ts)
+
+**Title & Description:**
+- Title: 'Elucim'
+- Description: 'Animate concepts. Illuminate understanding.'
+- Logo: /logo.svg
+
+**Navigation Menu:**
+- Guide → /guide/getting-started
+- API → /api/components
+- Explorer → http://localhost:3200
+
+**Sidebar Structure:**
+
+### /guide/ Section:
+1. Introduction
+   - What is Elucim? (/guide/what-is-elucim)
+   - Getting Started (/guide/getting-started)
+
+2. Core Concepts
+   - Scene & Composition (/guide/scene)
+   - Animation Frames (/guide/frames)
+   - Easing Functions (/guide/easing)
+   - Sequences (/guide/sequences)
+
+3. Primitives
+   - Basic Shapes (/guide/basic-shapes)
+   - Math Primitives (/guide/math-primitives)
+   - LaTeX Rendering (/guide/latex)
+
+4. Animations
+   - Animation Components (/guide/animations)
+   - Timeline DSL (/guide/timeline)
+
+5. Advanced
+   - Video Export (/guide/export)
+   - Creating Visuals (/guide/creating-visuals)
+
+### /api/ Section:
+API Reference
+- Components (/api/components)
+- Primitives (/api/primitives)
+- Animations (/api/animations)
+- Hooks (/api/hooks)
+- Easing (/api/easing)
+- Export (/api/export)
+
+**Footer:**
+- Message: 'Released under the MIT License.'
+- Copyright: 'Copyright © 2024-present Elucim Contributors'
+- Search: local provider
+
+## 4. DOCUMENTATION PAGES INVENTORY
+
+### GUIDE PAGES (13 pages):
+
+1. **what-is-elucim.md**
+   - Purpose: Introduces library, explains why Elucim exists
+   - Key Sections: Why Elucim?, Architecture, Core Concepts
+   - Format: Overview + table + links to next steps
+   - Length: ~35 lines
+
+2. **getting-started.md**
+   - Purpose: First steps for new users
+   - Key Sections: Installation, Your First Animation, How It Works, Key Concepts, Next Steps
+   - Format: Code examples + explanations + navigation
+   - Length: ~99 lines
+
+3. **creating-visuals.md** (COMPREHENSIVE)
+   - Purpose: Developer guide for building animations
+   - Key Sections: Quick Start, Core Concepts, Primitives Reference, Math Primitives, 
+     Animation System, Easing, Player, Timeline DSL, Recipes & Patterns, API Reference
+   - Format: Extensive code examples + detailed explanations
+   - Length: ~737 lines (longest guide)
+
+4. **basic-shapes.md**
+   - Purpose: All basic shape primitives
+   - Components: Circle, Line, Arrow, Rect, Text, Polygon
+   - Format: Code example + prop table for each shape
+   - Length: ~89 lines
+
+5. **scene.md**
+   - Purpose: Scene, Player, Sequence components
+   - Sections: Scene (root container), Player (interactive), Sequence (timing)
+   - Format: Code + props table + examples
+   - Length: ~99 lines
+
+6. **frames.md**
+   - Purpose: useCurrentFrame and interpolate hooks
+   - Sections: useCurrentFrame, interpolate (with multi-segment), extrapolation, signature
+   - Format: Code examples + explanations
+   - Length: ~58 lines
+
+7. **easing.md**
+   - Purpose: Easing functions guide
+   - Sections: Available Functions (standard, trig, exponential, special), Custom Easings
+   - Format: Function tables + code examples
+   - Length: ~82 lines
+
+8. **sequences.md**
+   - Purpose: Deep dive on Sequence component
+   - Sections: Overview, Basic Usage, Overlapping, Nested, Lifecycle
+   - Format: Code examples + explanations
+   - Length: ~54 lines
+
+9. **animations.md**
+   - Purpose: Animation wrapper components
+   - Components: FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel
+   - Format: Code example for each component
+   - Length: ~107 lines
+
+10. **timeline.md**
+    - Purpose: Imperative Timeline DSL API
+    - Sections: Basic Usage, API (play, add, wait, compile), Animation Types, PlayOptions, Complex Example
+    - Format: Code + method table + signature
+    - Length: ~108 lines
+
+11. **math-primitives.md**
+    - Purpose: Advanced math visualization components
+    - Components: Axes, FunctionPlot, Vector, VectorField, Matrix, Graph
+    - Format: Code + prop table for each
+    - Length: ~123 lines
+
+12. **latex.md**
+    - Purpose: LaTeX equation rendering
+    - Sections: Setup, Usage, Props, Examples
+    - Format: Code examples + prop table
+    - Length: ~72 lines
+
+13. **export.md**
+    - Purpose: Video export functionality
+    - Sections: useExport Hook, Low-Level API, ExportOptions, Browser Support
+    - Format: Code examples + option table
+    - Length: ~90 lines
+
+### API PAGES (6 pages):
+
+1. **components.md**
+   - Contains: Scene, Sequence, Player (TypeScript interfaces)
+   - Format: Interface definitions with comments
+   - Length: ~46 lines
+
+2. **primitives.md**
+   - Contains: Basic shapes (Circle, Line, Arrow, Rect, Text, Polygon)
+   - Contains: Math primitives (Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX)
+   - Format: Interface definitions with inline comments
+   - Length: ~162 lines
+
+3. **animations.md**
+   - Contains: FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel, Timeline
+   - Format: Interface definitions + class definition + types
+   - Length: ~119 lines
+
+4. **hooks.md**
+   - Contains: useCurrentFrame, useElucimContext, useAnimation, interpolate
+   - Format: Function signatures + interface definitions
+   - Length: ~66 lines
+
+5. **easing.md**
+   - Contains: All easing function imports, spring(), cubicBezier(), EasingFunction type
+   - Format: Import list + factory signatures + type definition
+   - Length: ~48 lines
+
+6. **export.md**
+   - Contains: exportAnimation, exportWithMediaRecorder, svgToCanvas, downloadBlob, useExport
+   - Format: Function signatures + interface definitions + types
+   - Length: ~80 lines
+
+### HOMEPAGE (index.md):
+
+- Format: VitePress home layout with hero section
+- Features: 6 feature cards with icons
+- Actions: Get Started, API Reference, Explorer buttons
+- Length: ~39 lines
+
+## 5. COMPONENTS DIRECTORY
+
+**No custom components found** in packages/docs/src/components/
+- VitePress uses standard Markdown rendering + Vue integration
+- Documentation uses built-in code block syntax
+
+## 6. WRITING STYLE & CONVENTIONS
+
+### Structure Patterns:
+
+1. **Guide Pages:**
+   - Intro paragraph explaining purpose
+   - Hierarchical headings (H1, H2, H3)
+   - Code blocks in TSX/TS notation
+   - Inline code for props/types
+   - Prop tables (| Prop | Type | Description |)
+   - Examples with real output
+   - Cross-linking to related pages with [text](/path)
+
+2. **API Pages:**
+   - Interface definitions with interface keyword
+   - Inline  @default  comments
+   - Function signatures with  async  notation
+   - Type definitions
+   - Minimal descriptive text
+
+3. **Code Examples:**
+   - Use TSX/TS syntax (not plain JS)
+   - Import statements shown
+   - Real-world scenarios with meaningful variable names
+   - Comments in code for clarity
+   - Frame-based durations (not seconds in most examples)
+
+### Frontmatter:
+
+- Minimal - only layout declarations
+- Home page uses layout: home with hero config
+- Regular pages have implicit default layout
+
+### Markdown Features Used:
+
+- Code blocks with language hints (tsx, ts, html, bash)
+- Tables for API reference (pipes |)
+- Links using [text](/path)
+- Blockquotes for tips using ::: tip
+- Emphasis with **bold** and *italic*
+- Lists (ordered and unordered)
+- Headings up to H3 (sometimes H4 for subsections)
+
+### Color Palette in Examples:
+
+- Primary: #4ecdc4 (cyan/teal)
+- Secondary: #ff6b6b (coral red)
+- Tertiary: #ffe66d (yellow)
+- Quaternary: #a29bfe (purple)
+- Text: #e0e0e0, #fff (light colors)
+- Dark: #111, #111127, #000 (backgrounds)
+
+### Common Patterns:
+
+- Props tables always: Prop | Type | Description | Default (if applicable)
+- Example intro: "`	sx" not "`jsx"
+- Method examples use method chaining with "this"
+- Animation props: durationInFrames (NOT duration)
+- Coordinates: cx, cy (center), x, y, x1, y1, x2, y2 conventions
+- Easing imports from '@elucim/core'
+- Cross-references: "See [Guide Page Title](/path)" or "Next Steps" sections
+
+## 7. EXISTING EDITOR-RELATED DOCUMENTATION
+
+**NONE FOUND** - No existing documentation about:
+- Web editor/playground
+- Code editing
+- Live preview features
+- IDE features
+
+This is a **greenfield opportunity** for new editor documentation pages.
+
+## RECOMMENDATIONS FOR NEW EDITOR DOCUMENTATION
+
+Based on analysis, new editor pages should:
+
+1. **Match structure:** Add to appropriate category (likely new "Tools" section or "Advanced")
+2. **Follow naming:** kebab-case filenames (e.g., editor-overview.md)
+3. **Follow format:**
+   - Start with intro paragraph
+   - Use TSX code blocks for examples
+   - Include prop/feature tables
+   - Add Next Steps section with cross-links
+   - Use 2-3 levels of headings
+4. **Use conventions:**
+   - Color palette: the 4 colors listed above
+   - Link to guide pages for context
+   - Include real-world examples
+   - Cross-reference related components
+5. **Update sidebar:** Add new section to config.ts like:
+   {
+     text: 'Editor & Tools',
+     items: [
+       { text: 'Editor Overview', link: '/guide/editor-overview' },
+       { text: 'Live Preview', link: '/guide/live-preview' },
+       // ... other editor docs
+     ]
+   }
+
