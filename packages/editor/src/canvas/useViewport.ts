@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import type { Dispatch } from 'react';
 import type { EditorAction, Viewport } from '../state/types';
 import { MIN_ZOOM, MAX_ZOOM } from '../state/types';
@@ -58,30 +58,36 @@ export function useViewport({
   sceneHeight,
 }: UseViewportOptions) {
   const panStartRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
+  const viewportRef = useRef(viewport);
+  viewportRef.current = viewport;
 
-  /** Ctrl+scroll: zoom toward cursor */
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (!e.ctrlKey && !e.metaKey) return;
-    e.preventDefault();
-
+  // Attach wheel handler as non-passive so we can preventDefault and block browser zoom
+  useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const rect = container.getBoundingClientRect();
-    const cursorX = e.clientX - rect.left;
-    const cursorY = e.clientY - rect.top;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
 
-    // Zoom factor
-    const delta = -e.deltaY * 0.002;
-    const newZoom = clampZoom(viewport.zoom * (1 + delta));
-    const scale = newZoom / viewport.zoom;
+      const vp = viewportRef.current;
+      const rect = container.getBoundingClientRect();
+      const cursorX = e.clientX - rect.left;
+      const cursorY = e.clientY - rect.top;
 
-    // Zoom toward cursor: adjust pan so cursor stays at same scene position
-    const newX = cursorX - (cursorX - viewport.x) * scale;
-    const newY = cursorY - (cursorY - viewport.y) * scale;
+      const delta = -e.deltaY * 0.002;
+      const newZoom = clampZoom(vp.zoom * (1 + delta));
+      const scale = newZoom / vp.zoom;
 
-    dispatch({ type: 'SET_VIEWPORT', viewport: { x: newX, y: newY, zoom: newZoom } });
-  }, [dispatch, viewport, containerRef]);
+      const newX = cursorX - (cursorX - vp.x) * scale;
+      const newY = cursorY - (cursorY - vp.y) * scale;
+
+      dispatch({ type: 'SET_VIEWPORT', viewport: { x: newX, y: newY, zoom: newZoom } });
+    };
+
+    container.addEventListener('wheel', onWheel, { passive: false });
+    return () => container.removeEventListener('wheel', onWheel);
+  }, [dispatch, containerRef]);
 
   /** Start panning (Space+drag or middle-click) */
   const handlePanStart = useCallback((e: React.PointerEvent) => {
@@ -152,7 +158,6 @@ export function useViewport({
   }, [dispatch, viewport, containerRef]);
 
   return {
-    handleWheel,
     handlePanStart,
     handlePanMove,
     handlePanEnd,

@@ -300,6 +300,27 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
         </InspectorSection>
       );
 
+    case 'matrix':
+      return (
+        <InspectorSection title="Matrix">
+          <TextField
+            label="Values"
+            value={el.values ? el.values.map((r: any[]) => r.join(', ')).join(' ; ') : ''}
+            onChange={v => {
+              const rows = v.split(';').map((r: string) =>
+                r.trim().split(',').map((c: string) => {
+                  const n = Number(c.trim());
+                  return isNaN(n) ? c.trim() : n;
+                })
+              );
+              onChange('values', rows);
+            }}
+          />
+          <NumberField label="Cell Size" value={el.cellSize ?? 40} onChange={v => onChange('cellSize', v)} />
+          <NumberField label="Font Size" value={el.fontSize ?? 16} onChange={v => onChange('fontSize', v)} />
+        </InspectorSection>
+      );
+
     default:
       return null;
   }

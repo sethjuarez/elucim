@@ -66,9 +66,8 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Viewport interactions
+  // Viewport interactions (wheel handler attached via useEffect inside useViewport)
   const {
-    handleWheel,
     handlePanStart,
     handlePanMove,
     handlePanEnd,
@@ -151,7 +150,6 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
         cursor,
         ...style,
       }}
-      onWheel={handleWheel}
       onPointerDown={handlePanStart}
       onPointerMove={handlePanMove}
       onPointerUp={handlePanEnd}

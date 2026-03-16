@@ -83,12 +83,30 @@ export function getElementBounds(element: ElementNode): BoundingBox | null {
     case 'vector':
     case 'vectorField':
     case 'matrix':
-    case 'graph':
-      // Math components use origin/scale — approximate a region
+      // Matrix uses x/y positioning with cellSize-based dimensions
+      if ('x' in element || 'y' in element) {
+        const mx = (element as any).x ?? 0;
+        const my = (element as any).y ?? 0;
+        const cellSize = (element as any).cellSize ?? 40;
+        const values = (element as any).values as any[][] | undefined;
+        const rows = values?.length ?? 2;
+        const cols = values?.[0]?.length ?? 2;
+        return { x: mx, y: my, width: cols * cellSize + 20, height: rows * cellSize + 10 };
+      }
       if ('origin' in element && element.origin) {
         const [ox, oy] = element.origin;
         const s = ('scale' in element ? (element.scale as number) : 40) ?? 40;
-        const d = ('domain' in element && element.domain) ? element.domain : [-5, 5];
+        return { x: ox - s * 2, y: oy - s * 2, width: s * 4, height: s * 4 };
+      }
+      return null;
+
+    case 'graph':
+      // Math components use origin/scale — approximate a region
+      if ('origin' in element && element.origin) {
+        const origin = element.origin as [number, number];
+        const [ox, oy] = origin;
+        const s = ('scale' in element ? (element.scale as number) : 40) ?? 40;
+        const d = ('domain' in element && element.domain) ? element.domain as [number, number] : [-5, 5];
         const width = (d[1] - d[0]) * s;
         const height = width;
         return { x: ox - width / 2, y: oy - height / 2, width, height };
