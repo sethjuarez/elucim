@@ -2,6 +2,7 @@ import React from 'react';
 import type { ElucimDocument } from '@elucim/dsl';
 import { EditorProvider } from './state/EditorProvider';
 import { ElucimCanvas } from './canvas/ElucimCanvas';
+import { Toolbar } from './toolbar/Toolbar';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
@@ -33,13 +34,16 @@ export function ElucimEditor({ initialDocument, className, style }: ElucimEditor
         className={`elucim-editor ${className ?? ''}`}
         style={{
           display: 'flex',
-          flexDirection: 'column',
           background: '#1a1a2e',
           color: '#e0e0e0',
           fontFamily: 'system-ui, -apple-system, sans-serif',
+          height: '100%',
           ...style,
         }}
       >
+        {/* Toolbar — left sidebar */}
+        <Toolbar />
+
         {/* Canvas area */}
         <div
           className="elucim-editor-main"

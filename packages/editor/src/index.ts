@@ -14,6 +14,10 @@ export { ElucimCanvas, type ElucimCanvasProps } from './canvas/ElucimCanvas';
 export { SelectionOverlay, type SelectionOverlayProps } from './canvas/SelectionOverlay';
 export { useDrag, type DragState } from './canvas/useDrag';
 
+// Toolbar
+export { Toolbar, type ToolbarProps } from './toolbar/Toolbar';
+export { ELEMENT_TEMPLATES, getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from './toolbar/templates';
+
 // Utilities
 export { getElementBounds, mergeBounds, isPointInBounds, type BoundingBox } from './utils/bounds';
 export { computeSnap, type SnapGuide } from './utils/snap';
