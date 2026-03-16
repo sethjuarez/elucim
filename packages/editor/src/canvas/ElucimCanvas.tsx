@@ -137,7 +137,7 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
     .filter((t): t is NonNullable<typeof t> => t !== null);
 
   // Cursor based on state
-  const cursor = isPanning ? 'grab' : 'default';
+  const cursor = isPanning ? 'grab' : state.activeTool !== 'select' ? 'crosshair' : 'default';
 
   return (
     <div

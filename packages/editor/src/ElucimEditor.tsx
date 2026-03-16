@@ -1,5 +1,6 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react';
+import React, { useCallback, useRef } from 'react';
 import type { ElucimDocument } from '@elucim/dsl';
+import type { ElementNode } from '@elucim/dsl';
 import { EditorProvider } from './state/EditorProvider';
 import { ElucimCanvas } from './canvas/ElucimCanvas';
 import { Toolbar } from './toolbar/Toolbar';
@@ -7,6 +8,7 @@ import { Inspector } from './inspector/Inspector';
 import { Timeline } from './timeline/Timeline';
 import { FloatingPanel } from './panels/FloatingPanel';
 import { useEditorState } from './state/EditorProvider';
+import { getElementBounds } from './utils/bounds';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
@@ -31,6 +33,7 @@ export function ElucimEditor({ initialDocument, className, style }: ElucimEditor
 
 function EditorLayout({ className, style }: { className?: string; style?: React.CSSProperties }) {
   const { state, dispatch } = useEditorState();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleToolbarPosition = useCallback((pos: { x: number; y: number }) => {
     dispatch({ type: 'SET_TOOLBAR_POSITION', position: pos });
@@ -48,8 +51,41 @@ function EditorLayout({ className, style }: { className?: string; style?: React.
     dispatch({ type: 'SET_INSPECTOR_PINNED', pinned: !state.inspectorPinned });
   }, [dispatch, state.inspectorPinned]);
 
-  // Compute inspector position near selection if not pinned
-  const inspectorPos = state.inspectorPosition ?? { x: 600, y: 60 };
+  // Compute inspector position near the selected element when unpinned
+  const inspectorPos = React.useMemo(() => {
+    if (state.inspectorPinned && state.inspectorPosition) {
+      return state.inspectorPosition;
+    }
+
+    // Find first selected element's bounds and position inspector to its right
+    if (state.selectedIds.length > 0) {
+      const root = state.document.root;
+      const children: ElementNode[] = ('children' in root && Array.isArray(root.children)) ? root.children : [];
+      const selectedEl = children.find((el, i) => {
+        const id = ('id' in el && el.id) ? el.id : `el-${i}`;
+        return state.selectedIds.includes(id);
+      });
+      if (selectedEl) {
+        const bounds = getElementBounds(selectedEl);
+        if (bounds) {
+          const vp = state.viewport;
+          // Convert scene coords to screen coords
+          const screenRight = vp.x + (bounds.x + bounds.width) * vp.zoom + 16;
+          const screenTop = vp.y + bounds.y * vp.zoom;
+          // Clamp to keep panel visible within canvas
+          const container = containerRef.current;
+          const maxX = (container?.clientWidth ?? 900) - 250;
+          const maxY = (container?.clientHeight ?? 600) - 200;
+          return {
+            x: Math.min(screenRight, maxX),
+            y: Math.max(8, Math.min(screenTop, maxY)),
+          };
+        }
+      }
+    }
+
+    return state.inspectorPosition ?? { x: 600, y: 60 };
+  }, [state.inspectorPinned, state.inspectorPosition, state.selectedIds, state.document, state.viewport]);
 
   return (
     <div
@@ -65,7 +101,7 @@ function EditorLayout({ className, style }: { className?: string; style?: React.
       }}
     >
       {/* Main canvas area — full-bleed */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+      <div ref={containerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         {/* Canvas fills everything */}
         <ElucimCanvas />
 
