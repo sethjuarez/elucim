@@ -7,6 +7,7 @@ import { Toolbar } from './toolbar/Toolbar';
 import { Inspector } from './inspector/Inspector';
 import { Timeline } from './timeline/Timeline';
 import { FloatingPanel } from './panels/FloatingPanel';
+import { EditorErrorBoundary } from './panels/EditorErrorBoundary';
 import { useEditorState } from './state/EditorProvider';
 import { getElementBounds } from './utils/bounds';
 import { buildThemeVars, v } from './theme/tokens';
@@ -32,9 +33,11 @@ export interface ElucimEditorProps {
  */
 export function ElucimEditor({ initialDocument, theme, className, style }: ElucimEditorProps) {
   return (
-    <EditorProvider initialDocument={initialDocument}>
-      <EditorLayout theme={theme} className={className} style={style} />
-    </EditorProvider>
+    <EditorErrorBoundary>
+      <EditorProvider initialDocument={initialDocument}>
+        <EditorLayout theme={theme} className={className} style={style} />
+      </EditorProvider>
+    </EditorErrorBoundary>
   );
 }
 

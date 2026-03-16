@@ -303,7 +303,16 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         />
       );
     case 'functionPlot': {
-      const fn = compileExpression(node.fn);
+      let fn: (vars: Record<string, number>) => number;
+      try {
+        fn = compileExpression(node.fn);
+      } catch {
+        return (
+          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
+            content={`⚠ f(x) = ${node.fn}`} fontSize={14} color="red" opacity={0.8}
+            zIndex={node.zIndex} />
+        );
+      }
       return (
         <FunctionPlot
           key={key}
@@ -337,7 +346,16 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         />
       );
     case 'vectorField': {
-      const vfn = compileVectorExpression(node.fn);
+      let vfn: (vars: Record<string, number>) => [number, number];
+      try {
+        vfn = compileVectorExpression(node.fn);
+      } catch {
+        return (
+          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
+            content={`⚠ field = ${node.fn}`} fontSize={14} color="red" opacity={0.8}
+            zIndex={node.zIndex} />
+        );
+      }
       return (
         <VectorField
           key={key}
