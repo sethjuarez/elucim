@@ -309,8 +309,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
       } catch {
         return (
           <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
-            content={`⚠ f(x) = ${node.fn}`} fontSize={14} color="red" opacity={0.8}
-            zIndex={node.zIndex} />
+            fontSize={14} fill="red" opacity={0.8}>{`⚠ f(x) = ${node.fn}`}</Text>
         );
       }
       return (
@@ -352,8 +351,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
       } catch {
         return (
           <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
-            content={`⚠ field = ${node.fn}`} fontSize={14} color="red" opacity={0.8}
-            zIndex={node.zIndex} />
+            fontSize={14} fill="red" opacity={0.8}>{`⚠ field = ${node.fn}`}</Text>
         );
       }
       return (
