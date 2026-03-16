@@ -1,5 +1,19 @@
 # @elucim/dsl
 
+## [0.6.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.5.0...dsl-v0.6.0) (2026-03-16)
+
+
+### Bug Fixes
+
+* prevent blank screen when typing special characters in expression fields ([7428f30](https://github.com/sethjuarez/elucim/commit/7428f30b9741519a32a0e782618af412fb348268))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.6.0
+
 ## [0.5.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.4.1...dsl-v0.5.0) (2026-03-15)
 
 
