@@ -238,6 +238,12 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return { ...state, document: doc };
     }
 
+    case 'UPDATE_CANVAS': {
+      const doc = cloneDoc(state.document);
+      Object.assign(doc.root, action.changes);
+      return { ...state, document: doc };
+    }
+
     case 'ADD_ELEMENT': {
       const doc = cloneDoc(state.document);
       const root = doc.root;

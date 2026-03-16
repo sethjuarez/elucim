@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { Dispatch } from 'react';
 import type { EditorAction, Viewport } from '../state/types';
+import { CANVAS_ID } from '../state/types';
 import type { BoundingBox } from '../utils/bounds';
 import { screenToScene } from './useViewport';
 
@@ -105,10 +106,10 @@ export function useMarquee({
     const w = Math.abs(scene.x - start.sceneX);
     const h = Math.abs(scene.y - start.sceneY);
 
-    // If drag was too small, treat as a click (deselect)
+    // If drag was too small, treat as a click (select canvas)
     if (w < 3 && h < 3) {
       if (!shiftRef.current) {
-        dispatch({ type: 'DESELECT_ALL' });
+        dispatch({ type: 'SELECT', ids: [CANVAS_ID] });
       }
       setMarquee(null);
       return;
@@ -134,7 +135,7 @@ export function useMarquee({
         dispatch({ type: 'SELECT', ids: hitIds });
       }
     } else if (!shiftRef.current) {
-      dispatch({ type: 'DESELECT_ALL' });
+      dispatch({ type: 'SELECT', ids: [CANVAS_ID] });
     }
 
     setMarquee(null);

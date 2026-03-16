@@ -60,6 +60,7 @@ export type EditorAction =
   | { type: 'DESELECT_ALL' }
   | { type: 'SET_DOCUMENT'; document: ElucimDocument }
   | { type: 'UPDATE_ELEMENT'; id: string; changes: Partial<ElementNode> }
+  | { type: 'UPDATE_CANVAS'; changes: Record<string, any> }
   | { type: 'ADD_ELEMENT'; element: ElementNode; parentPath?: string }
   | { type: 'DELETE_ELEMENTS'; ids: string[] }
   | { type: 'MOVE_ELEMENT'; id: string; dx: number; dy: number }
@@ -77,6 +78,9 @@ export type EditorAction =
   | { type: 'ZOOM_TO_FIT' }
   | { type: 'UNDO' }
   | { type: 'REDO' };
+
+/** Sentinel ID representing the canvas/scene root in the selection. */
+export const CANVAS_ID = '__canvas__';
 
 // ─── Element ID helpers ────────────────────────────────────────────────────
 
@@ -136,6 +140,7 @@ export const ZOOM_STEP = 0.1;
 export function isUndoableAction(action: EditorAction): boolean {
   switch (action.type) {
     case 'UPDATE_ELEMENT':
+    case 'UPDATE_CANVAS':
     case 'ADD_ELEMENT':
     case 'DELETE_ELEMENTS':
     case 'MOVE_ELEMENT':

@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import type { ElementNode } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
+import { CANVAS_ID } from '../state/types';
 import { v } from '../theme/tokens';
 
 export interface InspectorProps {
@@ -17,8 +18,15 @@ export function Inspector({ className, style }: InspectorProps) {
   const { state, dispatch } = useEditorState();
   const { selectedIds, document } = state;
 
-  // Only inspect single selection
-  const elementId = selectedIds.length === 1 ? selectedIds[0] : null;
+  const isCanvasSelected = selectedIds.length === 1 && selectedIds[0] === CANVAS_ID;
+
+  // Canvas properties handler
+  const handleCanvasChange = useCallback((field: string, value: any) => {
+    dispatch({ type: 'UPDATE_CANVAS', changes: { [field]: value } });
+  }, [dispatch]);
+
+  // Element properties handler
+  const elementId = (!isCanvasSelected && selectedIds.length === 1) ? selectedIds[0] : null;
   const loc = elementId ? findElementById(document.root, elementId) : null;
   const element = loc?.element ?? null;
 
@@ -26,6 +34,35 @@ export function Inspector({ className, style }: InspectorProps) {
     if (!elementId) return;
     dispatch({ type: 'UPDATE_ELEMENT', id: elementId, changes: { [field]: value } as any });
   }, [dispatch, elementId]);
+
+  // Canvas inspector
+  if (isCanvasSelected) {
+    const root = document.root as any;
+    return (
+      <div
+        className={`elucim-editor-inspector ${className ?? ''}`}
+        style={{ padding: 12, overflowY: 'auto', fontSize: 12, minWidth: 200, ...style }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: v('--elucim-editor-accent') }}>
+          Canvas
+        </div>
+
+        <InspectorSection title="Dimensions">
+          <NumberField label="Width" value={root.width ?? 800} onChange={val => handleCanvasChange('width', val)} />
+          <NumberField label="Height" value={root.height ?? 600} onChange={val => handleCanvasChange('height', val)} />
+        </InspectorSection>
+
+        <InspectorSection title="Appearance">
+          <ColorField label="Background" value={root.background ?? '#0f172a'} onChange={val => handleCanvasChange('background', val)} />
+        </InspectorSection>
+
+        <InspectorSection title="Playback">
+          <NumberField label="FPS" value={root.fps ?? 60} onChange={val => handleCanvasChange('fps', val)} />
+          <NumberField label="Duration" value={root.durationInFrames ?? 120} onChange={val => handleCanvasChange('durationInFrames', val)} />
+        </InspectorSection>
+      </div>
+    );
+  }
 
   if (!element) {
     return (

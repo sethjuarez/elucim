@@ -11,6 +11,7 @@ import { EditorErrorBoundary } from './panels/EditorErrorBoundary';
 import { useEditorState } from './state/EditorProvider';
 import { getElementBounds } from './utils/bounds';
 import { buildThemeVars, v } from './theme/tokens';
+import { CANVAS_ID } from './state/types';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
@@ -66,6 +67,13 @@ function EditorLayout({ theme, className, style }: { theme?: Record<string, stri
   const inspectorPos = React.useMemo(() => {
     if (state.inspectorPinned && state.inspectorPosition) {
       return state.inspectorPosition;
+    }
+
+    // Canvas selection — position at top-right area
+    if (state.selectedIds.length === 1 && state.selectedIds[0] === CANVAS_ID) {
+      const container = containerRef.current;
+      const maxX = (container?.clientWidth ?? 900) - 250;
+      return { x: Math.max(8, maxX), y: 60 };
     }
 
     // Find first selected element's bounds and position inspector to its right

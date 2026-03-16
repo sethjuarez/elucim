@@ -542,14 +542,15 @@ test.describe('Editor — Marquee Selection', () => {
     await page.screenshot({ path: `${SCREENSHOT_DIR}/36-marquee-selected.png` });
   });
 
-  test('click on empty canvas deselects all', async ({ page }) => {
+  test('click on empty canvas selects canvas and shows properties', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    // Select something by clicking an element's hit rect on canvas
+    // Select an element first
     await selectOnCanvas(page, 'rect-1');
     const inspector = page.locator('.elucim-editor-inspector');
     await expect(inspector).toBeVisible();
+    await expect(inspector).toContainText('Rect');
 
     // Click on empty canvas area (far right, vertically centered — away from elements)
     const canvas = page.locator('.elucim-editor-canvas');
@@ -558,7 +559,12 @@ test.describe('Editor — Marquee Selection', () => {
     await page.mouse.click(box.x + box.width - 50, box.y + box.height * 0.3);
     await page.waitForTimeout(500);
 
-    // Inspector should be gone (no selection)
-    await expect(inspector).not.toBeVisible();
+    // Inspector should show canvas properties
+    await expect(inspector).toBeVisible();
+    await expect(inspector).toContainText('Canvas');
+    await expect(inspector).toContainText('Width');
+    await expect(inspector).toContainText('Height');
+    await expect(inspector).toContainText('Background');
+    await expect(inspector).toContainText('FPS');
   });
 });
