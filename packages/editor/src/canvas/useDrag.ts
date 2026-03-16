@@ -42,6 +42,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
   const accDy = useRef(0);
   const didDrag = useRef(false);
   const shiftKeyRef = useRef(false);
+  const activeDragType = useRef<'move' | 'resize' | 'rotate' | null>(null);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     const target = e.target as SVGElement;
@@ -61,13 +62,15 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
 
     if (handleAttr) {
       const isRotate = handleAttr === 'rotate';
+      const type = isRotate ? 'rotate' as const : 'resize' as const;
       dragRef.current = {
-        type: isRotate ? 'rotate' : 'resize',
+        type,
         elementId: editorId,
         startX: coords.x,
         startY: coords.y,
         handle: handleAttr,
       };
+      activeDragType.current = type;
     } else {
       dragRef.current = {
         type: 'move',
@@ -75,6 +78,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
         startX: coords.x,
         startY: coords.y,
       };
+      activeDragType.current = 'move';
     }
 
     accDx.current = 0;
@@ -130,8 +134,9 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
       }
     }
     dragRef.current = null;
+    activeDragType.current = null;
     svgRef.current?.releasePointerCapture(e.pointerId);
   }, [dispatch, svgRef]);
 
-  return { handlePointerDown, handlePointerMove, handlePointerUp };
+  return { handlePointerDown, handlePointerMove, handlePointerUp, activeDragType };
 }

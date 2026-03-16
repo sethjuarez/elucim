@@ -15,6 +15,10 @@ const ROTATION_ARM = 24;
 const STROKE_COLOR = '#4a9eff';
 const HANDLE_FILL = '#fff';
 
+// SVG-based rotation cursor (↻ arrow)
+const ROTATE_CURSOR_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234a9eff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 12a9 9 0 1 1-3-6.7'/><polyline points='21 3 21 9 15 9'/></svg>`;
+export const ROTATE_CURSOR = `url("data:image/svg+xml,${ROTATE_CURSOR_SVG}") 12 12, crosshair`;
+
 /**
  * Renders selection rectangles with corner handles around selected elements.
  * Applies the same rotation transform as the element so the box rotates with it.
@@ -82,7 +86,7 @@ export function SelectionOverlay({ selections }: SelectionOverlayProps) {
               fill={HANDLE_FILL}
               stroke={STROKE_COLOR}
               strokeWidth={1.5}
-              style={{ pointerEvents: 'all', cursor: 'grab' }}
+              style={{ pointerEvents: 'all', cursor: ROTATE_CURSOR }}
             />
           </g>
         );

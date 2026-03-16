@@ -4,7 +4,7 @@ import { renderElement } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
-import { SelectionOverlay } from './SelectionOverlay';
+import { SelectionOverlay, ROTATE_CURSOR } from './SelectionOverlay';
 import { useDrag } from './useDrag';
 import { useKeyboardShortcuts } from './useKeyboard';
 import { useViewport, screenToScene, fitToView } from './useViewport';
@@ -86,7 +86,7 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
   });
 
   // Drag interactions (element move/resize/rotate)
-  const { handlePointerDown, handlePointerMove, handlePointerUp } = useDrag({
+  const { handlePointerDown, handlePointerMove, handlePointerUp, activeDragType } = useDrag({
     dispatch,
     svgRef: overlaySvgRef,
     sceneWidth: width,
@@ -143,8 +143,10 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
     })
     .filter((t): t is NonNullable<typeof t> => t !== null);
 
-  // Cursor based on state
-  const cursor = isPanning ? 'grab' : state.activeTool !== 'select' ? 'crosshair' : 'default';
+  // Cursor based on state — rotation drag shows custom rotation icon
+  const cursor = activeDragType.current === 'rotate'
+    ? ROTATE_CURSOR
+    : isPanning ? 'grab' : state.activeTool !== 'select' ? 'crosshair' : 'default';
 
   return (
     <div
