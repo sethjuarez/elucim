@@ -35,14 +35,28 @@ export function getElementBounds(element: ElementNode): BoundingBox | null {
     }
 
     case 'text':
-    case 'latex':
-      // Approximate text bounds — real measurement requires DOM
-      return {
-        x: element.x,
-        y: element.y - (('fontSize' in element ? element.fontSize : 16) ?? 16),
-        width: ('content' in element ? element.content.length : 5) * (('fontSize' in element ? element.fontSize : 16) ?? 16) * 0.6,
-        height: (('fontSize' in element ? element.fontSize : 16) ?? 16) * 1.2,
-      };
+    case 'latex': {
+      // SVG text: (x,y) is baseline position. Estimate bounds.
+      const fontSize = ('fontSize' in element ? element.fontSize : 16) ?? 16;
+      const content = ('content' in element ? element.content : '') ?? '';
+      const textLen = typeof content === 'string' ? content.length : 5;
+      const estWidth = textLen * fontSize * 0.6;
+      const estHeight = fontSize * 1.4;
+
+      // Account for textAnchor
+      const anchor = ('textAnchor' in element ? element.textAnchor : 'start') ?? 'start';
+      let bx = element.x;
+      if (anchor === 'middle') bx = element.x - estWidth / 2;
+      else if (anchor === 'end') bx = element.x - estWidth;
+
+      // Account for dominantBaseline
+      const baseline = ('dominantBaseline' in element ? element.dominantBaseline : 'auto') ?? 'auto';
+      let by = element.y - fontSize; // default: baseline at y, text ascends above
+      if (baseline === 'hanging') by = element.y;
+      else if (baseline === 'middle' || baseline === 'central') by = element.y - estHeight / 2;
+
+      return { x: bx, y: by, width: estWidth, height: estHeight };
+    }
 
     case 'polygon': {
       if (!element.points || element.points.length === 0) return null;
