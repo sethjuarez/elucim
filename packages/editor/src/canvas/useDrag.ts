@@ -40,6 +40,8 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
   const dragRef = useRef<DragState | null>(null);
   const accDx = useRef(0);
   const accDy = useRef(0);
+  const didDrag = useRef(false);
+  const shiftKeyRef = useRef(false);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     const target = e.target as SVGElement;
@@ -55,8 +57,9 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
 
     if (!editorId) return;
 
+    shiftKeyRef.current = e.shiftKey;
+
     if (handleAttr) {
-      // Resize or rotation
       const isRotate = handleAttr === 'rotate';
       dragRef.current = {
         type: isRotate ? 'rotate' : 'resize',
@@ -66,7 +69,6 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
         handle: handleAttr,
       };
     } else {
-      // Move
       dragRef.current = {
         type: 'move',
         elementId: editorId,
@@ -77,6 +79,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
 
     accDx.current = 0;
     accDy.current = 0;
+    didDrag.current = false;
     svg.setPointerCapture(e.pointerId);
     e.preventDefault();
   }, [svgRef, sceneWidth, sceneHeight]);
@@ -92,6 +95,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
 
     if (drag.type === 'move') {
       if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
+        didDrag.current = true;
         dispatch({ type: 'MOVE_ELEMENT', id: drag.elementId, dx, dy });
         accDx.current += dx;
         accDy.current += dy;
@@ -99,14 +103,15 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
     } else if (drag.type === 'resize') {
       const handle = drag.handle!;
       if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
+        didDrag.current = true;
         dispatch({ type: 'RESIZE_ELEMENT', id: drag.elementId, handle, dx, dy });
         accDx.current += dx;
         accDy.current += dy;
       }
     } else if (drag.type === 'rotate') {
-      // Compute angle based on pointer position relative to element center
-      const angleDelta = dx * 0.5; // Simple: horizontal movement = rotation degrees
+      const angleDelta = dx * 0.5;
       if (Math.abs(angleDelta) >= 0.5) {
+        didDrag.current = true;
         dispatch({ type: 'ROTATE_ELEMENT', id: drag.elementId, angleDeg: angleDelta });
         accDx.current += dx;
         accDy.current += dy;
@@ -115,9 +120,18 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
   }, [dispatch, svgRef, sceneWidth, sceneHeight]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    const drag = dragRef.current;
+    if (drag && !didDrag.current) {
+      // No significant drag movement — treat as a click → select
+      if (shiftKeyRef.current) {
+        dispatch({ type: 'SELECT_TOGGLE', id: drag.elementId });
+      } else {
+        dispatch({ type: 'SELECT', ids: [drag.elementId] });
+      }
+    }
     dragRef.current = null;
     svgRef.current?.releasePointerCapture(e.pointerId);
-  }, [svgRef]);
+  }, [dispatch, svgRef]);
 
   return { handlePointerDown, handlePointerMove, handlePointerUp };
 }

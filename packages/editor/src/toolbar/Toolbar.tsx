@@ -19,7 +19,8 @@ const PRESET_ITEMS = [
 ];
 
 /**
- * Toolbar with tools, element palette, and preset buttons.
+ * Toolbar content — element palette, undo/redo, and preset buttons.
+ * Rendered inside a FloatingPanel by ElucimEditor.
  */
 export function Toolbar({ className, style }: ToolbarProps) {
   const { state, dispatch } = useEditorState();
@@ -54,11 +55,7 @@ export function Toolbar({ className, style }: ToolbarProps) {
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
-        padding: '8px 6px',
-        background: '#16162a',
-        borderRight: '1px solid #334155',
-        overflowY: 'auto',
-        minWidth: 52,
+        padding: '6px',
         fontSize: 11,
         ...style,
       }}

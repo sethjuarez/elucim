@@ -5,14 +5,21 @@ export { ElucimEditor, type ElucimEditorProps } from './ElucimEditor';
 
 // State management (for advanced integrations)
 export { EditorProvider, useEditorState, useEditorDocument, useEditorSelection, type EditorProviderProps } from './state/EditorProvider';
-export type { EditorState, EditorAction, EditorTool, Viewport } from './state/types';
-export { createInitialState, createDefaultDocument } from './state/types';
+export type { EditorState, EditorAction, EditorTool, Viewport, PanelPosition } from './state/types';
+export { createInitialState, createDefaultDocument, MIN_ZOOM, MAX_ZOOM } from './state/types';
 export { editorReducer, findElementById, collectAllIds } from './state/reducer';
 
 // Canvas
 export { ElucimCanvas, type ElucimCanvasProps } from './canvas/ElucimCanvas';
 export { SelectionOverlay, type SelectionOverlayProps } from './canvas/SelectionOverlay';
 export { useDrag, type DragState } from './canvas/useDrag';
+export { useViewport, fitToView, clampZoom, screenToScene } from './canvas/useViewport';
+export { DotGrid } from './canvas/DotGrid';
+export { Minimap } from './canvas/Minimap';
+export { ZoomControls } from './canvas/ZoomControls';
+
+// Panels
+export { FloatingPanel, type FloatingPanelProps } from './panels/FloatingPanel';
 
 // Toolbar
 export { Toolbar, type ToolbarProps } from './toolbar/Toolbar';

@@ -8,6 +8,11 @@ export interface Viewport {
   zoom: number;
 }
 
+export interface PanelPosition {
+  x: number;
+  y: number;
+}
+
 export interface EditorState {
   /** The document being edited */
   document: ElucimDocument;
@@ -25,6 +30,16 @@ export interface EditorState {
   isPlaying: boolean;
   /** Active tool */
   activeTool: EditorTool;
+  /** Whether user is currently panning (Space held) */
+  isPanning: boolean;
+  /** Floating toolbar position */
+  toolbarPosition: PanelPosition;
+  /** Floating inspector position (null = auto-position near selection) */
+  inspectorPosition: PanelPosition | null;
+  /** Whether inspector is pinned to its current position */
+  inspectorPinned: boolean;
+  /** Whether toolbar is collapsed to icon strip */
+  toolbarCollapsed: boolean;
 }
 
 export type EditorTool =
@@ -54,6 +69,12 @@ export type EditorAction =
   | { type: 'SET_FRAME'; frame: number }
   | { type: 'SET_PLAYING'; playing: boolean }
   | { type: 'SET_TOOL'; tool: EditorTool }
+  | { type: 'SET_PANNING'; panning: boolean }
+  | { type: 'SET_TOOLBAR_POSITION'; position: PanelPosition }
+  | { type: 'SET_TOOLBAR_COLLAPSED'; collapsed: boolean }
+  | { type: 'SET_INSPECTOR_POSITION'; position: PanelPosition | null }
+  | { type: 'SET_INSPECTOR_PINNED'; pinned: boolean }
+  | { type: 'ZOOM_TO_FIT' }
   | { type: 'UNDO' }
   | { type: 'REDO' };
 
@@ -97,10 +118,19 @@ export function createInitialState(document?: ElucimDocument): EditorState {
     currentFrame: 0,
     isPlaying: false,
     activeTool: 'select',
+    isPanning: false,
+    toolbarPosition: { x: 12, y: 12 },
+    inspectorPosition: null,
+    inspectorPinned: false,
+    toolbarCollapsed: false,
   };
 }
 
 const MAX_HISTORY = 50;
+
+export const MIN_ZOOM = 0.1;
+export const MAX_ZOOM = 5;
+export const ZOOM_STEP = 0.1;
 
 /** Whether an action should create a history entry */
 export function isUndoableAction(action: EditorAction): boolean {

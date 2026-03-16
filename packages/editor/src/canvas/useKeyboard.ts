@@ -19,8 +19,9 @@ interface UseKeyboardOptions {
  * - Ctrl+Y / Ctrl+Shift+Z: Redo
  * - Arrow keys: Nudge selected elements by 1px (Shift = 10px)
  * - Escape: Deselect all
- * - Space: Toggle play/pause
- * - Ctrl+A: Select all (TODO)
+ * - Space (hold): Pan mode
+ * - Ctrl+0: Fit to view
+ * - +/-: Zoom in/out
  */
 export function useKeyboardShortcuts({ dispatch, selectedIds, getDocumentJson, importDocument }: UseKeyboardOptions) {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -56,6 +57,13 @@ export function useKeyboardShortcuts({ dispatch, selectedIds, getDocumentJson, i
         }
         break;
 
+      case '0':
+        if (ctrl) {
+          e.preventDefault();
+          dispatch({ type: 'ZOOM_TO_FIT' });
+        }
+        break;
+
       case 'Escape':
         dispatch({ type: 'DESELECT_ALL' });
         dispatch({ type: 'SET_TOOL', tool: 'select' });
@@ -63,7 +71,7 @@ export function useKeyboardShortcuts({ dispatch, selectedIds, getDocumentJson, i
 
       case ' ':
         e.preventDefault();
-        dispatch({ type: 'SET_PLAYING', playing: true }); // toggled in timeline
+        dispatch({ type: 'SET_PANNING', panning: true });
         break;
 
       case 'ArrowLeft':
@@ -83,8 +91,18 @@ export function useKeyboardShortcuts({ dispatch, selectedIds, getDocumentJson, i
     }
   }, [dispatch, selectedIds, getDocumentJson, importDocument]);
 
+  const handleKeyUp = useCallback((e: KeyboardEvent) => {
+    if (e.key === ' ') {
+      dispatch({ type: 'SET_PANNING', panning: false });
+    }
+  }, [dispatch]);
+
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [handleKeyDown, handleKeyUp]);
 }

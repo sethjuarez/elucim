@@ -9,8 +9,8 @@ export interface InspectorProps {
 }
 
 /**
- * Right-side inspector panel — shows properties for the selected element.
- * Edits dispatch UPDATE_ELEMENT actions.
+ * Inspector content — shows properties for the selected element.
+ * Rendered inside a FloatingPanel by ElucimEditor.
  */
 export function Inspector({ className, style }: InspectorProps) {
   const { state, dispatch } = useEditorState();
@@ -31,10 +31,7 @@ export function Inspector({ className, style }: InspectorProps) {
       <div
         className={`elucim-editor-inspector ${className ?? ''}`}
         style={{
-          width: 220,
           padding: 12,
-          background: '#16162a',
-          borderLeft: '1px solid #334155',
           color: '#64748b',
           fontSize: 12,
           ...style,
@@ -49,12 +46,10 @@ export function Inspector({ className, style }: InspectorProps) {
     <div
       className={`elucim-editor-inspector ${className ?? ''}`}
       style={{
-        width: 220,
         padding: 12,
-        background: '#16162a',
-        borderLeft: '1px solid #334155',
         overflowY: 'auto',
         fontSize: 12,
+        minWidth: 200,
         ...style,
       }}
     >

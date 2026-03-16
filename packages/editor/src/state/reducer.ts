@@ -300,6 +300,24 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'SET_TOOL':
       return { ...state, activeTool: action.tool };
 
+    case 'SET_PANNING':
+      return { ...state, isPanning: action.panning };
+
+    case 'SET_TOOLBAR_POSITION':
+      return { ...state, toolbarPosition: action.position };
+
+    case 'SET_TOOLBAR_COLLAPSED':
+      return { ...state, toolbarCollapsed: action.collapsed };
+
+    case 'SET_INSPECTOR_POSITION':
+      return { ...state, inspectorPosition: action.position };
+
+    case 'SET_INSPECTOR_PINNED':
+      return { ...state, inspectorPinned: action.pinned };
+
+    case 'ZOOM_TO_FIT':
+      return { ...state, viewport: { x: 0, y: 0, zoom: 1 } };
+
     case 'UNDO': {
       if (state.past.length === 0) return state;
       const prev = state.past[state.past.length - 1];
