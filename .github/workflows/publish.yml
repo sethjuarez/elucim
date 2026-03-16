@@ -16,6 +16,7 @@ jobs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       core_release: ${{ steps.release.outputs['packages/core--release_created'] }}
       dsl_release: ${{ steps.release.outputs['packages/dsl--release_created'] }}
+      editor_release: ${{ steps.release.outputs['packages/editor--release_created'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -55,3 +56,7 @@ jobs:
       - name: Publish @elucim/dsl
         if: ${{ needs.release-please.outputs.dsl_release == 'true' }}
         run: pnpm --filter @elucim/dsl publish --access public --no-git-checks --provenance
+
+      - name: Publish @elucim/editor
+        if: ${{ needs.release-please.outputs.editor_release == 'true' }}
+        run: pnpm --filter @elucim/editor publish --access public --no-git-checks --provenance

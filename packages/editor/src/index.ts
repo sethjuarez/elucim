@@ -27,3 +27,4 @@ export { Timeline, type TimelineProps } from './timeline/Timeline';
 // Utilities
 export { getElementBounds, mergeBounds, isPointInBounds, type BoundingBox } from './utils/bounds';
 export { computeSnap, type SnapGuide } from './utils/snap';
+export { exportToJson, importFromJson, downloadAsJson, type ExportOptions, type ImportResult } from './utils/io';

@@ -6,7 +6,9 @@ import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
 import { SelectionOverlay } from './SelectionOverlay';
 import { useDrag } from './useDrag';
+import { useKeyboardShortcuts } from './useKeyboard';
 import { getElementBounds } from '../utils/bounds';
+import { exportToJson, importFromJson } from '../utils/io';
 
 export interface ElucimCanvasProps {
   className?: string;
@@ -42,6 +44,22 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
     svgRef: overlaySvgRef,
     sceneWidth: width,
     sceneHeight: height,
+  });
+
+  // Keyboard shortcuts
+  const getDocumentJson = useCallback(() => exportToJson(document), [document]);
+  const handleImport = useCallback((json: string) => {
+    const result = importFromJson(json);
+    if (result.document) {
+      dispatch({ type: 'SET_DOCUMENT', document: result.document });
+    }
+  }, [dispatch]);
+
+  useKeyboardShortcuts({
+    dispatch,
+    selectedIds,
+    getDocumentJson: getDocumentJson,
+    importDocument: handleImport,
   });
 
   // Click handler — select element or deselect
