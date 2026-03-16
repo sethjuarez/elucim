@@ -12,11 +12,10 @@ const SCREENSHOT_DIR = 'screenshots/editor';
  *   3. Toolbar — add each element type
  *   4. Inspector — editing property values
  *   5. Timeline — playback controls, seek
- *   6. Presets — card, slide, square resize
- *   7. Undo / Redo
- *   8. Keyboard shortcuts — delete, arrow nudge, escape
- *   9. Viewport — zoom controls, fit-to-view
- *  10. Floating panels — toolbar collapse, inspector pin
+ *   6. Undo / Redo
+ *   7. Keyboard shortcuts — delete, arrow nudge, escape
+ *   8. Viewport — zoom controls, fit-to-view
+ *   9. Floating panels — toolbar collapse, inspector pin
  */
 
 /** Helper: select an element by clicking its timeline track label */
@@ -44,7 +43,6 @@ test.describe('Editor — Initial Render', () => {
     await expect(page.getByText('Lines')).toBeVisible();
     await expect(page.getByText('Math')).toBeVisible();
     await expect(page.getByText('Data')).toBeVisible();
-    await expect(page.getByText('Presets')).toBeVisible();
 
     // All 5 elements in timeline
     await expect(page.getByText('rect-1')).toBeVisible();
@@ -287,27 +285,6 @@ test.describe('Editor — Timeline Controls', () => {
     }
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/19-timeline-ruler-seek.png` });
-  });
-});
-
-test.describe('Editor — Presets', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto(EDITOR_URL);
-    await page.waitForTimeout(500);
-  });
-
-  test('card preset (640x360)', async ({ page }) => {
-    await page.getByTitle('Card').click({ force: true });
-    await page.waitForTimeout(300);
-
-    await page.screenshot({ path: `${SCREENSHOT_DIR}/20-preset-card.png` });
-  });
-
-  test('slide preset (1280x720)', async ({ page }) => {
-    await page.getByTitle('Slide').click({ force: true });
-    await page.waitForTimeout(300);
-
-    await page.screenshot({ path: `${SCREENSHOT_DIR}/21-preset-slide.png` });
   });
 });
 

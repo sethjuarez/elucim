@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { useEditorState } from '../state/EditorProvider';
-import { ELEMENT_TEMPLATES, getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from './templates';
-import type { EditorTool } from '../state/types';
+import { getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from './templates';
 import { v } from '../theme/tokens';
 
 export interface ToolbarProps {
@@ -9,18 +8,8 @@ export interface ToolbarProps {
   style?: React.CSSProperties;
 }
 
-const TOOL_ITEMS: { tool: EditorTool; label: string; icon: string }[] = [
-  { tool: 'select', label: 'Select', icon: '⊹' },
-];
-
-const PRESET_ITEMS = [
-  { label: 'Card', preset: 'card' as const, dims: [640, 360] },
-  { label: 'Slide', preset: 'slide' as const, dims: [1280, 720] },
-  { label: 'Square', preset: 'square' as const, dims: [600, 600] },
-];
-
 /**
- * Toolbar content — element palette, undo/redo, and preset buttons.
+ * Toolbar content — element palette and undo/redo.
  * Rendered inside a FloatingPanel by ElucimEditor.
  */
 export function Toolbar({ className, style }: ToolbarProps) {
@@ -38,14 +27,6 @@ export function Toolbar({ className, style }: ToolbarProps) {
     if (id) dispatch({ type: 'SELECT', ids: [id] });
   }, [state.document.root, dispatch]);
 
-  const handlePreset = useCallback((dims: number[]) => {
-    const doc = structuredClone(state.document);
-    const root = doc.root as any;
-    root.width = dims[0];
-    root.height = dims[1];
-    dispatch({ type: 'SET_DOCUMENT', document: doc });
-  }, [state.document, dispatch]);
-
   const handleUndo = useCallback(() => dispatch({ type: 'UNDO' }), [dispatch]);
   const handleRedo = useCallback(() => dispatch({ type: 'REDO' }), [dispatch]);
 
@@ -61,19 +42,6 @@ export function Toolbar({ className, style }: ToolbarProps) {
         ...style,
       }}
     >
-      {/* Tools */}
-      <ToolbarSection label="Tools">
-        {TOOL_ITEMS.map(({ tool, label, icon }) => (
-          <ToolbarButton
-            key={tool}
-            icon={icon}
-            label={label}
-            active={state.activeTool === tool}
-            onClick={() => dispatch({ type: 'SET_TOOL', tool })}
-          />
-        ))}
-      </ToolbarSection>
-
       {/* Undo / Redo */}
       <ToolbarSection label="History">
         <ToolbarButton icon="↶" label="Undo" onClick={handleUndo} disabled={state.past.length === 0} />
@@ -93,18 +61,6 @@ export function Toolbar({ className, style }: ToolbarProps) {
           ))}
         </ToolbarSection>
       ))}
-
-      {/* Scene presets */}
-      <ToolbarSection label="Presets">
-        {PRESET_ITEMS.map(({ label, dims }) => (
-          <ToolbarButton
-            key={label}
-            icon={label[0]}
-            label={label}
-            onClick={() => handlePreset(dims)}
-          />
-        ))}
-      </ToolbarSection>
     </div>
   );
 }
