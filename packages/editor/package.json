@@ -1,0 +1,69 @@
+{
+  "name": "@elucim/editor",
+  "version": "0.5.0",
+  "description": "Visual editor for creating and editing Elucim animated scenes",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sethjuarez/elucim.git",
+    "directory": "packages/editor"
+  },
+  "homepage": "https://elucim.com",
+  "bugs": "https://github.com/sethjuarez/elucim/issues",
+  "keywords": [
+    "react",
+    "animation",
+    "editor",
+    "visual",
+    "svg",
+    "elucim",
+    "canvas",
+    "drag-and-drop"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "tsc && vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@elucim/core": "workspace:*",
+    "@elucim/dsl": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^28.1.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "typescript": "^5.5.0",
+    "vite": "^5.4.0",
+    "vite-plugin-dts": "^4.0.0",
+    "vitest": "^2.0.0"
+  }
+}

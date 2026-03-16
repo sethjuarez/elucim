@@ -1,0 +1,84 @@
+import React from 'react';
+import type { BoundingBox } from '../utils/bounds';
+
+interface SelectionEntry {
+  id: string;
+  bounds: BoundingBox;
+}
+
+export interface SelectionOverlayProps {
+  selections: SelectionEntry[];
+}
+
+const HANDLE_SIZE = 8;
+const STROKE_COLOR = '#4a9eff';
+const HANDLE_FILL = '#fff';
+
+/**
+ * Renders selection rectangles with corner handles around selected elements.
+ * This is an SVG group that goes inside the overlay SVG.
+ */
+export function SelectionOverlay({ selections }: SelectionOverlayProps) {
+  if (selections.length === 0) return null;
+
+  return (
+    <g className="elucim-editor-selection">
+      {selections.map(({ id, bounds }) => (
+        <g key={`sel-${id}`} data-selection-id={id}>
+          {/* Selection rectangle */}
+          <rect
+            x={bounds.x}
+            y={bounds.y}
+            width={bounds.width}
+            height={bounds.height}
+            fill="none"
+            stroke={STROKE_COLOR}
+            strokeWidth={1.5}
+            strokeDasharray="4 2"
+            style={{ pointerEvents: 'none' }}
+          />
+
+          {/* Corner handles */}
+          {getCornerHandles(bounds).map((handle) => (
+            <rect
+              key={handle.position}
+              data-handle={handle.position}
+              data-editor-id={id}
+              x={handle.x - HANDLE_SIZE / 2}
+              y={handle.y - HANDLE_SIZE / 2}
+              width={HANDLE_SIZE}
+              height={HANDLE_SIZE}
+              fill={HANDLE_FILL}
+              stroke={STROKE_COLOR}
+              strokeWidth={1.5}
+              rx={1}
+              style={{ pointerEvents: 'all', cursor: handle.cursor }}
+            />
+          ))}
+        </g>
+      ))}
+    </g>
+  );
+}
+
+interface HandleInfo {
+  position: string;
+  x: number;
+  y: number;
+  cursor: string;
+}
+
+function getCornerHandles(bounds: BoundingBox): HandleInfo[] {
+  const { x, y, width, height } = bounds;
+  return [
+    { position: 'nw', x, y, cursor: 'nw-resize' },
+    { position: 'ne', x: x + width, y, cursor: 'ne-resize' },
+    { position: 'sw', x, y: y + height, cursor: 'sw-resize' },
+    { position: 'se', x: x + width, y: y + height, cursor: 'se-resize' },
+    // Edge midpoints
+    { position: 'n', x: x + width / 2, y, cursor: 'n-resize' },
+    { position: 's', x: x + width / 2, y: y + height, cursor: 's-resize' },
+    { position: 'w', x, y: y + height / 2, cursor: 'w-resize' },
+    { position: 'e', x: x + width, y: y + height / 2, cursor: 'e-resize' },
+  ];
+}
