@@ -36,6 +36,10 @@ export function FloatingPanel({
   const panelRef = useRef<HTMLDivElement>(null);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    // Don't start drag if clicking a button inside the header
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+
     e.preventDefault();
     e.stopPropagation();
     dragRef.current = {
@@ -131,6 +135,7 @@ export function FloatingPanel({
         {collapsible && onCollapsedChange && (
           <button
             onClick={(e) => { e.stopPropagation(); onCollapsedChange(!collapsed); }}
+            title={collapsed ? 'Expand panel' : 'Collapse panel'}
             style={{
               background: 'none',
               border: 'none',

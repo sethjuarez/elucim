@@ -21,7 +21,7 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, onFitToView }: ZoomCon
         position: 'absolute',
         bottom: 8,
         left: 8,
-        zIndex: 90,
+        zIndex: 110,
         display: 'flex',
         alignItems: 'center',
         gap: 2,
@@ -43,14 +43,14 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, onFitToView }: ZoomCon
           userSelect: 'none',
           cursor: 'pointer',
         }}
-        title="Fit to view"
+        title="Current zoom"
         onClick={onFitToView}
       >
         {pct}%
       </span>
       <ZoomButton icon="+" title="Zoom in" onClick={onZoomIn} />
       <div style={{ width: 1, height: 16, background: '#334155', margin: '0 2px' }} />
-      <ZoomButton icon="⊞" title="Fit to view" onClick={onFitToView} />
+      <ZoomButton icon="⤢" title="Fit to view" onClick={onFitToView} />
     </div>
   );
 }

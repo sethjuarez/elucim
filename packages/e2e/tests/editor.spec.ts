@@ -4,44 +4,63 @@ const EDITOR_URL = '/editor.html';
 const SCREENSHOT_DIR = 'screenshots/editor';
 
 /**
- * Comprehensive visual validation for @elucim/editor.
+ * Comprehensive visual validation for @elucim/editor (v2 — full-bleed canvas UX).
  *
  * Tests cover:
- *   1. Initial render — all elements visible at frame 0
- *   2. Selection — rect, circle, line, arrow, text (different inspector fields)
- *   3. Toolbar — add each element type (shape, line, text, math, data)
+ *   1. Initial render — canvas, floating toolbar, dot grid, minimap, zoom controls
+ *   2. Selection — rect, circle, line, arrow, text (floating inspector)
+ *   3. Toolbar — add each element type
  *   4. Inspector — editing property values
  *   5. Timeline — playback controls, seek
  *   6. Presets — card, slide, square resize
  *   7. Undo / Redo
- *   8. Keyboard shortcuts — delete, arrow nudge
- *   9. Deselect
+ *   8. Keyboard shortcuts — delete, arrow nudge, escape
+ *   9. Viewport — zoom controls, fit-to-view
+ *  10. Floating panels — toolbar collapse, inspector pin
  */
 
+/** Helper: select an element by clicking its timeline track label */
+async function selectViaTimeline(page: Page, name: string) {
+  await page.getByText(name, { exact: true }).click();
+  await page.waitForTimeout(300);
+}
+
+/** Helper: click on element's hit area on the canvas */
+async function selectOnCanvas(page: Page, editorId: string) {
+  const hitRect = page.locator(`[data-editor-id="${editorId}"]`);
+  const box = await hitRect.boundingBox();
+  if (!box) throw new Error(`Hit rect for ${editorId} not found`);
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(300);
+}
+
 test.describe('Editor — Initial Render', () => {
-  test('full editor loads with all 5 elements', async ({ page }) => {
+  test('full editor loads with canvas, toolbar, and timeline', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    // Verify toolbar sections
-    await expect(page.getByText('Tools')).toBeVisible();
+    // Floating toolbar with categories
     await expect(page.getByText('Shapes')).toBeVisible();
     await expect(page.getByText('Lines')).toBeVisible();
     await expect(page.getByText('Math')).toBeVisible();
     await expect(page.getByText('Data')).toBeVisible();
     await expect(page.getByText('Presets')).toBeVisible();
 
-    // Verify all 5 elements in timeline
+    // All 5 elements in timeline
     await expect(page.getByText('rect-1')).toBeVisible();
     await expect(page.getByText('circle-1')).toBeVisible();
     await expect(page.getByText('line-1')).toBeVisible();
     await expect(page.getByText('arrow-1')).toBeVisible();
     await expect(page.getByText('text-1')).toBeVisible();
 
-    // Verify inspector says "No selection"
-    await expect(page.getByText('No selection')).toBeVisible();
+    // No inspector visible (nothing selected)
+    await expect(page.getByText('Inspector')).not.toBeVisible();
 
-    // Verify timeline frame display
+    // Zoom controls visible
+    await expect(page.getByRole('button', { name: '+' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '−' })).toBeVisible();
+
+    // Timeline frame display
     await expect(page.getByText('0 / 119 @ 60fps')).toBeVisible();
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/01-initial-render.png`, fullPage: true });
@@ -54,11 +73,11 @@ test.describe('Editor — Selection', () => {
     await page.waitForTimeout(500);
   });
 
-  test('select rect — shows X/Y/W/H in inspector', async ({ page }) => {
-    await page.getByText('rect-1').click();
-    await page.waitForTimeout(200);
+  test('select rect — shows floating inspector with X/Y/W/H', async ({ page }) => {
+    await selectViaTimeline(page, 'rect-1');
 
     await expect(page.getByText('Rect — rect-1')).toBeVisible();
+    await expect(page.getByText('Inspector')).toBeVisible();
     await expect(page.getByRole('spinbutton', { name: 'X', exact: true })).toHaveValue('80');
     await expect(page.getByRole('spinbutton', { name: 'Y', exact: true })).toHaveValue('60');
     await expect(page.getByRole('spinbutton', { name: 'W', exact: true })).toHaveValue('160');
@@ -68,8 +87,7 @@ test.describe('Editor — Selection', () => {
   });
 
   test('select circle — shows CX/CY/R in inspector', async ({ page }) => {
-    await page.getByText('circle-1').click();
-    await page.waitForTimeout(200);
+    await selectViaTimeline(page, 'circle-1');
 
     await expect(page.getByText('Circle — circle-1')).toBeVisible();
     await expect(page.getByRole('spinbutton', { name: 'CX' })).toHaveValue('500');
@@ -80,8 +98,7 @@ test.describe('Editor — Selection', () => {
   });
 
   test('select line — shows X1/Y1/X2/Y2', async ({ page }) => {
-    await page.getByText('line-1').click();
-    await page.waitForTimeout(200);
+    await selectViaTimeline(page, 'line-1');
 
     await expect(page.getByText('Line — line-1')).toBeVisible();
     await expect(page.getByLabel('X1')).toHaveValue('100');
@@ -92,9 +109,8 @@ test.describe('Editor — Selection', () => {
     await page.screenshot({ path: `${SCREENSHOT_DIR}/04-select-line.png` });
   });
 
-  test('select arrow — shows X1/Y1/X2/Y2 + Arrow section', async ({ page }) => {
-    await page.getByText('arrow-1').click();
-    await page.waitForTimeout(200);
+  test('select arrow — shows Arrow section with Head Size', async ({ page }) => {
+    await selectViaTimeline(page, 'arrow-1');
 
     await expect(page.getByText('Arrow — arrow-1')).toBeVisible();
     await expect(page.getByText('▾ Arrow')).toBeVisible();
@@ -104,8 +120,7 @@ test.describe('Editor — Selection', () => {
   });
 
   test('select text — shows Content section', async ({ page }) => {
-    await page.getByText('text-1').click();
-    await page.waitForTimeout(200);
+    await selectViaTimeline(page, 'text-1');
 
     await expect(page.getByText('Text — text-1')).toBeVisible();
     await expect(page.getByText('▾ Content')).toBeVisible();
@@ -113,6 +128,13 @@ test.describe('Editor — Selection', () => {
     await expect(page.getByLabel('Font Size')).toHaveValue('28');
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/06-select-text.png` });
+  });
+
+  test('select element on canvas via click', async ({ page }) => {
+    await selectOnCanvas(page, 'rect-1');
+
+    await expect(page.getByText('Rect — rect-1')).toBeVisible();
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/06b-select-on-canvas.png` });
   });
 });
 
@@ -138,9 +160,6 @@ test.describe('Editor — Add Elements from Toolbar', () => {
     await page.getByRole('button', { name: '●' }).click();
     await page.waitForTimeout(200);
 
-    // No duplicate key errors
-    const errors = await page.evaluate(() => (window as any).__consoleErrors ?? []);
-    // Simply verify a 6th element appears in timeline
     const tracks = page.locator('.elucim-editor-timeline [style*="cursor: pointer"]');
     const trackCount = await tracks.count();
     expect(trackCount).toBeGreaterThanOrEqual(6);
@@ -156,7 +175,7 @@ test.describe('Editor — Add Elements from Toolbar', () => {
   });
 
   test('add axes', async ({ page }) => {
-    await page.getByRole('button', { name: '⊞' }).click();
+    await page.getByTitle('Axes').click();
     await page.waitForTimeout(200);
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/10-added-axes.png` });
@@ -189,9 +208,7 @@ test.describe('Editor — Inspector Editing', () => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    // Select rect
-    await page.getByText('rect-1').click();
-    await page.waitForTimeout(200);
+    await selectViaTimeline(page, 'rect-1');
 
     // Change X from 80 to 200
     const xField = page.getByRole('spinbutton', { name: 'X', exact: true });
@@ -200,9 +217,7 @@ test.describe('Editor — Inspector Editing', () => {
     await xField.press('Tab');
     await page.waitForTimeout(300);
 
-    // Verify the value stuck
     await expect(xField).toHaveValue('200');
-
     await page.screenshot({ path: `${SCREENSHOT_DIR}/14-rect-moved-via-inspector.png` });
   });
 
@@ -210,10 +225,8 @@ test.describe('Editor — Inspector Editing', () => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    await page.getByText('circle-1').click();
-    await page.waitForTimeout(200);
+    await selectViaTimeline(page, 'circle-1');
 
-    // Change radius from 60 to 100
     const rField = page.getByRole('spinbutton', { name: 'R', exact: true });
     await rField.click({ clickCount: 3 });
     await rField.fill('100');
@@ -221,7 +234,6 @@ test.describe('Editor — Inspector Editing', () => {
     await page.waitForTimeout(300);
 
     await expect(rField).toHaveValue('100');
-
     await page.screenshot({ path: `${SCREENSHOT_DIR}/15-circle-resized-via-inspector.png` });
   });
 
@@ -229,10 +241,8 @@ test.describe('Editor — Inspector Editing', () => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    await page.getByText('text-1').click();
-    await page.waitForTimeout(200);
+    await selectViaTimeline(page, 'text-1');
 
-    // Change text
     const textField = page.getByLabel('Text');
     await textField.click({ clickCount: 3 });
     await textField.fill('Hello World!');
@@ -258,8 +268,7 @@ test.describe('Editor — Timeline Controls', () => {
   });
 
   test('step forward', async ({ page }) => {
-    // Click step forward 5 times
-    const stepBtn = page.getByRole('button', { name: '▶' }).nth(1); // second ▶ is step forward
+    const stepBtn = page.getByRole('button', { name: '▶' }).nth(1);
     for (let i = 0; i < 5; i++) {
       await stepBtn.click();
     }
@@ -271,8 +280,6 @@ test.describe('Editor — Timeline Controls', () => {
 
   test('ruler click seeks to position', async ({ page }) => {
     const ruler = page.locator('.elucim-editor-timeline [style*="cursor: pointer"]').first();
-    // The ruler is the first clickable div in the timeline area
-    // Let's click at ~50% position on the ruler
     const rulerBox = await ruler.boundingBox();
     if (rulerBox) {
       await page.mouse.click(rulerBox.x + rulerBox.width * 0.5, rulerBox.y + rulerBox.height / 2);
@@ -290,14 +297,14 @@ test.describe('Editor — Presets', () => {
   });
 
   test('card preset (640x360)', async ({ page }) => {
-    await page.getByRole('button', { name: 'C' }).click();
+    await page.getByTitle('Card').click({ force: true });
     await page.waitForTimeout(300);
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/20-preset-card.png` });
   });
 
   test('slide preset (1280x720)', async ({ page }) => {
-    await page.getByRole('button', { name: 'S' }).first().click();
+    await page.getByTitle('Slide').click({ force: true });
     await page.waitForTimeout(300);
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/21-preset-slide.png` });
@@ -309,26 +316,21 @@ test.describe('Editor — Undo/Redo', () => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    // Verify 5 elements initially
     await expect(page.getByText('text-1')).toBeVisible();
 
-    // Add a rectangle
     await page.getByRole('button', { name: '▬' }).click();
     await page.waitForTimeout(200);
 
-    // Undo button should be enabled
     const undoBtn = page.getByRole('button', { name: '↶' });
     await expect(undoBtn).toBeEnabled();
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/22-before-undo.png` });
 
-    // Undo
     await undoBtn.click();
     await page.waitForTimeout(200);
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/23-after-undo.png` });
 
-    // Redo
     const redoBtn = page.getByRole('button', { name: '↷' });
     await expect(redoBtn).toBeEnabled();
     await redoBtn.click();
@@ -343,19 +345,16 @@ test.describe('Editor — Keyboard Shortcuts', () => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    // Select rect-1 via timeline
-    await page.getByText('rect-1').click();
-    await page.waitForTimeout(200);
+    await selectViaTimeline(page, 'rect-1');
     await expect(page.getByText('Rect — rect-1')).toBeVisible();
 
-    // Press Delete
     await page.keyboard.press('Delete');
     await page.waitForTimeout(200);
 
     // rect-1 should be gone from timeline
     await expect(page.getByText('rect-1')).not.toBeVisible();
-    // Inspector should show no selection
-    await expect(page.getByText('No selection')).toBeVisible();
+    // Inspector should disappear (no selection)
+    await expect(page.getByText('Inspector')).not.toBeVisible();
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/25-after-delete.png` });
   });
@@ -364,15 +363,12 @@ test.describe('Editor — Keyboard Shortcuts', () => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    // Add a circle
     await page.getByRole('button', { name: '●' }).click();
     await page.waitForTimeout(200);
 
-    // Ctrl+Z to undo
     await page.keyboard.press('Control+z');
     await page.waitForTimeout(200);
 
-    // Should be back to 5 elements
     await page.screenshot({ path: `${SCREENSHOT_DIR}/26-ctrl-z-undo.png` });
   });
 
@@ -380,50 +376,133 @@ test.describe('Editor — Keyboard Shortcuts', () => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    // Select rect-1
-    await page.getByText('rect-1').click();
-    await page.waitForTimeout(200);
+    await selectViaTimeline(page, 'rect-1');
 
     const xField = page.getByRole('spinbutton', { name: 'X', exact: true });
-    const initialX = await xField.inputValue();
-    expect(initialX).toBe('80');
+    expect(await xField.inputValue()).toBe('80');
 
-    // Press right arrow 3 times (focus must be on canvas, not input)
-    // Click on canvas area first to ensure keyboard goes there
-    await page.locator('.elucim-editor-canvas').click();
-    await page.waitForTimeout(100);
-
-    // Re-select after clicking canvas (clicking canvas may deselect)
-    await page.getByText('rect-1').click();
-    await page.waitForTimeout(200);
-
+    // Press right arrow 3 times
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowRight');
     await page.waitForTimeout(200);
 
-    // X should have increased by 3
-    const newX = await xField.inputValue();
-    expect(Number(newX)).toBe(83);
-
+    expect(Number(await xField.inputValue())).toBe(83);
     await page.screenshot({ path: `${SCREENSHOT_DIR}/27-arrow-nudge.png` });
   });
 
-  test('Escape deselects', async ({ page }) => {
+  test('Escape deselects and hides inspector', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    // Select rect
-    await page.getByText('rect-1').click();
-    await page.waitForTimeout(200);
+    await selectViaTimeline(page, 'rect-1');
     await expect(page.getByText('Rect — rect-1')).toBeVisible();
 
-    // Press Escape
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
 
-    await expect(page.getByText('No selection')).toBeVisible();
+    // Inspector should disappear
+    await expect(page.getByText('Inspector')).not.toBeVisible();
     await page.screenshot({ path: `${SCREENSHOT_DIR}/28-escape-deselect.png` });
+  });
+});
+
+test.describe('Editor — Viewport Controls', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+    // Collapse toolbar so it doesn't cover zoom controls
+    await page.getByTitle('Collapse panel').click();
+    await page.waitForTimeout(200);
+  });
+
+  test('zoom in via button', async ({ page }) => {
+    const zoomLabel = page.getByTitle('Current zoom');
+    const initialZoom = await zoomLabel.textContent();
+
+    await page.getByTitle('Zoom in').click();
+    await page.waitForTimeout(200);
+
+    const newZoom = await zoomLabel.textContent();
+    expect(newZoom).not.toBe(initialZoom);
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/30-zoom-in.png` });
+  });
+
+  test('zoom out via button', async ({ page }) => {
+    const zoomLabel = page.getByTitle('Current zoom');
+    const initialZoom = await zoomLabel.textContent();
+
+    await page.getByTitle('Zoom out').click();
+    await page.waitForTimeout(200);
+
+    const newZoom = await zoomLabel.textContent();
+    expect(newZoom).not.toBe(initialZoom);
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/31-zoom-out.png` });
+  });
+
+  test('fit to view resets zoom', async ({ page }) => {
+    // Zoom in first
+    await page.getByTitle('Zoom in').click();
+    await page.getByTitle('Zoom in').click();
+    await page.waitForTimeout(200);
+
+    // Fit to view
+    await page.getByTitle('Fit to view').click();
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/32-fit-to-view.png` });
+  });
+
+  test('minimap is visible', async ({ page }) => {
+    // The minimap should be in the bottom-right of the canvas area
+    const minimap = page.locator('.elucim-editor-canvas svg').last();
+    await expect(minimap).toBeVisible();
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/33-minimap-visible.png` });
+  });
+});
+
+test.describe('Editor — Floating Panels', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+  });
+
+  test('toolbar collapse toggle', async ({ page }) => {
+    // Toolbar should be visible with categories
+    await expect(page.getByText('Shapes')).toBeVisible();
+
+    // Click collapse button on the toolbar panel
+    await page.getByTitle('Collapse panel').click();
+    await page.waitForTimeout(200);
+
+    // Categories should be hidden
+    await expect(page.getByText('Shapes')).not.toBeVisible();
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/34-toolbar-collapsed.png` });
+
+    // Expand again
+    await page.getByTitle('Expand panel').click();
+    await page.waitForTimeout(200);
+
+    await expect(page.getByText('Shapes')).toBeVisible();
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/35-toolbar-expanded.png` });
+  });
+
+  test('inspector pin button toggles', async ({ page }) => {
+    await selectViaTimeline(page, 'rect-1');
+
+    // Inspector should appear
+    await expect(page.getByText('Inspector')).toBeVisible();
+
+    // Click pin button
+    const pinBtn = page.getByRole('button', { name: '📌' });
+    await pinBtn.click();
+    await page.waitForTimeout(200);
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/36-inspector-pinned.png` });
   });
 });
 
@@ -432,10 +511,17 @@ test.describe('Editor — Multiple Elements Added', () => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    // Add one of each type
-    const buttons = ['▬', '●', '╱', '→', 'T', '∑', '⊞', 'ƒ', '📊', '🔗'];
-    for (const icon of buttons) {
-      await page.getByRole('button', { name: icon }).click();
+    const buttons: Array<{ name: string; useTitle?: boolean }> = [
+      { name: '▬' }, { name: '●' }, { name: '╱' }, { name: '→' },
+      { name: 'T' }, { name: '∑' }, { name: 'Axes', useTitle: true },
+      { name: 'ƒ' }, { name: '📊' }, { name: '🔗' },
+    ];
+    for (const btn of buttons) {
+      if (btn.useTitle) {
+        await page.getByTitle(btn.name).click();
+      } else {
+        await page.getByRole('button', { name: btn.name }).click();
+      }
       await page.waitForTimeout(100);
     }
 

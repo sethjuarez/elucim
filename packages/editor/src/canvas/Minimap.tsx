@@ -74,7 +74,7 @@ export function Minimap({
         position: 'absolute',
         bottom: 8,
         right: 8,
-        zIndex: 90,
+        zIndex: 110,
         background: '#0f172acc',
         backdropFilter: 'blur(4px)',
         border: '1px solid #334155',
