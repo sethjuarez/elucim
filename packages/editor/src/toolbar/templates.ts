@@ -8,14 +8,14 @@ export interface ElementTemplate {
   create: (cx: number, cy: number) => ElementNode;
 }
 
-let nextId = 1;
+let nextId = Date.now();
 function genId(prefix: string): string {
-  return `${prefix}-${nextId++}`;
+  return `${prefix}-${(nextId++).toString(36).slice(-6)}`;
 }
 
 /** Reset ID counter (for testing) */
-export function resetIdCounter(): void {
-  nextId = 1;
+export function resetIdCounter(seed = 1): void {
+  nextId = seed;
 }
 
 export const ELEMENT_TEMPLATES: ElementTemplate[] = [
