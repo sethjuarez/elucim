@@ -21,6 +21,9 @@ export { ELEMENT_TEMPLATES, getTemplatesByCategory, CATEGORY_LABELS, type Elemen
 // Inspector
 export { Inspector, type InspectorProps } from './inspector/Inspector';
 
+// Timeline
+export { Timeline, type TimelineProps } from './timeline/Timeline';
+
 // Utilities
 export { getElementBounds, mergeBounds, isPointInBounds, type BoundingBox } from './utils/bounds';
 export { computeSnap, type SnapGuide } from './utils/snap';

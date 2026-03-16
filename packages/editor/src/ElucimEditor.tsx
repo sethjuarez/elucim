@@ -4,6 +4,7 @@ import { EditorProvider } from './state/EditorProvider';
 import { ElucimCanvas } from './canvas/ElucimCanvas';
 import { Toolbar } from './toolbar/Toolbar';
 import { Inspector } from './inspector/Inspector';
+import { Timeline } from './timeline/Timeline';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
@@ -35,6 +36,7 @@ export function ElucimEditor({ initialDocument, className, style }: ElucimEditor
         className={`elucim-editor ${className ?? ''}`}
         style={{
           display: 'flex',
+          flexDirection: 'column',
           background: '#1a1a2e',
           color: '#e0e0e0',
           fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -42,26 +44,32 @@ export function ElucimEditor({ initialDocument, className, style }: ElucimEditor
           ...style,
         }}
       >
-        {/* Toolbar — left sidebar */}
-        <Toolbar />
+        {/* Main area: toolbar + canvas + inspector */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+          {/* Toolbar — left sidebar */}
+          <Toolbar />
 
-        {/* Canvas area */}
-        <div
-          className="elucim-editor-main"
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'auto',
-            padding: 24,
-          }}
-        >
-          <ElucimCanvas />
+          {/* Canvas area */}
+          <div
+            className="elucim-editor-main"
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'auto',
+              padding: 24,
+            }}
+          >
+            <ElucimCanvas />
+          </div>
+
+          {/* Inspector — right sidebar */}
+          <Inspector />
         </div>
 
-        {/* Inspector — right sidebar */}
-        <Inspector />
+        {/* Timeline — bottom panel */}
+        <Timeline />
       </div>
     </EditorProvider>
   );
