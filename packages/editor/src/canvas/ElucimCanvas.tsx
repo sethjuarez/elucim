@@ -5,6 +5,7 @@ import type { ElementNode } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
 import { SelectionOverlay } from './SelectionOverlay';
+import { useDrag } from './useDrag';
 import { getElementBounds } from '../utils/bounds';
 
 export interface ElucimCanvasProps {
@@ -18,9 +19,9 @@ export interface ElucimCanvasProps {
  */
 export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
   const { state, dispatch } = useEditorState();
-  const { document, selectedIds, currentFrame, viewport } = state;
+  const { document, selectedIds, currentFrame } = state;
   const root = document.root;
-  const containerRef = useRef<HTMLDivElement>(null);
+  const overlaySvgRef = useRef<SVGSVGElement>(null);
 
   // Resolve scene dimensions
   const width = ('width' in root ? root.width : undefined) ?? 800;
@@ -35,9 +36,16 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
   // Build element ID map for hit testing
   const elementIds = children.map((el, i) => getElementId(el, i));
 
+  // Drag interactions
+  const { handlePointerDown, handlePointerMove, handlePointerUp } = useDrag({
+    dispatch,
+    svgRef: overlaySvgRef,
+    sceneWidth: width,
+    sceneHeight: height,
+  });
+
   // Click handler — select element or deselect
   const handleCanvasClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
-    // Check if clicking on a selectable element overlay
     const target = e.target as HTMLElement;
     const elementId = target.closest('[data-editor-id]')?.getAttribute('data-editor-id');
 
@@ -72,7 +80,6 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
 
   return (
     <div
-      ref={containerRef}
       className={`elucim-editor-canvas ${className ?? ''}`}
       style={{
         position: 'relative',
@@ -99,6 +106,7 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
 
       {/* Overlay layer — selection handles and hit targets */}
       <svg
+        ref={overlaySvgRef}
         width={width}
         height={height}
         viewBox={`0 0 ${width} ${height}`}
@@ -109,6 +117,9 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
           pointerEvents: 'none',
         }}
         className="elucim-editor-overlay"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
       >
         {/* Invisible hit targets for each element */}
         {hitTargets.map(({ id, bounds }) => (

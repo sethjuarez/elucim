@@ -139,6 +139,66 @@ function applyMove(element: ElementNode, dx: number, dy: number): ElementNode {
   return moved;
 }
 
+// ─── Resize helpers ────────────────────────────────────────────────────────
+
+function applyResize(element: ElementNode, handle: string, dx: number, dy: number): ElementNode {
+  const resized = { ...element } as any;
+  const affectsLeft = handle.includes('w');
+  const affectsRight = handle.includes('e');
+  const affectsTop = handle.includes('n');
+  const affectsBottom = handle.includes('s');
+
+  switch (element.type) {
+    case 'rect':
+    case 'image':
+    case 'barChart': {
+      if (affectsLeft) {
+        resized.x = (resized.x ?? 0) + dx;
+        resized.width = Math.max(1, (resized.width ?? 0) - dx);
+      }
+      if (affectsRight) {
+        resized.width = Math.max(1, (resized.width ?? 0) + dx);
+      }
+      if (affectsTop) {
+        resized.y = (resized.y ?? 0) + dy;
+        resized.height = Math.max(1, (resized.height ?? 0) - dy);
+      }
+      if (affectsBottom) {
+        resized.height = Math.max(1, (resized.height ?? 0) + dy);
+      }
+      break;
+    }
+
+    case 'circle': {
+      // Resize circle by adjusting radius based on the dominant axis
+      const dr = Math.max(Math.abs(dx), Math.abs(dy));
+      const sign = (affectsRight || affectsBottom) ? 1 : -1;
+      resized.r = Math.max(1, (resized.r ?? 0) + sign * dr);
+      break;
+    }
+
+    case 'line':
+    case 'arrow': {
+      // Resize by moving the endpoint closest to the handle
+      if (affectsLeft || affectsTop) {
+        resized.x1 = (resized.x1 ?? 0) + dx;
+        resized.y1 = (resized.y1 ?? 0) + dy;
+      }
+      if (affectsRight || affectsBottom) {
+        resized.x2 = (resized.x2 ?? 0) + dx;
+        resized.y2 = (resized.y2 ?? 0) + dy;
+      }
+      break;
+    }
+
+    default:
+      // For other types, no-op for now
+      break;
+  }
+
+  return resized as ElementNode;
+}
+
 // ─── Reducer ───────────────────────────────────────────────────────────────
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
@@ -207,6 +267,24 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const loc = findElementById(doc.root, action.id);
       if (!loc?.parent) return state;
       loc.parent[loc.index] = applyMove(loc.element, action.dx, action.dy);
+      return { ...state, document: doc };
+    }
+
+    case 'RESIZE_ELEMENT': {
+      const doc = cloneDoc(state.document);
+      const loc = findElementById(doc.root, action.id);
+      if (!loc?.parent) return state;
+      loc.parent[loc.index] = applyResize(loc.element, action.handle, action.dx, action.dy);
+      return { ...state, document: doc };
+    }
+
+    case 'ROTATE_ELEMENT': {
+      const doc = cloneDoc(state.document);
+      const loc = findElementById(doc.root, action.id);
+      if (!loc?.parent) return state;
+      const el = loc.element as any;
+      const current = el.rotation ?? 0;
+      loc.parent[loc.index] = { ...el, rotation: current + action.angleDeg } as ElementNode;
       return { ...state, document: doc };
     }
 

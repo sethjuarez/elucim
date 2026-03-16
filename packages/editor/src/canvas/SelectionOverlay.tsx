@@ -11,6 +11,7 @@ export interface SelectionOverlayProps {
 }
 
 const HANDLE_SIZE = 8;
+const ROTATION_ARM = 24;
 const STROKE_COLOR = '#4a9eff';
 const HANDLE_FILL = '#fff';
 
@@ -55,6 +56,28 @@ export function SelectionOverlay({ selections }: SelectionOverlayProps) {
               style={{ pointerEvents: 'all', cursor: handle.cursor }}
             />
           ))}
+
+          {/* Rotation handle — above top center */}
+          <line
+            x1={bounds.x + bounds.width / 2}
+            y1={bounds.y}
+            x2={bounds.x + bounds.width / 2}
+            y2={bounds.y - ROTATION_ARM}
+            stroke={STROKE_COLOR}
+            strokeWidth={1}
+            style={{ pointerEvents: 'none' }}
+          />
+          <circle
+            data-handle="rotate"
+            data-editor-id={id}
+            cx={bounds.x + bounds.width / 2}
+            cy={bounds.y - ROTATION_ARM}
+            r={HANDLE_SIZE / 2}
+            fill={HANDLE_FILL}
+            stroke={STROKE_COLOR}
+            strokeWidth={1.5}
+            style={{ pointerEvents: 'all', cursor: 'grab' }}
+          />
         </g>
       ))}
     </g>

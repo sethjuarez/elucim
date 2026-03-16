@@ -48,6 +48,8 @@ export type EditorAction =
   | { type: 'ADD_ELEMENT'; element: ElementNode; parentPath?: string }
   | { type: 'DELETE_ELEMENTS'; ids: string[] }
   | { type: 'MOVE_ELEMENT'; id: string; dx: number; dy: number }
+  | { type: 'RESIZE_ELEMENT'; id: string; handle: string; dx: number; dy: number }
+  | { type: 'ROTATE_ELEMENT'; id: string; angleDeg: number }
   | { type: 'SET_VIEWPORT'; viewport: Partial<Viewport> }
   | { type: 'SET_FRAME'; frame: number }
   | { type: 'SET_PLAYING'; playing: boolean }
@@ -107,6 +109,8 @@ export function isUndoableAction(action: EditorAction): boolean {
     case 'ADD_ELEMENT':
     case 'DELETE_ELEMENTS':
     case 'MOVE_ELEMENT':
+    case 'RESIZE_ELEMENT':
+    case 'ROTATE_ELEMENT':
     case 'SET_DOCUMENT':
       return true;
     default:

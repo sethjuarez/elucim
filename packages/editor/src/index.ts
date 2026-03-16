@@ -12,6 +12,8 @@ export { editorReducer, findElementById, collectAllIds } from './state/reducer';
 // Canvas
 export { ElucimCanvas, type ElucimCanvasProps } from './canvas/ElucimCanvas';
 export { SelectionOverlay, type SelectionOverlayProps } from './canvas/SelectionOverlay';
+export { useDrag, type DragState } from './canvas/useDrag';
 
 // Utilities
 export { getElementBounds, mergeBounds, isPointInBounds, type BoundingBox } from './utils/bounds';
+export { computeSnap, type SnapGuide } from './utils/snap';
