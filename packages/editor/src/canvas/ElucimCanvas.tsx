@@ -202,18 +202,25 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
         >
-          {hitTargets.map(({ id, bounds }) => (
-            <rect
-              key={`hit-${id}`}
-              data-editor-id={id}
-              x={bounds.x}
-              y={bounds.y}
-              width={bounds.width}
-              height={bounds.height}
-              fill="transparent"
-              style={{ pointerEvents: 'all', cursor: isPanning ? 'grab' : 'pointer' }}
-            />
-          ))}
+          {hitTargets.map(({ id, bounds }) => {
+            const { rotation, rotationCenter } = bounds;
+            const transform = rotation && rotationCenter
+              ? `rotate(${rotation}, ${rotationCenter[0]}, ${rotationCenter[1]})`
+              : undefined;
+            return (
+              <rect
+                key={`hit-${id}`}
+                data-editor-id={id}
+                x={bounds.x}
+                y={bounds.y}
+                width={bounds.width}
+                height={bounds.height}
+                fill="transparent"
+                transform={transform}
+                style={{ pointerEvents: 'all', cursor: isPanning ? 'grab' : 'pointer' }}
+              />
+            );
+          })}
           <SelectionOverlay selections={selectedBounds} />
         </svg>
       </div>

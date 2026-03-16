@@ -70,4 +70,53 @@ describe('isPointInBounds', () => {
     expect(isPointInBounds(8, 50, bounds, 4)).toBe(true); // within padding
     expect(isPointInBounds(3, 50, bounds, 4)).toBe(false); // outside padding
   });
+
+  it('un-rotates point for rotated bounds', () => {
+    // A rect at (0,0) 100x10, rotated 90° around its center (50,5)
+    // After rotation, the rect occupies roughly x=45..55, y=-45..55
+    const rotBounds = { x: 0, y: 0, width: 100, height: 10, rotation: 90, rotationCenter: [50, 5] as [number, number] };
+    // Point at (50, -30) is inside the rotated rect (maps to ~(35, 5) in local space)
+    expect(isPointInBounds(50, -30, rotBounds, 4)).toBe(true);
+    // Point at (50, 50) is outside — far from the rotated thin rect
+    expect(isPointInBounds(80, 50, rotBounds, 4)).toBe(false);
+  });
+});
+
+describe('getElementBounds rotation info', () => {
+  it('includes rotation for rotated rect', () => {
+    const rect: RectNode = { type: 'rect', x: 10, y: 20, width: 100, height: 80, rotation: 45 } as any;
+    const bounds = getElementBounds(rect);
+    expect(bounds).not.toBeNull();
+    expect(bounds!.rotation).toBe(45);
+    // Rect default origin = center
+    expect(bounds!.rotationCenter).toEqual([60, 60]);
+  });
+
+  it('uses rotationOrigin when specified', () => {
+    const rect = { type: 'rect', x: 0, y: 0, width: 100, height: 100, rotation: 30, rotationOrigin: [10, 20] } as any;
+    const bounds = getElementBounds(rect);
+    expect(bounds!.rotation).toBe(30);
+    expect(bounds!.rotationCenter).toEqual([10, 20]);
+  });
+
+  it('omits rotation when not set', () => {
+    const rect: RectNode = { type: 'rect', x: 10, y: 20, width: 100, height: 80 };
+    const bounds = getElementBounds(rect);
+    expect(bounds!.rotation).toBeUndefined();
+    expect(bounds!.rotationCenter).toBeUndefined();
+  });
+
+  it('uses text anchor point as rotation center for text', () => {
+    const text = { type: 'text', x: 50, y: 100, content: 'Hi', fontSize: 20, rotation: 90 } as any;
+    const bounds = getElementBounds(text);
+    expect(bounds!.rotation).toBe(90);
+    expect(bounds!.rotationCenter).toEqual([50, 100]);
+  });
+
+  it('uses circle center as rotation center', () => {
+    const circle = { type: 'circle', cx: 100, cy: 200, r: 50, rotation: 15 } as any;
+    const bounds = getElementBounds(circle);
+    expect(bounds!.rotation).toBe(15);
+    expect(bounds!.rotationCenter).toEqual([100, 200]);
+  });
 });

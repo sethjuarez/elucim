@@ -17,69 +17,76 @@ const HANDLE_FILL = '#fff';
 
 /**
  * Renders selection rectangles with corner handles around selected elements.
- * This is an SVG group that goes inside the overlay SVG.
+ * Applies the same rotation transform as the element so the box rotates with it.
  */
 export function SelectionOverlay({ selections }: SelectionOverlayProps) {
   if (selections.length === 0) return null;
 
   return (
     <g className="elucim-editor-selection">
-      {selections.map(({ id, bounds }) => (
-        <g key={`sel-${id}`} data-selection-id={id}>
-          {/* Selection rectangle */}
-          <rect
-            x={bounds.x}
-            y={bounds.y}
-            width={bounds.width}
-            height={bounds.height}
-            fill="none"
-            stroke={STROKE_COLOR}
-            strokeWidth={1.5}
-            strokeDasharray="4 2"
-            style={{ pointerEvents: 'none' }}
-          />
+      {selections.map(({ id, bounds }) => {
+        const { rotation, rotationCenter } = bounds;
+        const transform = rotation && rotationCenter
+          ? `rotate(${rotation}, ${rotationCenter[0]}, ${rotationCenter[1]})`
+          : undefined;
 
-          {/* Corner handles */}
-          {getCornerHandles(bounds).map((handle) => (
+        return (
+          <g key={`sel-${id}`} data-selection-id={id} transform={transform}>
+            {/* Selection rectangle */}
             <rect
-              key={handle.position}
-              data-handle={handle.position}
+              x={bounds.x}
+              y={bounds.y}
+              width={bounds.width}
+              height={bounds.height}
+              fill="none"
+              stroke={STROKE_COLOR}
+              strokeWidth={1.5}
+              strokeDasharray="4 2"
+              style={{ pointerEvents: 'none' }}
+            />
+
+            {/* Corner handles */}
+            {getCornerHandles(bounds).map((handle) => (
+              <rect
+                key={handle.position}
+                data-handle={handle.position}
+                data-editor-id={id}
+                x={handle.x - HANDLE_SIZE / 2}
+                y={handle.y - HANDLE_SIZE / 2}
+                width={HANDLE_SIZE}
+                height={HANDLE_SIZE}
+                fill={HANDLE_FILL}
+                stroke={STROKE_COLOR}
+                strokeWidth={1.5}
+                rx={1}
+                style={{ pointerEvents: 'all', cursor: handle.cursor }}
+              />
+            ))}
+
+            {/* Rotation handle — above top center */}
+            <line
+              x1={bounds.x + bounds.width / 2}
+              y1={bounds.y}
+              x2={bounds.x + bounds.width / 2}
+              y2={bounds.y - ROTATION_ARM}
+              stroke={STROKE_COLOR}
+              strokeWidth={1}
+              style={{ pointerEvents: 'none' }}
+            />
+            <circle
+              data-handle="rotate"
               data-editor-id={id}
-              x={handle.x - HANDLE_SIZE / 2}
-              y={handle.y - HANDLE_SIZE / 2}
-              width={HANDLE_SIZE}
-              height={HANDLE_SIZE}
+              cx={bounds.x + bounds.width / 2}
+              cy={bounds.y - ROTATION_ARM}
+              r={HANDLE_SIZE / 2}
               fill={HANDLE_FILL}
               stroke={STROKE_COLOR}
               strokeWidth={1.5}
-              rx={1}
-              style={{ pointerEvents: 'all', cursor: handle.cursor }}
+              style={{ pointerEvents: 'all', cursor: 'grab' }}
             />
-          ))}
-
-          {/* Rotation handle — above top center */}
-          <line
-            x1={bounds.x + bounds.width / 2}
-            y1={bounds.y}
-            x2={bounds.x + bounds.width / 2}
-            y2={bounds.y - ROTATION_ARM}
-            stroke={STROKE_COLOR}
-            strokeWidth={1}
-            style={{ pointerEvents: 'none' }}
-          />
-          <circle
-            data-handle="rotate"
-            data-editor-id={id}
-            cx={bounds.x + bounds.width / 2}
-            cy={bounds.y - ROTATION_ARM}
-            r={HANDLE_SIZE / 2}
-            fill={HANDLE_FILL}
-            stroke={STROKE_COLOR}
-            strokeWidth={1.5}
-            style={{ pointerEvents: 'all', cursor: 'grab' }}
-          />
-        </g>
-      ))}
+          </g>
+        );
+      })}
     </g>
   );
 }
