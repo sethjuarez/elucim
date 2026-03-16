@@ -1,5 +1,6 @@
 import React from 'react';
 import type { BoundingBox } from '../utils/bounds';
+import { v, ROTATE_CURSOR } from '../theme/tokens';
 
 interface SelectionEntry {
   id: string;
@@ -12,12 +13,6 @@ export interface SelectionOverlayProps {
 
 const HANDLE_SIZE = 8;
 const ROTATION_ARM = 24;
-const STROKE_COLOR = '#4a9eff';
-const HANDLE_FILL = '#fff';
-
-// SVG-based rotation cursor (↻ arrow)
-const ROTATE_CURSOR_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234a9eff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 12a9 9 0 1 1-3-6.7'/><polyline points='21 3 21 9 15 9'/></svg>`;
-export const ROTATE_CURSOR = `url("data:image/svg+xml,${ROTATE_CURSOR_SVG}") 12 12, crosshair`;
 
 /**
  * Renders selection rectangles with corner handles around selected elements.
@@ -43,7 +38,7 @@ export function SelectionOverlay({ selections }: SelectionOverlayProps) {
               width={bounds.width}
               height={bounds.height}
               fill="none"
-              stroke={STROKE_COLOR}
+              stroke={v('--elucim-editor-accent')}
               strokeWidth={1.5}
               strokeDasharray="4 2"
               style={{ pointerEvents: 'none' }}
@@ -59,8 +54,8 @@ export function SelectionOverlay({ selections }: SelectionOverlayProps) {
                 y={handle.y - HANDLE_SIZE / 2}
                 width={HANDLE_SIZE}
                 height={HANDLE_SIZE}
-                fill={HANDLE_FILL}
-                stroke={STROKE_COLOR}
+                fill="#fff"
+                stroke={v('--elucim-editor-accent')}
                 strokeWidth={1.5}
                 rx={1}
                 style={{ pointerEvents: 'all', cursor: handle.cursor }}
@@ -73,7 +68,7 @@ export function SelectionOverlay({ selections }: SelectionOverlayProps) {
               y1={bounds.y}
               x2={bounds.x + bounds.width / 2}
               y2={bounds.y - ROTATION_ARM}
-              stroke={STROKE_COLOR}
+              stroke={v('--elucim-editor-accent')}
               strokeWidth={1}
               style={{ pointerEvents: 'none' }}
             />
@@ -83,8 +78,8 @@ export function SelectionOverlay({ selections }: SelectionOverlayProps) {
               cx={bounds.x + bounds.width / 2}
               cy={bounds.y - ROTATION_ARM}
               r={HANDLE_SIZE / 2}
-              fill={HANDLE_FILL}
-              stroke={STROKE_COLOR}
+              fill="#fff"
+              stroke={v('--elucim-editor-accent')}
               strokeWidth={1.5}
               style={{ pointerEvents: 'all', cursor: ROTATE_CURSOR }}
             />

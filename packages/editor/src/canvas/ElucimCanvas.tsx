@@ -4,7 +4,8 @@ import { renderElement } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
-import { SelectionOverlay, ROTATE_CURSOR } from './SelectionOverlay';
+import { SelectionOverlay } from './SelectionOverlay';
+import { v, ROTATE_CURSOR } from '../theme/tokens';
 import { useDrag } from './useDrag';
 import { useKeyboardShortcuts } from './useKeyboard';
 import { useViewport, screenToScene, fitToView } from './useViewport';
@@ -238,8 +239,9 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
               y={marquee.y}
               width={marquee.width}
               height={marquee.height}
-              fill="rgba(74, 158, 255, 0.1)"
-              stroke="#4a9eff"
+              fill={v('--elucim-editor-accent')}
+              fillOpacity={0.1}
+              stroke={v('--elucim-editor-accent')}
               strokeWidth={1}
               strokeDasharray="6 3"
               style={{ pointerEvents: 'none' }}

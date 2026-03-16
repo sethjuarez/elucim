@@ -3,6 +3,7 @@ import type { ElementNode } from '@elucim/dsl';
 import type { Viewport } from '../state/types';
 import { getElementBounds } from '../utils/bounds';
 import { getElementId } from '../state/types';
+import { v } from '../theme/tokens';
 
 interface MinimapProps {
   viewport: Viewport;
@@ -75,9 +76,9 @@ export function Minimap({
         bottom: 8,
         right: 8,
         zIndex: 110,
-        background: '#0f172acc',
+        background: v('--elucim-editor-chrome'),
         backdropFilter: 'blur(4px)',
-        border: '1px solid #334155',
+        border: `1px solid ${v('--elucim-editor-border')}`,
         borderRadius: 6,
         overflow: 'hidden',
       }}
@@ -90,7 +91,7 @@ export function Minimap({
         style={{ display: 'block', cursor: 'pointer' }}
       >
         {/* Scene background */}
-        <rect x={sceneX} y={sceneY} width={sceneW} height={sceneH} fill="#0f172a" stroke="#334155" strokeWidth={0.5} />
+        <rect x={sceneX} y={sceneY} width={sceneW} height={sceneH} fill={v('--elucim-editor-input-bg')} stroke={v('--elucim-editor-border')} strokeWidth={0.5} />
 
         {/* Element indicators */}
         {elements.map((el, i) => {
@@ -103,8 +104,10 @@ export function Minimap({
               y={sceneY + bounds.y * scale}
               width={Math.max(2, bounds.width * scale)}
               height={Math.max(2, bounds.height * scale)}
-              fill="#4a9eff44"
-              stroke="#4a9eff88"
+              fill={v('--elucim-editor-accent')}
+              fillOpacity={0.27}
+              stroke={v('--elucim-editor-accent')}
+              strokeOpacity={0.53}
               strokeWidth={0.5}
             />
           );
@@ -117,7 +120,7 @@ export function Minimap({
           width={vpW}
           height={vpH}
           fill="none"
-          stroke="#4a9eff"
+          stroke={v('--elucim-editor-accent')}
           strokeWidth={1}
           strokeDasharray="2 1"
         />

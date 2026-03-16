@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useEffect } from 'react';
 import type { ElementNode } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
+import { v } from '../theme/tokens';
 
 export interface TimelineProps {
   className?: string;
@@ -84,21 +85,21 @@ export function Timeline({ className, style }: TimelineProps) {
     <div
       className={`elucim-editor-timeline ${className ?? ''}`}
       style={{
-        background: '#12122a',
-        borderTop: '1px solid #334155',
+        background: v('--elucim-editor-surface'),
+        borderTop: `1px solid ${v('--elucim-editor-border')}`,
         fontSize: 11,
         userSelect: 'none',
         ...style,
       }}
     >
       {/* Controls bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderBottom: '1px solid #1e293b' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}` }}>
         <TimelineButton icon="⏮" title="Start" onClick={goToStart} />
         <TimelineButton icon="◀" title="Step back" onClick={stepBackward} />
         <TimelineButton icon={isPlaying ? '⏸' : '▶'} title={isPlaying ? 'Pause' : 'Play'} onClick={togglePlay} active={isPlaying} />
         <TimelineButton icon="▶" title="Step forward" onClick={stepForward} />
         <TimelineButton icon="⏭" title="End" onClick={goToEnd} />
-        <div style={{ marginLeft: 8, color: '#94a3b8', fontVariantNumeric: 'tabular-nums' }}>
+        <div style={{ marginLeft: 8, color: v('--elucim-editor-text-secondary'), fontVariantNumeric: 'tabular-nums' }}>
           {currentFrame} / {durationInFrames - 1} @ {fps}fps
         </div>
       </div>
@@ -110,10 +111,10 @@ export function Timeline({ className, style }: TimelineProps) {
           onClick={handleRulerClick}
           style={{
             height: RULER_HEIGHT,
-            background: '#0f172a',
+            background: v('--elucim-editor-input-bg'),
             cursor: 'pointer',
             position: 'relative',
-            borderBottom: '1px solid #1e293b',
+            borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
           }}
         >
           {/* Tick marks */}
@@ -122,8 +123,8 @@ export function Timeline({ className, style }: TimelineProps) {
             const frame = Math.round((pct / 100) * (durationInFrames - 1));
             return (
               <div key={i} style={{ position: 'absolute', left: `${pct}%`, top: 0, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ width: 1, height: 6, background: '#475569' }} />
-                <span style={{ fontSize: 8, color: '#64748b' }}>{frame}</span>
+                <div style={{ width: 1, height: 6, background: v('--elucim-editor-text-disabled') }} />
+                <span style={{ fontSize: 8, color: v('--elucim-editor-text-muted') }}>{frame}</span>
               </div>
             );
           })}
@@ -135,7 +136,7 @@ export function Timeline({ className, style }: TimelineProps) {
             top: 0,
             width: 2,
             height: '100%',
-            background: '#4a9eff',
+            background: v('--elucim-editor-accent'),
             transform: 'translateX(-1px)',
           }} />
         </div>
@@ -158,8 +159,8 @@ export function Timeline({ className, style }: TimelineProps) {
                   height: TRACK_HEIGHT,
                   display: 'flex',
                   alignItems: 'center',
-                  borderBottom: '1px solid #1e293b',
-                  background: isSelected ? '#4a9eff11' : 'transparent',
+                  borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
+                  background: isSelected ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 7%, transparent)` : 'transparent',
                   cursor: 'pointer',
                 }}
               >
@@ -170,7 +171,7 @@ export function Timeline({ className, style }: TimelineProps) {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  color: isSelected ? '#4a9eff' : '#94a3b8',
+                  color: isSelected ? v('--elucim-editor-accent') : v('--elucim-editor-text-secondary'),
                   fontSize: 10,
                   flexShrink: 0,
                 }}>
@@ -187,7 +188,7 @@ export function Timeline({ className, style }: TimelineProps) {
                       top: 4,
                       width: `${(fadeIn / durationInFrames) * 100}%`,
                       height: TRACK_HEIGHT - 8,
-                      background: '#34d39966',
+                      background: `color-mix(in srgb, ${v('--elucim-editor-success')} 40%, transparent)`,
                       borderRadius: 2,
                     }} title={`fadeIn: ${fadeIn}f`} />
                   )}
@@ -199,7 +200,7 @@ export function Timeline({ className, style }: TimelineProps) {
                       top: 4,
                       width: `${(draw / durationInFrames) * 100}%`,
                       height: TRACK_HEIGHT - 8,
-                      background: '#4fc3f766',
+                      background: `color-mix(in srgb, ${v('--elucim-editor-info')} 40%, transparent)`,
                       borderRadius: 2,
                     }} title={`draw: ${draw}f`} />
                   )}
@@ -211,7 +212,7 @@ export function Timeline({ className, style }: TimelineProps) {
                       top: 4,
                       width: `${(fadeOut / durationInFrames) * 100}%`,
                       height: TRACK_HEIGHT - 8,
-                      background: '#f8717166',
+                      background: `color-mix(in srgb, ${v('--elucim-editor-error')} 40%, transparent)`,
                       borderRadius: 2,
                     }} title={`fadeOut: ${fadeOut}f`} />
                   )}
@@ -228,7 +229,7 @@ export function Timeline({ className, style }: TimelineProps) {
           top: RULER_HEIGHT,
           width: 1,
           height: children.length * TRACK_HEIGHT,
-          background: '#4a9eff88',
+          background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 53%, transparent)`,
           pointerEvents: 'none',
         }} />
       </div>
@@ -253,8 +254,8 @@ function TimelineButton({ icon, title, onClick, active }: {
         justifyContent: 'center',
         border: 'none',
         borderRadius: 3,
-        background: active ? '#4a9eff33' : 'transparent',
-        color: '#e0e0e0',
+        background: active ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 20%, transparent)` : 'transparent',
+        color: v('--elucim-editor-fg'),
         cursor: 'pointer',
         fontSize: 12,
       }}

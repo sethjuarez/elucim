@@ -1,4 +1,5 @@
 import React from 'react';
+import { v } from '../theme/tokens';
 
 interface ZoomControlsProps {
   zoom: number;
@@ -25,9 +26,9 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, onFitToView }: ZoomCon
         display: 'flex',
         alignItems: 'center',
         gap: 2,
-        background: '#0f172acc',
+        background: v('--elucim-editor-chrome'),
         backdropFilter: 'blur(4px)',
-        border: '1px solid #334155',
+        border: `1px solid ${v('--elucim-editor-border')}`,
         borderRadius: 6,
         padding: '2px 4px',
       }}
@@ -38,7 +39,7 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, onFitToView }: ZoomCon
           minWidth: 40,
           textAlign: 'center',
           fontSize: 10,
-          color: '#94a3b8',
+          color: v('--elucim-editor-text-secondary'),
           fontVariantNumeric: 'tabular-nums',
           userSelect: 'none',
           cursor: 'pointer',
@@ -49,7 +50,7 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, onFitToView }: ZoomCon
         {pct}%
       </span>
       <ZoomButton icon="+" title="Zoom in" onClick={onZoomIn} />
-      <div style={{ width: 1, height: 16, background: '#334155', margin: '0 2px' }} />
+      <div style={{ width: 1, height: 16, background: v('--elucim-editor-border'), margin: '0 2px' }} />
       <ZoomButton icon="⤢" title="Fit to view" onClick={onFitToView} />
     </div>
   );
@@ -69,7 +70,7 @@ function ZoomButton({ icon, title, onClick }: { icon: string; title: string; onC
         border: 'none',
         borderRadius: 4,
         background: 'transparent',
-        color: '#e0e0e0',
+        color: v('--elucim-editor-fg'),
         cursor: 'pointer',
         fontSize: 14,
       }}

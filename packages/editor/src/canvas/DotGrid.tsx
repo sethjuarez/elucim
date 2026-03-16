@@ -1,11 +1,12 @@
 import React from 'react';
+import { v } from '../theme/tokens';
 
 interface DotGridProps {
   /** Spacing between dots in scene pixels */
   spacing?: number;
   /** Dot radius */
   dotRadius?: number;
-  /** Dot color */
+  /** Dot color — defaults to the editor border token */
   color?: string;
 }
 
@@ -13,7 +14,8 @@ interface DotGridProps {
  * SVG-based dot grid that tiles behind the scene.
  * Rendered as a full-viewport background pattern.
  */
-export function DotGrid({ spacing = 20, dotRadius = 1, color = '#334155' }: DotGridProps) {
+export function DotGrid({ spacing = 20, dotRadius = 1, color }: DotGridProps) {
+  const dotColor = color ?? v('--elucim-editor-border');
   const patternId = 'elucim-dot-grid';
   return (
     <svg
@@ -33,7 +35,7 @@ export function DotGrid({ spacing = 20, dotRadius = 1, color = '#334155' }: DotG
           height={spacing}
           patternUnits="userSpaceOnUse"
         >
-          <circle cx={spacing / 2} cy={spacing / 2} r={dotRadius} fill={color} />
+          <circle cx={spacing / 2} cy={spacing / 2} r={dotRadius} fill={dotColor} />
         </pattern>
       </defs>
       <rect width="100%" height="100%" fill={`url(#${patternId})`} />

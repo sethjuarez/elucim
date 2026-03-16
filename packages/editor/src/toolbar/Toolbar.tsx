@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { useEditorState } from '../state/EditorProvider';
 import { ELEMENT_TEMPLATES, getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from './templates';
 import type { EditorTool } from '../state/types';
+import { v } from '../theme/tokens';
 
 export interface ToolbarProps {
   className?: string;
@@ -113,7 +114,7 @@ export function Toolbar({ className, style }: ToolbarProps) {
 function ToolbarSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1, padding: '2px 4px' }}>
+      <div style={{ fontSize: 9, color: v('--elucim-editor-text-muted'), textTransform: 'uppercase', letterSpacing: 1, padding: '2px 4px' }}>
         {label}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -149,12 +150,12 @@ function ToolbarButton({
         justifyContent: 'center',
         border: 'none',
         borderRadius: 4,
-        background: active ? '#4a9eff33' : 'transparent',
-        color: disabled ? '#475569' : '#e0e0e0',
+        background: active ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 20%, transparent)` : 'transparent',
+        color: disabled ? v('--elucim-editor-text-disabled') : v('--elucim-editor-fg'),
         cursor: disabled ? 'default' : 'pointer',
         fontSize: 16,
         lineHeight: 1,
-        outline: active ? '1px solid #4a9eff' : 'none',
+        outline: active ? `1px solid ${v('--elucim-editor-accent')}` : 'none',
       }}
     >
       {icon}

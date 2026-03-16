@@ -1,5 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import type { PanelPosition } from '../state/types';
+import { v } from '../theme/tokens';
 
 export interface FloatingPanelProps {
   children: React.ReactNode;
@@ -96,12 +97,12 @@ export function FloatingPanel({
         left: position.x,
         top: position.y,
         zIndex: 100,
-        background: '#16162aee',
+        background: v('--elucim-editor-panel'),
         backdropFilter: 'blur(8px)',
-        border: '1px solid #334155',
+        border: `1px solid ${v('--elucim-editor-border')}`,
         borderRadius: 8,
         boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-        color: '#e0e0e0',
+        color: v('--elucim-editor-fg'),
         fontSize: 11,
         overflow: 'hidden',
         maxWidth: maxWidth ?? 'none',
@@ -118,16 +119,16 @@ export function FloatingPanel({
           alignItems: 'center',
           gap: 6,
           padding: '4px 8px',
-          background: '#0f172a88',
+          background: `color-mix(in srgb, ${v('--elucim-editor-input-bg')} 53%, transparent)`,
           cursor: 'grab',
           userSelect: 'none',
           minHeight: 28,
-          borderBottom: collapsed ? 'none' : '1px solid #1e293b',
+          borderBottom: collapsed ? 'none' : `1px solid ${v('--elucim-editor-border-subtle')}`,
         }}
       >
-        <span style={{ color: '#475569', fontSize: 10, letterSpacing: 1 }}>⠿</span>
+        <span style={{ color: v('--elucim-editor-text-disabled'), fontSize: 10, letterSpacing: 1 }}>⠿</span>
         {title && (
-          <span style={{ flex: 1, fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          <span style={{ flex: 1, fontSize: 10, fontWeight: 600, color: v('--elucim-editor-text-secondary'), textTransform: 'uppercase', letterSpacing: 0.5 }}>
             {title}
           </span>
         )}
@@ -139,7 +140,7 @@ export function FloatingPanel({
             style={{
               background: 'none',
               border: 'none',
-              color: '#64748b',
+              color: v('--elucim-editor-text-muted'),
               cursor: 'pointer',
               fontSize: 10,
               padding: '0 2px',

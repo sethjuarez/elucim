@@ -33,6 +33,9 @@ export { Inspector, type InspectorProps } from './inspector/Inspector';
 // Timeline
 export { Timeline, type TimelineProps } from './timeline/Timeline';
 
+// Theme
+export { EDITOR_TOKENS, v, buildThemeVars, makeRotateCursor, ROTATE_CURSOR } from './theme/tokens';
+
 // Utilities
 export { getElementBounds, mergeBounds, isPointInBounds, type BoundingBox } from './utils/bounds';
 export { computeSnap, type SnapGuide } from './utils/snap';

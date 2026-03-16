@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import type { ElementNode } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
+import { v } from '../theme/tokens';
 
 export interface InspectorProps {
   className?: string;
@@ -32,7 +33,7 @@ export function Inspector({ className, style }: InspectorProps) {
         className={`elucim-editor-inspector ${className ?? ''}`}
         style={{
           padding: 12,
-          color: '#64748b',
+          color: v('--elucim-editor-text-muted'),
           fontSize: 12,
           ...style,
         }}
@@ -54,7 +55,7 @@ export function Inspector({ className, style }: InspectorProps) {
       }}
     >
       {/* Element type header */}
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: '#4a9eff' }}>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: v('--elucim-editor-accent') }}>
         {element.type.charAt(0).toUpperCase() + element.type.slice(1)}
         {'id' in element && element.id ? ` — ${element.id}` : ''}
       </div>
@@ -98,9 +99,9 @@ function InspectorSection({ title, children }: { title: string; children: React.
           fontSize: 10,
           textTransform: 'uppercase',
           letterSpacing: 1,
-          color: '#94a3b8',
+          color: v('--elucim-editor-text-secondary'),
           padding: '4px 0',
-          borderBottom: '1px solid #334155',
+          borderBottom: `1px solid ${v('--elucim-editor-border')}`,
           userSelect: 'none',
         }}
       >
@@ -118,7 +119,7 @@ function NumberField({ label, value, onChange, step = 1 }: {
 }) {
   return (
     <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-      <span style={{ color: '#94a3b8', minWidth: 50 }}>{label}</span>
+      <span style={{ color: v('--elucim-editor-text-secondary'), minWidth: 50 }}>{label}</span>
       <input
         type="number"
         value={value ?? ''}
@@ -126,10 +127,10 @@ function NumberField({ label, value, onChange, step = 1 }: {
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
         style={{
           width: 70,
-          background: '#0f172a',
-          border: '1px solid #334155',
+          background: v('--elucim-editor-input-bg'),
+          border: `1px solid ${v('--elucim-editor-border')}`,
           borderRadius: 3,
-          color: '#e0e0e0',
+          color: v('--elucim-editor-fg'),
           padding: '2px 6px',
           fontSize: 11,
         }}
@@ -143,7 +144,7 @@ function ColorField({ label, value, onChange }: {
 }) {
   return (
     <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-      <span style={{ color: '#94a3b8', minWidth: 50 }}>{label}</span>
+      <span style={{ color: v('--elucim-editor-text-secondary'), minWidth: 50 }}>{label}</span>
       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
         <input
           type="color"
@@ -157,10 +158,10 @@ function ColorField({ label, value, onChange }: {
           onChange={e => onChange(e.target.value)}
           style={{
             width: 70,
-            background: '#0f172a',
-            border: '1px solid #334155',
+            background: v('--elucim-editor-input-bg'),
+            border: `1px solid ${v('--elucim-editor-border')}`,
             borderRadius: 3,
-            color: '#e0e0e0',
+            color: v('--elucim-editor-fg'),
             padding: '2px 6px',
             fontSize: 11,
           }}
@@ -175,17 +176,17 @@ function TextField({ label, value, onChange }: {
 }) {
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <span style={{ color: '#94a3b8' }}>{label}</span>
+      <span style={{ color: v('--elucim-editor-text-secondary') }}>{label}</span>
       <input
         type="text"
         value={value ?? ''}
         onChange={e => onChange(e.target.value)}
         style={{
           width: '100%',
-          background: '#0f172a',
-          border: '1px solid #334155',
+          background: v('--elucim-editor-input-bg'),
+          border: `1px solid ${v('--elucim-editor-border')}`,
           borderRadius: 3,
-          color: '#e0e0e0',
+          color: v('--elucim-editor-fg'),
           padding: '4px 6px',
           fontSize: 11,
           boxSizing: 'border-box',

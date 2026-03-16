@@ -9,10 +9,17 @@ import { Timeline } from './timeline/Timeline';
 import { FloatingPanel } from './panels/FloatingPanel';
 import { useEditorState } from './state/EditorProvider';
 import { getElementBounds } from './utils/bounds';
+import { buildThemeVars, v } from './theme/tokens';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
   initialDocument?: ElucimDocument;
+  /**
+   * Theme overrides for editor chrome colors.
+   * Keys can be bare names (e.g. `"accent"`) which map to `--elucim-editor-accent`,
+   * or full CSS variable names (e.g. `"--elucim-editor-accent"`).
+   */
+  theme?: Record<string, string>;
   /** CSS class for the editor container */
   className?: string;
   /** Inline styles for the editor container */
@@ -23,17 +30,18 @@ export interface ElucimEditorProps {
  * A visual editor for creating and editing Elucim animated scenes.
  * Full-bleed canvas with floating toolbar, contextual inspector, and Premiere-style timeline.
  */
-export function ElucimEditor({ initialDocument, className, style }: ElucimEditorProps) {
+export function ElucimEditor({ initialDocument, theme, className, style }: ElucimEditorProps) {
   return (
     <EditorProvider initialDocument={initialDocument}>
-      <EditorLayout className={className} style={style} />
+      <EditorLayout theme={theme} className={className} style={style} />
     </EditorProvider>
   );
 }
 
-function EditorLayout({ className, style }: { className?: string; style?: React.CSSProperties }) {
+function EditorLayout({ theme, className, style }: { theme?: Record<string, string>; className?: string; style?: React.CSSProperties }) {
   const { state, dispatch } = useEditorState();
   const containerRef = useRef<HTMLDivElement>(null);
+  const themeVars = buildThemeVars(theme);
 
   const handleToolbarPosition = useCallback((pos: { x: number; y: number }) => {
     dispatch({ type: 'SET_TOOLBAR_POSITION', position: pos });
@@ -91,10 +99,11 @@ function EditorLayout({ className, style }: { className?: string; style?: React.
     <div
       className={`elucim-editor ${className ?? ''}`}
       style={{
+        ...themeVars,
         display: 'flex',
         flexDirection: 'column',
-        background: '#1a1a2e',
-        color: '#e0e0e0',
+        background: v('--elucim-editor-bg'),
+        color: v('--elucim-editor-fg'),
         fontFamily: 'system-ui, -apple-system, sans-serif',
         height: '100%',
         ...style,
@@ -131,7 +140,7 @@ function EditorLayout({ className, style }: { className?: string; style?: React.
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: state.inspectorPinned ? '#4a9eff' : '#64748b',
+                  color: state.inspectorPinned ? v('--elucim-editor-accent') : v('--elucim-editor-text-muted'),
                   cursor: 'pointer',
                   fontSize: 12,
                   padding: '0 2px',
