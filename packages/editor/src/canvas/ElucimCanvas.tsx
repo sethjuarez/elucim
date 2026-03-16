@@ -176,6 +176,9 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
           transformOrigin: '0 0',
           transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
           willChange: 'transform',
+          border: `1px solid ${v('--elucim-editor-border')}`,
+          boxShadow: '0 2px 16px rgba(0,0,0,0.35)',
+          borderRadius: 2,
         }}
       >
         {/* Scene layer */}
