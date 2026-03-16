@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState, useEffect, type MouseEvent } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { Scene } from '@elucim/core';
 import { renderElement } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
@@ -9,6 +9,7 @@ import { useDrag } from './useDrag';
 import { useKeyboardShortcuts } from './useKeyboard';
 import { useViewport, screenToScene, fitToView } from './useViewport';
 import { useMeasuredBounds } from './useMeasuredBounds';
+import { useMarquee } from './useMarquee';
 import { DotGrid } from './DotGrid';
 import { Minimap } from './Minimap';
 import { ZoomControls } from './ZoomControls';
@@ -108,19 +109,23 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
     importDocument: handleImport,
   });
 
-  // Click handler — deselect when clicking empty canvas space
-  const handleCanvasClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
-    if (isPanning) return;
-    const target = e.target as HTMLElement;
-    // If click hit an element (handled by useDrag pointer handlers), do nothing
-    if (target.closest('[data-editor-id]')) return;
-    // If click hit a panel or control, do nothing
-    if (target.closest('.elucim-editor-overlay')) return;
-    dispatch({ type: 'DESELECT_ALL' });
-  }, [dispatch, isPanning]);
-
   // DOM-measured bounds — pixel-perfect for every element type
   const measuredBounds = useMeasuredBounds(sceneSvgRef, elementIds, children);
+
+  // Marquee (lasso) selection — drag on empty canvas to select
+  const {
+    marquee,
+    handleMarqueeStart,
+    handleMarqueeMove,
+    handleMarqueeEnd,
+  } = useMarquee({
+    dispatch,
+    viewport,
+    containerRef,
+    isPanning,
+    activeTool: state.activeTool,
+    boundsMap: measuredBounds,
+  });
 
   // Collect selected element bounds for the overlay
   const selectedBounds = selectedIds
@@ -152,10 +157,9 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
         cursor,
         ...style,
       }}
-      onPointerDown={handlePanStart}
-      onPointerMove={handlePanMove}
-      onPointerUp={handlePanEnd}
-      onClick={handleCanvasClick}
+      onPointerDown={(e) => { handlePanStart(e); handleMarqueeStart(e); }}
+      onPointerMove={(e) => { handlePanMove(e); handleMarqueeMove(e); }}
+      onPointerUp={(e) => { handlePanEnd(e); handleMarqueeEnd(e); }}
     >
       {/* Dot grid background */}
       <DotGrid spacing={20} />
@@ -225,6 +229,20 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
             );
           })}
           <SelectionOverlay selections={selectedBounds} />
+          {/* Marquee selection rectangle */}
+          {marquee && (
+            <rect
+              x={marquee.x}
+              y={marquee.y}
+              width={marquee.width}
+              height={marquee.height}
+              fill="rgba(74, 158, 255, 0.1)"
+              stroke="#4a9eff"
+              strokeWidth={1}
+              strokeDasharray="6 3"
+              style={{ pointerEvents: 'none' }}
+            />
+          )}
         </svg>
       </div>
 

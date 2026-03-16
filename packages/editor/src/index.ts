@@ -15,6 +15,7 @@ export { SelectionOverlay, type SelectionOverlayProps } from './canvas/Selection
 export { useDrag, type DragState } from './canvas/useDrag';
 export { useViewport, fitToView, clampZoom, screenToScene } from './canvas/useViewport';
 export { useMeasuredBounds } from './canvas/useMeasuredBounds';
+export { useMarquee, type MarqueeRect } from './canvas/useMarquee';
 export { DotGrid } from './canvas/DotGrid';
 export { Minimap } from './canvas/Minimap';
 export { ZoomControls } from './canvas/ZoomControls';

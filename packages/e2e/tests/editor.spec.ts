@@ -529,3 +529,59 @@ test.describe('Editor — Multiple Elements Added', () => {
     await page.screenshot({ path: `${SCREENSHOT_DIR}/29-all-element-types-added.png`, fullPage: true });
   });
 });
+
+// ─── Marquee Selection ─────────────────────────────────────────────────────
+
+test.describe('Editor — Marquee Selection', () => {
+  test('drag on empty canvas draws marquee and selects elements', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    // Canvas area
+    const canvas = page.locator('.elucim-editor-canvas');
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error('Canvas not found');
+
+    // Drag a large rectangle that should encompass all demo elements
+    // Start from top-left area, drag to bottom-right
+    await page.mouse.move(box.x + 20, box.y + 20);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width - 20, box.y + box.height / 2, { steps: 10 });
+    await page.waitForTimeout(200);
+
+    // Marquee rectangle should be visible during drag
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/35-marquee-drag.png` });
+
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+
+    // After release, some elements should be selected (timeline highlights)
+    const timeline = page.locator('.elucim-editor-timeline');
+    const selectedItems = timeline.locator('[style*="background"]');
+    // At least one element should be selected
+    const count = await selectedItems.count();
+    expect(count).toBeGreaterThan(0);
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/36-marquee-selected.png` });
+  });
+
+  test('click on empty canvas deselects all', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    // Select something by clicking an element's hit rect on canvas
+    await selectOnCanvas(page, 'rect-1');
+    const inspector = page.locator('.elucim-editor-inspector');
+    await expect(inspector).toBeVisible();
+
+    // Click on empty canvas area (far right, vertically centered — away from elements)
+    const canvas = page.locator('.elucim-editor-canvas');
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error('Canvas not found');
+    await page.mouse.click(box.x + box.width - 50, box.y + box.height * 0.3);
+    await page.waitForTimeout(500);
+
+    // Inspector should be gone (no selection)
+    await expect(inspector).not.toBeVisible();
+  });
+});
