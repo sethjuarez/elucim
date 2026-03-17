@@ -94,6 +94,7 @@ export function ArrayEditor({ columns, rows, onChange, maxRows = 20, newRowTempl
                   onChange={e => handleCellChange(rowIdx, col.key, col.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
                   style={{
                     width: '100%',
+                    height: 18,
                     fontSize: 10,
                     padding: '1px 3px',
                     border: `1px solid ${v('--elucim-editor-border-subtle')}`,
@@ -192,7 +193,7 @@ export function MatrixEditor({ values, onChange }: MatrixEditorProps) {
   return (
     <div style={{ fontSize: 10 }}>
       {/* Grid */}
-      <div style={{ display: 'inline-grid', gridTemplateColumns: `repeat(${cols}, 48px)`, gap: 2 }}>
+      <div style={{ display: 'inline-grid', gridTemplateColumns: `repeat(${cols}, 40px)`, gap: 2 }}>
         {values.map((row, ri) =>
           row.map((cell, ci) => (
             <input
@@ -201,15 +202,17 @@ export function MatrixEditor({ values, onChange }: MatrixEditorProps) {
               value={cell}
               onChange={e => handleCellChange(ri, ci, parseFloat(e.target.value) || 0)}
               style={{
-                width: 48,
+                width: 40,
+                height: 20,
                 fontSize: 10,
-                padding: '2px 3px',
+                padding: '1px 2px',
                 border: `1px solid ${v('--elucim-editor-border-subtle')}`,
                 borderRadius: 2,
                 background: v('--elucim-editor-input-bg'),
                 color: v('--elucim-editor-fg'),
                 textAlign: 'center',
                 outline: 'none',
+                boxSizing: 'border-box',
               }}
             />
           ))
