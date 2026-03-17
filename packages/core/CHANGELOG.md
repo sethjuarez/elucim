@@ -1,5 +1,13 @@
 # @elucim/core
 
+## [0.8.0](https://github.com/sethjuarez/elucim/compare/core-v0.7.0...core-v0.8.0) (2026-03-17)
+
+
+### Bug Fixes
+
+* **core:** make colorScheme configurable instead of hardcoded ([a170702](https://github.com/sethjuarez/elucim/commit/a170702a1614d3636ae0629f721d13fed2a96b6a))
+* **editor:** resize direction, matrix bounds, graph node drag ([bae3f3e](https://github.com/sethjuarez/elucim/commit/bae3f3e527b1263b170608810b7db82df93a9d04))
+
 ## [0.7.0](https://github.com/sethjuarez/elucim/compare/core-v0.6.0...core-v0.7.0) (2026-03-17)
 
 

@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.8.0](https://github.com/sethjuarez/elucim/compare/editor-v0.7.0...editor-v0.8.0) (2026-03-17)
+
+
+### Features
+
+* **editor:** add menu bar with export/import, theme picker, custom themes ([18cc8f9](https://github.com/sethjuarez/elucim/commit/18cc8f9c53a9a5a2c499030667ccc010559555e6))
+* **editor:** add missing primitives, group/ungroup, rename/reorder ([70a1b87](https://github.com/sethjuarez/elucim/commit/70a1b871ebdd467bfbd35e4bacdce6c2827a42dc))
+* **editor:** interactive timeline with rename, reorder, bar editing, easing ([ef78e63](https://github.com/sethjuarez/elucim/commit/ef78e6349ac91f2184c6cc7bf31e5fe66fd4eed6))
+* **editor:** right-click context menu, group move/resize, full editor theming ([d2f95a7](https://github.com/sethjuarez/elucim/commit/d2f95a742d225d15b4686e6b6186d6699f818e26))
+* **editor:** standardize all icons as monochrome SVGs ([efab8b9](https://github.com/sethjuarez/elucim/commit/efab8b977aeab9208c39262e06b6e821d040c985))
+* **editor:** switch to Lucide icons with overridable icon system ([32a66d3](https://github.com/sethjuarez/elucim/commit/32a66d314ea552e1391b024241b4e0c6c2419927))
+* **editor:** unified data editors for bar chart, graph, polygon, matrix ([1b4cd19](https://github.com/sethjuarez/elucim/commit/1b4cd19b53d0e358869d1e65a965c3dadf2bdcd2))
+
+
+### Bug Fixes
+
+* add missing id to VectorFieldNode, fix ElementNode id access in reducer ([2486389](https://github.com/sethjuarez/elucim/commit/24863897c3010b272b8eabd4480503b7dd03b94a))
+* **editor:** compact number spinners, allow negative number input ([4c8c8db](https://github.com/sethjuarez/elucim/commit/4c8c8db5225f5ef26b79c2acb527a40683105d98))
+* **editor:** consolidate toolbar, standardize Lucide icons, fix matrix bounds and graph move ([c537e53](https://github.com/sethjuarez/elucim/commit/c537e53d0e15ed502525c237df83d3431effd0ff))
+* **editor:** disable text selection across entire editor UI ([94a7ae7](https://github.com/sethjuarez/elucim/commit/94a7ae7447848db672d21204118c0e3b6fca24c0))
+* **editor:** LaTeX rendering and rotated matrix selection box ([30f5649](https://github.com/sethjuarez/elucim/commit/30f56492d24607a282870b8c1394c0ad687a933a))
+* **editor:** refine graph and pin icons for clarity ([cfd4615](https://github.com/sethjuarez/elucim/commit/cfd4615f14c4bcc29b47ee8f56b9620fa0f41d33))
+* **editor:** resize direction, matrix bounds, graph node drag ([bae3f3e](https://github.com/sethjuarez/elucim/commit/bae3f3e527b1263b170608810b7db82df93a9d04))
+* **editor:** snap move/resize positions to integer values ([3ecaa50](https://github.com/sethjuarez/elucim/commit/3ecaa50f6e48c7a4dc862e871005714d8208677f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.8.0
+    * @elucim/dsl bumped to 0.8.0
+
 ## [0.7.0](https://github.com/sethjuarez/elucim/compare/editor-v0.6.0...editor-v0.7.0) (2026-03-17)
 
 

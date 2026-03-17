@@ -1,5 +1,25 @@
 # @elucim/dsl
 
+## [0.8.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.7.0...dsl-v0.8.0) (2026-03-17)
+
+
+### Features
+
+* **dsl:** add renderToPng for CSP-safe PNG export ([a0c07d9](https://github.com/sethjuarez/elucim/commit/a0c07d9581bc2475c23af1eeb54d047cd7802feb))
+
+
+### Bug Fixes
+
+* add missing id to VectorFieldNode, fix ElementNode id access in reducer ([2486389](https://github.com/sethjuarez/elucim/commit/24863897c3010b272b8eabd4480503b7dd03b94a))
+* **core:** make colorScheme configurable instead of hardcoded ([a170702](https://github.com/sethjuarez/elucim/commit/a170702a1614d3636ae0629f721d13fed2a96b6a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.8.0
+
 ## [0.7.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.6.0...dsl-v0.7.0) (2026-03-17)
 
 
