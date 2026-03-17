@@ -1,5 +1,19 @@
 # @elucim/dsl
 
+## [0.8.1](https://github.com/sethjuarez/elucim/compare/dsl-v0.8.0...dsl-v0.8.1) (2026-03-17)
+
+
+### Bug Fixes
+
+* **dsl:** resolve \ colors to hex fallbacks in renderToPng ([4404a12](https://github.com/sethjuarez/elucim/commit/4404a121e6f1768c2873737fd07bd85c5d0dc669)), closes [#13](https://github.com/sethjuarez/elucim/issues/13)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.8.1
+
 ## [0.8.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.7.0...dsl-v0.8.0) (2026-03-17)
 
 
