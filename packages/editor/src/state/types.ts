@@ -64,6 +64,7 @@ export type EditorAction =
   | { type: 'ADD_ELEMENT'; element: ElementNode; parentPath?: string }
   | { type: 'DELETE_ELEMENTS'; ids: string[] }
   | { type: 'MOVE_ELEMENT'; id: string; dx: number; dy: number }
+  | { type: 'MOVE_GRAPH_NODE'; graphId: string; nodeId: string; dx: number; dy: number }
   | { type: 'RESIZE_ELEMENT'; id: string; handle: string; dx: number; dy: number }
   | { type: 'ROTATE_ELEMENT'; id: string; angleDeg: number }
   | { type: 'SET_VIEWPORT'; viewport: Partial<Viewport> }

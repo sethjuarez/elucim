@@ -148,6 +148,13 @@ function applyResize(element: ElementNode, handle: string, dx: number, dy: numbe
   const affectsTop = handle.includes('n');
   const affectsBottom = handle.includes('s');
 
+  // Signed delta: positive = outward (growing), negative = inward (shrinking).
+  // For right/bottom handles, outward means positive dx/dy.
+  // For left/top handles, outward means negative dx/dy.
+  const signedDelta =
+    dx * (affectsRight ? 1 : affectsLeft ? -1 : 0) +
+    dy * (affectsBottom ? 1 : affectsTop ? -1 : 0);
+
   // 1. Has width/height (rect, image, barChart)
   if ('width' in resized && typeof resized.width === 'number' &&
       'height' in resized && typeof resized.height === 'number') {
@@ -156,11 +163,9 @@ function applyResize(element: ElementNode, handle: string, dx: number, dy: numbe
     if (affectsTop) { resized.y = (resized.y ?? 0) + dy; resized.height = Math.max(1, resized.height - dy); }
     if (affectsBottom) { resized.height = Math.max(1, resized.height + dy); }
   }
-  // 2. Has radius (circle)
+  // 2. Has radius (circle) — use signed delta for correct inward/outward
   else if ('r' in resized && typeof resized.r === 'number') {
-    const dr = Math.max(Math.abs(dx), Math.abs(dy));
-    const sign = (affectsRight || affectsBottom) ? 1 : -1;
-    resized.r = Math.max(1, resized.r + sign * dr);
+    resized.r = Math.max(1, resized.r + signedDelta);
   }
   // 3. Has endpoints (line, arrow, bezierCurve)
   else if ('x1' in resized && typeof resized.x1 === 'number') {
@@ -172,9 +177,7 @@ function applyResize(element: ElementNode, handle: string, dx: number, dy: numbe
     const pts = resized.points as [number, number][];
     const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
     const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
-    // Compute uniform scale factor from drag delta
-    const scaleFactor = 1 + (dx * (affectsRight ? 1 : affectsLeft ? -1 : 0)
-                            + dy * (affectsBottom ? 1 : affectsTop ? -1 : 0)) / 100;
+    const scaleFactor = 1 + signedDelta / 100;
     resized.points = pts.map(([px, py]) => [
       cx + (px - cx) * scaleFactor,
       cy + (py - cy) * scaleFactor,
@@ -182,18 +185,15 @@ function applyResize(element: ElementNode, handle: string, dx: number, dy: numbe
   }
   // 5. Has fontSize (text, latex) — resize via font size
   else if ('fontSize' in resized && typeof resized.fontSize === 'number') {
-    const delta = (affectsRight || affectsBottom ? 1 : -1) * Math.max(Math.abs(dx), Math.abs(dy)) * 0.1;
-    resized.fontSize = Math.max(4, resized.fontSize + delta);
+    resized.fontSize = Math.max(4, resized.fontSize + signedDelta * 0.1);
   }
   // 6. Has cellSize (matrix) — resize via cell size
   else if ('cellSize' in resized && typeof resized.cellSize === 'number') {
-    const delta = (affectsRight || affectsBottom ? 1 : -1) * Math.max(Math.abs(dx), Math.abs(dy)) * 0.2;
-    resized.cellSize = Math.max(10, resized.cellSize + delta);
+    resized.cellSize = Math.max(10, resized.cellSize + signedDelta * 0.2);
   }
   // 7. Has numeric scale (axes, functionPlot, etc.) — adjust scale
   else if ('scale' in resized && typeof resized.scale === 'number') {
-    const delta = (affectsRight || affectsBottom ? 1 : -1) * Math.max(Math.abs(dx), Math.abs(dy)) * 0.2;
-    resized.scale = Math.max(5, resized.scale + delta);
+    resized.scale = Math.max(5, resized.scale + signedDelta * 0.2);
   }
 
   return resized as ElementNode;
@@ -273,6 +273,24 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const loc = findElementById(doc.root, action.id);
       if (!loc?.parent) return state;
       loc.parent[loc.index] = applyMove(loc.element, action.dx, action.dy);
+      return { ...state, document: doc };
+    }
+
+    case 'MOVE_GRAPH_NODE': {
+      const doc = cloneDoc(state.document);
+      const loc = findElementById(doc.root, action.graphId);
+      if (!loc?.parent) return state;
+      const graph = { ...loc.element } as any;
+      if (!Array.isArray(graph.nodes)) return state;
+      const nodeIdx = graph.nodes.findIndex((n: any) => n.id === action.nodeId);
+      if (nodeIdx < 0) return state;
+      graph.nodes = [...graph.nodes];
+      graph.nodes[nodeIdx] = {
+        ...graph.nodes[nodeIdx],
+        x: graph.nodes[nodeIdx].x + action.dx,
+        y: graph.nodes[nodeIdx].y + action.dy,
+      };
+      loc.parent[loc.index] = graph;
       return { ...state, document: doc };
     }
 

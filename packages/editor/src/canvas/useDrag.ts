@@ -4,12 +4,13 @@ import type { EditorAction } from '../state/types';
 import type { BoundingBox } from '../utils/bounds';
 
 export interface DragState {
-  type: 'move' | 'resize' | 'rotate';
+  type: 'move' | 'resize' | 'rotate' | 'move-graph-node';
   elementId: string;
   startX: number;
   startY: number;
   handle?: string;
   initialBounds?: BoundingBox;
+  graphNodeId?: string;
 }
 
 interface UseDragOptions {
@@ -72,13 +73,27 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
       };
       activeDragType.current = type;
     } else {
-      dragRef.current = {
-        type: 'move',
-        elementId: editorId,
-        startX: coords.x,
-        startY: coords.y,
-      };
-      activeDragType.current = 'move';
+      // Check for graph node vertex drag
+      const graphNodeId = target.getAttribute('data-graph-node-id') ??
+                          target.closest('[data-graph-node-id]')?.getAttribute('data-graph-node-id');
+      if (graphNodeId) {
+        dragRef.current = {
+          type: 'move-graph-node',
+          elementId: editorId,
+          startX: coords.x,
+          startY: coords.y,
+          graphNodeId,
+        };
+        activeDragType.current = 'move';
+      } else {
+        dragRef.current = {
+          type: 'move',
+          elementId: editorId,
+          startX: coords.x,
+          startY: coords.y,
+        };
+        activeDragType.current = 'move';
+      }
     }
 
     accDx.current = 0;
@@ -101,6 +116,13 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
       if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
         didDrag.current = true;
         dispatch({ type: 'MOVE_ELEMENT', id: drag.elementId, dx, dy });
+        accDx.current += dx;
+        accDy.current += dy;
+      }
+    } else if (drag.type === 'move-graph-node') {
+      if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
+        didDrag.current = true;
+        dispatch({ type: 'MOVE_GRAPH_NODE', graphId: drag.elementId, nodeId: drag.graphNodeId!, dx, dy });
         accDx.current += dx;
         accDy.current += dy;
       }

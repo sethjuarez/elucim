@@ -122,7 +122,7 @@ export function Graph({
         const r = node.radius ?? nodeRadius;
         const c = node.color ?? nodeColor;
         return (
-          <g key={node.id}>
+          <g key={node.id} data-graph-node-id={node.id} style={{ cursor: 'grab' }}>
             <circle
               cx={node.x}
               cy={node.y}

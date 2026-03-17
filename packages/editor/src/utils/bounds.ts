@@ -66,11 +66,19 @@ function originBasedBounds(el: AnyEl): { x: number; y: number; width: number; he
 function matrixBounds(el: AnyEl): { x: number; y: number; width: number; height: number } {
   const mx = (el.x as number) ?? 0;
   const my = (el.y as number) ?? 0;
-  const cellSize = (el.cellSize as number) ?? 40;
+  const cellSize = (el.cellSize as number) ?? 48;
   const values = el.values as any[][];
   const rows = values?.length ?? 2;
   const cols = values?.[0]?.length ?? 2;
-  return { x: mx, y: my, width: cols * cellSize + 20, height: rows * cellSize + 10 };
+  // Match Matrix.tsx: bracketWidth=8, padding=4, brackets on both sides
+  const bracketWidth = 8;
+  const padding = 4;
+  return {
+    x: mx,
+    y: my - padding,
+    width: cols * cellSize + (bracketWidth + padding) * 2,
+    height: rows * cellSize + padding * 2,
+  };
 }
 
 // ─── Rotation center (property-based) ──────────────────────────────────────
