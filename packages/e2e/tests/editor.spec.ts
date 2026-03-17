@@ -55,8 +55,8 @@ test.describe('Editor — Initial Render', () => {
     await expect(page.getByText('Inspector')).not.toBeVisible();
 
     // Zoom controls visible
-    await expect(page.getByRole('button', { name: '+' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '−' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Zoom in' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Zoom out' })).toBeVisible();
 
     // Timeline frame display
     await expect(page.getByText('0 / 119 @ 60fps')).toBeVisible();
@@ -111,7 +111,9 @@ test.describe('Editor — Selection', () => {
     await selectViaTimeline(page, 'arrow-1');
 
     await expect(page.getByText('Arrow — arrow-1')).toBeVisible();
-    await expect(page.getByText('▾ Arrow')).toBeVisible();
+    // Arrow-specific inspector section (rendered with uppercase CSS text-transform)
+    const arrowSection = page.locator('.elucim-editor-inspector [style*="text-transform: uppercase"]', { hasText: 'Arrow' });
+    await expect(arrowSection.first()).toBeVisible();
     await expect(page.getByLabel('Head Size')).toHaveValue('12');
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/05-select-arrow.png` });
@@ -121,7 +123,7 @@ test.describe('Editor — Selection', () => {
     await selectViaTimeline(page, 'text-1');
 
     await expect(page.getByText('Text — text-1')).toBeVisible();
-    await expect(page.getByText('▾ Content')).toBeVisible();
+    await expect(page.getByText('Content', { exact: false })).toBeVisible();
     await expect(page.getByLabel('Text')).toHaveValue('Elucim Editor');
     await expect(page.getByLabel('Font Size')).toHaveValue('28');
 
@@ -143,11 +145,11 @@ test.describe('Editor — Add Elements from Toolbar', () => {
   });
 
   test('add rectangle', async ({ page }) => {
-    await page.getByRole('button', { name: '▬' }).click();
+    await page.getByRole('button', { name: 'Rectangle' }).click();
     await page.waitForTimeout(200);
 
     // Should now have 6 elements in timeline
-    const tracks = page.locator('.elucim-editor-timeline [style*="cursor: pointer"]');
+    const tracks = page.locator('.elucim-editor-timeline [style*="cursor: grab"]');
     const trackCount = await tracks.count();
     expect(trackCount).toBeGreaterThanOrEqual(6);
 
@@ -155,10 +157,10 @@ test.describe('Editor — Add Elements from Toolbar', () => {
   });
 
   test('add circle', async ({ page }) => {
-    await page.getByRole('button', { name: '●' }).click();
+    await page.getByRole('button', { name: 'Circle' }).click();
     await page.waitForTimeout(200);
 
-    const tracks = page.locator('.elucim-editor-timeline [style*="cursor: pointer"]');
+    const tracks = page.locator('.elucim-editor-timeline [style*="cursor: grab"]');
     const trackCount = await tracks.count();
     expect(trackCount).toBeGreaterThanOrEqual(6);
 
@@ -166,7 +168,7 @@ test.describe('Editor — Add Elements from Toolbar', () => {
   });
 
   test('add LaTeX', async ({ page }) => {
-    await page.getByRole('button', { name: '∑' }).click();
+    await page.getByRole('button', { name: 'LaTeX' }).click();
     await page.waitForTimeout(200);
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/09-added-latex.png` });
@@ -180,21 +182,21 @@ test.describe('Editor — Add Elements from Toolbar', () => {
   });
 
   test('add function plot', async ({ page }) => {
-    await page.getByRole('button', { name: 'ƒ' }).click();
+    await page.getByRole('button', { name: 'Function' }).click();
     await page.waitForTimeout(200);
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/11-added-function.png` });
   });
 
   test('add bar chart', async ({ page }) => {
-    await page.getByRole('button', { name: '📊' }).click();
+    await page.getByRole('button', { name: 'Bar Chart' }).click();
     await page.waitForTimeout(200);
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/12-added-barchart.png` });
   });
 
   test('add graph', async ({ page }) => {
-    await page.getByRole('button', { name: '🔗' }).click();
+    await page.getByRole('button', { name: 'Graph' }).click();
     await page.waitForTimeout(200);
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/13-added-graph.png` });
@@ -258,7 +260,7 @@ test.describe('Editor — Timeline Controls', () => {
   });
 
   test('go to end frame', async ({ page }) => {
-    await page.getByRole('button', { name: '⏭' }).click();
+    await page.getByRole('button', { name: 'End' }).click();
     await page.waitForTimeout(200);
 
     await expect(page.getByText('119 / 119 @ 60fps')).toBeVisible();
@@ -266,7 +268,7 @@ test.describe('Editor — Timeline Controls', () => {
   });
 
   test('step forward', async ({ page }) => {
-    const stepBtn = page.getByRole('button', { name: '▶' }).nth(1);
+    const stepBtn = page.getByRole('button', { name: 'Step forward' });
     for (let i = 0; i < 5; i++) {
       await stepBtn.click();
     }
@@ -277,7 +279,7 @@ test.describe('Editor — Timeline Controls', () => {
   });
 
   test('ruler click seeks to position', async ({ page }) => {
-    const ruler = page.locator('.elucim-editor-timeline [style*="cursor: pointer"]').first();
+    const ruler = page.locator('.elucim-editor-timeline [style*="cursor: grab"]').first();
     const rulerBox = await ruler.boundingBox();
     if (rulerBox) {
       await page.mouse.click(rulerBox.x + rulerBox.width * 0.5, rulerBox.y + rulerBox.height / 2);
@@ -295,10 +297,10 @@ test.describe('Editor — Undo/Redo', () => {
 
     await expect(page.getByText('text-1')).toBeVisible();
 
-    await page.getByRole('button', { name: '▬' }).click();
+    await page.getByRole('button', { name: 'Rectangle' }).click();
     await page.waitForTimeout(200);
 
-    const undoBtn = page.getByRole('button', { name: '↶' });
+    const undoBtn = page.getByRole('button', { name: 'Undo' });
     await expect(undoBtn).toBeEnabled();
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/22-before-undo.png` });
@@ -308,7 +310,7 @@ test.describe('Editor — Undo/Redo', () => {
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/23-after-undo.png` });
 
-    const redoBtn = page.getByRole('button', { name: '↷' });
+    const redoBtn = page.getByRole('button', { name: 'Redo' });
     await expect(redoBtn).toBeEnabled();
     await redoBtn.click();
     await page.waitForTimeout(200);
@@ -340,7 +342,7 @@ test.describe('Editor — Keyboard Shortcuts', () => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    await page.getByRole('button', { name: '●' }).click();
+    await page.getByRole('button', { name: 'Circle' }).click();
     await page.waitForTimeout(200);
 
     await page.keyboard.press('Control+z');
@@ -475,7 +477,7 @@ test.describe('Editor — Floating Panels', () => {
     await expect(page.getByText('Inspector')).toBeVisible();
 
     // Click pin button
-    const pinBtn = page.getByRole('button', { name: '📌' });
+    const pinBtn = page.getByRole('button', { name: 'Pin inspector' });
     await pinBtn.click();
     await page.waitForTimeout(200);
 
@@ -488,17 +490,13 @@ test.describe('Editor — Multiple Elements Added', () => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    const buttons: Array<{ name: string; useTitle?: boolean }> = [
-      { name: '▬' }, { name: '●' }, { name: '╱' }, { name: '→' },
-      { name: 'T' }, { name: '∑' }, { name: 'Axes', useTitle: true },
-      { name: 'ƒ' }, { name: '📊' }, { name: '🔗' },
+    const buttons = [
+      'Rectangle', 'Circle', 'Line', 'Arrow',
+      'Text', 'LaTeX', 'Axes',
+      'Function', 'Bar Chart', 'Graph',
     ];
-    for (const btn of buttons) {
-      if (btn.useTitle) {
-        await page.getByTitle(btn.name).click();
-      } else {
-        await page.getByRole('button', { name: btn.name }).click();
-      }
+    for (const name of buttons) {
+      await page.getByRole('button', { name }).click();
       await page.waitForTimeout(100);
     }
 
@@ -566,5 +564,269 @@ test.describe('Editor — Marquee Selection', () => {
     await expect(inspector).toContainText('Height');
     await expect(inspector).toContainText('Background');
     await expect(inspector).toContainText('FPS');
+  });
+});
+
+// ─── Phase 1-5 Feature Tests ───────────────────────────────────────────────
+
+test.describe('Editor — Menu Bar (Phase 4)', () => {
+  test('menu bar shows Save, Open, Copy, Theme buttons', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Theme' })).toBeVisible();
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/40-menu-bar.png` });
+  });
+
+  test('theme picker opens with built-in themes', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await page.getByRole('button', { name: 'Theme' }).click();
+    await page.waitForTimeout(300);
+
+    await expect(page.getByText('Built-in Themes')).toBeVisible();
+    await expect(page.getByText('dark')).toBeVisible();
+    await expect(page.getByText('light')).toBeVisible();
+    await expect(page.getByText('ocean')).toBeVisible();
+    await expect(page.getByText('Custom Theme…')).toBeVisible();
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/41-theme-picker.png` });
+  });
+
+  test('apply light theme changes canvas background', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await page.getByRole('button', { name: 'Theme' }).click();
+    await page.waitForTimeout(300);
+    await page.getByText('light').click();
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/42-light-theme.png` });
+  });
+});
+
+test.describe('Editor — New Primitives (Phase 2)', () => {
+  test('toolbar shows Polygon, Bézier Curve, Vector Field', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    // New primitives in toolbar
+    await expect(page.getByRole('button', { name: 'Polygon' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Bézier Curve' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Vector Field' })).toBeVisible();
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/43-new-primitives-toolbar.png` });
+  });
+
+  test('add polygon via toolbar', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await page.getByRole('button', { name: 'Polygon' }).click();
+    await page.waitForTimeout(500);
+
+    // Should show polygon in timeline
+    const inspector = page.locator('.elucim-editor-inspector');
+    await expect(inspector).toContainText('Polygon');
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/44-added-polygon.png` });
+  });
+
+  test('add bezier curve via toolbar', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await page.getByRole('button', { name: 'Bézier Curve' }).click();
+    await page.waitForTimeout(500);
+
+    const inspector = page.locator('.elucim-editor-inspector');
+    await expect(inspector).toContainText('Bezier');
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/45-added-bezier.png` });
+  });
+});
+
+test.describe('Editor — Matrix & Data Editing (Phase 5)', () => {
+  test('select matrix shows MatrixEditor in inspector', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await selectViaTimeline(page, 'matrix-1');
+    await page.waitForTimeout(300);
+
+    const inspector = page.locator('.elucim-editor-inspector');
+    await expect(inspector).toContainText('Matrix');
+    // MatrixEditor dimension controls
+    await expect(inspector).toContainText('+R');
+    await expect(inspector).toContainText('+C');
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/46-matrix-editor.png` });
+  });
+
+  test('select barchart shows ArrayEditor with bar data', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await selectViaTimeline(page, 'barchart-1');
+    await page.waitForTimeout(300);
+
+    const inspector = page.locator('.elucim-editor-inspector');
+    await expect(inspector).toContainText('Bar Chart');
+    // Should show individual bar labels
+    await expect(inspector).toContainText('+ Add Row');
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/47-barchart-editor.png` });
+  });
+
+  test('select graph shows node/edge ArrayEditors', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await selectViaTimeline(page, 'graph-1');
+    await page.waitForTimeout(300);
+
+    const inspector = page.locator('.elucim-editor-inspector');
+    await expect(inspector).toContainText('Graph');
+    await expect(inspector).toContainText('Nodes');
+    await expect(inspector).toContainText('Edges');
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/48-graph-editor.png` });
+  });
+
+  test('select polygon shows point ArrayEditor', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await selectViaTimeline(page, 'polygon-1');
+    await page.waitForTimeout(300);
+
+    const inspector = page.locator('.elucim-editor-inspector');
+    await expect(inspector).toContainText('Polygon');
+    await expect(inspector).toContainText('+ Add Row');
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/49-polygon-editor.png` });
+  });
+});
+
+test.describe('Editor — Timeline Editing (Phase 3)', () => {
+  test('double-click track label opens rename input', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    // Double-click on rect-1 label to rename
+    const label = page.getByText('rect-1', { exact: true });
+    await label.dblclick();
+    await page.waitForTimeout(300);
+
+    // Should show an input field
+    const input = page.locator('.elucim-editor-timeline input');
+    await expect(input).toBeVisible();
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/50-timeline-rename.png` });
+  });
+
+  test('timeline shows all 10 element tracks', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    // Should show all element tracks
+    await expect(page.getByText('rect-1')).toBeVisible();
+    await expect(page.getByText('circle-1')).toBeVisible();
+    await expect(page.getByText('line-1')).toBeVisible();
+    await expect(page.getByText('arrow-1')).toBeVisible();
+    await expect(page.getByText('text-1')).toBeVisible();
+    await expect(page.getByText('matrix-1')).toBeVisible();
+    await expect(page.getByText('barchart-1')).toBeVisible();
+    await expect(page.getByText('graph-1')).toBeVisible();
+    await expect(page.getByText('polygon-1')).toBeVisible();
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/51-all-tracks.png` });
+  });
+});
+
+test.describe('Editor — Resize Direction Fix (Phase 1)', () => {
+  test('circle resize handles visible when selected', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await selectOnCanvas(page, 'circle-1');
+    await page.waitForTimeout(300);
+
+    // Selection handles should be visible
+    const handles = page.locator('[data-handle]');
+    const handleCount = await handles.count();
+    expect(handleCount).toBeGreaterThan(0);
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/52-circle-selected-handles.png` });
+  });
+
+  test('matrix bounding box correct after fix', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await selectOnCanvas(page, 'matrix-1');
+    await page.waitForTimeout(300);
+
+    // Selection overlay should show around the matrix
+    const inspector = page.locator('.elucim-editor-inspector');
+    await expect(inspector).toContainText('Matrix');
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/53-matrix-bounds.png` });
+  });
+});
+
+test.describe('Editor — Group/Ungroup (Phase 2)', () => {
+  test('select multiple and group with Ctrl+G', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    // Select rect-1
+    await selectOnCanvas(page, 'rect-1');
+    await page.waitForTimeout(200);
+
+    // Shift-click circle-1 to add to selection
+    const circleHit = page.locator('[data-editor-id="circle-1"]');
+    const circleBox = await circleHit.boundingBox();
+    if (!circleBox) throw new Error('circle-1 not found');
+    await page.mouse.click(circleBox.x + circleBox.width / 2, circleBox.y + circleBox.height / 2, { modifiers: ['Shift'] });
+    await page.waitForTimeout(300);
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/54-multi-select-before-group.png` });
+
+    // Group with Ctrl+G
+    await page.keyboard.press('Control+g');
+    await page.waitForTimeout(500);
+
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/55-after-group.png` });
+  });
+});
+
+test.describe('Editor — Full Feature Overview', () => {
+  test('complete editor with all primitives', async ({ page }) => {
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    // Full editor screenshot showing all elements
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/60-full-editor-all-elements.png`, fullPage: true });
+  });
+
+  test('copy JSON to clipboard works', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.goto(EDITOR_URL);
+    await page.waitForTimeout(500);
+
+    await page.getByRole('button', { name: 'Copy' }).click();
+    await page.waitForTimeout(300);
+
+    const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+    const doc = JSON.parse(clipboardText);
+    expect(doc.version).toBe('1.0');
+    expect(doc.root.type).toBe('player');
   });
 });
