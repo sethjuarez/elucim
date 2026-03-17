@@ -100,6 +100,11 @@ function applyMove(element: ElementNode, dx: number, dy: number): ElementNode {
   dx = Math.round(dx);
   dy = Math.round(dy);
   const moved = { ...element };
+  // Groups — recursively move all children
+  if (moved.type === 'group' && 'children' in moved && Array.isArray(moved.children)) {
+    (moved as any).children = (moved.children as ElementNode[]).map(c => applyMove(c, dx, dy));
+    return moved;
+  }
   // Position-based elements (rect, text, image, latex, barChart, matrix)
   if ('x' in moved && typeof moved.x === 'number') {
     (moved as any).x += dx;
@@ -151,10 +156,45 @@ function applyMove(element: ElementNode, dx: number, dy: number): ElementNode {
 
 // ─── Resize helpers (property-based) ────────────────────────────────────────
 
+/** Scale a single element's position and size by a factor (used for group resize). */
+function scaleElement(element: ElementNode, factor: number): ElementNode {
+  const s = { ...element } as any;
+  if (typeof s.x === 'number') s.x = Math.round(s.x * factor);
+  if (typeof s.y === 'number') s.y = Math.round(s.y * factor);
+  if (typeof s.cx === 'number') s.cx = Math.round(s.cx * factor);
+  if (typeof s.cy === 'number') s.cy = Math.round(s.cy * factor);
+  if (typeof s.r === 'number') s.r = Math.max(1, Math.round(s.r * factor));
+  if (typeof s.width === 'number') s.width = Math.max(1, Math.round(s.width * factor));
+  if (typeof s.height === 'number') s.height = Math.max(1, Math.round(s.height * factor));
+  if (typeof s.x1 === 'number') { s.x1 = Math.round(s.x1 * factor); s.y1 = Math.round(s.y1 * factor); s.x2 = Math.round(s.x2 * factor); s.y2 = Math.round(s.y2 * factor); }
+  if (typeof s.fontSize === 'number') s.fontSize = Math.max(4, Math.round(s.fontSize * factor * 10) / 10);
+  if (Array.isArray(s.origin)) s.origin = s.origin.map((v: number) => Math.round(v * factor));
+  if (Array.isArray(s.points)) s.points = s.points.map(([px, py]: [number, number]) => [Math.round(px * factor), Math.round(py * factor)]);
+  if (s.type === 'group' && Array.isArray(s.children)) s.children = s.children.map((c: ElementNode) => scaleElement(c, factor));
+  return s as ElementNode;
+}
+
 function applyResize(element: ElementNode, handle: string, dx: number, dy: number): ElementNode {
   dx = Math.round(dx);
   dy = Math.round(dy);
   const resized = { ...element } as any;
+
+  // Groups — scale all children relative to group bounds
+  if (resized.type === 'group' && Array.isArray(resized.children)) {
+    const affectsLeft = handle.includes('w');
+    const affectsRight = handle.includes('e');
+    const affectsTop = handle.includes('n');
+    const affectsBottom = handle.includes('s');
+    const signedDelta =
+      dx * (affectsRight ? 1 : affectsLeft ? -1 : 0) +
+      dy * (affectsBottom ? 1 : affectsTop ? -1 : 0);
+    const scaleFactor = 1 + signedDelta / 200;
+    if (scaleFactor > 0.1) {
+      resized.children = (resized.children as ElementNode[]).map(c => scaleElement(c, scaleFactor));
+    }
+    return resized as ElementNode;
+  }
+
   const affectsLeft = handle.includes('w');
   const affectsRight = handle.includes('e');
   const affectsTop = handle.includes('n');
@@ -417,6 +457,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'SET_INSPECTOR_PINNED':
       return { ...state, inspectorPinned: action.pinned };
+
+    case 'SET_EDITOR_THEME':
+      return { ...state, themeOverrides: action.overrides };
 
     case 'ZOOM_TO_FIT':
       return { ...state, viewport: { x: 0, y: 0, zoom: 1 } };

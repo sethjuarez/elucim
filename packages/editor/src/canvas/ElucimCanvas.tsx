@@ -15,6 +15,8 @@ import { DotGrid } from './DotGrid';
 import { Minimap } from './Minimap';
 import { ZoomControls } from './ZoomControls';
 import { exportToJson, importFromJson } from '../utils/io';
+import { ContextMenu } from './ContextMenu';
+import type { ContextMenuItem } from './ContextMenu';
 
 export interface ElucimCanvasProps {
   className?: string;
@@ -149,6 +151,88 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
     ? ROTATE_CURSOR
     : isPanning ? 'grab' : state.activeTool !== 'select' ? 'crosshair' : 'default';
 
+  // ── Context menu ──
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; items: ContextMenuItem[] } | null>(null);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    // Determine which element was right-clicked
+    const target = e.target as HTMLElement | SVGElement;
+    const editorId = target.getAttribute?.('data-editor-id') ??
+      (target as Element).closest?.('[data-editor-id]')?.getAttribute('data-editor-id');
+
+    // If right-clicked on an element, select it first
+    if (editorId && !selectedIds.includes(editorId)) {
+      dispatch({ type: 'SELECT', ids: [editorId] });
+    }
+
+    const ids = editorId && !selectedIds.includes(editorId) ? [editorId] : [...selectedIds];
+    const hasSelection = ids.length > 0;
+    const singleEl = hasSelection ? children.find((c, i) => elementIds[i] === ids[0]) : undefined;
+    const isGroup = singleEl?.type === 'group';
+
+    const items: ContextMenuItem[] = [
+      {
+        label: 'Group',
+        shortcut: 'Ctrl+G',
+        disabled: ids.length < 2,
+        onClick: () => dispatch({ type: 'GROUP_ELEMENTS', ids }),
+        separator: false,
+      },
+      {
+        label: 'Ungroup',
+        shortcut: 'Ctrl+Shift+G',
+        disabled: !isGroup,
+        onClick: () => { if (ids[0]) dispatch({ type: 'UNGROUP', id: ids[0] }); },
+        separator: false,
+      },
+      { label: '', onClick: () => {}, separator: true },
+      {
+        label: 'Duplicate',
+        disabled: !hasSelection,
+        onClick: () => {
+          for (const id of ids) {
+            const idx = elementIds.indexOf(id);
+            if (idx >= 0) {
+              const clone = JSON.parse(JSON.stringify(children[idx]));
+              if ('id' in clone) clone.id = `${clone.id}-copy-${Date.now().toString(36).slice(-4)}`;
+              if ('x' in clone && typeof clone.x === 'number') clone.x += 20;
+              if ('y' in clone && typeof clone.y === 'number') clone.y += 20;
+              if ('cx' in clone && typeof clone.cx === 'number') clone.cx += 20;
+              if ('cy' in clone && typeof clone.cy === 'number') clone.cy += 20;
+              dispatch({ type: 'ADD_ELEMENT', element: clone });
+            }
+          }
+        },
+        separator: false,
+      },
+      {
+        label: 'Delete',
+        shortcut: 'Del',
+        disabled: !hasSelection,
+        onClick: () => dispatch({ type: 'DELETE_ELEMENTS', ids }),
+        separator: false,
+      },
+      { label: '', onClick: () => {}, separator: true },
+      {
+        label: 'Select All',
+        shortcut: 'Ctrl+A',
+        disabled: children.length === 0,
+        onClick: () => dispatch({ type: 'SELECT', ids: [...elementIds] }),
+        separator: false,
+      },
+      {
+        label: 'Deselect All',
+        shortcut: 'Esc',
+        disabled: !hasSelection,
+        onClick: () => dispatch({ type: 'DESELECT_ALL' }),
+        separator: false,
+      },
+    ];
+
+    setContextMenu({ x: e.clientX, y: e.clientY, items });
+  }, [selectedIds, children, elementIds, dispatch]);
+
   return (
     <div
       ref={containerRef}
@@ -163,6 +247,7 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
       onPointerDown={(e) => { handlePanStart(e); handleMarqueeStart(e); }}
       onPointerMove={(e) => { handlePanMove(e); handleMarqueeMove(e); }}
       onPointerUp={(e) => { handlePanEnd(e); handleMarqueeEnd(e); }}
+      onContextMenu={handleContextMenu}
     >
       {/* Dot grid background */}
       <DotGrid spacing={20} />
@@ -271,6 +356,16 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
         onZoomOut={zoomOut}
         onFitToView={handleFitToView}
       />
+
+      {/* Context menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenu.items}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 }

@@ -160,15 +160,15 @@ function NumberField({ label, value, onChange, step = 1 }: {
   label: string; value: number | undefined; onChange: (v: number) => void; step?: number;
 }) {
   const [localStr, setLocalStr] = React.useState(String(value ?? ''));
-  const prevValue = React.useRef(value);
-  // Sync from external value changes (e.g. drag, undo) but not our own commits
-  if (value !== prevValue.current) {
-    prevValue.current = value;
+  const committedRef = React.useRef(value);
+  // Sync external value changes (nudge, drag, undo) into local string
+  React.useEffect(() => {
     setLocalStr(String(value ?? ''));
-  }
+    committedRef.current = value;
+  }, [value]);
   const commit = (str: string) => {
     const num = parseFloat(str);
-    if (!isNaN(num)) { onChange(num); prevValue.current = num; }
+    if (!isNaN(num)) { onChange(num); committedRef.current = num; }
     else setLocalStr(String(value ?? ''));
   };
   return (
@@ -181,7 +181,7 @@ function NumberField({ label, value, onChange, step = 1 }: {
         onChange={e => {
           setLocalStr(e.target.value);
           const num = parseFloat(e.target.value);
-          if (!isNaN(num)) { onChange(num); prevValue.current = num; }
+          if (!isNaN(num)) { onChange(num); committedRef.current = num; }
         }}
         onBlur={() => commit(localStr)}
         onKeyDown={e => { if (e.key === 'Enter') commit(localStr); }}

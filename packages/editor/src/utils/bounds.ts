@@ -161,6 +161,19 @@ export function getElementBounds(element: ElementNode): BoundingBox | null {
   else if (hasNum(el, 'x', 'y')) {
     aabb = { x: el.x, y: el.y, width: 40, height: 40 };
   }
+  // 10. Group — union of children bounds
+  else if (el.type === 'group' && Array.isArray(el.children) && el.children.length > 0) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const child of el.children) {
+      const cb = getElementBounds(child as ElementNode);
+      if (!cb) continue;
+      minX = Math.min(minX, cb.x);
+      minY = Math.min(minY, cb.y);
+      maxX = Math.max(maxX, cb.x + cb.width);
+      maxY = Math.max(maxY, cb.y + cb.height);
+    }
+    if (minX < Infinity) aabb = { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  }
 
   if (!aabb) return null;
   return { ...aabb, ...getRotationInfo(el, aabb) };

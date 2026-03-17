@@ -40,6 +40,8 @@ export interface EditorState {
   inspectorPinned: boolean;
   /** Whether toolbar is collapsed to icon strip */
   toolbarCollapsed: boolean;
+  /** Runtime editor-chrome theme overrides (set by "Apply theme") */
+  themeOverrides: Record<string, string>;
 }
 
 export type EditorTool =
@@ -80,6 +82,7 @@ export type EditorAction =
   | { type: 'SET_TOOLBAR_COLLAPSED'; collapsed: boolean }
   | { type: 'SET_INSPECTOR_POSITION'; position: PanelPosition | null }
   | { type: 'SET_INSPECTOR_PINNED'; pinned: boolean }
+  | { type: 'SET_EDITOR_THEME'; overrides: Record<string, string> }
   | { type: 'ZOOM_TO_FIT' }
   | { type: 'UNDO' }
   | { type: 'REDO' };
@@ -132,6 +135,7 @@ export function createInitialState(document?: ElucimDocument): EditorState {
     inspectorPosition: null,
     inspectorPinned: false,
     toolbarCollapsed: false,
+    themeOverrides: {},
   };
 }
 

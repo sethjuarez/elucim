@@ -360,6 +360,10 @@ test.describe('Editor — Keyboard Shortcuts', () => {
     const xField = page.getByRole('spinbutton', { name: 'X', exact: true });
     expect(await xField.inputValue()).toBe('80');
 
+    // Blur any focused input so arrow keys reach the editor's nudge handler
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.waitForTimeout(100);
+
     // Press right arrow 3 times
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowRight');

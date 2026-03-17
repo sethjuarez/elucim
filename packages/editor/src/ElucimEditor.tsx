@@ -47,7 +47,13 @@ function EditorLayout({ theme, className, style }: { theme?: Record<string, stri
   const { state, dispatch } = useEditorState();
   const icons = useEditorIcons();
   const containerRef = useRef<HTMLDivElement>(null);
-  const themeVars = buildThemeVars(theme);
+  // Merge: defaults ← external theme prop ← runtime theme overrides from "Apply theme"
+  const merged = { ...theme };
+  for (const [k, val] of Object.entries(state.themeOverrides)) {
+    merged[k] = val;
+  }
+  const themeVars = buildThemeVars(merged);
+  const colorScheme = state.themeOverrides['--elucim-editor-color-scheme'] || 'dark';
 
   const handleToolbarPosition = useCallback((pos: { x: number; y: number }) => {
     dispatch({ type: 'SET_TOOLBAR_POSITION', position: pos });
@@ -121,7 +127,7 @@ function EditorLayout({ theme, className, style }: { theme?: Record<string, stri
         height: '100%',
         userSelect: 'none',
         WebkitUserSelect: 'none',
-        colorScheme: 'dark',
+        colorScheme: colorScheme as any,
         ...style,
       }}
     >
