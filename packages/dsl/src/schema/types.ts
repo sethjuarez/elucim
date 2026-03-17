@@ -328,6 +328,7 @@ export interface VectorNode {
 
 export interface VectorFieldNode {
   type: 'vectorField';
+  id?: string;
   /** Vector expression string, e.g. "[-y, x]" */
   fn: string;
   domain?: [number, number];

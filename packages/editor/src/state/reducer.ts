@@ -373,7 +373,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const indices: number[] = [];
       const elements: ElementNode[] = [];
       for (let i = 0; i < rootChildren.length; i++) {
-        const cId = ('id' in rootChildren[i] && rootChildren[i].id) ? rootChildren[i].id : undefined;
+        const cId = (rootChildren[i] as { id?: string }).id;
         if (cId && action.ids.includes(cId)) {
           indices.push(i);
           elements.push(rootChildren[i]);
