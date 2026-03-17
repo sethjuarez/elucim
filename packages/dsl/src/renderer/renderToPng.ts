@@ -1,4 +1,5 @@
 import { renderToSvgString } from './renderToSvgString';
+import { SEMANTIC_TOKENS } from './resolveColor';
 import type { ElucimDocument } from '../schema/types';
 
 export interface RenderToPngOptions {
@@ -70,16 +71,32 @@ export async function renderToPng(
   // Remove position:absolute style (not needed standalone)
   svgString = svgString.replace(/style="[^"]*position:\s*absolute[^"]*"/, '');
 
-  // 5. Inject background rect from the DSL root
-  const bg = (dsl.root as any).background ?? '#ffffff';
+  // 5. Inject background rect from the DSL root (resolve $token to hex fallback)
+  let bg: string = (dsl.root as any).background ?? '#ffffff';
+  if (bg.startsWith('$')) {
+    const token = SEMANTIC_TOKENS[bg.slice(1)];
+    bg = token?.fallback ?? '#ffffff';
+  }
   const bgRect = `<rect width="${logicalW}" height="${logicalH}" fill="${bg}"/>`;
   svgString = svgString.replace(/>/, `>${bgRect}`);
 
-  // 6. Convert SVG to data URI (avoids blob URLs → works under strict CSP)
+  // 6. Strip CSS var() references — standalone SVGs loaded via Image can't resolve them.
+  //    var(--elucim-foreground, #c8d6e5) → #c8d6e5
+  //    var(--elucim-custom) (no fallback) → removed entirely
+  svgString = svgString.replace(
+    /var\(--elucim-[\w-]+,\s*(#[0-9a-fA-F]{3,8})\)/g,
+    '$1',
+  );
+  svgString = svgString.replace(
+    /var\(--elucim-[\w-]+\)/g,
+    'none',
+  );
+
+  // 8. Convert SVG to data URI (avoids blob URLs → works under strict CSP)
   const encoded = btoa(unescape(encodeURIComponent(svgString)));
   const dataUri = `data:image/svg+xml;base64,${encoded}`;
 
-  // 7. Rasterize: data URI → Image → OffscreenCanvas/Canvas → PNG bytes
+  // 9. Rasterize: data URI → Image → OffscreenCanvas/Canvas → PNG bytes
   if (typeof OffscreenCanvas !== 'undefined') {
     return rasterizeOffscreen(dataUri, w, h);
   }
