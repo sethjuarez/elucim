@@ -246,7 +246,24 @@ Use `$token` syntax in your DSL JSON to create theme-adaptive visualizations:
 }
 ```
 
-**Available tokens:** `$foreground`, `$background`, `$accent`, `$muted`, `$surface`, `$primary`, `$secondary`, `$tertiary`, `$success`, `$warning`, `$error`
+**Available tokens:**
+
+| Token | Dark default | Light default | Usage |
+|-------|-------------|---------------|-------|
+| `$foreground` | `#c8d6e5` | `#334155` | Body text |
+| `$background` | `#0a0a1e` | `#f8fafc` | Slide/scene background |
+| `$title` | `#e0e7ff` | `#1e293b` | Heading text (brighter than foreground) |
+| `$subtitle` | `#94a3b8` | `#64748b` | Secondary/subtitle text |
+| `$muted` | `#64748b` | `#94a3b8` | Annotations, faint text |
+| `$primary` | `#4fc3f7` | `#2563eb` | Primary accent |
+| `$secondary` | `#a78bfa` | `#7c3aed` | Secondary accent |
+| `$tertiary` | `#f472b6` | `#db2777` | Tertiary accent |
+| `$success` | `#34d399` | `#16a34a` | Positive / success |
+| `$warning` | `#fbbf24` | `#d97706` | Warning / highlight |
+| `$error` | `#f87171` | `#dc2626` | Error / negative |
+| `$surface` | `#1e293b` | `#f8fafc` | Panel backgrounds |
+| `$border` | `#334155` | `#334155` | Borders, grid lines |
+| `$accent` | `#4fc3f7` | `#2563eb` | Alias for primary |
 
 Tokens resolve to CSS custom properties (`$background` → `var(--elucim-background, #0a0a1e)`). Pair with `colorScheme` to auto-adapt:
 
