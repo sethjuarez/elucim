@@ -1,6 +1,26 @@
 import { renderToSvgString } from './renderToSvgString';
-import { SEMANTIC_TOKENS } from './resolveColor';
+import { resolveColor, SEMANTIC_TOKENS } from './resolveColor';
 import type { ElucimDocument } from '../schema/types';
+
+/**
+ * Strip all CSS functions that are invalid in standalone SVGs loaded via Image:
+ * - var(--x, fallback) → fallback (iterative for nested vars)
+ * - var(--x) with no fallback → 'none'
+ * - light-dark(light, dark) → dark value (elucim defaults to dark theme)
+ */
+export function stripCssFunctions(s: string): string {
+  // Iteratively resolve var() from innermost out (handles nesting)
+  let prev: string;
+  do {
+    prev = s;
+    s = s.replace(/var\(--[a-z][\w-]*,\s*([^)]+)\)/gi, '$1');
+  } while (s !== prev);
+  // Bare var() with no fallback
+  s = s.replace(/var\(--[a-z][\w-]*\)/gi, 'none');
+  // light-dark() → pick dark value (second arg)
+  s = s.replace(/light-dark\([^,]+,\s*([^)]+)\)/gi, '$1');
+  return s;
+}
 
 export interface RenderToPngOptions {
   /** Output width in pixels (default: document width) */
@@ -71,26 +91,19 @@ export async function renderToPng(
   // Remove position:absolute style (not needed standalone)
   svgString = svgString.replace(/style="[^"]*position:\s*absolute[^"]*"/, '');
 
-  // 5. Inject background rect from the DSL root (resolve $token to hex fallback)
+  // 5. Inject background rect from the DSL root
+  //    $token → resolveColor → var(--elucim-X, #hex) → strip to #hex
   let bg: string = (dsl.root as any).background ?? '#ffffff';
   if (bg.startsWith('$')) {
-    const token = SEMANTIC_TOKENS[bg.slice(1)];
-    bg = token?.fallback ?? '#ffffff';
+    bg = resolveColor(bg) ?? '#ffffff';
   }
+  bg = stripCssFunctions(bg);
   const bgRect = `<rect width="${logicalW}" height="${logicalH}" fill="${bg}"/>`;
   svgString = svgString.replace(/>/, `>${bgRect}`);
 
-  // 6. Strip CSS var() references — standalone SVGs loaded via Image can't resolve them.
-  //    var(--elucim-foreground, #c8d6e5) → #c8d6e5
-  //    var(--elucim-custom) (no fallback) → removed entirely
-  svgString = svgString.replace(
-    /var\(--elucim-[\w-]+,\s*(#[0-9a-fA-F]{3,8})\)/g,
-    '$1',
-  );
-  svgString = svgString.replace(
-    /var\(--elucim-[\w-]+\)/g,
-    'none',
-  );
+  // 6. Strip all CSS var() and light-dark() from the SVG — standalone SVGs
+  //    loaded via Image/createImageBitmap have no DOM CSS context.
+  svgString = stripCssFunctions(svgString);
 
   // 8. Convert SVG to data URI (avoids blob URLs → works under strict CSP)
   const encoded = btoa(unescape(encodeURIComponent(svgString)));

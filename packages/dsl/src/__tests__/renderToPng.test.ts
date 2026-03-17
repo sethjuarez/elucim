@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderToPng } from '../renderer/renderToPng';
+import { renderToPng, stripCssFunctions } from '../renderer/renderToPng';
 import { renderToSvgString } from '../renderer/renderToSvgString';
 import { SEMANTIC_TOKENS } from '../renderer/resolveColor';
 
@@ -29,11 +29,6 @@ const tokenDoc = {
 };
 
 describe('renderToPng', () => {
-  // renderToPng needs browser APIs (Image, Canvas/OffscreenCanvas) which
-  // aren't available in Node/vitest. We can only test that the export exists
-  // and that the SVG string step works. The full rasterization pipeline is
-  // covered by Playwright e2e tests.
-
   it('is exported and is a function', () => {
     expect(typeof renderToPng).toBe('function');
   });
@@ -46,9 +41,41 @@ describe('renderToPng', () => {
 
   it('renderToSvgString resolves $tokens to var() with hex fallbacks', () => {
     const svg = renderToSvgString(tokenDoc as any, 0);
-    // $foreground → var(--elucim-foreground, #c8d6e5)
     expect(svg).toContain(`var(--elucim-foreground, ${SEMANTIC_TOKENS.foreground.fallback})`);
     expect(svg).not.toContain('$foreground');
     expect(svg).not.toContain('$background');
+  });
+});
+
+describe('stripCssFunctions', () => {
+  it('strips simple var() to fallback', () => {
+    expect(stripCssFunctions('var(--elucim-foreground, #c8d6e5)')).toBe('#c8d6e5');
+  });
+
+  it('strips nested var() from innermost out', () => {
+    expect(stripCssFunctions('var(--elucim-scene-bg, var(--elucim-background, #0a0a1e))'))
+      .toBe('#0a0a1e');
+  });
+
+  it('strips bare var() with no fallback to none', () => {
+    expect(stripCssFunctions('var(--elucim-custom)')).toBe('none');
+  });
+
+  it('strips light-dark() to dark value (second arg)', () => {
+    expect(stripCssFunctions('light-dark(#333, #e0e0e0)')).toBe('#e0e0e0');
+  });
+
+  it('strips var() wrapping light-dark()', () => {
+    expect(stripCssFunctions('var(--elucim-scene-fg, light-dark(#333, #e0e0e0))'))
+      .toBe('#e0e0e0');
+  });
+
+  it('leaves plain hex values unchanged', () => {
+    expect(stripCssFunctions('#ff0000')).toBe('#ff0000');
+  });
+
+  it('handles multiple var() refs in one string', () => {
+    const input = 'fill="var(--elucim-accent, #4fc3f7)" stroke="var(--elucim-border, #334155)"';
+    expect(stripCssFunctions(input)).toBe('fill="#4fc3f7" stroke="#334155"');
   });
 });
