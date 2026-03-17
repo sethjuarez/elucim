@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.8.2](https://github.com/sethjuarez/elucim/compare/editor-v0.8.1...editor-v0.8.2) (2026-03-17)
+
+
+### Miscellaneous
+
+* **editor:** Synchronize elucim versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.8.2
+    * @elucim/dsl bumped to 0.8.2
+
 ## [0.8.1](https://github.com/sethjuarez/elucim/compare/editor-v0.8.0...editor-v0.8.1) (2026-03-17)
 
 
