@@ -67,6 +67,10 @@ export type EditorAction =
   | { type: 'MOVE_GRAPH_NODE'; graphId: string; nodeId: string; dx: number; dy: number }
   | { type: 'RESIZE_ELEMENT'; id: string; handle: string; dx: number; dy: number }
   | { type: 'ROTATE_ELEMENT'; id: string; angleDeg: number }
+  | { type: 'GROUP_ELEMENTS'; ids: string[] }
+  | { type: 'UNGROUP'; id: string }
+  | { type: 'RENAME_ELEMENT'; id: string; newId: string }
+  | { type: 'REORDER_ELEMENT'; id: string; newIndex: number }
   | { type: 'SET_VIEWPORT'; viewport: Partial<Viewport> }
   | { type: 'SET_FRAME'; frame: number }
   | { type: 'SET_PLAYING'; playing: boolean }

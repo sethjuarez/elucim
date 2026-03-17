@@ -88,6 +88,16 @@ export function useKeyboardShortcuts({ dispatch, selectedIds, getDocumentJson, i
         }
         break;
       }
+
+      case 'g':
+        if (ctrl && !e.shiftKey && selectedIds.length >= 2) {
+          e.preventDefault();
+          dispatch({ type: 'GROUP_ELEMENTS', ids: [...selectedIds] });
+        } else if (ctrl && e.shiftKey && selectedIds.length === 1) {
+          e.preventDefault();
+          dispatch({ type: 'UNGROUP', id: selectedIds[0] });
+        }
+        break;
     }
   }, [dispatch, selectedIds, getDocumentJson, importDocument]);
 

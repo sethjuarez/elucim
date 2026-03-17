@@ -1,11 +1,11 @@
 import React from 'react';
-import type { ElementNode, CircleNode, RectNode, LineNode, ArrowNode, TextNode, LaTeXNode, ImageNode, AxesNode, FunctionPlotNode, VectorNode, MatrixNode, BarChartNode, GraphNode } from '@elucim/dsl';
+import type { ElementNode, CircleNode, RectNode, LineNode, ArrowNode, TextNode, LaTeXNode, ImageNode, AxesNode, FunctionPlotNode, VectorNode, VectorFieldNode, MatrixNode, BarChartNode, GraphNode, BezierCurveNode, PolygonNode } from '@elucim/dsl';
 import {
   IconRect, IconCircle, IconImage,
-  IconLine, IconArrow,
+  IconLine, IconArrow, IconBezier,
   IconText, IconLatex,
-  IconAxes, IconFunction, IconVector, IconMatrix,
-  IconBarChart, IconGraph,
+  IconAxes, IconFunction, IconVector, IconVectorField, IconMatrix,
+  IconBarChart, IconGraph, IconPolygon,
 } from '../theme/icons';
 
 export interface ElementTemplate {
@@ -62,6 +62,27 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies CircleNode),
   },
   {
+    type: 'polygon',
+    label: 'Polygon',
+    category: 'shape',
+    icon: <IconPolygon />,
+    create: (cx, cy) => ({
+      type: 'polygon',
+      id: genId('polygon'),
+      points: [
+        [cx, cy - 50],
+        [cx + 47, cy - 15],
+        [cx + 29, cy + 40],
+        [cx - 29, cy + 40],
+        [cx - 47, cy - 15],
+      ],
+      fill: 'none',
+      stroke: '#4fc3f7',
+      strokeWidth: 2,
+      closed: true,
+    } satisfies PolygonNode),
+  },
+  {
     type: 'image',
     label: 'Image',
     category: 'shape',
@@ -110,6 +131,26 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
       strokeWidth: 2,
       headSize: 10,
     } satisfies ArrowNode),
+  },
+  {
+    type: 'bezierCurve',
+    label: 'Bézier Curve',
+    category: 'line',
+    icon: <IconBezier />,
+    create: (cx, cy) => ({
+      type: 'bezierCurve',
+      id: genId('bezier'),
+      x1: cx - 80,
+      y1: cy,
+      cx1: cx - 30,
+      cy1: cy - 60,
+      cx2: cx + 30,
+      cy2: cy + 60,
+      x2: cx + 80,
+      y2: cy,
+      stroke: '#4fc3f7',
+      strokeWidth: 2,
+    } satisfies BezierCurveNode),
   },
 
   // ─── Text ──────────────────────────────────────────────────────
@@ -192,6 +233,24 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
       scale: 40,
       color: '#4fc3f7',
     } satisfies VectorNode),
+  },
+  {
+    type: 'vectorField',
+    label: 'Vector Field',
+    category: 'math',
+    icon: <IconVectorField />,
+    create: (cx, cy) => ({
+      type: 'vectorField',
+      id: genId('vecfield'),
+      fn: '[-y, x]',
+      origin: [cx, cy],
+      scale: 40,
+      domain: [-3, 3],
+      range: [-3, 3],
+      step: 1,
+      color: '#4fc3f7',
+      normalize: true,
+    } satisfies VectorFieldNode),
   },
   {
     type: 'matrix',

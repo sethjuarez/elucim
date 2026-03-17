@@ -312,6 +312,73 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return { ...state, document: doc };
     }
 
+    case 'GROUP_ELEMENTS': {
+      if (action.ids.length < 2) return state;
+      const doc = cloneDoc(state.document);
+      const rootChildren = getChildren(doc.root);
+      if (!rootChildren) return state;
+      // Collect elements to group (only from root level)
+      const indices: number[] = [];
+      const elements: ElementNode[] = [];
+      for (let i = 0; i < rootChildren.length; i++) {
+        const cId = ('id' in rootChildren[i] && rootChildren[i].id) ? rootChildren[i].id : undefined;
+        if (cId && action.ids.includes(cId)) {
+          indices.push(i);
+          elements.push(rootChildren[i]);
+        }
+      }
+      if (elements.length < 2) return state;
+      // Remove grouped elements (reverse order to preserve indices)
+      for (let i = indices.length - 1; i >= 0; i--) {
+        rootChildren.splice(indices[i], 1);
+      }
+      // Insert group at the position of the first element
+      const groupNode: any = {
+        type: 'group',
+        id: `group-${Date.now().toString(36).slice(-6)}`,
+        children: elements,
+      };
+      rootChildren.splice(indices[0], 0, groupNode as ElementNode);
+      return { ...state, document: doc, selectedIds: [groupNode.id] };
+    }
+
+    case 'UNGROUP': {
+      const doc = cloneDoc(state.document);
+      const loc = findElementById(doc.root, action.id);
+      if (!loc?.parent) return state;
+      const group = loc.element as any;
+      if (group.type !== 'group' || !Array.isArray(group.children)) return state;
+      // Replace the group with its children at the same position
+      loc.parent.splice(loc.index, 1, ...group.children);
+      const childIds = group.children
+        .map((c: any) => c.id)
+        .filter((id: string | undefined): id is string => !!id);
+      return { ...state, document: doc, selectedIds: childIds };
+    }
+
+    case 'RENAME_ELEMENT': {
+      const doc = cloneDoc(state.document);
+      const loc = findElementById(doc.root, action.id);
+      if (!loc?.parent) return state;
+      loc.parent[loc.index] = { ...loc.element, id: action.newId } as ElementNode;
+      // Update selectedIds if the renamed element was selected
+      const selectedIds = state.selectedIds.map(id => id === action.id ? action.newId : id);
+      return { ...state, document: doc, selectedIds };
+    }
+
+    case 'REORDER_ELEMENT': {
+      const doc = cloneDoc(state.document);
+      const rootChildren = getChildren(doc.root);
+      if (!rootChildren) return state;
+      const loc = findElementById(doc.root, action.id);
+      if (!loc?.parent || loc.parent !== rootChildren) return state;
+      const newIdx = Math.max(0, Math.min(action.newIndex, rootChildren.length - 1));
+      if (newIdx === loc.index) return state;
+      const [removed] = rootChildren.splice(loc.index, 1);
+      rootChildren.splice(newIdx, 0, removed);
+      return { ...state, document: doc };
+    }
+
     case 'SET_VIEWPORT':
       return { ...state, viewport: { ...state.viewport, ...action.viewport } };
 
