@@ -97,6 +97,8 @@ function collectIdsFromArray(arr: ElementNode[], parentPath: string): string[] {
 // ─── Position helpers ──────────────────────────────────────────────────────
 
 function applyMove(element: ElementNode, dx: number, dy: number): ElementNode {
+  dx = Math.round(dx);
+  dy = Math.round(dy);
   const moved = { ...element };
   // Position-based elements (rect, text, image, latex, barChart, matrix)
   if ('x' in moved && typeof moved.x === 'number') {
@@ -150,6 +152,8 @@ function applyMove(element: ElementNode, dx: number, dy: number): ElementNode {
 // ─── Resize helpers (property-based) ────────────────────────────────────────
 
 function applyResize(element: ElementNode, handle: string, dx: number, dy: number): ElementNode {
+  dx = Math.round(dx);
+  dy = Math.round(dy);
   const resized = { ...element } as any;
   const affectsLeft = handle.includes('w');
   const affectsRight = handle.includes('e');
@@ -295,8 +299,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       graph.nodes = [...graph.nodes];
       graph.nodes[nodeIdx] = {
         ...graph.nodes[nodeIdx],
-        x: graph.nodes[nodeIdx].x + action.dx,
-        y: graph.nodes[nodeIdx].y + action.dy,
+        x: Math.round(graph.nodes[nodeIdx].x + action.dx),
+        y: Math.round(graph.nodes[nodeIdx].y + action.dy),
       };
       loc.parent[loc.index] = graph;
       return { ...state, document: doc };
