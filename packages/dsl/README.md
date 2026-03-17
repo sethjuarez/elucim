@@ -59,9 +59,10 @@ Validates the DSL document and renders it as React components. If validation fai
 - `dsl: ElucimDocument` — The DSL document to render
 - `className?: string` — CSS class for the wrapper div
 - `style?: CSSProperties` — Inline styles for the wrapper div
-- `theme?: 'light' | 'dark'` — Override the color theme
-- `poster?: number` — Frame number to display as a static poster before playback
-- `onError?: (errors: ValidationError[]) => void` — Callback for validation errors
+- `theme?: ElucimTheme` — Custom color tokens as CSS custom properties (e.g. `{ foreground: '#fff', background: '#000' }`)
+- `colorScheme?: 'light' | 'dark' | 'auto'` — Inject light/dark theme variables automatically. `'auto'` detects from `prefers-color-scheme`. DSL docs using `$token` syntax adapt automatically.
+- `poster?: 'first' | 'last' | number` — Render a static frame instead of interactive player
+- `onError?: (errors: Array<{ path: string; message: string }>) => void` — Callback for validation errors
 - `ref?: React.Ref<DslRendererRef>` — Imperative handle for programmatic control
 
 ### `validate(doc: unknown): ValidationResult`
@@ -229,6 +230,42 @@ Used in `functionPlot.fn` and `vectorField.fn`. Safe evaluation — no `eval()`.
 - `"exp(-(x^2) / 2)"` — Gaussian
 - `"[-y, x]"` — Rotation vector field
 - `"[sin(y), cos(x)]"` — Wave vector field
+
+## Semantic Color Tokens
+
+Use `$token` syntax in your DSL JSON to create theme-adaptive visualizations:
+
+```json
+{
+  "type": "player",
+  "background": "$background",
+  "children": [
+    { "type": "text", "x": 400, "y": 300, "content": "Hello", "fill": "$foreground" },
+    { "type": "circle", "cx": 200, "cy": 200, "r": 50, "stroke": "$accent" }
+  ]
+}
+```
+
+**Available tokens:** `$foreground`, `$background`, `$accent`, `$muted`, `$surface`, `$primary`, `$secondary`, `$tertiary`, `$success`, `$warning`, `$error`
+
+Tokens resolve to CSS custom properties (`$background` → `var(--elucim-background, #0a0a1e)`). Pair with `colorScheme` to auto-adapt:
+
+```tsx
+<DslRenderer dsl={doc} colorScheme="auto" />
+```
+
+| colorScheme | Behavior |
+|-------------|----------|
+| `'dark'` | Injects dark palette variables |
+| `'light'` | Injects light palette variables |
+| `'auto'` | Detects `prefers-color-scheme` media query |
+| _(omitted)_ | Tokens fall back to built-in defaults (dark) |
+
+You can also override individual tokens with the `theme` prop:
+
+```tsx
+<DslRenderer dsl={doc} colorScheme="auto" theme={{ accent: '#ff6600' }} />
+```
 
 ## Examples
 
