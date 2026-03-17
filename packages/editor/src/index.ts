@@ -29,6 +29,10 @@ export { ELEMENT_TEMPLATES, getTemplatesByCategory, CATEGORY_LABELS, type Elemen
 
 // Inspector
 export { Inspector, type InspectorProps } from './inspector/Inspector';
+export { ArrayEditor, MatrixEditor, type ArrayEditorProps, type MatrixEditorProps, type ColumnDef } from './inspector/ArrayEditor';
+
+// Menu bar
+export { EditorMenuBar } from './toolbar/EditorMenuBar';
 
 // Timeline
 export { Timeline, type TimelineProps } from './timeline/Timeline';

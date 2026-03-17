@@ -5,6 +5,7 @@ import { findElementById } from '../state/reducer';
 import { CANVAS_ID } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
+import { ArrayEditor, MatrixEditor, type ColumnDef } from './ArrayEditor';
 
 export interface InspectorProps {
   className?: string;
@@ -372,20 +373,11 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
   if (Array.isArray(el.values)) {
     sections.push(
       <InspectorSection key="matrix" title="Matrix">
-        <TextField
-          label="Values"
-          value={el.values ? el.values.map((r: any[]) => r.join(', ')).join(' ; ') : ''}
-          onChange={v => {
-            const rows = v.split(';').map((r: string) =>
-              r.trim().split(',').map((c: string) => {
-                const n = Number(c.trim());
-                return isNaN(n) ? c.trim() : n;
-              })
-            );
-            onChange('values', rows);
-          }}
+        <MatrixEditor
+          values={el.values as number[][]}
+          onChange={v => onChange('values', v)}
         />
-        {'cellSize' in el && <NumberField label="Cell Size" value={el.cellSize ?? 40} onChange={v => onChange('cellSize', v)} />}
+        {'cellSize' in el && <NumberField label="Cell Size" value={el.cellSize ?? 48} onChange={v => onChange('cellSize', v)} />}
       </InspectorSection>
     );
   }
@@ -423,10 +415,36 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
 
   // Graph nodes/edges
   if (Array.isArray(el.nodes)) {
+    const nodeColumns: ColumnDef[] = [
+      { key: 'id', label: 'ID', type: 'string', width: 36 },
+      { key: 'x', label: 'X', type: 'number', width: 40 },
+      { key: 'y', label: 'Y', type: 'number', width: 40 },
+      { key: 'label', label: 'Label', type: 'string', width: 40 },
+    ];
+    const edgeColumns: ColumnDef[] = [
+      { key: 'from', label: 'From', type: 'string' },
+      { key: 'to', label: 'To', type: 'string' },
+    ];
     sections.push(
       <InspectorSection key="graph" title="Graph">
-        <NumberField label="Nodes" value={el.nodes.length} onChange={() => {}} />
-        {Array.isArray(el.edges) && <NumberField label="Edges" value={el.edges.length} onChange={() => {}} />}
+        <div style={{ fontSize: 9, color: v('--elucim-editor-text-muted'), padding: '2px 0' }}>Nodes</div>
+        <ArrayEditor
+          columns={nodeColumns}
+          rows={el.nodes}
+          onChange={rows => onChange('nodes', rows)}
+          newRowTemplate={{ id: `n${el.nodes.length}`, x: 200, y: 200, label: '' }}
+        />
+        {Array.isArray(el.edges) && (
+          <>
+            <div style={{ fontSize: 9, color: v('--elucim-editor-text-muted'), padding: '4px 0 2px' }}>Edges</div>
+            <ArrayEditor
+              columns={edgeColumns}
+              rows={el.edges}
+              onChange={rows => onChange('edges', rows)}
+              newRowTemplate={{ from: '', to: '' }}
+            />
+          </>
+        )}
         {'nodeRadius' in el && <NumberField label="Node Radius" value={el.nodeRadius} onChange={v => onChange('nodeRadius', v)} />}
         {'nodeColor' in el && <ColorField label="Node Color" value={el.nodeColor} onChange={v => onChange('nodeColor', v)} />}
         {'edgeColor' in el && <ColorField label="Edge Color" value={el.edgeColor} onChange={v => onChange('edgeColor', v)} />}
@@ -436,10 +454,20 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
 
   // BarChart bars
   if (Array.isArray(el.bars)) {
+    const barColumns: ColumnDef[] = [
+      { key: 'label', label: 'Label', type: 'string' },
+      { key: 'value', label: 'Value', type: 'number', width: 48 },
+      { key: 'color', label: 'Color', type: 'color', width: 32 },
+    ];
     sections.push(
       <InspectorSection key="barchart" title="Bar Chart">
-        <NumberField label="Bars" value={el.bars.length} onChange={() => {}} />
-        {'barColor' in el && <ColorField label="Bar Color" value={el.barColor} onChange={v => onChange('barColor', v)} />}
+        <ArrayEditor
+          columns={barColumns}
+          rows={el.bars}
+          onChange={rows => onChange('bars', rows)}
+          newRowTemplate={{ label: 'New', value: 50 }}
+        />
+        {'barColor' in el && <ColorField label="Default Bar Color" value={el.barColor} onChange={v => onChange('barColor', v)} />}
         {'gap' in el && <NumberField label="Gap" value={el.gap} onChange={v => onChange('gap', v)} step={0.1} />}
         {'maxValue' in el && <NumberField label="Max Value" value={el.maxValue} onChange={v => onChange('maxValue', v)} />}
       </InspectorSection>
@@ -479,11 +507,22 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
     );
   }
 
-  // Polygon points (read-only count; editing individual points is complex)
+  // Polygon points
   if (Array.isArray(el.points) && !Array.isArray(el.nodes)) {
+    const pointColumns: ColumnDef[] = [
+      { key: '0', label: 'X', type: 'number' },
+      { key: '1', label: 'Y', type: 'number' },
+    ];
+    // Convert [x,y][] to {0:x, 1:y}[]
+    const pointRows = (el.points as [number, number][]).map(([x, y]) => ({ '0': x, '1': y }));
     sections.push(
       <InspectorSection key="polygon" title="Polygon">
-        <NumberField label="Vertices" value={el.points.length} onChange={() => {}} />
+        <ArrayEditor
+          columns={pointColumns}
+          rows={pointRows}
+          onChange={rows => onChange('points', rows.map(r => [r['0'], r['1']]))}
+          newRowTemplate={{ '0': 0, '1': 0 }}
+        />
         {'closed' in el && <TextField label="Closed" value={String(el.closed ?? true)} onChange={v => onChange('closed', v === 'true')} />}
       </InspectorSection>
     );
