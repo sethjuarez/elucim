@@ -123,6 +123,15 @@ export default defineConfig({
             { slug: 'examples/recipes' },
           ],
         },
+        {
+          label: 'Visual Editor',
+          items: [
+            { slug: 'editor/overview' },
+            { slug: 'editor/inspector' },
+            { slug: 'editor/theming' },
+            { slug: 'editor/api' },
+          ],
+        },
       ],
     }),
     react(),

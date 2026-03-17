@@ -1,10 +1,9 @@
-# Editor API
+---
+title: Editor API Reference
+description: Full API reference for @elucim/editor — components, hooks, state, and utilities.
+---
 
-Full API reference for `@elucim/editor`.
-
-## Components
-
-### `ElucimEditor`
+## ElucimEditor
 
 The main editor component — all-in-one canvas, toolbar, inspector, and timeline.
 
@@ -20,56 +19,24 @@ interface ElucimEditorProps {
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `initialDocument` | `ElucimDocument` | Empty 800×600 scene | Starting scene document |
-| `theme` | `Record<string, string>` | — | Token overrides (see [Theming](/guide/editor-theming)) |
+| `theme` | `Record<string, string>` | — | Token overrides (see [Theming](/editor/theming/)) |
 | `className` | `string` | — | CSS class on root element |
 | `style` | `CSSProperties` | — | Inline styles on root element |
 
-### `EditorProvider`
+## Components
 
-Context provider wrapping the editor state. Used internally by `ElucimEditor`, but exported for custom editor layouts.
-
-```ts
-interface EditorProviderProps {
-  initialDocument?: ElucimDocument;
-  children: React.ReactNode;
-}
-```
-
-### `ElucimCanvas`
-
-The canvas rendering surface with zoom, pan, selection overlays, and dot grid.
-
-### `Toolbar`
-
-Floating panel with categorized element templates. Click a template to add it to the scene.
-
-### `Inspector`
-
-Contextual property editing panel. Shows element properties when an element is selected, or scene properties when the canvas is selected.
-
-### `Timeline`
-
-Bottom panel with play/pause, scrub bar, and frame counter.
-
-### `FloatingPanel`
-
-Draggable, floating container used by the toolbar and inspector. Can be used to build custom floating UI.
-
-### `SelectionOverlay`
-
-SVG overlay that renders selection boxes, resize handles, and rotation handles for selected elements.
-
-### `DotGrid`
-
-Zoom-adaptive dot grid background for the canvas.
-
-### `Minimap`
-
-Bird's-eye canvas overview showing the viewport position.
-
-### `ZoomControls`
-
-Zoom in/out buttons and zoom-to-fit.
+| Export | Description |
+|--------|-------------|
+| `ElucimEditor` | Main editor — canvas + toolbar + inspector + timeline |
+| `ElucimCanvas` | Canvas with zoom/pan and selection overlays |
+| `Toolbar` | Element template palette |
+| `Inspector` | Property editing panel |
+| `Timeline` | Animation playback controls |
+| `FloatingPanel` | Draggable floating container |
+| `SelectionOverlay` | Selection boxes, resize/rotate handles |
+| `DotGrid` | Zoom-adaptive dot grid background |
+| `Minimap` | Canvas overview minimap |
+| `ZoomControls` | Zoom buttons and zoom-to-fit |
 
 ## Hooks
 
@@ -87,7 +54,6 @@ const [state, dispatch] = useEditorState();
 // Read state
 console.log(state.selectedIds);
 console.log(state.viewport.zoom);
-console.log(state.isPlaying);
 
 // Dispatch actions
 dispatch({ type: 'SELECT', ids: ['element-1'] });
@@ -110,23 +76,16 @@ Returns the array of selected element IDs.
 function useEditorSelection(): string[];
 ```
 
-### `useViewport()`
+### Other Hooks
 
-Zoom and pan state with handlers.
+| Hook | Description |
+|------|-------------|
+| `useViewport()` | Zoom/pan state and handlers |
+| `useDrag()` | Element drag, resize, and rotate interactions |
+| `useMarquee()` | Marquee (lasso) selection interactions |
+| `useMeasuredBounds()` | DOM-based element bounds measurement |
 
-### `useDrag()`
-
-Element drag, resize, and rotate interaction handlers.
-
-### `useMarquee()`
-
-Marquee (lasso) selection interaction handlers.
-
-### `useMeasuredBounds()`
-
-DOM-based element bounds measurement using `getBBox()`.
-
-## State
+## State Types
 
 ### `EditorState`
 
@@ -135,8 +94,8 @@ interface EditorState {
   document: ElucimDocument;
   selectedIds: string[];
   viewport: { x: number; y: number; zoom: number };
-  past: ElucimDocument[];      // undo stack
-  future: ElucimDocument[];    // redo stack
+  past: ElucimDocument[];
+  future: ElucimDocument[];
   currentFrame: number;
   isPlaying: boolean;
   activeTool: EditorTool;
@@ -182,148 +141,84 @@ All available dispatch actions:
 
 ### `CANVAS_ID`
 
-Sentinel value (`'__canvas__'`) used when the canvas itself is selected:
+Sentinel value used when the canvas itself is selected:
 
 ```ts
 import { CANVAS_ID } from '@elucim/editor';
+// CANVAS_ID === '__canvas__'
 
 const isCanvasSelected = selectedIds.includes(CANVAS_ID);
 ```
 
 ## Utilities
 
-### `exportToJson(document)`
-
-Serialize an `ElucimDocument` to a formatted JSON string.
+### Import / Export
 
 ```ts
+// Serialize document to JSON string
 function exportToJson(document: ElucimDocument): string;
-```
 
-### `importFromJson(json)`
-
-Parse a JSON string into an `ElucimDocument`.
-
-```ts
+// Parse JSON string to document
 function importFromJson(json: string): ElucimDocument;
-```
 
-### `downloadAsJson(document, filename)`
-
-Trigger a browser file download of the document as JSON.
-
-```ts
+// Trigger browser file download
 function downloadAsJson(document: ElucimDocument, filename?: string): void;
 ```
 
-### `getElementBounds(element)`
-
-Compute the bounding box for a DSL element.
+### Bounds & Hit Testing
 
 ```ts
-function getElementBounds(element: object): { x: number; y: number; width: number; height: number } | null;
-```
+// Compute bounding box for a DSL element
+function getElementBounds(element: object):
+  { x: number; y: number; width: number; height: number } | null;
 
-### `mergeBounds(boxes)`
-
-Merge multiple bounding boxes into one enclosing box.
-
-```ts
+// Merge multiple bounding boxes
 function mergeBounds(boxes: Array<{ x: number; y: number; width: number; height: number }>):
   { x: number; y: number; width: number; height: number };
-```
 
-### `isPointInBounds(point, bounds)`
-
-Hit-test a point against a bounding box.
-
-```ts
+// Hit-test a point against a bounding box
 function isPointInBounds(
   point: { x: number; y: number },
   bounds: { x: number; y: number; width: number; height: number }
 ): boolean;
-```
 
-### `computeSnap(value, gridSize)`
-
-Snap a value to the nearest grid increment.
-
-```ts
+// Snap a value to the nearest grid increment
 function computeSnap(value: number, gridSize: number): number;
 ```
 
-## Theming Utilities
-
-### `v(token)`
-
-Returns a CSS `var()` reference with fallback:
+### Theming
 
 ```ts
+// Get CSS var() reference with fallback
 function v(token: string): string;
-// v('--elucim-editor-accent') → 'var(--elucim-editor-accent, #4a9eff)'
-```
 
-### `buildThemeVars(overrides?)`
-
-Merge theme overrides with defaults, returning a CSS variable object:
-
-```ts
+// Merge theme overrides with defaults
 function buildThemeVars(overrides?: Record<string, string>): Record<string, string>;
-```
 
-### `makeRotateCursor(color?)`
-
-Generate an SVG data-URL cursor string for rotation handles:
-
-```ts
+// Generate SVG rotation cursor with custom color
 function makeRotateCursor(color?: string): string;
-```
 
-### `EDITOR_TOKENS`
-
-The full token registry with default values:
-
-```ts
-const EDITOR_TOKENS: Record<string, string>;
-// { '--elucim-editor-accent': '#4a9eff', '--elucim-editor-bg': '#1a1a2e', ... }
-```
-
-### `ROTATE_CURSOR`
-
-Pre-built rotation cursor using the default accent color.
-
-```ts
+// Pre-built rotation cursor with default accent
 const ROTATE_CURSOR: string;
+
+// Full token registry with defaults
+const EDITOR_TOKENS: Record<string, string>;
 ```
 
-## Template Utilities
-
-### `ELEMENT_TEMPLATES`
-
-Array of all available element templates with metadata:
+### Templates
 
 ```ts
+// All available element templates
 const ELEMENT_TEMPLATES: Array<{
   type: string;
   category: string;
   label: string;
   defaults: object;
 }>;
-```
 
-### `getTemplatesByCategory()`
-
-Returns templates grouped by category key:
-
-```ts
+// Templates grouped by category
 function getTemplatesByCategory(): Record<string, typeof ELEMENT_TEMPLATES>;
-```
 
-### `CATEGORY_LABELS`
-
-Display labels for template categories:
-
-```ts
+// Display labels for categories
 const CATEGORY_LABELS: Record<string, string>;
-// { shapes: 'Shapes', math: 'Math', data: 'Data', ... }
 ```

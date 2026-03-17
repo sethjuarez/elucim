@@ -1,15 +1,14 @@
-# Visual Editor
+---
+title: Editor Overview
+description: Visual canvas editor for building Elucim animations — Figma-like drag-and-drop scene design.
+---
 
 The Elucim editor is a drop-in React component that lets you visually build animated scenes — add elements, edit properties, preview animations, and export to JSON. Think Figma, but for animated math visualizations.
 
 ## Installation
 
 ```bash
-# Using pnpm (recommended)
 pnpm add @elucim/editor @elucim/core @elucim/dsl react react-dom
-
-# Using npm
-npm install @elucim/editor @elucim/core @elucim/dsl react react-dom
 ```
 
 ## Quick Start
@@ -59,8 +58,8 @@ The editor uses a **floating panel** design — all UI chrome hovers over an inf
 
 | Panel | Position | Purpose |
 |-------|----------|---------|
-| **Toolbar** | Top-left | Add elements to the scene from categorized templates |
-| **Inspector** | Contextual | Edit properties of the selected element (auto-positions next to selection) |
+| **Toolbar** | Top-left | Add elements from categorized templates |
+| **Inspector** | Contextual | Edit properties of the selected element |
 | **Timeline** | Bottom | Play/pause animations, scrub to any frame |
 | **Minimap** | Bottom-right | Bird's-eye view for navigating large scenes |
 | **Zoom Controls** | Bottom-right | Zoom in/out, zoom-to-fit |
@@ -81,9 +80,9 @@ Open the **Toolbar** (top-left) and click any template to add it to the scene:
 | **Animation** | FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel |
 | **Structure** | Sequence |
 
-Each template inserts a pre-configured element with sensible defaults. Select it and use the [Inspector](/guide/editor-inspector) to customize.
+Each template inserts a pre-configured element with sensible defaults. Select it and use the [Inspector](/editor/inspector/) to customize.
 
-::: tip
+:::tip
 The toolbar is collapsible — click the collapse button to minimize it when you need more canvas space.
 :::
 
@@ -107,7 +106,7 @@ Press **Escape** to fully deselect everything.
 ## Moving & Transforming
 
 - **Drag** a selected element to move it
-- **Resize handles** — drag the corner or edge handles on the selection box to resize
+- **Resize handles** — drag the corner or edge handles on the selection box
 - **Rotation handle** — drag the circular handle above the selection to rotate (a custom rotation cursor appears)
 
 All transforms support **undo/redo** with `Ctrl+Z` / `Ctrl+Shift+Z` (up to 50 levels of history).
@@ -158,7 +157,7 @@ import { importFromJson } from '@elucim/editor';
 const document = importFromJson(jsonString);
 ```
 
-The exported JSON is a standard [Elucim DSL document](/guide/timeline) — it can be rendered with `<DslRenderer>` from `@elucim/dsl` or loaded back into the editor.
+The exported JSON is a standard [Elucim DSL document](/dsl/overview/) — it can be rendered with `<DslRenderer>` from `@elucim/dsl` or loaded back into the editor.
 
 ## Keyboard Shortcuts
 
@@ -179,7 +178,6 @@ If something goes wrong during rendering (for example, an invalid math expressio
 
 ## Next Steps
 
-- [Inspector & Properties](/guide/editor-inspector) — Deep dive on editing element properties
-- [Editor Theming](/guide/editor-theming) — Customize editor colors and appearance
-- [Editor API Reference](/api/editor) — Full API documentation
-- [Creating Visuals](/guide/creating-visuals) — Comprehensive guide to building animations
+- Learn about the [Inspector & Properties](/editor/inspector/) — editing element and canvas properties
+- Customize the look with [Editor Theming](/editor/theming/)
+- See the full [Editor API Reference](/editor/api/)
