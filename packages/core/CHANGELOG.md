@@ -1,5 +1,17 @@
 # @elucim/core
 
+## [0.7.0](https://github.com/sethjuarez/elucim/compare/core-v0.6.0...core-v0.7.0) (2026-03-17)
+
+
+### Features
+
+* **core:** click to complete slide animations before advancing ([ac513ab](https://github.com/sethjuarez/elucim/commit/ac513abf0dec7a661fdcaf0bdb8b56f5d28dee71))
+
+
+### Bug Fixes
+
+* **core:** presentation now renders at proper 16:9 aspect ratio ([d957e24](https://github.com/sethjuarez/elucim/commit/d957e24779f395ccb965eb6cc2b192c4de81a974))
+
 ## [0.6.0](https://github.com/sethjuarez/elucim/compare/core-v0.5.0...core-v0.6.0) (2026-03-16)
 
 

@@ -1,5 +1,25 @@
 # @elucim/dsl
 
+## [0.7.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.6.0...dsl-v0.7.0) (2026-03-17)
+
+
+### Features
+
+* **dsl:** add colorScheme prop for automatic light/dark theme support ([1500c44](https://github.com/sethjuarez/elucim/commit/1500c44679fcbd49be3161b70b1fe60a7d397eb5))
+* **dsl:** convert all examples to semantic tokens + 16:9 presentations ([d29d8bd](https://github.com/sethjuarez/elucim/commit/d29d8bd3cef8c4accfd60ffbe1e8030c823f2edb))
+
+
+### Bug Fixes
+
+* **core:** presentation now renders at proper 16:9 aspect ratio ([d957e24](https://github.com/sethjuarez/elucim/commit/d957e24779f395ccb965eb6cc2b192c4de81a974))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.7.0
+
 ## [0.6.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.5.0...dsl-v0.6.0) (2026-03-16)
 
 
