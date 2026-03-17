@@ -1,5 +1,19 @@
 # @elucim/dsl
 
+## [0.8.2](https://github.com/sethjuarez/elucim/compare/dsl-v0.8.1...dsl-v0.8.2) (2026-03-17)
+
+
+### Bug Fixes
+
+* **dsl:** handle nested var(), light-dark() in renderToPng SVG output ([7291150](https://github.com/sethjuarez/elucim/commit/72911507dd4a226985d03dcdd26b7c15ea05e1f7)), closes [#13](https://github.com/sethjuarez/elucim/issues/13)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.8.2
+
 ## [0.8.1](https://github.com/sethjuarez/elucim/compare/dsl-v0.8.0...dsl-v0.8.1) (2026-03-17)
 
 

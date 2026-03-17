@@ -1,6 +1,6 @@
 {
   "name": "@elucim/editor",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Visual editor for creating and editing Elucim animated scenes",
   "type": "module",
   "license": "MIT",
