@@ -1,6 +1,6 @@
 {
   "name": "@elucim/core",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "React library for animated math and concept visualizations — 3Blue1Brown-style for the web",
   "type": "module",
   "license": "MIT",

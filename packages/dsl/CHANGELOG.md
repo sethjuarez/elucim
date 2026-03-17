@@ -1,5 +1,19 @@
 # @elucim/dsl
 
+## [0.8.3](https://github.com/sethjuarez/elucim/compare/dsl-v0.8.2...dsl-v0.8.3) (2026-03-17)
+
+
+### Bug Fixes
+
+* **dsl:** fix renderToPng OffscreenCanvas decode failure, add E2E tests ([05370ad](https://github.com/sethjuarez/elucim/commit/05370ad03f277919356c72decc79e590c7b31714)), closes [#13](https://github.com/sethjuarez/elucim/issues/13)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/core bumped to 0.8.3
+
 ## [0.8.2](https://github.com/sethjuarez/elucim/compare/dsl-v0.8.1...dsl-v0.8.2) (2026-03-17)
 
 
