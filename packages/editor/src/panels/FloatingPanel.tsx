@@ -98,7 +98,7 @@ export function FloatingPanel({
         position: 'absolute',
         left: position.x,
         top: position.y,
-        zIndex: 100,
+        zIndex: 120,
         background: v('--elucim-editor-panel'),
         backdropFilter: 'blur(8px)',
         border: `1px solid ${v('--elucim-editor-border')}`,

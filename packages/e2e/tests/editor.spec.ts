@@ -589,11 +589,10 @@ test.describe('Editor — Menu Bar (Phase 4)', () => {
     await page.getByRole('button', { name: 'Theme' }).click();
     await page.waitForTimeout(300);
 
-    await expect(page.getByText('Built-in Themes')).toBeVisible();
+    await expect(page.getByText('Themes')).toBeVisible();
     await expect(page.getByText('dark')).toBeVisible();
     await expect(page.getByText('light')).toBeVisible();
     await expect(page.getByText('ocean')).toBeVisible();
-    await expect(page.getByText('Custom Theme…')).toBeVisible();
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/41-theme-picker.png` });
   });

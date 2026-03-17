@@ -136,6 +136,14 @@ function applyMove(element: ElementNode, dx: number, dy: number): ElementNode {
       (moved as any).cy2 += dy;
     }
   }
+  // Graph — move all nodes together
+  if ('nodes' in moved && Array.isArray(moved.nodes)) {
+    (moved as any).nodes = (moved.nodes as any[]).map((n: any) => ({
+      ...n,
+      x: typeof n.x === 'number' ? n.x + dx : n.x,
+      y: typeof n.y === 'number' ? n.y + dy : n.y,
+    }));
+  }
   return moved;
 }
 

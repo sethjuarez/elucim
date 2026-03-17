@@ -67,14 +67,17 @@ function measureElement(
 ): BoundingBox | null {
   try {
     // Navigate to the content element.
-    // If withTransform wrapped the content in <g transform="...">, calling
-    // getBBox() on that <g> returns the children's bounds in its local
-    // coordinate space — i.e., before the transform is applied. This gives
-    // us the intrinsic (pre-rotation) bounds we need for the selection overlay.
+    // If withTransform wrapped the content in <g transform="rotate/scale(...)">
+    // we want the intrinsic pre-rotation bounds. But we must NOT unwrap
+    // positional translate-only groups (e.g. Matrix's translate(x,y)).
     let target: SVGGraphicsElement = wrapper;
     const firstChild = wrapper.firstElementChild as SVGGraphicsElement | null;
-    if (firstChild && firstChild.tagName === 'g' && firstChild.hasAttribute('transform')) {
-      target = firstChild;
+    if (firstChild && firstChild.tagName === 'g') {
+      const transformStr = firstChild.getAttribute('transform') ?? '';
+      // Only unwrap rotation/scale wrappers from withTransform
+      if (/rotate\s*\(|scale\s*\(/.test(transformStr)) {
+        target = firstChild;
+      }
     }
 
     const bbox = target.getBBox();

@@ -25,6 +25,7 @@ import {
   Pin, PinOff, ChevronDown, ChevronRight, GripVertical,
   Save, FolderOpen, Copy, Spline, Pentagon,
   Group, Ungroup, Layers, Palette,
+  Axis3d, SquareFunction, MoveUpRight, Grid3x3, Wind,
 } from 'lucide-react';
 
 // ─── Size constants ─────────────────────────────────────────────────────────
@@ -97,25 +98,6 @@ export interface EditorIcons {
   Palette: IconComponent;
 }
 
-// ─── Custom SVG helper ─────────────────────────────────────────────────────
-
-const customSvg = (defaultSize: number, children: React.ReactNode, props?: IconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={props?.size ?? defaultSize}
-    height={props?.size ?? defaultSize}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={2}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={props?.className}
-    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...props?.style }}
-  >
-    {children}
-  </svg>
-);
 
 // ─── Default icon implementations ──────────────────────────────────────────
 
@@ -133,45 +115,12 @@ export const DEFAULT_ICONS: EditorIcons = {
   Bezier:  (p) => <Spline size={p?.size ?? TB} />,
   Polygon: (p) => <Pentagon size={p?.size ?? TB} />,
 
-  // Custom domain-specific icons (no good Lucide match)
-  Axes: (p) => customSvg(p?.size ?? TB, <>
-    <line x1="3" y1="21" x2="3" y2="3" />
-    <polyline points="3,3 5,5" />
-    <line x1="3" y1="21" x2="21" y2="21" />
-    <polyline points="21,21 19,19" />
-    <line x1="3" y1="14" x2="8" y2="14" strokeWidth={1} strokeDasharray="2 2" />
-    <line x1="3" y1="7" x2="13" y2="7" strokeWidth={1} strokeDasharray="2 2" />
-    <line x1="10" y1="21" x2="10" y2="14" strokeWidth={1} strokeDasharray="2 2" />
-  </>, p),
-
-  Function: (p) => customSvg(p?.size ?? TB, <>
-    <path d="M3 17c3-12 6 0 9-6s6 0 9-6" strokeWidth={2} fill="none" />
-  </>, p),
-
-  Vector: (p) => customSvg(p?.size ?? TB, <>
-    <line x1="4" y1="20" x2="18" y2="6" />
-    <polyline points="12,5 18,6 17,12" />
-    <circle cx="4" cy="20" r="1.5" fill="currentColor" stroke="none" />
-  </>, p),
-
-  Matrix: (p) => customSvg(p?.size ?? TB, <>
-    <path d="M6 3H4v18h2M18 3h2v18h-2" />
-    <circle cx="9" cy="9" r="1" fill="currentColor" stroke="none" />
-    <circle cx="15" cy="9" r="1" fill="currentColor" stroke="none" />
-    <circle cx="9" cy="15" r="1" fill="currentColor" stroke="none" />
-    <circle cx="15" cy="15" r="1" fill="currentColor" stroke="none" />
-  </>, p),
-
-  VectorField: (p) => customSvg(p?.size ?? TB, <>
-    <line x1="4" y1="8" x2="10" y2="5" strokeWidth={1.5} />
-    <polyline points="8,4 10,5 9,7" strokeWidth={1.5} />
-    <line x1="14" y1="8" x2="20" y2="5" strokeWidth={1.5} />
-    <polyline points="18,4 20,5 19,7" strokeWidth={1.5} />
-    <line x1="4" y1="18" x2="10" y2="15" strokeWidth={1.5} />
-    <polyline points="8,14 10,15 9,17" strokeWidth={1.5} />
-    <line x1="14" y1="18" x2="20" y2="15" strokeWidth={1.5} />
-    <polyline points="18,14 20,15 19,17" strokeWidth={1.5} />
-  </>, p),
+  // Math-domain icons (Lucide standard)
+  Axes: (p) => <Axis3d size={p?.size ?? TB} />,
+  Function: (p) => <SquareFunction size={p?.size ?? TB} />,
+  Vector: (p) => <MoveUpRight size={p?.size ?? TB} />,
+  Matrix: (p) => <Grid3x3 size={p?.size ?? TB} />,
+  VectorField: (p) => <Wind size={p?.size ?? TB} />,
 
   // History (16px)
   Undo: (p) => <Undo2 size={p?.size ?? TB} />,
