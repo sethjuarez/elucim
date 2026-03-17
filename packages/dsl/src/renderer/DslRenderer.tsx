@@ -1,7 +1,9 @@
-import React, { forwardRef, useRef, useImperativeHandle } from 'react';
+import React, { forwardRef, useRef, useImperativeHandle, useSyncExternalStore } from 'react';
 import { validate } from '../validator/validate';
 import type { ElucimDocument } from '../schema/types';
 import { renderRoot } from './renderElements';
+import { SEMANTIC_TOKENS } from './resolveColor';
+import { darkTheme, lightTheme } from '../builders/themes';
 
 // ─── DslRenderer ────────────────────────────────────────────────────────────
 
@@ -33,6 +35,17 @@ export interface DslRendererProps {
   style?: React.CSSProperties;
   /** Inject theme colors as CSS custom properties (e.g. --elucim-foreground) */
   theme?: ElucimTheme;
+  /**
+   * Color scheme for semantic token resolution.
+   * - `'dark'` — inject dark theme CSS variables
+   * - `'light'` — inject light theme CSS variables
+   * - `'auto'` — detect from `prefers-color-scheme` media query
+   *
+   * DSL documents using `$token` syntax (e.g. `$background`, `$foreground`)
+   * will automatically adapt. Explicit `theme` values take priority over
+   * colorScheme defaults.
+   */
+  colorScheme?: 'light' | 'dark' | 'auto';
   /** Render a static frame instead of interactive player. 'first' | 'last' | frame number */
   poster?: 'first' | 'last' | number;
   /** Callback fired when DSL validation fails */
@@ -51,11 +64,53 @@ function themeToVars(theme?: ElucimTheme): React.CSSProperties {
   return vars as React.CSSProperties;
 }
 
+/** Map a builder Theme to semantic token CSS variables. */
+function builderThemeToVars(t: typeof darkTheme): Record<string, string> {
+  return {
+    '--elucim-foreground': t.text,
+    '--elucim-background': t.background,
+    '--elucim-accent': t.primary,
+    '--elucim-muted': t.muted,
+    '--elucim-surface': t.background,
+    '--elucim-primary': t.primary,
+    '--elucim-secondary': t.secondary,
+    '--elucim-tertiary': t.tertiary,
+    '--elucim-success': t.success,
+    '--elucim-warning': t.warning,
+    '--elucim-error': t.error,
+  };
+}
+
+const DARK_VARS = builderThemeToVars(darkTheme);
+const LIGHT_VARS = builderThemeToVars(lightTheme);
+
+/** Subscribe to prefers-color-scheme changes. */
+function subscribeColorScheme(cb: () => void) {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return () => {};
+  const mql = window.matchMedia('(prefers-color-scheme: dark)');
+  mql.addEventListener('change', cb);
+  return () => mql.removeEventListener('change', cb);
+}
+
+function getColorSchemeSnapshot(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return true;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function getColorSchemeServerSnapshot(): boolean {
+  return true; // default to dark on server
+}
+
+function usePrefersDark(): boolean {
+  return useSyncExternalStore(subscribeColorScheme, getColorSchemeSnapshot, getColorSchemeServerSnapshot);
+}
+
 export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function DslRenderer(
-  { dsl, className, style, theme, poster, onError },
+  { dsl, className, style, theme, colorScheme, poster, onError },
   ref
 ) {
   const playerRef = useRef<import('@elucim/core').PlayerRef>(null);
+  const prefersDark = usePrefersDark();
 
   useImperativeHandle(ref, () => ({
     getSvgElement: () => playerRef.current?.getSvgElement() ?? null,
@@ -112,11 +167,18 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
 
   const themeVars = themeToVars(theme);
 
+  // Resolve colorScheme → CSS variables for semantic tokens
+  let schemeVars: React.CSSProperties = {};
+  if (colorScheme) {
+    const isDark = colorScheme === 'auto' ? prefersDark : colorScheme === 'dark';
+    schemeVars = (isDark ? DARK_VARS : LIGHT_VARS) as React.CSSProperties;
+  }
+
   // Resolve poster to a frame override
   const posterOverrides = poster !== undefined ? resolvePoster(poster, dsl) : undefined;
 
   return (
-    <div className={className} style={{ ...themeVars, ...style }} data-testid="dsl-root">
+    <div className={className} style={{ ...schemeVars, ...themeVars, ...style }} data-testid="dsl-root">
       {renderRoot(dsl.root, {
         frame: posterOverrides?.frame,
         playerRef,

@@ -14,7 +14,7 @@
         "type": "slide",
         "title": "The Calculus of Change",
         "notes": "Title slide -- set the stage for a journey through calculus concepts.",
-        "background": "#0a0a1e",
+        "background": "$background",
         "children": [
           {
             "type": "player",
@@ -22,7 +22,7 @@
             "height": 650,
             "fps": 30,
             "durationInFrames": 150,
-            "background": "#0a0a1e",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": false,
@@ -37,7 +37,7 @@
                     "x": 450,
                     "y": 220,
                     "content": "The Calculus of Change",
-                    "fill": "#e0e7ff",
+                    "fill": "$foreground",
                     "fontSize": 46,
                     "fontWeight": 700,
                     "textAnchor": "middle"
@@ -162,7 +162,7 @@
         "type": "slide",
         "title": "Functions: The Building Blocks",
         "notes": "Introduce f(x) = x^2 -- the simplest polynomial. Show how the curve emerges from plotting input->output pairs.",
-        "background": "#0a0a1e",
+        "background": "$background",
         "children": [
           {
             "type": "player",
@@ -170,7 +170,7 @@
             "height": 650,
             "fps": 30,
             "durationInFrames": 180,
-            "background": "#0a0a1e",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": false,
@@ -184,7 +184,7 @@
                     "x": 450,
                     "y": 45,
                     "content": "Functions: The Building Blocks",
-                    "fill": "#e0e7ff",
+                    "fill": "$foreground",
                     "fontSize": 28,
                     "fontWeight": 700,
                     "textAnchor": "middle"
@@ -433,7 +433,7 @@
         "type": "slide",
         "title": "The Derivative: Instantaneous Rate of Change",
         "notes": "Show f(x) = x^2 and its derivative f'(x) = 2x overlaid. The derivative tells us the slope at every point.",
-        "background": "#0a0a1e",
+        "background": "$background",
         "children": [
           {
             "type": "player",
@@ -441,7 +441,7 @@
             "height": 650,
             "fps": 30,
             "durationInFrames": 210,
-            "background": "#0a0a1e",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": false,
@@ -455,7 +455,7 @@
                     "x": 450,
                     "y": 45,
                     "content": "The Derivative",
-                    "fill": "#e0e7ff",
+                    "fill": "$foreground",
                     "fontSize": 28,
                     "fontWeight": 700,
                     "textAnchor": "middle"
@@ -711,7 +711,7 @@
         "type": "slide",
         "title": "Trigonometric Functions",
         "notes": "Show sin and cos on the same axes -- these oscillating functions are everywhere in nature: waves, orbits, sound.",
-        "background": "#0a0a1e",
+        "background": "$background",
         "children": [
           {
             "type": "player",
@@ -719,7 +719,7 @@
             "height": 650,
             "fps": 30,
             "durationInFrames": 180,
-            "background": "#0a0a1e",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": false,
@@ -733,7 +733,7 @@
                     "x": 450,
                     "y": 45,
                     "content": "Trigonometric Functions",
-                    "fill": "#e0e7ff",
+                    "fill": "$foreground",
                     "fontSize": 28,
                     "fontWeight": 700,
                     "textAnchor": "middle"
@@ -905,7 +905,7 @@
         "type": "slide",
         "title": "Vectors: Direction and Magnitude",
         "notes": "Vectors represent quantities with both direction and magnitude. Show vector addition visually -- the parallelogram law.",
-        "background": "#0a0a1e",
+        "background": "$background",
         "children": [
           {
             "type": "player",
@@ -913,7 +913,7 @@
             "height": 650,
             "fps": 30,
             "durationInFrames": 180,
-            "background": "#0a0a1e",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": false,
@@ -927,7 +927,7 @@
                     "x": 450,
                     "y": 45,
                     "content": "Vectors: Direction & Magnitude",
-                    "fill": "#e0e7ff",
+                    "fill": "$foreground",
                     "fontSize": 28,
                     "fontWeight": 700,
                     "textAnchor": "middle"
@@ -1141,7 +1141,7 @@
         "type": "slide",
         "title": "Vector Fields: Flow and Force",
         "notes": "A vector field assigns a vector to every point in space. This one shows rotation -- imagine fluid swirling around the origin.",
-        "background": "#0a0a1e",
+        "background": "$background",
         "children": [
           {
             "type": "player",
@@ -1149,7 +1149,7 @@
             "height": 650,
             "fps": 30,
             "durationInFrames": 150,
-            "background": "#0a0a1e",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": false,
@@ -1163,7 +1163,7 @@
                     "x": 450,
                     "y": 45,
                     "content": "Vector Fields: Flow & Force",
-                    "fill": "#e0e7ff",
+                    "fill": "$foreground",
                     "fontSize": 28,
                     "fontWeight": 700,
                     "textAnchor": "middle"
@@ -1333,7 +1333,7 @@
         "type": "slide",
         "title": "Matrices: Linear Transformations",
         "notes": "A 2x2 matrix represents a linear transformation of the plane. Show the rotation matrix and how it maps basis vectors.",
-        "background": "#0a0a1e",
+        "background": "$background",
         "children": [
           {
             "type": "player",
@@ -1341,7 +1341,7 @@
             "height": 650,
             "fps": 30,
             "durationInFrames": 180,
-            "background": "#0a0a1e",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": false,
@@ -1355,7 +1355,7 @@
                     "x": 450,
                     "y": 45,
                     "content": "Matrices as Transformations",
-                    "fill": "#e0e7ff",
+                    "fill": "$foreground",
                     "fontSize": 28,
                     "fontWeight": 700,
                     "textAnchor": "middle"
@@ -1654,7 +1654,7 @@
         "type": "slide",
         "title": "Graph Theory: Networks",
         "notes": "Graphs model relationships. Show a small network with weighted edges -- could represent cities, neurons, or social connections.",
-        "background": "#0a0a1e",
+        "background": "$background",
         "children": [
           {
             "type": "player",
@@ -1662,7 +1662,7 @@
             "height": 650,
             "fps": 30,
             "durationInFrames": 150,
-            "background": "#0a0a1e",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": false,
@@ -1676,7 +1676,7 @@
                     "x": 450,
                     "y": 45,
                     "content": "Graph Theory: Networks",
-                    "fill": "#e0e7ff",
+                    "fill": "$foreground",
                     "fontSize": 28,
                     "fontWeight": 700,
                     "textAnchor": "middle"
@@ -1841,7 +1841,7 @@
         "type": "slide",
         "title": "Euler's Identity: The Most Beautiful Equation",
         "notes": "Euler's identity connects five fundamental constants: e, i, pi, 1, and 0. It's often called the most beautiful equation in mathematics.",
-        "background": "#0a0a1e",
+        "background": "$background",
         "children": [
           {
             "type": "player",
@@ -1849,7 +1849,7 @@
             "height": 650,
             "fps": 30,
             "durationInFrames": 210,
-            "background": "#0a0a1e",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": false,
@@ -1863,7 +1863,7 @@
                     "x": 450,
                     "y": 45,
                     "content": "Euler's Identity",
-                    "fill": "#e0e7ff",
+                    "fill": "$foreground",
                     "fontSize": 28,
                     "fontWeight": 700,
                     "textAnchor": "middle"
@@ -2037,9 +2037,18 @@
                         "children": [
                           {
                             "type": "vector",
-                            "from": [0, 0],
-                            "to": [-1, 0],
-                            "origin": [450, 470],
+                            "from": [
+                              0,
+                              0
+                            ],
+                            "to": [
+                              -1,
+                              0
+                            ],
+                            "origin": [
+                              450,
+                              470
+                            ],
                             "scale": 85,
                             "color": "#f472b6",
                             "strokeWidth": 2.5
@@ -2118,7 +2127,7 @@
         "type": "slide",
         "title": "Thank You",
         "notes": "Closing slide -- invite questions and further exploration.",
-        "background": "#0a0a1e",
+        "background": "$background",
         "children": [
           {
             "type": "player",
@@ -2126,7 +2135,7 @@
             "height": 650,
             "fps": 30,
             "durationInFrames": 120,
-            "background": "#0a0a1e",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": false,
@@ -2141,7 +2150,7 @@
                     "x": 450,
                     "y": 250,
                     "content": "Thank You",
-                    "fill": "#e0e7ff",
+                    "fill": "$foreground",
                     "fontSize": 56,
                     "fontWeight": 700,
                     "textAnchor": "middle"

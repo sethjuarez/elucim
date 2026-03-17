@@ -75,6 +75,48 @@ describe('DslRenderer onError callback', () => {
 import React from 'react';
 import { act } from '@testing-library/react';
 
+describe('DslRenderer colorScheme prop', () => {
+  it('injects dark CSS variables with colorScheme="dark"', () => {
+    const { container } = render(
+      <DslRenderer dsl={validDsl as any} colorScheme="dark" />,
+    );
+    const root = container.querySelector('[data-testid="dsl-root"]') as HTMLElement;
+    expect(root).toBeTruthy();
+    expect(root.style.getPropertyValue('--elucim-background')).toBeTruthy();
+    expect(root.style.getPropertyValue('--elucim-foreground')).toBeTruthy();
+  });
+
+  it('injects light CSS variables with colorScheme="light"', () => {
+    const { container } = render(
+      <DslRenderer dsl={validDsl as any} colorScheme="light" />,
+    );
+    const root = container.querySelector('[data-testid="dsl-root"]') as HTMLElement;
+    expect(root).toBeTruthy();
+    const bg = root.style.getPropertyValue('--elucim-background');
+    expect(bg).toBeTruthy();
+    // Light background should differ from dark
+    expect(bg).not.toBe('#0d1117');
+  });
+
+  it('explicit theme props override colorScheme defaults', () => {
+    const { container } = render(
+      <DslRenderer dsl={validDsl as any} colorScheme="dark" theme={{ background: '#ff0000' }} />,
+    );
+    const root = container.querySelector('[data-testid="dsl-root"]') as HTMLElement;
+    expect(root).toBeTruthy();
+    expect(root.style.getPropertyValue('--elucim-background')).toBe('#ff0000');
+  });
+
+  it('colorScheme="auto" defaults to dark when matchMedia unavailable', () => {
+    const { container } = render(
+      <DslRenderer dsl={validDsl as any} colorScheme="auto" />,
+    );
+    const root = container.querySelector('[data-testid="dsl-root"]') as HTMLElement;
+    expect(root).toBeTruthy();
+    expect(root.style.getPropertyValue('--elucim-background')).toBeTruthy();
+  });
+});
+
 describe('DslRenderer poster prop', () => {
   it('renders a static Scene (no controls) with poster="first"', () => {
     const { container } = render(

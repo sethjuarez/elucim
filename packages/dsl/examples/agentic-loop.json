@@ -4,7 +4,7 @@
     "type": "presentation",
     "width": 900,
     "height": 640,
-    "background": "#0a0a1e",
+    "background": "$background",
     "transition": "fade",
     "transitionDuration": 10,
     "showHud": true,
@@ -39,7 +39,7 @@
                         "y": 200,
                         "content": "From Words to Agents",
                         "fontSize": 36,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -263,7 +263,7 @@
                         "y": 55,
                         "content": "Step 1: Tokenization",
                         "fontSize": 28,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -802,7 +802,7 @@
                         "y": 55,
                         "content": "Step 2: Token Embeddings",
                         "fontSize": 28,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -1093,7 +1093,7 @@
                         "y": 55,
                         "content": "Step 3: Self-Attention",
                         "fontSize": 28,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -1554,7 +1554,7 @@
                         "y": 55,
                         "content": "Step 4: The Transformer Block",
                         "fontSize": 28,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -2049,7 +2049,7 @@
                         "y": 55,
                         "content": "Step 5: Stacking Layers",
                         "fontSize": 28,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -2415,7 +2415,7 @@
                         "y": 55,
                         "content": "Step 6: Predicting the Next Token",
                         "fontSize": 28,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -2768,7 +2768,7 @@
                         "y": 55,
                         "content": "Step 7: Autoregressive Generation",
                         "fontSize": 28,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -3488,7 +3488,7 @@
                         "y": 55,
                         "content": "Step 8: From Text to Structure",
                         "fontSize": 28,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -3980,7 +3980,7 @@
                         "y": 55,
                         "content": "Step 9: The Agentic Loop",
                         "fontSize": 28,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -4333,7 +4333,7 @@
                         "y": 55,
                         "content": "Putting It All Together",
                         "fontSize": 28,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
@@ -5013,7 +5013,7 @@
                         "y": 220,
                         "content": "From Words to Agents",
                         "fontSize": 34,
-                        "fill": "#e0e7ff",
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
                       }
