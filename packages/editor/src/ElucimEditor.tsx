@@ -119,6 +119,8 @@ function EditorLayout({ theme, className, style }: { theme?: Record<string, stri
         color: v('--elucim-editor-fg'),
         fontFamily: 'system-ui, -apple-system, sans-serif',
         height: '100%',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
         ...style,
       }}
     >
