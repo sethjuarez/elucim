@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import type { ElucimDocument } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
 import { EditorProvider } from './state/EditorProvider';
@@ -13,6 +13,7 @@ import { getElementBounds } from './utils/bounds';
 import { useEditorIcons } from './theme/icons';
 import { buildThemeVars, v } from './theme/tokens';
 import { CANVAS_ID } from './state/types';
+import { EditorMenuBar } from './toolbar/EditorMenuBar';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
@@ -122,6 +123,9 @@ function EditorLayout({ theme, className, style }: { theme?: Record<string, stri
         ...style,
       }}
     >
+      {/* Menu bar — export, import, themes */}
+      <EditorMenuBar />
+
       {/* Main canvas area — full-bleed */}
       <div ref={containerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         {/* Canvas fills everything */}

@@ -24,7 +24,7 @@ import {
   ZoomIn, ZoomOut, Maximize,
   Pin, PinOff, ChevronDown, ChevronRight, GripVertical,
   Save, FolderOpen, Copy, Spline, Pentagon,
-  Group, Ungroup, Layers,
+  Group, Ungroup, Layers, Palette,
 } from 'lucide-react';
 
 // ─── Size constants ─────────────────────────────────────────────────────────
@@ -94,6 +94,7 @@ export interface EditorIcons {
   Save: IconComponent;
   Open: IconComponent;
   Copy: IconComponent;
+  Palette: IconComponent;
 }
 
 // ─── Custom SVG helper ─────────────────────────────────────────────────────
@@ -206,6 +207,7 @@ export const DEFAULT_ICONS: EditorIcons = {
   Save: (p) => <Save size={p?.size ?? TB} />,
   Open: (p) => <FolderOpen size={p?.size ?? TB} />,
   Copy: (p) => <Copy size={p?.size ?? TB} />,
+  Palette: (p) => <Palette size={p?.size ?? TB} />,
 };
 
 // ─── Context ───────────────────────────────────────────────────────────────
@@ -288,3 +290,4 @@ export const IconDragHandle = DEFAULT_ICONS.DragHandle;
 export const IconSave = DEFAULT_ICONS.Save;
 export const IconOpen = DEFAULT_ICONS.Open;
 export const IconCopy = DEFAULT_ICONS.Copy;
+export const IconPalette = DEFAULT_ICONS.Palette;
