@@ -49,7 +49,8 @@
   },
   "dependencies": {
     "@elucim/core": "workspace:*",
-    "@elucim/dsl": "workspace:*"
+    "@elucim/dsl": "workspace:*",
+    "lucide-react": "^0.577.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",

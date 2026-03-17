@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { useEditorState } from '../state/EditorProvider';
 import { getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from './templates';
-import { IconUndo, IconRedo } from '../theme/icons';
+import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 
 export interface ToolbarProps {
@@ -15,6 +15,7 @@ export interface ToolbarProps {
  */
 export function Toolbar({ className, style }: ToolbarProps) {
   const { state, dispatch } = useEditorState();
+  const icons = useEditorIcons();
   const categories = getTemplatesByCategory();
 
   const handleAddElement = useCallback((template: ElementTemplate) => {
@@ -45,8 +46,8 @@ export function Toolbar({ className, style }: ToolbarProps) {
     >
       {/* Undo / Redo */}
       <ToolbarSection label="History">
-        <ToolbarButton icon={<IconUndo />} label="Undo" onClick={handleUndo} disabled={state.past.length === 0} />
-        <ToolbarButton icon={<IconRedo />} label="Redo" onClick={handleRedo} disabled={state.future.length === 0} />
+        <ToolbarButton icon={icons.Undo()} label="Undo" onClick={handleUndo} disabled={state.past.length === 0} />
+        <ToolbarButton icon={icons.Redo()} label="Redo" onClick={handleRedo} disabled={state.future.length === 0} />
       </ToolbarSection>
 
       {/* Element palette */}

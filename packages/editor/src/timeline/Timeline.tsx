@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useEffect } from 'react';
 import type { ElementNode } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
-import { IconSkipStart, IconStepBackward, IconPlay, IconPause, IconStepForward, IconSkipEnd } from '../theme/icons';
+import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 
 export interface TimelineProps {
@@ -19,6 +19,7 @@ const RULER_HEIGHT = 20;
  */
 export function Timeline({ className, style }: TimelineProps) {
   const { state, dispatch } = useEditorState();
+  const icons = useEditorIcons();
   const { document, currentFrame, isPlaying, selectedIds } = state;
   const root = document.root;
   const animRef = useRef<number | null>(null);
@@ -95,11 +96,11 @@ export function Timeline({ className, style }: TimelineProps) {
     >
       {/* Controls bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}` }}>
-        <TimelineButton icon={<IconSkipStart />} title="Start" onClick={goToStart} />
-        <TimelineButton icon={<IconStepBackward />} title="Step back" onClick={stepBackward} />
-        <TimelineButton icon={isPlaying ? <IconPause /> : <IconPlay />} title={isPlaying ? 'Pause' : 'Play'} onClick={togglePlay} active={isPlaying} />
-        <TimelineButton icon={<IconStepForward />} title="Step forward" onClick={stepForward} />
-        <TimelineButton icon={<IconSkipEnd />} title="End" onClick={goToEnd} />
+        <TimelineButton icon={icons.SkipStart()} title="Start" onClick={goToStart} />
+        <TimelineButton icon={icons.StepBackward()} title="Step back" onClick={stepBackward} />
+        <TimelineButton icon={isPlaying ? icons.Pause() : icons.Play()} title={isPlaying ? 'Pause' : 'Play'} onClick={togglePlay} active={isPlaying} />
+        <TimelineButton icon={icons.StepForward()} title="Step forward" onClick={stepForward} />
+        <TimelineButton icon={icons.SkipEnd()} title="End" onClick={goToEnd} />
         <div style={{ marginLeft: 8, color: v('--elucim-editor-text-secondary'), fontVariantNumeric: 'tabular-nums' }}>
           {currentFrame} / {durationInFrames - 1} @ {fps}fps
         </div>

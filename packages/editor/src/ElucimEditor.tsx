@@ -10,7 +10,7 @@ import { FloatingPanel } from './panels/FloatingPanel';
 import { EditorErrorBoundary } from './panels/EditorErrorBoundary';
 import { useEditorState } from './state/EditorProvider';
 import { getElementBounds } from './utils/bounds';
-import { IconPin } from './theme/icons';
+import { useEditorIcons } from './theme/icons';
 import { buildThemeVars, v } from './theme/tokens';
 import { CANVAS_ID } from './state/types';
 
@@ -45,6 +45,7 @@ export function ElucimEditor({ initialDocument, theme, className, style }: Eluci
 
 function EditorLayout({ theme, className, style }: { theme?: Record<string, string>; className?: string; style?: React.CSSProperties }) {
   const { state, dispatch } = useEditorState();
+  const icons = useEditorIcons();
   const containerRef = useRef<HTMLDivElement>(null);
   const themeVars = buildThemeVars(theme);
 
@@ -158,7 +159,7 @@ function EditorLayout({ theme, className, style }: { theme?: Record<string, stri
                   lineHeight: 0,
                 }}
               >
-                <IconPin pinned={state.inspectorPinned} />
+                {icons.Pin({ pinned: state.inspectorPinned })}
               </button>
             }
             maxWidth={240}

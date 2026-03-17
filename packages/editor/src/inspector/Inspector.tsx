@@ -3,7 +3,7 @@ import type { ElementNode } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
 import { CANVAS_ID } from '../state/types';
-import { IconChevronDown, IconChevronRight } from '../theme/icons';
+import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 
 export interface InspectorProps {
@@ -128,6 +128,7 @@ export function Inspector({ className, style }: InspectorProps) {
 
 function InspectorSection({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
+  const icons = useEditorIcons();
   return (
     <div style={{ marginBottom: 8 }}>
       <div
@@ -144,7 +145,7 @@ function InspectorSection({ title, children }: { title: string; children: React.
         }}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          {open ? <IconChevronDown /> : <IconChevronRight />} {title}
+          {open ? icons.ChevronDown() : icons.ChevronRight()} {title}
         </span>
       </div>
       {open && <div style={{ padding: '6px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>{children}</div>}

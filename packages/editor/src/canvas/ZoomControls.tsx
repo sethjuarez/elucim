@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconZoomIn, IconZoomOut, IconFitToView } from '../theme/icons';
+import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 
 interface ZoomControlsProps {
@@ -15,6 +15,7 @@ interface ZoomControlsProps {
  */
 export function ZoomControls({ zoom, onZoomIn, onZoomOut, onFitToView }: ZoomControlsProps) {
   const pct = Math.round(zoom * 100);
+  const icons = useEditorIcons();
 
   return (
     <div
@@ -34,7 +35,7 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, onFitToView }: ZoomCon
         padding: '2px 4px',
       }}
     >
-      <ZoomButton icon={<IconZoomOut />} title="Zoom out" onClick={onZoomOut} />
+      <ZoomButton icon={icons.ZoomOut()} title="Zoom out" onClick={onZoomOut} />
       <span
         style={{
           minWidth: 40,
@@ -50,9 +51,9 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, onFitToView }: ZoomCon
       >
         {pct}%
       </span>
-      <ZoomButton icon={<IconZoomIn />} title="Zoom in" onClick={onZoomIn} />
+      <ZoomButton icon={icons.ZoomIn()} title="Zoom in" onClick={onZoomIn} />
       <div style={{ width: 1, height: 16, background: v('--elucim-editor-border'), margin: '0 2px' }} />
-      <ZoomButton icon={<IconFitToView />} title="Fit to view" onClick={onFitToView} />
+      <ZoomButton icon={icons.FitToView()} title="Fit to view" onClick={onFitToView} />
     </div>
   );
 }

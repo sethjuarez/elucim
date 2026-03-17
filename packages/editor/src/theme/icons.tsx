@@ -1,27 +1,108 @@
 /**
- * Standardized monochrome SVG icon set for the Elucim editor.
+ * Standardized icon set for the Elucim editor.
  *
- * All icons use `currentColor` — size and color are inherited from
- * the parent element's `font-size` and `color`.
+ * Uses Lucide icons where available, with small custom SVGs for
+ * domain-specific icons (LaTeX, matrix, vector, axes, function plot, etc.).
+ *
+ * All icons use `currentColor` — size and color inherited from parent.
+ *
+ * **Overridable**: Wrap your editor in `<EditorIconProvider icons={...}>` to
+ * replace any icon. Partial overrides merge with defaults.
  *
  * Three size tiers:
- *   16×16  — toolbar element palette
- *   14×14  — timeline & zoom controls
- *   12×12  — panel chrome (pin, collapse, drag)
+ *   16  — toolbar element palette
+ *   14  — timeline & zoom controls
+ *   12  — panel chrome (pin, collapse, drag)
  */
-import React from 'react';
+import React, { createContext, useContext } from 'react';
+import {
+  Square, Circle, Image, Minus, MoveRight,
+  Type, Sigma,
+  BarChart3, Network,
+  Undo2, Redo2,
+  Play, Pause, SkipBack, SkipForward, StepBack, StepForward,
+  ZoomIn, ZoomOut, Maximize,
+  Pin, PinOff, ChevronDown, ChevronRight, GripVertical,
+  Save, FolderOpen, Copy, Spline, Pentagon,
+  Group, Ungroup, Layers,
+} from 'lucide-react';
 
-interface IconProps {
+// ─── Size constants ─────────────────────────────────────────────────────────
+const TB = 16;  // toolbar
+const TL = 14;  // timeline / zoom
+const PC = 12;  // panel chrome
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+export interface IconProps {
   size?: number;
   className?: string;
   style?: React.CSSProperties;
 }
 
-const svg = (size: number, children: React.ReactNode, props?: IconProps) => (
+export interface PinIconProps extends IconProps {
+  pinned?: boolean;
+}
+
+/** A function that renders an icon given optional props. */
+export type IconComponent = (props?: IconProps) => React.ReactNode;
+export type PinIconComponent = (props?: PinIconProps) => React.ReactNode;
+
+/** All overridable icons in the editor. */
+export interface EditorIcons {
+  // Toolbar — element palette
+  Rect: IconComponent;
+  Circle: IconComponent;
+  Image: IconComponent;
+  Line: IconComponent;
+  Arrow: IconComponent;
+  Text: IconComponent;
+  Latex: IconComponent;
+  Axes: IconComponent;
+  Function: IconComponent;
+  Vector: IconComponent;
+  Matrix: IconComponent;
+  BarChart: IconComponent;
+  Graph: IconComponent;
+  Bezier: IconComponent;
+  Polygon: IconComponent;
+  VectorField: IconComponent;
+  // History
+  Undo: IconComponent;
+  Redo: IconComponent;
+  // Grouping & structure
+  Group: IconComponent;
+  Ungroup: IconComponent;
+  Sequence: IconComponent;
+  // Timeline / playback
+  Play: IconComponent;
+  Pause: IconComponent;
+  StepForward: IconComponent;
+  StepBackward: IconComponent;
+  SkipStart: IconComponent;
+  SkipEnd: IconComponent;
+  // Zoom
+  ZoomIn: IconComponent;
+  ZoomOut: IconComponent;
+  FitToView: IconComponent;
+  // Panel chrome
+  Pin: PinIconComponent;
+  ChevronDown: IconComponent;
+  ChevronRight: IconComponent;
+  DragHandle: IconComponent;
+  // File operations
+  Save: IconComponent;
+  Open: IconComponent;
+  Copy: IconComponent;
+}
+
+// ─── Custom SVG helper ─────────────────────────────────────────────────────
+
+const customSvg = (defaultSize: number, children: React.ReactNode, props?: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width={props?.size ?? size}
-    height={props?.size ?? size}
+    width={props?.size ?? defaultSize}
+    height={props?.size ?? defaultSize}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -35,199 +116,175 @@ const svg = (size: number, children: React.ReactNode, props?: IconProps) => (
   </svg>
 );
 
-// ─── Toolbar element palette (default 16px) ────────────────────────────────
+// ─── Default icon implementations ──────────────────────────────────────────
 
-/** Rectangle — rounded rect outline */
-export const IconRect = (p?: IconProps) => svg(16, <>
-  <rect x="3" y="5" width="18" height="14" rx="2" />
-</>, p);
+export const DEFAULT_ICONS: EditorIcons = {
+  // Toolbar — element palette (16px)
+  Rect:    (p) => <Square size={p?.size ?? TB} />,
+  Circle:  (p) => <Circle size={p?.size ?? TB} />,
+  Image:   (p) => <Image size={p?.size ?? TB} />,
+  Line:    (p) => <Minus size={p?.size ?? TB} />,
+  Arrow:   (p) => <MoveRight size={p?.size ?? TB} />,
+  Text:    (p) => <Type size={p?.size ?? TB} />,
+  Latex:   (p) => <Sigma size={p?.size ?? TB} />,
+  BarChart:(p) => <BarChart3 size={p?.size ?? TB} />,
+  Graph:   (p) => <Network size={p?.size ?? TB} />,
+  Bezier:  (p) => <Spline size={p?.size ?? TB} />,
+  Polygon: (p) => <Pentagon size={p?.size ?? TB} />,
 
-/** Circle — ellipse outline */
-export const IconCircle = (p?: IconProps) => svg(16, <>
-  <circle cx="12" cy="12" r="9" />
-</>, p);
+  // Custom domain-specific icons (no good Lucide match)
+  Axes: (p) => customSvg(p?.size ?? TB, <>
+    <line x1="3" y1="21" x2="3" y2="3" />
+    <polyline points="3,3 5,5" />
+    <line x1="3" y1="21" x2="21" y2="21" />
+    <polyline points="21,21 19,19" />
+    <line x1="3" y1="14" x2="8" y2="14" strokeWidth={1} strokeDasharray="2 2" />
+    <line x1="3" y1="7" x2="13" y2="7" strokeWidth={1} strokeDasharray="2 2" />
+    <line x1="10" y1="21" x2="10" y2="14" strokeWidth={1} strokeDasharray="2 2" />
+  </>, p),
 
-/** Image — landscape frame with mountain */
-export const IconImage = (p?: IconProps) => svg(16, <>
-  <rect x="3" y="5" width="18" height="14" rx="2" />
-  <circle cx="8.5" cy="10" r="1.5" fill="currentColor" stroke="none" />
-  <path d="M21 15l-5-5L5 19" strokeWidth={1.5} />
-</>, p);
+  Function: (p) => customSvg(p?.size ?? TB, <>
+    <path d="M3 17c3-12 6 0 9-6s6 0 9-6" strokeWidth={2} fill="none" />
+  </>, p),
 
-/** Line — diagonal stroke */
-export const IconLine = (p?: IconProps) => svg(16, <>
-  <line x1="5" y1="19" x2="19" y2="5" />
-</>, p);
+  Vector: (p) => customSvg(p?.size ?? TB, <>
+    <line x1="4" y1="20" x2="18" y2="6" />
+    <polyline points="12,5 18,6 17,12" />
+    <circle cx="4" cy="20" r="1.5" fill="currentColor" stroke="none" />
+  </>, p),
 
-/** Arrow — line with arrowhead */
-export const IconArrow = (p?: IconProps) => svg(16, <>
-  <line x1="5" y1="12" x2="19" y2="12" />
-  <polyline points="15,8 19,12 15,16" />
-</>, p);
+  Matrix: (p) => customSvg(p?.size ?? TB, <>
+    <path d="M6 3H4v18h2M18 3h2v18h-2" />
+    <circle cx="9" cy="9" r="1" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="9" r="1" fill="currentColor" stroke="none" />
+    <circle cx="9" cy="15" r="1" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="15" r="1" fill="currentColor" stroke="none" />
+  </>, p),
 
-/** Text — capital T */
-export const IconText = (p?: IconProps) => svg(16, <>
-  <line x1="6" y1="4" x2="18" y2="4" />
-  <line x1="12" y1="4" x2="12" y2="20" />
-  <line x1="9" y1="20" x2="15" y2="20" />
-</>, p);
+  VectorField: (p) => customSvg(p?.size ?? TB, <>
+    <line x1="4" y1="8" x2="10" y2="5" strokeWidth={1.5} />
+    <polyline points="8,4 10,5 9,7" strokeWidth={1.5} />
+    <line x1="14" y1="8" x2="20" y2="5" strokeWidth={1.5} />
+    <polyline points="18,4 20,5 19,7" strokeWidth={1.5} />
+    <line x1="4" y1="18" x2="10" y2="15" strokeWidth={1.5} />
+    <polyline points="8,14 10,15 9,17" strokeWidth={1.5} />
+    <line x1="14" y1="18" x2="20" y2="15" strokeWidth={1.5} />
+    <polyline points="18,14 20,15 19,17" strokeWidth={1.5} />
+  </>, p),
 
-/** LaTeX — sigma/summation */
-export const IconLatex = (p?: IconProps) => svg(16, <>
-  <path d="M5 4h14M5 4l7 8-7 8h14" />
-</>, p);
+  // History (16px)
+  Undo: (p) => <Undo2 size={p?.size ?? TB} />,
+  Redo: (p) => <Redo2 size={p?.size ?? TB} />,
 
-/** Axes — coordinate grid */
-export const IconAxes = (p?: IconProps) => svg(16, <>
-  <line x1="3" y1="21" x2="3" y2="3" />
-  <line x1="3" y1="21" x2="21" y2="21" />
-  <line x1="3" y1="14" x2="8" y2="14" strokeWidth={1} strokeDasharray="2 2" />
-  <line x1="3" y1="7" x2="13" y2="7" strokeWidth={1} strokeDasharray="2 2" />
-  <line x1="10" y1="21" x2="10" y2="14" strokeWidth={1} strokeDasharray="2 2" />
-</>, p);
+  // Grouping & structure (16px)
+  Group:    (p) => <Group size={p?.size ?? TB} />,
+  Ungroup:  (p) => <Ungroup size={p?.size ?? TB} />,
+  Sequence: (p) => <Layers size={p?.size ?? TB} />,
 
-/** Function plot — sine-ish curve */
-export const IconFunction = (p?: IconProps) => svg(16, <>
-  <path d="M3 17c3-12 6 0 9-6s6 0 9-6" strokeWidth={2} fill="none" />
-</>, p);
+  // Timeline / playback (14px)
+  Play:         (p) => <Play size={p?.size ?? TL} fill="currentColor" />,
+  Pause:        (p) => <Pause size={p?.size ?? TL} fill="currentColor" />,
+  StepForward:  (p) => <StepForward size={p?.size ?? TL} fill="currentColor" />,
+  StepBackward: (p) => <StepBack size={p?.size ?? TL} fill="currentColor" />,
+  SkipStart:    (p) => <SkipBack size={p?.size ?? TL} fill="currentColor" />,
+  SkipEnd:      (p) => <SkipForward size={p?.size ?? TL} fill="currentColor" />,
 
-/** Vector — arrow from origin */
-export const IconVector = (p?: IconProps) => svg(16, <>
-  <line x1="4" y1="20" x2="18" y2="6" />
-  <polyline points="12,5 18,6 17,12" />
-  <circle cx="4" cy="20" r="1.5" fill="currentColor" stroke="none" />
-</>, p);
+  // Zoom (14px)
+  ZoomIn:    (p) => <ZoomIn size={p?.size ?? TL} />,
+  ZoomOut:   (p) => <ZoomOut size={p?.size ?? TL} />,
+  FitToView: (p) => <Maximize size={p?.size ?? TL} />,
 
-/** Matrix — bracket grid */
-export const IconMatrix = (p?: IconProps) => svg(16, <>
-  <path d="M6 3H4v18h2M18 3h2v18h-2" />
-  <circle cx="9" cy="9" r="1" fill="currentColor" stroke="none" />
-  <circle cx="15" cy="9" r="1" fill="currentColor" stroke="none" />
-  <circle cx="9" cy="15" r="1" fill="currentColor" stroke="none" />
-  <circle cx="15" cy="15" r="1" fill="currentColor" stroke="none" />
-</>, p);
+  // Panel chrome (12px)
+  Pin: (p?: PinIconProps) => p?.pinned
+    ? <Pin size={p?.size ?? PC} fill="currentColor" />
+    : <PinOff size={p?.size ?? PC} />,
+  ChevronDown:  (p) => <ChevronDown size={p?.size ?? PC} />,
+  ChevronRight: (p) => <ChevronRight size={p?.size ?? PC} />,
+  DragHandle:   (p) => <GripVertical size={p?.size ?? PC} />,
 
-/** Bar chart — three bars */
-export const IconBarChart = (p?: IconProps) => svg(16, <>
-  <rect x="4" y="12" width="4" height="8" rx="1" fill="currentColor" stroke="none" />
-  <rect x="10" y="6" width="4" height="14" rx="1" fill="currentColor" stroke="none" />
-  <rect x="16" y="9" width="4" height="11" rx="1" fill="currentColor" stroke="none" />
-  <line x1="2" y1="21" x2="22" y2="21" strokeWidth={1.5} />
-</>, p);
+  // File operations (16px)
+  Save: (p) => <Save size={p?.size ?? TB} />,
+  Open: (p) => <FolderOpen size={p?.size ?? TB} />,
+  Copy: (p) => <Copy size={p?.size ?? TB} />,
+};
 
-/** Graph / network — connected nodes */
-export const IconGraph = (p?: IconProps) => svg(16, <>
-  <circle cx="6" cy="6" r="2.5" fill="currentColor" stroke="none" />
-  <circle cx="18" cy="6" r="2.5" fill="currentColor" stroke="none" />
-  <circle cx="12" cy="18" r="2.5" fill="currentColor" stroke="none" />
-  <line x1="8" y1="7.5" x2="16" y2="7.5" strokeWidth={1.5} />
-  <line x1="17" y1="8.5" x2="13.5" y2="16" strokeWidth={1.5} />
-  <line x1="7" y1="8.5" x2="10.5" y2="16" strokeWidth={1.5} />
-</>, p);
+// ─── Context ───────────────────────────────────────────────────────────────
 
-// ─── History ────────────────────────────────────────────────────────────────
+const EditorIconContext = createContext<EditorIcons>(DEFAULT_ICONS);
 
-/** Undo — counterclockwise arrow */
-export const IconUndo = (p?: IconProps) => svg(16, <>
-  <path d="M3 10a9 9 0 1 1 3 6.7" />
-  <polyline points="3 4 3 10 9 10" />
-</>, p);
+/**
+ * Override any editor icon. Partial overrides merge with defaults.
+ *
+ * @example
+ * ```tsx
+ * import { EditorIconProvider } from '@elucim/editor';
+ * import { Pencil } from 'lucide-react';
+ *
+ * <EditorIconProvider icons={{ Text: (p) => <Pencil size={p?.size ?? 16} /> }}>
+ *   <ElucimEditor />
+ * </EditorIconProvider>
+ * ```
+ */
+export function EditorIconProvider({
+  icons,
+  children,
+}: {
+  icons: Partial<EditorIcons>;
+  children: React.ReactNode;
+}) {
+  const parent = useContext(EditorIconContext);
+  const merged = { ...parent, ...icons };
+  return (
+    <EditorIconContext.Provider value={merged}>
+      {children}
+    </EditorIconContext.Provider>
+  );
+}
 
-/** Redo — clockwise arrow */
-export const IconRedo = (p?: IconProps) => svg(16, <>
-  <path d="M21 10a9 9 0 1 0-3 6.7" />
-  <polyline points="21 4 21 10 15 10" />
-</>, p);
+/** Access the current icon set (respects overrides from EditorIconProvider). */
+export function useEditorIcons(): EditorIcons {
+  return useContext(EditorIconContext);
+}
 
-// ─── Timeline / playback (default 14px) ─────────────────────────────────────
+// ─── Convenience re-exports ────────────────────────────────────────────────
+// Direct references to DEFAULT_ICONS for use outside React render functions
+// (e.g., in templates.tsx which runs at module scope).
+// Inside React components, prefer useEditorIcons() for override support.
 
-/** Play — right-pointing triangle */
-export const IconPlay = (p?: IconProps) => svg(14, <>
-  <polygon points="6,4 20,12 6,20" fill="currentColor" stroke="none" />
-</>, p);
-
-/** Pause — two bars */
-export const IconPause = (p?: IconProps) => svg(14, <>
-  <rect x="5" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none" />
-  <rect x="15" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none" />
-</>, p);
-
-/** Step forward — bar + triangle */
-export const IconStepForward = (p?: IconProps) => svg(14, <>
-  <polygon points="4,4 14,12 4,20" fill="currentColor" stroke="none" />
-  <rect x="17" y="4" width="3" height="16" rx="0.5" fill="currentColor" stroke="none" />
-</>, p);
-
-/** Step backward — triangle + bar */
-export const IconStepBackward = (p?: IconProps) => svg(14, <>
-  <polygon points="20,4 10,12 20,20" fill="currentColor" stroke="none" />
-  <rect x="4" y="4" width="3" height="16" rx="0.5" fill="currentColor" stroke="none" />
-</>, p);
-
-/** Skip to start — double triangle + bar */
-export const IconSkipStart = (p?: IconProps) => svg(14, <>
-  <polygon points="18,4 10,12 18,20" fill="currentColor" stroke="none" />
-  <rect x="4" y="4" width="3" height="16" rx="0.5" fill="currentColor" stroke="none" />
-</>, p);
-
-/** Skip to end — bar + double triangle */
-export const IconSkipEnd = (p?: IconProps) => svg(14, <>
-  <polygon points="6,4 14,12 6,20" fill="currentColor" stroke="none" />
-  <rect x="17" y="4" width="3" height="16" rx="0.5" fill="currentColor" stroke="none" />
-</>, p);
-
-// ─── Zoom controls (default 14px) ──────────────────────────────────────────
-
-/** Zoom in — magnifier + */
-export const IconZoomIn = (p?: IconProps) => svg(14, <>
-  <circle cx="10" cy="10" r="7" />
-  <line x1="10" y1="7" x2="10" y2="13" />
-  <line x1="7" y1="10" x2="13" y2="10" />
-  <line x1="15.5" y1="15.5" x2="21" y2="21" strokeWidth={2.5} />
-</>, p);
-
-/** Zoom out — magnifier − */
-export const IconZoomOut = (p?: IconProps) => svg(14, <>
-  <circle cx="10" cy="10" r="7" />
-  <line x1="7" y1="10" x2="13" y2="10" />
-  <line x1="15.5" y1="15.5" x2="21" y2="21" strokeWidth={2.5} />
-</>, p);
-
-/** Fit to view — expand arrows */
-export const IconFitToView = (p?: IconProps) => svg(14, <>
-  <polyline points="4,9 4,4 9,4" />
-  <polyline points="20,9 20,4 15,4" />
-  <polyline points="4,15 4,20 9,20" />
-  <polyline points="20,15 20,20 15,20" />
-</>, p);
-
-// ─── Panel chrome (default 12px) ───────────────────────────────────────────
-
-/** Pin — thumbtack; filled when pinned, outline when floating */
-export const IconPin = ({ pinned, ...p }: IconProps & { pinned?: boolean }) => svg(12, <>
-  <g transform={pinned ? '' : 'rotate(-45 12 12)'}>
-    <path d="M12 17v4" />
-    <path d="M8 11V8l1.5-2h5l1.5 2v3" fill={pinned ? 'currentColor' : 'none'} />
-    <rect x="6" y="11" width="12" height="2.5" rx="1" fill="currentColor" stroke="none" />
-  </g>
-</>, p);
-
-/** Chevron down — collapse indicator */
-export const IconChevronDown = (p?: IconProps) => svg(12, <>
-  <polyline points="6,9 12,15 18,9" />
-</>, p);
-
-/** Chevron right — expand indicator */
-export const IconChevronRight = (p?: IconProps) => svg(12, <>
-  <polyline points="9,6 15,12 9,18" />
-</>, p);
-
-/** Drag handle — six dots */
-export const IconDragHandle = (p?: IconProps) => svg(12, <>
-  <circle cx="8" cy="6" r="1.5" fill="currentColor" stroke="none" />
-  <circle cx="16" cy="6" r="1.5" fill="currentColor" stroke="none" />
-  <circle cx="8" cy="12" r="1.5" fill="currentColor" stroke="none" />
-  <circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none" />
-  <circle cx="8" cy="18" r="1.5" fill="currentColor" stroke="none" />
-  <circle cx="16" cy="18" r="1.5" fill="currentColor" stroke="none" />
-</>, p);
+export const IconRect = DEFAULT_ICONS.Rect;
+export const IconCircle = DEFAULT_ICONS.Circle;
+export const IconImage = DEFAULT_ICONS.Image;
+export const IconLine = DEFAULT_ICONS.Line;
+export const IconArrow = DEFAULT_ICONS.Arrow;
+export const IconText = DEFAULT_ICONS.Text;
+export const IconLatex = DEFAULT_ICONS.Latex;
+export const IconAxes = DEFAULT_ICONS.Axes;
+export const IconFunction = DEFAULT_ICONS.Function;
+export const IconVector = DEFAULT_ICONS.Vector;
+export const IconMatrix = DEFAULT_ICONS.Matrix;
+export const IconBarChart = DEFAULT_ICONS.BarChart;
+export const IconGraph = DEFAULT_ICONS.Graph;
+export const IconBezier = DEFAULT_ICONS.Bezier;
+export const IconPolygon = DEFAULT_ICONS.Polygon;
+export const IconVectorField = DEFAULT_ICONS.VectorField;
+export const IconUndo = DEFAULT_ICONS.Undo;
+export const IconRedo = DEFAULT_ICONS.Redo;
+export const IconGroup = DEFAULT_ICONS.Group;
+export const IconUngroup = DEFAULT_ICONS.Ungroup;
+export const IconSequence = DEFAULT_ICONS.Sequence;
+export const IconPlay = DEFAULT_ICONS.Play;
+export const IconPause = DEFAULT_ICONS.Pause;
+export const IconStepForward = DEFAULT_ICONS.StepForward;
+export const IconStepBackward = DEFAULT_ICONS.StepBackward;
+export const IconSkipStart = DEFAULT_ICONS.SkipStart;
+export const IconSkipEnd = DEFAULT_ICONS.SkipEnd;
+export const IconZoomIn = DEFAULT_ICONS.ZoomIn;
+export const IconZoomOut = DEFAULT_ICONS.ZoomOut;
+export const IconFitToView = DEFAULT_ICONS.FitToView;
+export const IconPin = DEFAULT_ICONS.Pin;
+export const IconChevronDown = DEFAULT_ICONS.ChevronDown;
+export const IconChevronRight = DEFAULT_ICONS.ChevronRight;
+export const IconDragHandle = DEFAULT_ICONS.DragHandle;
+export const IconSave = DEFAULT_ICONS.Save;
+export const IconOpen = DEFAULT_ICONS.Open;
+export const IconCopy = DEFAULT_ICONS.Copy;

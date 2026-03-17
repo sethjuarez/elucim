@@ -36,6 +36,12 @@ export { Timeline, type TimelineProps } from './timeline/Timeline';
 // Theme
 export { EDITOR_TOKENS, v, buildThemeVars, makeRotateCursor, ROTATE_CURSOR } from './theme/tokens';
 
+// Icons (overridable)
+export {
+  EditorIconProvider, useEditorIcons, DEFAULT_ICONS,
+  type EditorIcons, type IconComponent, type PinIconComponent, type IconProps, type PinIconProps,
+} from './theme/icons';
+
 // Utilities
 export { getElementBounds, mergeBounds, isPointInBounds, type BoundingBox } from './utils/bounds';
 export { computeSnap, type SnapGuide } from './utils/snap';
