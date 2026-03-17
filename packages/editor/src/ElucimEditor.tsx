@@ -10,6 +10,7 @@ import { FloatingPanel } from './panels/FloatingPanel';
 import { EditorErrorBoundary } from './panels/EditorErrorBoundary';
 import { useEditorState } from './state/EditorProvider';
 import { getElementBounds } from './utils/bounds';
+import { IconPin } from './theme/icons';
 import { buildThemeVars, v } from './theme/tokens';
 import { CANVAS_ID } from './state/types';
 
@@ -153,11 +154,11 @@ function EditorLayout({ theme, className, style }: { theme?: Record<string, stri
                   border: 'none',
                   color: state.inspectorPinned ? v('--elucim-editor-accent') : v('--elucim-editor-text-muted'),
                   cursor: 'pointer',
-                  fontSize: 12,
                   padding: '0 2px',
+                  lineHeight: 0,
                 }}
               >
-                📌
+                <IconPin pinned={state.inspectorPinned} />
               </button>
             }
             maxWidth={240}

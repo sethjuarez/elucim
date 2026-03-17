@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useEditorState } from '../state/EditorProvider';
 import { getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from './templates';
+import { IconUndo, IconRedo } from '../theme/icons';
 import { v } from '../theme/tokens';
 
 export interface ToolbarProps {
@@ -44,8 +45,8 @@ export function Toolbar({ className, style }: ToolbarProps) {
     >
       {/* Undo / Redo */}
       <ToolbarSection label="History">
-        <ToolbarButton icon="↶" label="Undo" onClick={handleUndo} disabled={state.past.length === 0} />
-        <ToolbarButton icon="↷" label="Redo" onClick={handleRedo} disabled={state.future.length === 0} />
+        <ToolbarButton icon={<IconUndo />} label="Undo" onClick={handleUndo} disabled={state.past.length === 0} />
+        <ToolbarButton icon={<IconRedo />} label="Redo" onClick={handleRedo} disabled={state.future.length === 0} />
       </ToolbarSection>
 
       {/* Element palette */}
@@ -87,7 +88,7 @@ function ToolbarButton({
   disabled,
   onClick,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   active?: boolean;
   disabled?: boolean;

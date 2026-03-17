@@ -1,4 +1,5 @@
 import React from 'react';
+import { IconZoomIn, IconZoomOut, IconFitToView } from '../theme/icons';
 import { v } from '../theme/tokens';
 
 interface ZoomControlsProps {
@@ -33,7 +34,7 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, onFitToView }: ZoomCon
         padding: '2px 4px',
       }}
     >
-      <ZoomButton icon="−" title="Zoom out" onClick={onZoomOut} />
+      <ZoomButton icon={<IconZoomOut />} title="Zoom out" onClick={onZoomOut} />
       <span
         style={{
           minWidth: 40,
@@ -49,21 +50,21 @@ export function ZoomControls({ zoom, onZoomIn, onZoomOut, onFitToView }: ZoomCon
       >
         {pct}%
       </span>
-      <ZoomButton icon="+" title="Zoom in" onClick={onZoomIn} />
+      <ZoomButton icon={<IconZoomIn />} title="Zoom in" onClick={onZoomIn} />
       <div style={{ width: 1, height: 16, background: v('--elucim-editor-border'), margin: '0 2px' }} />
-      <ZoomButton icon="⤢" title="Fit to view" onClick={onFitToView} />
+      <ZoomButton icon={<IconFitToView />} title="Fit to view" onClick={onFitToView} />
     </div>
   );
 }
 
-function ZoomButton({ icon, title, onClick }: { icon: string; title: string; onClick: () => void }) {
+function ZoomButton({ icon, title, onClick }: { icon: React.ReactNode; title: string; onClick: () => void }) {
   return (
     <button
       title={title}
       onClick={onClick}
       style={{
-        width: 24,
-        height: 24,
+        width: 28,
+        height: 28,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -72,7 +73,7 @@ function ZoomButton({ icon, title, onClick }: { icon: string; title: string; onC
         background: 'transparent',
         color: v('--elucim-editor-fg'),
         cursor: 'pointer',
-        fontSize: 14,
+        padding: 0,
       }}
     >
       {icon}

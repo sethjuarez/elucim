@@ -1,10 +1,18 @@
+import React from 'react';
 import type { ElementNode, CircleNode, RectNode, LineNode, ArrowNode, TextNode, LaTeXNode, ImageNode, AxesNode, FunctionPlotNode, VectorNode, MatrixNode, BarChartNode, GraphNode } from '@elucim/dsl';
+import {
+  IconRect, IconCircle, IconImage,
+  IconLine, IconArrow,
+  IconText, IconLatex,
+  IconAxes, IconFunction, IconVector, IconMatrix,
+  IconBarChart, IconGraph,
+} from '../theme/icons';
 
 export interface ElementTemplate {
   type: string;
   label: string;
   category: 'shape' | 'line' | 'text' | 'math' | 'data';
-  icon: string;
+  icon: React.ReactNode;
   create: (cx: number, cy: number) => ElementNode;
 }
 
@@ -24,7 +32,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'rect',
     label: 'Rectangle',
     category: 'shape',
-    icon: '▬',
+    icon: <IconRect />,
     create: (cx, cy) => ({
       type: 'rect',
       id: genId('rect'),
@@ -41,7 +49,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'circle',
     label: 'Circle',
     category: 'shape',
-    icon: '●',
+    icon: <IconCircle />,
     create: (cx, cy) => ({
       type: 'circle',
       id: genId('circle'),
@@ -57,7 +65,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'image',
     label: 'Image',
     category: 'shape',
-    icon: '🖼',
+    icon: <IconImage />,
     create: (cx, cy) => ({
       type: 'image',
       id: genId('image'),
@@ -74,7 +82,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'line',
     label: 'Line',
     category: 'line',
-    icon: '╱',
+    icon: <IconLine />,
     create: (cx, cy) => ({
       type: 'line',
       id: genId('line'),
@@ -90,7 +98,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'arrow',
     label: 'Arrow',
     category: 'line',
-    icon: '→',
+    icon: <IconArrow />,
     create: (cx, cy) => ({
       type: 'arrow',
       id: genId('arrow'),
@@ -109,7 +117,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'text',
     label: 'Text',
     category: 'text',
-    icon: 'T',
+    icon: <IconText />,
     create: (cx, cy) => ({
       type: 'text',
       id: genId('text'),
@@ -125,7 +133,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'latex',
     label: 'LaTeX',
     category: 'text',
-    icon: '∑',
+    icon: <IconLatex />,
     create: (cx, cy) => ({
       type: 'latex',
       id: genId('latex'),
@@ -142,7 +150,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'axes',
     label: 'Axes',
     category: 'math',
-    icon: '⊞',
+    icon: <IconAxes />,
     create: (cx, cy) => ({
       type: 'axes',
       id: genId('axes'),
@@ -159,7 +167,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'functionPlot',
     label: 'Function',
     category: 'math',
-    icon: 'ƒ',
+    icon: <IconFunction />,
     create: (cx, cy) => ({
       type: 'functionPlot',
       fn: 'sin(x)',
@@ -174,7 +182,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'vector',
     label: 'Vector',
     category: 'math',
-    icon: '⃗',
+    icon: <IconVector />,
     create: (cx, cy) => ({
       type: 'vector',
       id: genId('vector'),
@@ -189,7 +197,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'matrix',
     label: 'Matrix',
     category: 'math',
-    icon: '⌈⌉',
+    icon: <IconMatrix />,
     create: (cx, cy) => ({
       type: 'matrix',
       id: genId('matrix'),
@@ -205,7 +213,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'barChart',
     label: 'Bar Chart',
     category: 'data',
-    icon: '📊',
+    icon: <IconBarChart />,
     create: (cx, cy) => ({
       type: 'barChart',
       id: genId('barChart'),
@@ -227,7 +235,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     type: 'graph',
     label: 'Graph',
     category: 'data',
-    icon: '🔗',
+    icon: <IconGraph />,
     create: (cx, cy) => ({
       type: 'graph',
       id: genId('graph'),

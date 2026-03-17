@@ -1,5 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 import type { PanelPosition } from '../state/types';
+import { IconDragHandle, IconChevronDown, IconChevronRight } from '../theme/icons';
 import { v } from '../theme/tokens';
 
 export interface FloatingPanelProps {
@@ -126,7 +127,7 @@ export function FloatingPanel({
           borderBottom: collapsed ? 'none' : `1px solid ${v('--elucim-editor-border-subtle')}`,
         }}
       >
-        <span style={{ color: v('--elucim-editor-text-disabled'), fontSize: 10, letterSpacing: 1 }}>⠿</span>
+        <span style={{ color: v('--elucim-editor-text-disabled'), lineHeight: 0 }}><IconDragHandle /></span>
         {title && (
           <span style={{ flex: 1, fontSize: 10, fontWeight: 600, color: v('--elucim-editor-text-secondary'), textTransform: 'uppercase', letterSpacing: 0.5 }}>
             {title}
@@ -142,11 +143,11 @@ export function FloatingPanel({
               border: 'none',
               color: v('--elucim-editor-text-muted'),
               cursor: 'pointer',
-              fontSize: 10,
               padding: '0 2px',
+              lineHeight: 0,
             }}
           >
-            {collapsed ? '▸' : '▾'}
+            {collapsed ? <IconChevronRight /> : <IconChevronDown />}
           </button>
         )}
       </div>

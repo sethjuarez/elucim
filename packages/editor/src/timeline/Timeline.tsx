@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useEffect } from 'react';
 import type { ElementNode } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
+import { IconSkipStart, IconStepBackward, IconPlay, IconPause, IconStepForward, IconSkipEnd } from '../theme/icons';
 import { v } from '../theme/tokens';
 
 export interface TimelineProps {
@@ -94,11 +95,11 @@ export function Timeline({ className, style }: TimelineProps) {
     >
       {/* Controls bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}` }}>
-        <TimelineButton icon="⏮" title="Start" onClick={goToStart} />
-        <TimelineButton icon="◀" title="Step back" onClick={stepBackward} />
-        <TimelineButton icon={isPlaying ? '⏸' : '▶'} title={isPlaying ? 'Pause' : 'Play'} onClick={togglePlay} active={isPlaying} />
-        <TimelineButton icon="▶" title="Step forward" onClick={stepForward} />
-        <TimelineButton icon="⏭" title="End" onClick={goToEnd} />
+        <TimelineButton icon={<IconSkipStart />} title="Start" onClick={goToStart} />
+        <TimelineButton icon={<IconStepBackward />} title="Step back" onClick={stepBackward} />
+        <TimelineButton icon={isPlaying ? <IconPause /> : <IconPlay />} title={isPlaying ? 'Pause' : 'Play'} onClick={togglePlay} active={isPlaying} />
+        <TimelineButton icon={<IconStepForward />} title="Step forward" onClick={stepForward} />
+        <TimelineButton icon={<IconSkipEnd />} title="End" onClick={goToEnd} />
         <div style={{ marginLeft: 8, color: v('--elucim-editor-text-secondary'), fontVariantNumeric: 'tabular-nums' }}>
           {currentFrame} / {durationInFrames - 1} @ {fps}fps
         </div>
@@ -240,7 +241,7 @@ export function Timeline({ className, style }: TimelineProps) {
 // ─── Sub-components ────────────────────────────────────────────────────────
 
 function TimelineButton({ icon, title, onClick, active }: {
-  icon: string; title: string; onClick: () => void; active?: boolean;
+  icon: React.ReactNode; title: string; onClick: () => void; active?: boolean;
 }) {
   return (
     <button
@@ -248,7 +249,7 @@ function TimelineButton({ icon, title, onClick, active }: {
       onClick={onClick}
       style={{
         width: 28,
-        height: 24,
+        height: 28,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -257,7 +258,7 @@ function TimelineButton({ icon, title, onClick, active }: {
         background: active ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 20%, transparent)` : 'transparent',
         color: v('--elucim-editor-fg'),
         cursor: 'pointer',
-        fontSize: 12,
+        padding: 0,
       }}
     >
       {icon}
