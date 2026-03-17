@@ -7,7 +7,7 @@
     "height": 600,
     "fps": 30,
     "durationInFrames": 180,
-    "background": "#0d0d1a",
+    "background": "$background",
     "children": [
       {
         "type": "sequence",
@@ -23,7 +23,7 @@
                 "cx": 200,
                 "cy": 200,
                 "r": 60,
-                "fill": "#3b82f6",
+                "fill": "$primary",
                 "stroke": "#60a5fa",
                 "strokeWidth": 2
               }
@@ -62,9 +62,24 @@
             "type": "transform",
             "duration": 60,
             "easing": "easeInOutCubic",
-            "translate": { "from": [0, 0], "to": [200, 100] },
-            "rotate": { "from": 0, "to": 360 },
-            "scale": { "from": 0.5, "to": 1.5 },
+            "translate": {
+              "from": [
+                0,
+                0
+              ],
+              "to": [
+                200,
+                100
+              ]
+            },
+            "rotate": {
+              "from": 0,
+              "to": 360
+            },
+            "scale": {
+              "from": 0.5,
+              "to": 1.5
+            },
             "children": [
               {
                 "type": "arrow",
@@ -87,12 +102,54 @@
             "type": "stagger",
             "staggerDelay": 8,
             "children": [
-              { "type": "circle", "cx": 100, "cy": 500, "r": 15, "fill": "#ef4444", "fadeIn": 20 },
-              { "type": "circle", "cx": 160, "cy": 500, "r": 15, "fill": "#f97316", "fadeIn": 20 },
-              { "type": "circle", "cx": 220, "cy": 500, "r": 15, "fill": "#eab308", "fadeIn": 20 },
-              { "type": "circle", "cx": 280, "cy": 500, "r": 15, "fill": "#22c55e", "fadeIn": 20 },
-              { "type": "circle", "cx": 340, "cy": 500, "r": 15, "fill": "#3b82f6", "fadeIn": 20 },
-              { "type": "circle", "cx": 400, "cy": 500, "r": 15, "fill": "#8b5cf6", "fadeIn": 20 }
+              {
+                "type": "circle",
+                "cx": 100,
+                "cy": 500,
+                "r": 15,
+                "fill": "#ef4444",
+                "fadeIn": 20
+              },
+              {
+                "type": "circle",
+                "cx": 160,
+                "cy": 500,
+                "r": 15,
+                "fill": "#f97316",
+                "fadeIn": 20
+              },
+              {
+                "type": "circle",
+                "cx": 220,
+                "cy": 500,
+                "r": 15,
+                "fill": "#eab308",
+                "fadeIn": 20
+              },
+              {
+                "type": "circle",
+                "cx": 280,
+                "cy": 500,
+                "r": 15,
+                "fill": "#22c55e",
+                "fadeIn": 20
+              },
+              {
+                "type": "circle",
+                "cx": 340,
+                "cy": 500,
+                "r": 15,
+                "fill": "$primary",
+                "fadeIn": 20
+              },
+              {
+                "type": "circle",
+                "cx": 400,
+                "cy": 500,
+                "r": 15,
+                "fill": "#8b5cf6",
+                "fadeIn": 20
+              }
             ]
           }
         ]
@@ -134,7 +191,7 @@
                 "x": 400,
                 "y": 50,
                 "content": "Animation Showcase",
-                "fill": "#fff",
+                "fill": "$foreground",
                 "fontSize": 32,
                 "textAnchor": "middle"
               }

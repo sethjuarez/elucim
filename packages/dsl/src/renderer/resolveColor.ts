@@ -11,8 +11,10 @@
 
 /** Standard semantic color tokens with their CSS variable and default fallback. */
 export const SEMANTIC_TOKENS: Record<string, { cssVar: string; fallback: string }> = {
-  foreground:  { cssVar: '--elucim-foreground',  fallback: '#e0e0e0' },
-  background:  { cssVar: '--elucim-background',  fallback: '#0f172a' },
+  foreground:  { cssVar: '--elucim-foreground',  fallback: '#c8d6e5' },
+  background:  { cssVar: '--elucim-background',  fallback: '#0a0a1e' },
+  title:       { cssVar: '--elucim-title',       fallback: '#e0e7ff' },
+  subtitle:    { cssVar: '--elucim-subtitle',    fallback: '#94a3b8' },
   accent:      { cssVar: '--elucim-accent',      fallback: '#4fc3f7' },
   muted:       { cssVar: '--elucim-muted',       fallback: '#64748b' },
   surface:     { cssVar: '--elucim-surface',     fallback: '#1e293b' },

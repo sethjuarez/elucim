@@ -3,8 +3,8 @@
   "version": "1.0",
   "root": {
     "type": "presentation",
-    "width": 900,
-    "height": 650,
+    "width": 1280,
+    "height": 720,
     "transition": "fade",
     "transitionDuration": 500,
     "showHud": true,
@@ -18,8 +18,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 650,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 150,
             "background": "$background",
@@ -34,11 +34,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 450,
-                    "y": 220,
+                    "x": 640,
+                    "y": 243.69,
                     "content": "The Calculus of Change",
                     "fill": "$foreground",
-                    "fontSize": 46,
+                    "fontSize": 58.19,
                     "fontWeight": 700,
                     "textAnchor": "middle"
                   }
@@ -55,10 +55,10 @@
                       {
                         "type": "latex",
                         "expression": "\\frac{df}{dx} = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}",
-                        "x": 450,
-                        "y": 310,
+                        "x": 640,
+                        "y": 343.38,
                         "color": "#818cf8",
-                        "fontSize": 28,
+                        "fontSize": 35.42,
                         "align": "center"
                       }
                     ]
@@ -75,58 +75,58 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 250,
-                        "cy": 450,
-                        "r": 4,
-                        "fill": "#4a9eff",
+                        "cx": 355.56,
+                        "cy": 498.46,
+                        "r": 5.06,
+                        "fill": "$primary",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 320,
-                        "cy": 450,
-                        "r": 4,
-                        "fill": "#6366f1",
+                        "cx": 455.11,
+                        "cy": 498.46,
+                        "r": 5.06,
+                        "fill": "$secondary",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 390,
-                        "cy": 450,
-                        "r": 4,
+                        "cx": 554.67,
+                        "cy": 498.46,
+                        "r": 5.06,
                         "fill": "#818cf8",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 460,
-                        "cy": 450,
-                        "r": 4,
-                        "fill": "#a78bfa",
+                        "cx": 654.22,
+                        "cy": 498.46,
+                        "r": 5.06,
+                        "fill": "$secondary",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 530,
-                        "cy": 450,
-                        "r": 4,
+                        "cx": 753.78,
+                        "cy": 498.46,
+                        "r": 5.06,
                         "fill": "#c084fc",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 600,
-                        "cy": 450,
-                        "r": 4,
+                        "cx": 853.33,
+                        "cy": 498.46,
+                        "r": 5.06,
                         "fill": "#e879f9",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 670,
-                        "cy": 450,
-                        "r": 4,
-                        "fill": "#f472b6",
+                        "cx": 952.89,
+                        "cy": 498.46,
+                        "r": 5.06,
+                        "fill": "$tertiary",
                         "stroke": "none"
                       }
                     ]
@@ -143,11 +143,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 520,
+                        "x": 640,
+                        "y": 576,
                         "content": "A visual journey through the language of change",
-                        "fill": "#64748b",
-                        "fontSize": 18,
+                        "fill": "$muted",
+                        "fontSize": 22.77,
                         "textAnchor": "middle"
                       }
                     ]
@@ -166,8 +166,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 650,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 180,
             "background": "$background",
@@ -181,11 +181,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 450,
-                    "y": 45,
+                    "x": 640,
+                    "y": 49.85,
                     "content": "Functions: The Building Blocks",
                     "fill": "$foreground",
-                    "fontSize": 28,
+                    "fontSize": 35.42,
                     "fontWeight": 700,
                     "textAnchor": "middle"
                   }
@@ -202,8 +202,8 @@
                   4
                 ],
                 "origin": [
-                  300,
-                  510
+                  426.67,
+                  564.92
                 ],
                 "scale": 55,
                 "showGrid": true,
@@ -225,17 +225,17 @@
                       2.2
                     ],
                     "origin": [
-                      300,
-                      510
+                      426.67,
+                      564.92
                     ],
                     "scale": 55,
-                    "color": "#4a9eff",
-                    "strokeWidth": 3,
+                    "color": "$primary",
+                    "strokeWidth": 3.79,
                     "draw": 60,
                     "easing": "easeInOutCubic",
                     "yClamp": [
                       -0.5,
-                      4.0
+                      4
                     ]
                   }
                 ]
@@ -251,10 +251,10 @@
                       {
                         "type": "latex",
                         "expression": "f(x) = x^2",
-                        "x": 730,
-                        "y": 150,
-                        "color": "#4a9eff",
-                        "fontSize": 26
+                        "x": 1038.22,
+                        "y": 166.15,
+                        "color": "$primary",
+                        "fontSize": 32.89
                       }
                     ]
                   }
@@ -270,10 +270,10 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 300,
-                        "cy": 510,
-                        "r": 5,
-                        "fill": "#fbbf24",
+                        "cx": 426.67,
+                        "cy": 564.92,
+                        "r": 6.32,
+                        "fill": "$warning",
                         "stroke": "none"
                       }
                     ]
@@ -290,11 +290,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 310,
-                        "y": 530,
+                        "x": 440.89,
+                        "y": 587.08,
                         "content": "(0, 0)",
-                        "fill": "#fbbf24",
-                        "fontSize": 14,
+                        "fill": "$warning",
+                        "fontSize": 17.71,
                         "textAnchor": "start"
                       }
                     ]
@@ -311,10 +311,10 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 355,
-                        "cy": 455,
-                        "r": 5,
-                        "fill": "#fbbf24",
+                        "cx": 504.89,
+                        "cy": 504,
+                        "r": 6.32,
+                        "fill": "$warning",
                         "stroke": "none"
                       }
                     ]
@@ -331,11 +331,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 365,
-                        "y": 450,
+                        "x": 519.11,
+                        "y": 498.46,
                         "content": "(1, 1)",
-                        "fill": "#fbbf24",
-                        "fontSize": 14,
+                        "fill": "$warning",
+                        "fontSize": 17.71,
                         "textAnchor": "start"
                       }
                     ]
@@ -352,10 +352,10 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 410,
-                        "cy": 290,
-                        "r": 5,
-                        "fill": "#fbbf24",
+                        "cx": 583.11,
+                        "cy": 321.23,
+                        "r": 6.32,
+                        "fill": "$warning",
                         "stroke": "none"
                       }
                     ]
@@ -372,11 +372,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 420,
-                        "y": 285,
+                        "x": 597.33,
+                        "y": 315.69,
                         "content": "(2, 4)",
-                        "fill": "#fbbf24",
-                        "fontSize": 14,
+                        "fill": "$warning",
+                        "fontSize": 17.71,
                         "textAnchor": "start"
                       }
                     ]
@@ -393,11 +393,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 730,
-                        "y": 220,
+                        "x": 1038.22,
+                        "y": 243.69,
                         "content": "Every input x maps",
-                        "fill": "#94a3b8",
-                        "fontSize": 16,
+                        "fill": "$subtitle",
+                        "fontSize": 20.24,
                         "textAnchor": "middle"
                       }
                     ]
@@ -414,11 +414,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 730,
-                        "y": 245,
+                        "x": 1038.22,
+                        "y": 271.38,
                         "content": "to exactly one output",
-                        "fill": "#94a3b8",
-                        "fontSize": 16,
+                        "fill": "$subtitle",
+                        "fontSize": 20.24,
                         "textAnchor": "middle"
                       }
                     ]
@@ -437,8 +437,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 650,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 210,
             "background": "$background",
@@ -452,11 +452,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 450,
-                    "y": 45,
+                    "x": 640,
+                    "y": 49.85,
                     "content": "The Derivative",
                     "fill": "$foreground",
-                    "fontSize": 28,
+                    "fontSize": 35.42,
                     "fontWeight": 700,
                     "textAnchor": "middle"
                   }
@@ -473,8 +473,8 @@
                   4
                 ],
                 "origin": [
-                  300,
-                  500
+                  426.67,
+                  553.85
                 ],
                 "scale": 60,
                 "showGrid": true,
@@ -496,17 +496,17 @@
                       2.2
                     ],
                     "origin": [
-                      300,
-                      500
+                      426.67,
+                      553.85
                     ],
                     "scale": 60,
-                    "color": "#4a9eff",
-                    "strokeWidth": 3,
+                    "color": "$primary",
+                    "strokeWidth": 3.79,
                     "draw": 50,
                     "easing": "easeInOutCubic",
                     "yClamp": [
-                      -1.0,
-                      4.0
+                      -1,
+                      4
                     ]
                   }
                 ]
@@ -522,10 +522,10 @@
                       {
                         "type": "latex",
                         "expression": "f(x) = x^2",
-                        "x": 700,
-                        "y": 120,
-                        "color": "#4a9eff",
-                        "fontSize": 22
+                        "x": 995.56,
+                        "y": 132.92,
+                        "color": "$primary",
+                        "fontSize": 27.83
                       }
                     ]
                   }
@@ -542,10 +542,10 @@
                       {
                         "type": "latex",
                         "expression": "\\frac{d}{dx}[x^2] = 2x",
-                        "x": 700,
-                        "y": 180,
-                        "color": "#f472b6",
-                        "fontSize": 22
+                        "x": 995.56,
+                        "y": 199.38,
+                        "color": "$tertiary",
+                        "fontSize": 27.83
                       }
                     ]
                   }
@@ -563,17 +563,17 @@
                       2.5
                     ],
                     "origin": [
-                      300,
-                      500
+                      426.67,
+                      553.85
                     ],
                     "scale": 60,
-                    "color": "#f472b6",
-                    "strokeWidth": 2.5,
+                    "color": "$tertiary",
+                    "strokeWidth": 3.16,
                     "draw": 50,
                     "easing": "easeInOutCubic",
                     "yClamp": [
-                      -1.0,
-                      4.0
+                      -1,
+                      4
                     ]
                   }
                 ]
@@ -588,12 +588,12 @@
                     "children": [
                       {
                         "type": "line",
-                        "x1": 280,
-                        "y1": 500,
-                        "x2": 420,
-                        "y2": 360,
-                        "stroke": "#fbbf24",
-                        "strokeWidth": 1.5
+                        "x1": 398.22,
+                        "y1": 553.85,
+                        "x2": 597.33,
+                        "y2": 398.77,
+                        "stroke": "$warning",
+                        "strokeWidth": 1.9
                       }
                     ]
                   }
@@ -609,10 +609,10 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 360,
-                        "cy": 440,
-                        "r": 5,
-                        "fill": "#fbbf24",
+                        "cx": 512,
+                        "cy": 487.38,
+                        "r": 6.32,
+                        "fill": "$warning",
                         "stroke": "none"
                       }
                     ]
@@ -629,11 +629,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 470,
-                        "y": 235,
+                        "x": 668.44,
+                        "y": 260.31,
                         "content": "tangent at x=1",
-                        "fill": "#fbbf24",
-                        "fontSize": 14,
+                        "fill": "$warning",
+                        "fontSize": 17.71,
                         "textAnchor": "start"
                       }
                     ]
@@ -650,11 +650,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 470,
-                        "y": 255,
+                        "x": 668.44,
+                        "y": 282.46,
                         "content": "slope = f'(1) = 2",
-                        "fill": "#fbbf24",
-                        "fontSize": 14,
+                        "fill": "$warning",
+                        "fontSize": 17.71,
                         "textAnchor": "start"
                       }
                     ]
@@ -671,11 +671,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 700,
-                        "y": 260,
+                        "x": 995.56,
+                        "y": 288,
                         "content": "The derivative gives us",
-                        "fill": "#94a3b8",
-                        "fontSize": 15,
+                        "fill": "$subtitle",
+                        "fontSize": 18.97,
                         "textAnchor": "middle"
                       }
                     ]
@@ -692,11 +692,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 700,
-                        "y": 282,
+                        "x": 995.56,
+                        "y": 312.37,
                         "content": "the slope at any point",
-                        "fill": "#94a3b8",
-                        "fontSize": 15,
+                        "fill": "$subtitle",
+                        "fontSize": 18.97,
                         "textAnchor": "middle"
                       }
                     ]
@@ -715,8 +715,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 650,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 180,
             "background": "$background",
@@ -730,11 +730,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 450,
-                    "y": 45,
+                    "x": 640,
+                    "y": 49.85,
                     "content": "Trigonometric Functions",
                     "fill": "$foreground",
-                    "fontSize": 28,
+                    "fontSize": 35.42,
                     "fontWeight": 700,
                     "textAnchor": "middle"
                   }
@@ -751,8 +751,8 @@
                   1.5
                 ],
                 "origin": [
-                  450,
-                  380
+                  640,
+                  420.92
                 ],
                 "scale": 80,
                 "showGrid": true,
@@ -773,12 +773,12 @@
                       6.5
                     ],
                     "origin": [
-                      450,
-                      380
+                      640,
+                      420.92
                     ],
                     "scale": 80,
-                    "color": "#4a9eff",
-                    "strokeWidth": 3,
+                    "color": "$primary",
+                    "strokeWidth": 3.79,
                     "draw": 60,
                     "easing": "easeInOutCubic",
                     "yClamp": [
@@ -800,12 +800,12 @@
                       6.5
                     ],
                     "origin": [
-                      450,
-                      380
+                      640,
+                      420.92
                     ],
                     "scale": 80,
-                    "color": "#f472b6",
-                    "strokeWidth": 3,
+                    "color": "$tertiary",
+                    "strokeWidth": 3.79,
                     "draw": 60,
                     "easing": "easeInOutCubic",
                     "yClamp": [
@@ -826,10 +826,10 @@
                       {
                         "type": "latex",
                         "expression": "\\sin(x)",
-                        "x": 130,
-                        "y": 110,
-                        "color": "#4a9eff",
-                        "fontSize": 22
+                        "x": 184.89,
+                        "y": 121.85,
+                        "color": "$primary",
+                        "fontSize": 27.83
                       }
                     ]
                   }
@@ -846,10 +846,10 @@
                       {
                         "type": "latex",
                         "expression": "\\cos(x)",
-                        "x": 130,
-                        "y": 150,
-                        "color": "#f472b6",
-                        "fontSize": 22
+                        "x": 184.89,
+                        "y": 166.15,
+                        "color": "$tertiary",
+                        "fontSize": 27.83
                       }
                     ]
                   }
@@ -866,10 +866,10 @@
                       {
                         "type": "latex",
                         "expression": "\\frac{d}{dx}[\\sin(x)] = \\cos(x)",
-                        "x": 450,
-                        "y": 560,
-                        "color": "#a78bfa",
-                        "fontSize": 22,
+                        "x": 640,
+                        "y": 620.31,
+                        "color": "$secondary",
+                        "fontSize": 27.83,
                         "align": "center"
                       }
                     ]
@@ -886,11 +886,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 595,
+                        "x": 640,
+                        "y": 659.08,
                         "content": "The derivative of sin is cos -- they are intimately linked",
-                        "fill": "#64748b",
-                        "fontSize": 14,
+                        "fill": "$muted",
+                        "fontSize": 17.71,
                         "textAnchor": "middle"
                       }
                     ]
@@ -909,8 +909,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 650,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 180,
             "background": "$background",
@@ -924,11 +924,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 450,
-                    "y": 45,
+                    "x": 640,
+                    "y": 49.85,
                     "content": "Vectors: Direction & Magnitude",
                     "fill": "$foreground",
-                    "fontSize": 28,
+                    "fontSize": 35.42,
                     "fontWeight": 700,
                     "textAnchor": "middle"
                   }
@@ -945,8 +945,8 @@
                   5
                 ],
                 "origin": [
-                  200,
-                  500
+                  284.44,
+                  553.85
                 ],
                 "scale": 70,
                 "showGrid": true,
@@ -970,16 +970,16 @@
                           0
                         ],
                         "to": [
-                          3,
-                          1
+                          4.27,
+                          1.11
                         ],
                         "origin": [
-                          200,
-                          500
+                          284.44,
+                          553.85
                         ],
                         "scale": 70,
-                        "color": "#4a9eff",
-                        "strokeWidth": 3,
+                        "color": "$primary",
+                        "strokeWidth": 3.79,
                         "label": "a"
                       }
                     ]
@@ -1001,16 +1001,16 @@
                           0
                         ],
                         "to": [
-                          1,
-                          3
+                          1.42,
+                          3.32
                         ],
                         "origin": [
-                          200,
-                          500
+                          284.44,
+                          553.85
                         ],
                         "scale": 70,
-                        "color": "#f472b6",
-                        "strokeWidth": 3,
+                        "color": "$tertiary",
+                        "strokeWidth": 3.79,
                         "label": "b"
                       }
                     ]
@@ -1027,12 +1027,12 @@
                     "children": [
                       {
                         "type": "line",
-                        "x1": 410,
-                        "y1": 430,
-                        "x2": 480,
-                        "y2": 220,
-                        "stroke": "#4a9eff",
-                        "strokeWidth": 1
+                        "x1": 583.11,
+                        "y1": 476.31,
+                        "x2": 682.67,
+                        "y2": 243.69,
+                        "stroke": "$primary",
+                        "strokeWidth": 1.26
                       }
                     ]
                   }
@@ -1048,12 +1048,12 @@
                     "children": [
                       {
                         "type": "line",
-                        "x1": 270,
-                        "y1": 290,
-                        "x2": 480,
-                        "y2": 220,
-                        "stroke": "#f472b6",
-                        "strokeWidth": 1
+                        "x1": 384,
+                        "y1": 321.23,
+                        "x2": 682.67,
+                        "y2": 243.69,
+                        "stroke": "$tertiary",
+                        "strokeWidth": 1.26
                       }
                     ]
                   }
@@ -1075,16 +1075,16 @@
                           0
                         ],
                         "to": [
-                          4,
-                          4
+                          5.69,
+                          4.43
                         ],
                         "origin": [
-                          200,
-                          500
+                          284.44,
+                          553.85
                         ],
                         "scale": 70,
-                        "color": "#fbbf24",
-                        "strokeWidth": 3,
+                        "color": "$warning",
+                        "strokeWidth": 3.79,
                         "label": "a + b"
                       }
                     ]
@@ -1102,10 +1102,10 @@
                       {
                         "type": "latex",
                         "expression": "\\vec{a} + \\vec{b} = \\begin{pmatrix} 3 \\\\ 1 \\end{pmatrix} + \\begin{pmatrix} 1 \\\\ 3 \\end{pmatrix} = \\begin{pmatrix} 4 \\\\ 4 \\end{pmatrix}",
-                        "x": 650,
-                        "y": 300,
-                        "color": "#fbbf24",
-                        "fontSize": 18,
+                        "x": 924.44,
+                        "y": 332.31,
+                        "color": "$warning",
+                        "fontSize": 22.77,
                         "align": "center"
                       }
                     ]
@@ -1122,11 +1122,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 650,
-                        "y": 420,
+                        "x": 924.44,
+                        "y": 465.23,
                         "content": "Vectors add tip-to-tail",
-                        "fill": "#94a3b8",
-                        "fontSize": 16,
+                        "fill": "$subtitle",
+                        "fontSize": 20.24,
                         "textAnchor": "middle"
                       }
                     ]
@@ -1145,8 +1145,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 650,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 150,
             "background": "$background",
@@ -1160,11 +1160,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 450,
-                    "y": 45,
+                    "x": 640,
+                    "y": 49.85,
                     "content": "Vector Fields: Flow & Force",
                     "fill": "$foreground",
-                    "fontSize": 28,
+                    "fontSize": 35.42,
                     "fontWeight": 700,
                     "textAnchor": "middle"
                   }
@@ -1181,8 +1181,8 @@
                   3
                 ],
                 "origin": [
-                  350,
-                  350
+                  497.78,
+                  387.69
                 ],
                 "scale": 65,
                 "showGrid": false,
@@ -1207,13 +1207,13 @@
                     ],
                     "step": 0.8,
                     "origin": [
-                      350,
-                      350
+                      497.78,
+                      387.69
                     ],
                     "scale": 65,
                     "arrowScale": 0.25,
-                    "color": "#6366f1",
-                    "strokeWidth": 1.5,
+                    "color": "$secondary",
+                    "strokeWidth": 1.9,
                     "normalize": true,
                     "fadeIn": 40,
                     "easing": "easeOutCubic"
@@ -1231,10 +1231,10 @@
                       {
                         "type": "latex",
                         "expression": "\\vec{F}(x, y) = \\langle -y, \\, x \\rangle",
-                        "x": 730,
-                        "y": 120,
-                        "color": "#a78bfa",
-                        "fontSize": 22
+                        "x": 1038.22,
+                        "y": 132.92,
+                        "color": "$secondary",
+                        "fontSize": 27.83
                       }
                     ]
                   }
@@ -1250,12 +1250,12 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 350,
-                        "cy": 350,
-                        "r": 130,
+                        "cx": 497.78,
+                        "cy": 387.69,
+                        "r": 164.44,
                         "fill": "none",
-                        "stroke": "#fbbf24",
-                        "strokeWidth": 1.5,
+                        "stroke": "$warning",
+                        "strokeWidth": 1.9,
                         "opacity": 0.4
                       }
                     ]
@@ -1272,11 +1272,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 730,
-                        "y": 200,
+                        "x": 1038.22,
+                        "y": 221.54,
                         "content": "Pure rotation field",
-                        "fill": "#94a3b8",
-                        "fontSize": 16,
+                        "fill": "$subtitle",
+                        "fontSize": 20.24,
                         "textAnchor": "middle"
                       }
                     ]
@@ -1293,11 +1293,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 730,
-                        "y": 225,
+                        "x": 1038.22,
+                        "y": 249.23,
                         "content": "Every arrow is tangent",
-                        "fill": "#94a3b8",
-                        "fontSize": 16,
+                        "fill": "$subtitle",
+                        "fontSize": 20.24,
                         "textAnchor": "middle"
                       }
                     ]
@@ -1314,11 +1314,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 730,
-                        "y": 250,
+                        "x": 1038.22,
+                        "y": 276.92,
                         "content": "to circles around the origin",
-                        "fill": "#94a3b8",
-                        "fontSize": 16,
+                        "fill": "$subtitle",
+                        "fontSize": 20.24,
                         "textAnchor": "middle"
                       }
                     ]
@@ -1337,8 +1337,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 650,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 180,
             "background": "$background",
@@ -1352,11 +1352,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 450,
-                    "y": 45,
+                    "x": 640,
+                    "y": 49.85,
                     "content": "Matrices as Transformations",
                     "fill": "$foreground",
-                    "fontSize": 28,
+                    "fontSize": 35.42,
                     "fontWeight": 700,
                     "textAnchor": "middle"
                   }
@@ -1382,11 +1382,11 @@
                             "cos t"
                           ]
                         ],
-                        "x": 350,
-                        "y": 110,
+                        "x": 497.78,
+                        "y": 121.85,
                         "cellSize": 55,
-                        "color": "#a78bfa",
-                        "fontSize": 20,
+                        "color": "$secondary",
+                        "fontSize": 25.3,
                         "bracketColor": "#6366f1"
                       }
                     ]
@@ -1404,10 +1404,10 @@
                       {
                         "type": "latex",
                         "expression": "R(\\theta) = \\text{rotation by } \\theta",
-                        "x": 450,
-                        "y": 230,
+                        "x": 640,
+                        "y": 254.77,
                         "color": "#818cf8",
-                        "fontSize": 20,
+                        "fontSize": 25.3,
                         "align": "center"
                       }
                     ]
@@ -1425,8 +1425,8 @@
                   2
                 ],
                 "origin": [
-                  450,
-                  480
+                  640,
+                  531.69
                 ],
                 "scale": 60,
                 "showGrid": true,
@@ -1450,16 +1450,16 @@
                           0
                         ],
                         "to": [
-                          2,
+                          2.84,
                           0
                         ],
                         "origin": [
-                          450,
-                          480
+                          640,
+                          531.69
                         ],
                         "scale": 60,
-                        "color": "#4a9eff",
-                        "strokeWidth": 3,
+                        "color": "$primary",
+                        "strokeWidth": 3.79,
                         "label": "e1"
                       }
                     ]
@@ -1482,15 +1482,15 @@
                         ],
                         "to": [
                           0,
-                          2
+                          2.22
                         ],
                         "origin": [
-                          450,
-                          480
+                          640,
+                          531.69
                         ],
                         "scale": 60,
-                        "color": "#f472b6",
-                        "strokeWidth": 3,
+                        "color": "$tertiary",
+                        "strokeWidth": 3.79,
                         "label": "e2"
                       }
                     ]
@@ -1513,16 +1513,16 @@
                           0
                         ],
                         "to": [
-                          1.41,
-                          1.41
+                          2.01,
+                          1.56
                         ],
                         "origin": [
-                          450,
-                          480
+                          640,
+                          531.69
                         ],
                         "scale": 60,
-                        "color": "#4a9eff",
-                        "strokeWidth": 2,
+                        "color": "$primary",
+                        "strokeWidth": 2.53,
                         "label": "R(e1)"
                       }
                     ]
@@ -1545,16 +1545,16 @@
                           0
                         ],
                         "to": [
-                          -1.41,
-                          1.41
+                          -2.01,
+                          1.56
                         ],
                         "origin": [
-                          450,
-                          480
+                          640,
+                          531.69
                         ],
                         "scale": 60,
-                        "color": "#f472b6",
-                        "strokeWidth": 2,
+                        "color": "$tertiary",
+                        "strokeWidth": 2.53,
                         "label": "R(e2)"
                       }
                     ]
@@ -1571,12 +1571,12 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 450,
-                        "cy": 480,
-                        "r": 120,
+                        "cx": 640,
+                        "cy": 531.69,
+                        "r": 151.79,
                         "fill": "none",
-                        "stroke": "#fbbf24",
-                        "strokeWidth": 1,
+                        "stroke": "$warning",
+                        "strokeWidth": 1.26,
                         "opacity": 0.3
                       }
                     ]
@@ -1593,11 +1593,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 750,
-                        "y": 430,
+                        "x": 1066.67,
+                        "y": 476.31,
                         "content": "t = 45 deg",
-                        "fill": "#fbbf24",
-                        "fontSize": 18,
+                        "fill": "$warning",
+                        "fontSize": 22.77,
                         "textAnchor": "middle"
                       }
                     ]
@@ -1614,11 +1614,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 750,
-                        "y": 460,
+                        "x": 1066.67,
+                        "y": 509.54,
                         "content": "Lengths preserved",
-                        "fill": "#94a3b8",
-                        "fontSize": 14,
+                        "fill": "$subtitle",
+                        "fontSize": 17.71,
                         "textAnchor": "middle"
                       }
                     ]
@@ -1635,11 +1635,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 750,
-                        "y": 485,
+                        "x": 1066.67,
+                        "y": 537.23,
                         "content": "Angles preserved",
-                        "fill": "#94a3b8",
-                        "fontSize": 14,
+                        "fill": "$subtitle",
+                        "fontSize": 17.71,
                         "textAnchor": "middle"
                       }
                     ]
@@ -1658,8 +1658,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 650,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 150,
             "background": "$background",
@@ -1673,11 +1673,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 450,
-                    "y": 45,
+                    "x": 640,
+                    "y": 49.85,
                     "content": "Graph Theory: Networks",
                     "fill": "$foreground",
-                    "fontSize": 28,
+                    "fontSize": 35.42,
                     "fontWeight": 700,
                     "textAnchor": "middle"
                   }
@@ -1697,45 +1697,45 @@
                         "nodes": [
                           {
                             "id": "A",
-                            "x": 200,
-                            "y": 150,
+                            "x": 284.44,
+                            "y": 166.15,
                             "label": "Input",
-                            "color": "#4a9eff"
+                            "color": "$primary"
                           },
                           {
                             "id": "B",
-                            "x": 200,
-                            "y": 350,
+                            "x": 284.44,
+                            "y": 387.69,
                             "label": "Data",
-                            "color": "#4a9eff"
+                            "color": "$primary"
                           },
                           {
                             "id": "C",
-                            "x": 450,
-                            "y": 150,
+                            "x": 640,
+                            "y": 166.15,
                             "label": "Process",
-                            "color": "#a78bfa"
+                            "color": "$secondary"
                           },
                           {
                             "id": "D",
-                            "x": 450,
-                            "y": 350,
+                            "x": 640,
+                            "y": 387.69,
                             "label": "Transform",
-                            "color": "#a78bfa"
+                            "color": "$secondary"
                           },
                           {
                             "id": "E",
-                            "x": 450,
-                            "y": 500,
+                            "x": 640,
+                            "y": 553.85,
                             "label": "Filter",
-                            "color": "#a78bfa"
+                            "color": "$secondary"
                           },
                           {
                             "id": "F",
-                            "x": 700,
-                            "y": 250,
+                            "x": 995.56,
+                            "y": 276.92,
                             "label": "Output",
-                            "color": "#34d399"
+                            "color": "$success"
                           }
                         ],
                         "edges": [
@@ -1801,11 +1801,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 590,
+                        "x": 640,
+                        "y": 653.54,
                         "content": "Weighted directed graph -- edges carry capacity or cost",
-                        "fill": "#64748b",
-                        "fontSize": 15,
+                        "fill": "$muted",
+                        "fontSize": 18.97,
                         "textAnchor": "middle"
                       }
                     ]
@@ -1822,11 +1822,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 618,
+                        "x": 640,
+                        "y": 684.55,
                         "content": "Shortest path: Input -> Transform -> Output (cost: 9)",
-                        "fill": "#fbbf24",
-                        "fontSize": 14,
+                        "fill": "$warning",
+                        "fontSize": 17.71,
                         "textAnchor": "middle"
                       }
                     ]
@@ -1845,8 +1845,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 650,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 210,
             "background": "$background",
@@ -1860,11 +1860,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 450,
-                    "y": 45,
+                    "x": 640,
+                    "y": 49.85,
                     "content": "Euler's Identity",
                     "fill": "$foreground",
-                    "fontSize": 28,
+                    "fontSize": 35.42,
                     "fontWeight": 700,
                     "textAnchor": "middle"
                   }
@@ -1882,10 +1882,10 @@
                       {
                         "type": "latex",
                         "expression": "e^{i\\pi} + 1 = 0",
-                        "x": 450,
-                        "y": 150,
-                        "color": "#fbbf24",
-                        "fontSize": 48,
+                        "x": 640,
+                        "y": 166.15,
+                        "color": "$warning",
+                        "fontSize": 60.72,
                         "align": "center"
                       }
                     ]
@@ -1902,47 +1902,47 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 150,
-                        "y": 230,
+                        "x": 213.33,
+                        "y": 254.77,
                         "content": "e -- growth",
-                        "fill": "#4a9eff",
-                        "fontSize": 18,
+                        "fill": "$primary",
+                        "fontSize": 22.77,
                         "textAnchor": "middle"
                       },
                       {
                         "type": "text",
-                        "x": 310,
-                        "y": 230,
+                        "x": 440.89,
+                        "y": 254.77,
                         "content": "i -- rotation",
-                        "fill": "#a78bfa",
-                        "fontSize": 18,
+                        "fill": "$secondary",
+                        "fontSize": 22.77,
                         "textAnchor": "middle"
                       },
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 230,
+                        "x": 640,
+                        "y": 254.77,
                         "content": "pi -- circles",
-                        "fill": "#f472b6",
-                        "fontSize": 18,
+                        "fill": "$tertiary",
+                        "fontSize": 22.77,
                         "textAnchor": "middle"
                       },
                       {
                         "type": "text",
-                        "x": 590,
-                        "y": 230,
+                        "x": 839.11,
+                        "y": 254.77,
                         "content": "1 -- unity",
-                        "fill": "#34d399",
-                        "fontSize": 18,
+                        "fill": "$success",
+                        "fontSize": 22.77,
                         "textAnchor": "middle"
                       },
                       {
                         "type": "text",
-                        "x": 740,
-                        "y": 230,
+                        "x": 1052.44,
+                        "y": 254.77,
                         "content": "0 -- nothing",
-                        "fill": "#94a3b8",
-                        "fontSize": 18,
+                        "fill": "$subtitle",
+                        "fontSize": 22.77,
                         "textAnchor": "middle"
                       }
                     ]
@@ -1960,8 +1960,8 @@
                   1.5
                 ],
                 "origin": [
-                  450,
-                  470
+                  640,
+                  520.62
                 ],
                 "scale": 85,
                 "showGrid": true,
@@ -1980,12 +1980,12 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 450,
-                        "cy": 470,
-                        "r": 85,
+                        "cx": 640,
+                        "cy": 520.62,
+                        "r": 107.52,
                         "fill": "none",
-                        "stroke": "#6366f1",
-                        "strokeWidth": 2,
+                        "stroke": "$secondary",
+                        "strokeWidth": 2.53,
                         "draw": 40,
                         "easing": "easeInOutCubic"
                       }
@@ -2008,16 +2008,16 @@
                           0
                         ],
                         "to": [
-                          1,
+                          1.42,
                           0
                         ],
                         "origin": [
-                          450,
-                          470
+                          640,
+                          520.62
                         ],
                         "scale": 85,
-                        "color": "#34d399",
-                        "strokeWidth": 2.5,
+                        "color": "$success",
+                        "strokeWidth": 3.16,
                         "label": "1"
                       }
                     ]
@@ -2042,24 +2042,24 @@
                               0
                             ],
                             "to": [
-                              -1,
+                              -1.42,
                               0
                             ],
                             "origin": [
-                              450,
-                              470
+                              640,
+                              520.62
                             ],
                             "scale": 85,
-                            "color": "#f472b6",
-                            "strokeWidth": 2.5
+                            "color": "$tertiary",
+                            "strokeWidth": 3.16
                           },
                           {
                             "type": "latex",
                             "expression": "e^{i\\pi} = -1",
-                            "x": 370,
-                            "y": 485,
-                            "fontSize": 16,
-                            "color": "#f472b6"
+                            "x": 526.22,
+                            "y": 537.23,
+                            "fontSize": 20.24,
+                            "color": "$tertiary"
                           }
                         ]
                       }
@@ -2083,15 +2083,15 @@
                         ],
                         "to": [
                           0,
-                          1
+                          1.11
                         ],
                         "origin": [
-                          450,
-                          470
+                          640,
+                          520.62
                         ],
                         "scale": 85,
-                        "color": "#a78bfa",
-                        "strokeWidth": 2,
+                        "color": "$secondary",
+                        "strokeWidth": 2.53,
                         "label": "i"
                       }
                     ]
@@ -2108,11 +2108,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 600,
+                        "x": 640,
+                        "y": 664.62,
                         "content": "Five constants, one elegant equation",
-                        "fill": "#64748b",
-                        "fontSize": 16,
+                        "fill": "$muted",
+                        "fontSize": 20.24,
                         "textAnchor": "middle"
                       }
                     ]
@@ -2131,8 +2131,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 650,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 120,
             "background": "$background",
@@ -2147,11 +2147,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 450,
-                    "y": 250,
+                    "x": 640,
+                    "y": 276.92,
                     "content": "Thank You",
                     "fill": "$foreground",
-                    "fontSize": 56,
+                    "fontSize": 70.84,
                     "fontWeight": 700,
                     "textAnchor": "middle"
                   }
@@ -2168,10 +2168,10 @@
                       {
                         "type": "latex",
                         "expression": "\\text{Mathematics is the language of the universe}",
-                        "x": 450,
-                        "y": 340,
+                        "x": 640,
+                        "y": 376.62,
                         "color": "#818cf8",
-                        "fontSize": 22,
+                        "fontSize": 27.83,
                         "align": "center"
                       }
                     ]
@@ -2188,58 +2188,58 @@
                     "children": [
                       {
                         "type": "circle",
-                        "cx": 270,
-                        "cy": 430,
-                        "r": 6,
-                        "fill": "#4a9eff",
+                        "cx": 384,
+                        "cy": 476.31,
+                        "r": 7.59,
+                        "fill": "$primary",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 330,
-                        "cy": 430,
-                        "r": 6,
-                        "fill": "#6366f1",
+                        "cx": 469.33,
+                        "cy": 476.31,
+                        "r": 7.59,
+                        "fill": "$secondary",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 390,
-                        "cy": 430,
-                        "r": 6,
+                        "cx": 554.67,
+                        "cy": 476.31,
+                        "r": 7.59,
                         "fill": "#818cf8",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 450,
-                        "cy": 430,
-                        "r": 6,
-                        "fill": "#a78bfa",
+                        "cx": 640,
+                        "cy": 476.31,
+                        "r": 7.59,
+                        "fill": "$secondary",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 510,
-                        "cy": 430,
-                        "r": 6,
+                        "cx": 725.33,
+                        "cy": 476.31,
+                        "r": 7.59,
                         "fill": "#c084fc",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 570,
-                        "cy": 430,
-                        "r": 6,
+                        "cx": 810.67,
+                        "cy": 476.31,
+                        "r": 7.59,
                         "fill": "#e879f9",
                         "stroke": "none"
                       },
                       {
                         "type": "circle",
-                        "cx": 630,
-                        "cy": 430,
-                        "r": 6,
-                        "fill": "#f472b6",
+                        "cx": 896,
+                        "cy": 476.31,
+                        "r": 7.59,
+                        "fill": "$tertiary",
                         "stroke": "none"
                       }
                     ]
@@ -2256,11 +2256,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 490,
+                        "x": 640,
+                        "y": 542.77,
                         "content": "Built with Elucim -- animated explanations for the web",
                         "fill": "#475569",
-                        "fontSize": 14,
+                        "fontSize": 17.71,
                         "textAnchor": "middle"
                       }
                     ]

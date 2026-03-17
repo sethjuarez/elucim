@@ -2,8 +2,8 @@
   "version": "1.0",
   "root": {
     "type": "presentation",
-    "width": 900,
-    "height": 640,
+    "width": 1280,
+    "height": 720,
     "background": "$background",
     "transition": "fade",
     "transitionDuration": 10,
@@ -17,8 +17,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 140,
             "controls": false,
@@ -35,10 +35,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 200,
+                        "x": 640,
+                        "y": 225,
                         "content": "From Words to Agents",
-                        "fontSize": 36,
+                        "fontSize": 45.85,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -57,11 +57,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 250,
+                        "x": 640,
+                        "y": 281.25,
                         "content": "How LLMs Think, Speak, and Act",
-                        "fontSize": 20,
-                        "fill": "#94a3b8",
+                        "fontSize": 25.47,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -79,10 +79,10 @@
                       {
                         "type": "latex",
                         "expression": "P(w_t \\mid w_1, w_2, \\ldots, w_{t-1})",
-                        "x": 450,
-                        "y": 330,
-                        "fontSize": 32,
-                        "color": "#fbbf24",
+                        "x": 640,
+                        "y": 371.25,
+                        "fontSize": 40.76,
+                        "color": "$warning",
                         "align": "center"
                       }
                     ]
@@ -95,10 +95,10 @@
                 "children": [
                   {
                     "type": "circle",
-                    "cx": 250,
-                    "cy": 450,
-                    "r": 6,
-                    "fill": "#4fc3f7",
+                    "cx": 355.56,
+                    "cy": 506.25,
+                    "r": 7.64,
+                    "fill": "$primary",
                     "stroke": "none",
                     "fadeIn": 10
                   }
@@ -110,10 +110,10 @@
                 "children": [
                   {
                     "type": "circle",
-                    "cx": 305,
-                    "cy": 450,
-                    "r": 6,
-                    "fill": "#a78bfa",
+                    "cx": 433.78,
+                    "cy": 506.25,
+                    "r": 7.64,
+                    "fill": "$secondary",
                     "stroke": "none",
                     "fadeIn": 10
                   }
@@ -125,10 +125,10 @@
                 "children": [
                   {
                     "type": "circle",
-                    "cx": 360,
-                    "cy": 450,
-                    "r": 6,
-                    "fill": "#f472b6",
+                    "cx": 512,
+                    "cy": 506.25,
+                    "r": 7.64,
+                    "fill": "$tertiary",
                     "stroke": "none",
                     "fadeIn": 10
                   }
@@ -140,10 +140,10 @@
                 "children": [
                   {
                     "type": "circle",
-                    "cx": 415,
-                    "cy": 450,
-                    "r": 6,
-                    "fill": "#34d399",
+                    "cx": 590.22,
+                    "cy": 506.25,
+                    "r": 7.64,
+                    "fill": "$success",
                     "stroke": "none",
                     "fadeIn": 10
                   }
@@ -155,10 +155,10 @@
                 "children": [
                   {
                     "type": "circle",
-                    "cx": 470,
-                    "cy": 450,
-                    "r": 6,
-                    "fill": "#fbbf24",
+                    "cx": 668.44,
+                    "cy": 506.25,
+                    "r": 7.64,
+                    "fill": "$warning",
                     "stroke": "none",
                     "fadeIn": 10
                   }
@@ -170,10 +170,10 @@
                 "children": [
                   {
                     "type": "circle",
-                    "cx": 525,
-                    "cy": 450,
-                    "r": 6,
-                    "fill": "#fb923c",
+                    "cx": 746.67,
+                    "cy": 506.25,
+                    "r": 7.64,
+                    "fill": "$warning",
                     "stroke": "none",
                     "fadeIn": 10
                   }
@@ -185,10 +185,10 @@
                 "children": [
                   {
                     "type": "circle",
-                    "cx": 580,
-                    "cy": 450,
-                    "r": 6,
-                    "fill": "#6366f1",
+                    "cx": 824.89,
+                    "cy": 506.25,
+                    "r": 7.64,
+                    "fill": "$secondary",
                     "stroke": "none",
                     "fadeIn": 10
                   }
@@ -200,10 +200,10 @@
                 "children": [
                   {
                     "type": "circle",
-                    "cx": 635,
-                    "cy": 450,
-                    "r": 6,
-                    "fill": "#22d3ee",
+                    "cx": 903.11,
+                    "cy": 506.25,
+                    "r": 7.64,
+                    "fill": "$primary",
                     "stroke": "none",
                     "fadeIn": 10
                   }
@@ -219,11 +219,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 520,
+                        "x": 640,
+                        "y": 585,
                         "content": "A visual journey from tokens to autonomous agents",
-                        "fontSize": 14,
-                        "fill": "#64748b",
+                        "fontSize": 17.83,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -241,8 +241,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 202,
             "controls": false,
@@ -259,10 +259,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 55,
+                        "x": 640,
+                        "y": 61.88,
                         "content": "Step 1: Tokenization",
-                        "fontSize": 28,
+                        "fontSize": 35.66,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -281,11 +281,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 95,
+                        "x": 640,
+                        "y": 106.88,
                         "content": "Breaking text into pieces the model can understand",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -302,11 +302,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 155,
+                        "x": 640,
+                        "y": 174.38,
                         "content": "\"The cat sat on the mat\"",
-                        "fontSize": 18,
-                        "fill": "#fbbf24",
+                        "fontSize": 22.93,
+                        "fill": "$warning",
                         "textAnchor": "middle",
                         "fontFamily": "monospace"
                       }
@@ -320,13 +320,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 450,
-                    "y1": 170,
-                    "x2": 450,
-                    "y2": 195,
-                    "stroke": "#64748b",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 640,
+                    "y1": 191.25,
+                    "x2": 640,
+                    "y2": 219.38,
+                    "stroke": "$muted",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -344,22 +344,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 200,
-                            "y": 205,
-                            "width": 75,
-                            "height": 36,
+                            "x": 284.44,
+                            "y": 230.63,
+                            "width": 106.67,
+                            "height": 40.5,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 237.5,
-                            "y": 228,
+                            "x": 337.78,
+                            "y": 256.5,
                             "content": "The",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -370,22 +370,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 285,
-                            "y": 205,
-                            "width": 75,
-                            "height": 36,
+                            "x": 405.33,
+                            "y": 230.63,
+                            "width": 106.67,
+                            "height": 40.5,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 322.5,
-                            "y": 228,
+                            "x": 458.67,
+                            "y": 256.5,
                             "content": "cat",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -396,22 +396,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 370,
-                            "y": 205,
-                            "width": 75,
-                            "height": 36,
+                            "x": 526.22,
+                            "y": 230.63,
+                            "width": 106.67,
+                            "height": 40.5,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 407.5,
-                            "y": 228,
+                            "x": 579.56,
+                            "y": 256.5,
                             "content": "sat",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -422,22 +422,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 455,
-                            "y": 205,
-                            "width": 75,
-                            "height": 36,
+                            "x": 647.11,
+                            "y": 230.63,
+                            "width": 106.67,
+                            "height": 40.5,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 492.5,
-                            "y": 228,
+                            "x": 700.44,
+                            "y": 256.5,
                             "content": "on",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -448,22 +448,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 540,
-                            "y": 205,
-                            "width": 75,
-                            "height": 36,
+                            "x": 768,
+                            "y": 230.63,
+                            "width": 106.67,
+                            "height": 40.5,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 577.5,
-                            "y": 228,
+                            "x": 821.33,
+                            "y": 256.5,
                             "content": "the",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -474,22 +474,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 625,
-                            "y": 205,
-                            "width": 75,
-                            "height": 36,
+                            "x": 888.89,
+                            "y": 230.63,
+                            "width": 106.67,
+                            "height": 40.5,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 662.5,
-                            "y": 228,
+                            "x": 942.22,
+                            "y": 256.5,
                             "content": "mat",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -505,13 +505,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 450,
-                    "y1": 250,
-                    "x2": 450,
-                    "y2": 270,
-                    "stroke": "#64748b",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 640,
+                    "y1": 281.25,
+                    "x2": 640,
+                    "y2": 303.75,
+                    "stroke": "$muted",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -529,22 +529,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 200,
-                            "y": 280,
-                            "width": 75,
-                            "height": 32,
+                            "x": 284.44,
+                            "y": 315,
+                            "width": 106.67,
+                            "height": 36,
                             "fill": "rgba(167,139,250,0.15)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 237.5,
-                            "y": 301,
+                            "x": 337.78,
+                            "y": 338.63,
                             "content": "464",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -555,22 +555,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 285,
-                            "y": 280,
-                            "width": 75,
-                            "height": 32,
+                            "x": 405.33,
+                            "y": 315,
+                            "width": 106.67,
+                            "height": 36,
                             "fill": "rgba(167,139,250,0.15)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 322.5,
-                            "y": 301,
+                            "x": 458.67,
+                            "y": 338.63,
                             "content": "3797",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -581,22 +581,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 370,
-                            "y": 280,
-                            "width": 75,
-                            "height": 32,
+                            "x": 526.22,
+                            "y": 315,
+                            "width": 106.67,
+                            "height": 36,
                             "fill": "rgba(167,139,250,0.15)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 407.5,
-                            "y": 301,
+                            "x": 579.56,
+                            "y": 338.63,
                             "content": "9246",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -607,22 +607,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 455,
-                            "y": 280,
-                            "width": 75,
-                            "height": 32,
+                            "x": 647.11,
+                            "y": 315,
+                            "width": 106.67,
+                            "height": 36,
                             "fill": "rgba(167,139,250,0.15)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 492.5,
-                            "y": 301,
+                            "x": 700.44,
+                            "y": 338.63,
                             "content": "319",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -633,22 +633,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 540,
-                            "y": 280,
-                            "width": 75,
-                            "height": 32,
+                            "x": 768,
+                            "y": 315,
+                            "width": 106.67,
+                            "height": 36,
                             "fill": "rgba(167,139,250,0.15)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 577.5,
-                            "y": 301,
+                            "x": 821.33,
+                            "y": 338.63,
                             "content": "1820",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -659,22 +659,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 625,
-                            "y": 280,
-                            "width": 75,
-                            "height": 32,
+                            "x": 888.89,
+                            "y": 315,
+                            "width": 106.67,
+                            "height": 36,
                             "fill": "rgba(167,139,250,0.15)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 662.5,
-                            "y": 301,
+                            "x": 942.22,
+                            "y": 338.63,
                             "content": "2291",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -694,11 +694,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 355,
+                        "x": 640,
+                        "y": 399.38,
                         "content": "BPE (Byte Pair Encoding) maps subwords to integer IDs",
-                        "fontSize": 13,
-                        "fill": "#64748b",
+                        "fontSize": 16.56,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -716,10 +716,10 @@
                       {
                         "type": "latex",
                         "expression": "\\text{Vocabulary} \\approx 50{,}000 \\text{ tokens}",
-                        "x": 450,
-                        "y": 410,
-                        "fontSize": 22,
-                        "color": "#a78bfa",
+                        "x": 640,
+                        "y": 461.25,
+                        "fontSize": 28.02,
+                        "color": "$secondary",
                         "align": "center"
                       }
                     ]
@@ -736,11 +736,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 480,
+                        "x": 640,
+                        "y": 540,
                         "content": "Common words = 1 token  |  Rare words = multiple tokens",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -757,11 +757,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 505,
+                        "x": 640,
+                        "y": 568.13,
                         "content": "\"tokenization\" -> [\"token\", \"ization\"]  (2 tokens)",
-                        "fontSize": 12,
-                        "fill": "#94a3b8",
+                        "fontSize": 15.28,
+                        "fill": "$subtitle",
                         "textAnchor": "middle",
                         "fontFamily": "monospace"
                       }
@@ -780,8 +780,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 188,
             "controls": false,
@@ -798,10 +798,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 55,
+                        "x": 640,
+                        "y": 61.88,
                         "content": "Step 2: Token Embeddings",
-                        "fontSize": 28,
+                        "fontSize": 35.66,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -820,11 +820,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 95,
+                        "x": 640,
+                        "y": 106.88,
                         "content": "Each token ID becomes a high-dimensional vector",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -844,22 +844,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 410,
-                            "y": 150,
-                            "width": 80,
-                            "height": 36,
+                            "x": 583.11,
+                            "y": 168.75,
+                            "width": 113.78,
+                            "height": 40.5,
                             "fill": "rgba(167,139,250,0.2)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 173,
+                            "x": 640,
+                            "y": 194.63,
                             "content": "3797",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -879,11 +879,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 145,
+                        "x": 640,
+                        "y": 163.13,
                         "content": "\"cat\"",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -896,13 +896,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 450,
-                    "y1": 192,
-                    "x2": 450,
-                    "y2": 218,
-                    "stroke": "#64748b",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 640,
+                    "y1": 216,
+                    "x2": 640,
+                    "y2": 245.25,
+                    "stroke": "$muted",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -917,11 +917,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 215,
+                        "x": 640,
+                        "y": 241.88,
                         "content": "Embedding lookup table",
-                        "fontSize": 11,
-                        "fill": "#64748b",
+                        "fontSize": 14.01,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -945,12 +945,12 @@
                         "0.71"
                       ]
                     ],
-                    "x": 450,
-                    "y": 260,
+                    "x": 640,
+                    "y": 292.5,
                     "cellSize": 55,
-                    "color": "#4fc3f7",
+                    "color": "$primary",
                     "bracketColor": "#4fc3f7",
-                    "fontSize": 13,
+                    "fontSize": 16.56,
                     "fadeIn": 20
                   }
                 ]
@@ -966,10 +966,10 @@
                       {
                         "type": "latex",
                         "expression": "\\vec{e} \\in \\mathbb{R}^{d_{\\text{model}}}",
-                        "x": 450,
-                        "y": 330,
-                        "fontSize": 24,
-                        "color": "#fbbf24",
+                        "x": 640,
+                        "y": 371.25,
+                        "fontSize": 30.57,
+                        "color": "$warning",
                         "align": "center"
                       }
                     ]
@@ -986,11 +986,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 380,
+                        "x": 640,
+                        "y": 427.5,
                         "content": "d_model = 768 (GPT-2) to 12,288 (GPT-4)",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1007,11 +1007,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 425,
+                        "x": 640,
+                        "y": 478.13,
                         "content": "+ Positional Encoding",
-                        "fontSize": 16,
-                        "fill": "#f472b6",
+                        "fontSize": 20.38,
+                        "fill": "$tertiary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1028,11 +1028,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 450,
+                        "x": 640,
+                        "y": 506.25,
                         "content": "Adds position information so the model knows word order",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1050,10 +1050,10 @@
                       {
                         "type": "latex",
                         "expression": "\\text{PE}(pos, 2i) = \\sin(pos / 10000^{2i/d})",
-                        "x": 450,
-                        "y": 490,
-                        "fontSize": 18,
-                        "color": "#f472b6",
+                        "x": 640,
+                        "y": 551.25,
+                        "fontSize": 22.93,
+                        "color": "$tertiary",
                         "align": "center"
                       }
                     ]
@@ -1071,8 +1071,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 205,
             "controls": false,
@@ -1089,10 +1089,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 55,
+                        "x": 640,
+                        "y": 61.88,
                         "content": "Step 3: Self-Attention",
-                        "fontSize": 28,
+                        "fontSize": 35.66,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -1111,11 +1111,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 95,
+                        "x": 640,
+                        "y": 106.88,
                         "content": "How tokens learn to look at each other",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1133,10 +1133,10 @@
                       {
                         "type": "latex",
                         "expression": "\\text{Attention}(Q, K, V) = \\text{softmax}\\!\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right)\\!V",
-                        "x": 450,
-                        "y": 150,
-                        "fontSize": 22,
-                        "color": "#fbbf24",
+                        "x": 640,
+                        "y": 168.75,
+                        "fontSize": 28.02,
+                        "color": "$warning",
                         "align": "center"
                       }
                     ]
@@ -1156,22 +1156,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 220,
-                            "y": 215,
-                            "width": 140,
-                            "height": 36,
+                            "x": 312.89,
+                            "y": 241.88,
+                            "width": 199.11,
+                            "height": 40.5,
                             "fill": "rgba(79,195,247,0.2)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 290,
-                            "y": 238,
+                            "x": 412.44,
+                            "y": 267.75,
                             "content": "Query (Q)",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -1181,22 +1181,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 380,
-                            "y": 215,
-                            "width": 140,
-                            "height": 36,
+                            "x": 540.44,
+                            "y": 241.88,
+                            "width": 199.11,
+                            "height": 40.5,
                             "fill": "rgba(167,139,250,0.2)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 238,
+                            "x": 640,
+                            "y": 267.75,
                             "content": "Key (K)",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -1206,22 +1206,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 540,
-                            "y": 215,
-                            "width": 140,
-                            "height": 36,
+                            "x": 768,
+                            "y": 241.88,
+                            "width": 199.11,
+                            "height": 40.5,
                             "fill": "rgba(244,114,182,0.2)",
-                            "stroke": "#f472b6",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$tertiary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 610,
-                            "y": 238,
+                            "x": 867.56,
+                            "y": 267.75,
                             "content": "Value (V)",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -1240,11 +1240,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 290,
-                        "y": 270,
+                        "x": 412.44,
+                        "y": 303.75,
                         "content": "\"What am I",
-                        "fontSize": 10,
-                        "fill": "#4fc3f7",
+                        "fontSize": 12.74,
+                        "fill": "$primary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1261,11 +1261,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 290,
-                        "y": 282,
+                        "x": 412.44,
+                        "y": 317.25,
                         "content": "looking for?\"",
-                        "fontSize": 10,
-                        "fill": "#4fc3f7",
+                        "fontSize": 12.74,
+                        "fill": "$primary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1282,11 +1282,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 270,
+                        "x": 640,
+                        "y": 303.75,
                         "content": "\"What do I",
-                        "fontSize": 10,
-                        "fill": "#a78bfa",
+                        "fontSize": 12.74,
+                        "fill": "$secondary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1303,11 +1303,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 282,
+                        "x": 640,
+                        "y": 317.25,
                         "content": "contain?\"",
-                        "fontSize": 10,
-                        "fill": "#a78bfa",
+                        "fontSize": 12.74,
+                        "fill": "$secondary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1324,11 +1324,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 610,
-                        "y": 270,
+                        "x": 867.56,
+                        "y": 303.75,
                         "content": "\"What info",
-                        "fontSize": 10,
-                        "fill": "#f472b6",
+                        "fontSize": 12.74,
+                        "fill": "$tertiary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1345,11 +1345,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 610,
-                        "y": 282,
+                        "x": 867.56,
+                        "y": 317.25,
                         "content": "do I give?\"",
-                        "fontSize": 10,
-                        "fill": "#f472b6",
+                        "fontSize": 12.74,
+                        "fill": "$tertiary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1366,11 +1366,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 320,
+                        "x": 640,
+                        "y": 360,
                         "content": "Attention Weights (simplified)",
-                        "fontSize": 13,
-                        "fill": "#64748b",
+                        "fontSize": 16.56,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1409,12 +1409,12 @@
                         "0.2"
                       ]
                     ],
-                    "x": 450,
-                    "y": 370,
+                    "x": 640,
+                    "y": 416.25,
                     "cellSize": 50,
-                    "color": "#c8d6e5",
+                    "color": "$foreground",
                     "bracketColor": "#4fc3f7",
-                    "fontSize": 12,
+                    "fontSize": 15.28,
                     "fadeIn": 20
                   }
                 ]
@@ -1425,11 +1425,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 310,
-                    "y": 345,
+                    "x": 440.89,
+                    "y": 388.13,
                     "content": "The",
-                    "fontSize": 10,
-                    "fill": "#64748b",
+                    "fontSize": 12.74,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -1440,11 +1440,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 360,
-                    "y": 345,
+                    "x": 512,
+                    "y": 388.13,
                     "content": "cat",
-                    "fontSize": 10,
-                    "fill": "#64748b",
+                    "fontSize": 12.74,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -1455,11 +1455,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 410,
-                    "y": 345,
+                    "x": 583.11,
+                    "y": 388.13,
                     "content": "sat",
-                    "fontSize": 10,
-                    "fill": "#64748b",
+                    "fontSize": 12.74,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -1470,11 +1470,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 460,
-                    "y": 345,
+                    "x": 654.22,
+                    "y": 388.13,
                     "content": "on",
-                    "fontSize": 10,
-                    "fill": "#64748b",
+                    "fontSize": 12.74,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -1489,11 +1489,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 510,
+                        "x": 640,
+                        "y": 573.75,
                         "content": "Multi-Head: 8-96 parallel attention patterns",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1510,11 +1510,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 530,
+                        "x": 640,
+                        "y": 596.25,
                         "content": "Each head learns different relationships (syntax, semantics, position)",
-                        "fontSize": 11,
-                        "fill": "#94a3b8",
+                        "fontSize": 14.01,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1532,8 +1532,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 191,
             "controls": false,
@@ -1550,10 +1550,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 55,
+                        "x": 640,
+                        "y": 61.88,
                         "content": "Step 4: The Transformer Block",
-                        "fontSize": 28,
+                        "fontSize": 35.66,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -1572,11 +1572,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 95,
+                        "x": 640,
+                        "y": 106.88,
                         "content": "Attention + Feed-Forward, repeated N times",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1596,22 +1596,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 340,
-                            "y": 130,
-                            "width": 220,
-                            "height": 38,
+                            "x": 483.56,
+                            "y": 146.25,
+                            "width": 312.89,
+                            "height": 42.75,
                             "fill": "rgba(79,195,247,0.15)",
                             "stroke": "rgba(79,195,247,0.15)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 154,
+                            "x": 640,
+                            "y": 173.25,
                             "content": "Input Embeddings",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -1621,22 +1621,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 340,
-                            "y": 178,
-                            "width": 220,
-                            "height": 38,
+                            "x": 483.56,
+                            "y": 200.25,
+                            "width": 312.89,
+                            "height": 42.75,
                             "fill": "rgba(251,191,36,0.15)",
                             "stroke": "rgba(251,191,36,0.15)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 202,
+                            "x": 640,
+                            "y": 227.25,
                             "content": "Multi-Head Attention",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -1646,22 +1646,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 340,
-                            "y": 226,
-                            "width": 220,
-                            "height": 38,
+                            "x": 483.56,
+                            "y": 254.25,
+                            "width": 312.89,
+                            "height": 42.75,
                             "fill": "rgba(167,139,250,0.15)",
                             "stroke": "rgba(167,139,250,0.15)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 250,
+                            "x": 640,
+                            "y": 281.25,
                             "content": "Add & Normalize",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -1671,22 +1671,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 340,
-                            "y": 274,
-                            "width": 220,
-                            "height": 38,
+                            "x": 483.56,
+                            "y": 308.25,
+                            "width": 312.89,
+                            "height": 42.75,
                             "fill": "rgba(244,114,182,0.15)",
                             "stroke": "rgba(244,114,182,0.15)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 298,
+                            "x": 640,
+                            "y": 335.25,
                             "content": "Feed-Forward Network",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -1696,22 +1696,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 340,
-                            "y": 322,
-                            "width": 220,
-                            "height": 38,
+                            "x": 483.56,
+                            "y": 362.25,
+                            "width": 312.89,
+                            "height": 42.75,
                             "fill": "rgba(167,139,250,0.15)",
                             "stroke": "rgba(167,139,250,0.15)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 346,
+                            "x": 640,
+                            "y": 389.25,
                             "content": "Add & Normalize",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -1721,22 +1721,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 340,
-                            "y": 370,
-                            "width": 220,
-                            "height": 38,
+                            "x": 483.56,
+                            "y": 416.25,
+                            "width": 312.89,
+                            "height": 42.75,
                             "fill": "rgba(52,211,153,0.15)",
                             "stroke": "rgba(52,211,153,0.15)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 394,
+                            "x": 640,
+                            "y": 443.25,
                             "content": "Output Vectors",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -1755,53 +1755,53 @@
                     "children": [
                       {
                         "type": "arrow",
-                        "x1": 450,
-                        "y1": 170,
-                        "x2": 450,
-                        "y2": 176,
-                        "stroke": "#64748b",
-                        "strokeWidth": 1.5,
-                        "headSize": 6
+                        "x1": 640,
+                        "y1": 191.25,
+                        "x2": 640,
+                        "y2": 198,
+                        "stroke": "$muted",
+                        "strokeWidth": 1.91,
+                        "headSize": 7.64
                       },
                       {
                         "type": "arrow",
-                        "x1": 450,
-                        "y1": 218,
-                        "x2": 450,
-                        "y2": 224,
-                        "stroke": "#64748b",
-                        "strokeWidth": 1.5,
-                        "headSize": 6
+                        "x1": 640,
+                        "y1": 245.25,
+                        "x2": 640,
+                        "y2": 252,
+                        "stroke": "$muted",
+                        "strokeWidth": 1.91,
+                        "headSize": 7.64
                       },
                       {
                         "type": "arrow",
-                        "x1": 450,
-                        "y1": 266,
-                        "x2": 450,
-                        "y2": 272,
-                        "stroke": "#64748b",
-                        "strokeWidth": 1.5,
-                        "headSize": 6
+                        "x1": 640,
+                        "y1": 299.25,
+                        "x2": 640,
+                        "y2": 306,
+                        "stroke": "$muted",
+                        "strokeWidth": 1.91,
+                        "headSize": 7.64
                       },
                       {
                         "type": "arrow",
-                        "x1": 450,
-                        "y1": 314,
-                        "x2": 450,
-                        "y2": 320,
-                        "stroke": "#64748b",
-                        "strokeWidth": 1.5,
-                        "headSize": 6
+                        "x1": 640,
+                        "y1": 353.25,
+                        "x2": 640,
+                        "y2": 360,
+                        "stroke": "$muted",
+                        "strokeWidth": 1.91,
+                        "headSize": 7.64
                       },
                       {
                         "type": "arrow",
-                        "x1": 450,
-                        "y1": 362,
-                        "x2": 450,
-                        "y2": 368,
-                        "stroke": "#64748b",
-                        "strokeWidth": 1.5,
-                        "headSize": 6
+                        "x1": 640,
+                        "y1": 407.25,
+                        "x2": 640,
+                        "y2": 414,
+                        "stroke": "$muted",
+                        "strokeWidth": 1.91,
+                        "headSize": 7.64
                       }
                     ]
                   }
@@ -1813,12 +1813,12 @@
                 "children": [
                   {
                     "type": "line",
-                    "x1": 330,
-                    "y1": 149,
-                    "x2": 310,
-                    "y2": 149,
-                    "stroke": "#a78bfa",
-                    "strokeWidth": 1,
+                    "x1": 469.33,
+                    "y1": 167.63,
+                    "x2": 440.89,
+                    "y2": 167.63,
+                    "stroke": "$secondary",
+                    "strokeWidth": 1.27,
                     "strokeDasharray": "6 3",
                     "fadeIn": 12
                   }
@@ -1830,12 +1830,12 @@
                 "children": [
                   {
                     "type": "line",
-                    "x1": 310,
-                    "y1": 149,
-                    "x2": 310,
-                    "y2": 245,
-                    "stroke": "#a78bfa",
-                    "strokeWidth": 1,
+                    "x1": 440.89,
+                    "y1": 167.63,
+                    "x2": 440.89,
+                    "y2": 275.63,
+                    "stroke": "$secondary",
+                    "strokeWidth": 1.27,
                     "strokeDasharray": "6 3",
                     "fadeIn": 12
                   }
@@ -1847,13 +1847,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 310,
-                    "y1": 245,
-                    "x2": 338,
-                    "y2": 245,
-                    "stroke": "#a78bfa",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 440.89,
+                    "y1": 275.63,
+                    "x2": 480.71,
+                    "y2": 275.63,
+                    "stroke": "$secondary",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "strokeDasharray": "6 3",
                     "fadeIn": 12
                   }
@@ -1865,12 +1865,12 @@
                 "children": [
                   {
                     "type": "line",
-                    "x1": 330,
-                    "y1": 250,
-                    "x2": 295,
-                    "y2": 250,
-                    "stroke": "#f472b6",
-                    "strokeWidth": 1,
+                    "x1": 469.33,
+                    "y1": 281.25,
+                    "x2": 419.56,
+                    "y2": 281.25,
+                    "stroke": "$tertiary",
+                    "strokeWidth": 1.27,
                     "strokeDasharray": "6 3",
                     "fadeIn": 12
                   }
@@ -1882,12 +1882,12 @@
                 "children": [
                   {
                     "type": "line",
-                    "x1": 295,
-                    "y1": 250,
-                    "x2": 295,
-                    "y2": 341,
-                    "stroke": "#f472b6",
-                    "strokeWidth": 1,
+                    "x1": 419.56,
+                    "y1": 281.25,
+                    "x2": 419.56,
+                    "y2": 383.63,
+                    "stroke": "$tertiary",
+                    "strokeWidth": 1.27,
                     "strokeDasharray": "6 3",
                     "fadeIn": 12
                   }
@@ -1899,13 +1899,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 295,
-                    "y1": 341,
-                    "x2": 338,
-                    "y2": 341,
-                    "stroke": "#f472b6",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 419.56,
+                    "y1": 383.63,
+                    "x2": 480.71,
+                    "y2": 383.63,
+                    "stroke": "$tertiary",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "strokeDasharray": "6 3",
                     "fadeIn": 12
                   }
@@ -1921,11 +1921,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 285,
-                        "y": 197,
+                        "x": 405.33,
+                        "y": 221.63,
                         "content": "Residual",
-                        "fontSize": 10,
-                        "fill": "#a78bfa",
+                        "fontSize": 12.74,
+                        "fill": "$secondary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1942,11 +1942,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 270,
-                        "y": 293,
+                        "x": 384,
+                        "y": 329.63,
                         "content": "Residual",
-                        "fontSize": 10,
-                        "fill": "#f472b6",
+                        "fontSize": 12.74,
+                        "fill": "$tertiary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1963,11 +1963,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 620,
-                        "y": 201,
+                        "x": 881.78,
+                        "y": 226.13,
                         "content": "d_model = 768-12K",
-                        "fontSize": 11,
-                        "fill": "#64748b",
+                        "fontSize": 14.01,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -1984,11 +1984,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 620,
-                        "y": 297,
+                        "x": 881.78,
+                        "y": 334.13,
                         "content": "d_ff = 4 * d_model",
-                        "fontSize": 11,
-                        "fill": "#64748b",
+                        "fontSize": 14.01,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -2005,11 +2005,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 560,
+                        "x": 640,
+                        "y": 630,
                         "content": "This block is repeated N times (N = 12 to 96+ layers)",
-                        "fontSize": 13,
-                        "fill": "#94a3b8",
+                        "fontSize": 16.56,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -2027,8 +2027,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 168,
             "controls": false,
@@ -2045,10 +2045,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 55,
+                        "x": 640,
+                        "y": 61.88,
                         "content": "Step 5: Stacking Layers",
-                        "fontSize": 28,
+                        "fontSize": 35.66,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -2067,11 +2067,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 95,
+                        "x": 640,
+                        "y": 106.88,
                         "content": "Each layer builds richer understanding",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -2091,22 +2091,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 300,
-                            "y": 120,
-                            "width": 300,
-                            "height": 40,
+                            "x": 426.67,
+                            "y": 135,
+                            "width": 426.67,
+                            "height": 45,
                             "fill": "rgba(79,195,247,0.2)",
                             "stroke": "rgba(79,195,247,0.2)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 145,
+                            "x": 640,
+                            "y": 163.13,
                             "content": "Layer 1: Surface patterns",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -2116,22 +2116,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 300,
-                            "y": 172,
-                            "width": 300,
-                            "height": 40,
+                            "x": 426.67,
+                            "y": 193.5,
+                            "width": 426.67,
+                            "height": 45,
                             "fill": "rgba(99,102,241,0.2)",
                             "stroke": "rgba(99,102,241,0.2)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 197,
+                            "x": 640,
+                            "y": 221.63,
                             "content": "Layer 6: Syntax & grammar",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -2141,22 +2141,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 300,
-                            "y": 224,
-                            "width": 300,
-                            "height": 40,
+                            "x": 426.67,
+                            "y": 252,
+                            "width": 426.67,
+                            "height": 45,
                             "fill": "rgba(167,139,250,0.2)",
                             "stroke": "rgba(167,139,250,0.2)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 249,
+                            "x": 640,
+                            "y": 280.13,
                             "content": "Layer 12: Semantics",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -2166,22 +2166,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 300,
-                            "y": 276,
-                            "width": 300,
-                            "height": 40,
+                            "x": 426.67,
+                            "y": 310.5,
+                            "width": 426.67,
+                            "height": 45,
                             "fill": "rgba(244,114,182,0.2)",
                             "stroke": "rgba(244,114,182,0.2)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 301,
+                            "x": 640,
+                            "y": 338.63,
                             "content": "Layer 24: Reasoning",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -2191,22 +2191,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 300,
-                            "y": 328,
-                            "width": 300,
-                            "height": 40,
+                            "x": 426.67,
+                            "y": 369,
+                            "width": 426.67,
+                            "height": 45,
                             "fill": "rgba(251,191,36,0.2)",
                             "stroke": "rgba(251,191,36,0.2)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 353,
+                            "x": 640,
+                            "y": 397.13,
                             "content": "Layer 48: World knowledge",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -2216,22 +2216,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 300,
-                            "y": 380,
-                            "width": 300,
-                            "height": 40,
+                            "x": 426.67,
+                            "y": 427.5,
+                            "width": 426.67,
+                            "height": 45,
                             "fill": "rgba(52,211,153,0.2)",
                             "stroke": "rgba(52,211,153,0.2)",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 405,
+                            "x": 640,
+                            "y": 455.63,
                             "content": "Layer 96: Complex inference",
-                            "fontSize": 14,
-                            "fill": "#c8d6e5",
+                            "fontSize": 17.83,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -2250,53 +2250,53 @@
                     "children": [
                       {
                         "type": "arrow",
-                        "x1": 450,
-                        "y1": 162,
-                        "x2": 450,
-                        "y2": 170,
-                        "stroke": "#64748b",
-                        "strokeWidth": 1.5,
-                        "headSize": 6
+                        "x1": 640,
+                        "y1": 182.25,
+                        "x2": 640,
+                        "y2": 191.25,
+                        "stroke": "$muted",
+                        "strokeWidth": 1.91,
+                        "headSize": 7.64
                       },
                       {
                         "type": "arrow",
-                        "x1": 450,
-                        "y1": 214,
-                        "x2": 450,
-                        "y2": 222,
-                        "stroke": "#64748b",
-                        "strokeWidth": 1.5,
-                        "headSize": 6
+                        "x1": 640,
+                        "y1": 240.75,
+                        "x2": 640,
+                        "y2": 249.75,
+                        "stroke": "$muted",
+                        "strokeWidth": 1.91,
+                        "headSize": 7.64
                       },
                       {
                         "type": "arrow",
-                        "x1": 450,
-                        "y1": 266,
-                        "x2": 450,
-                        "y2": 274,
-                        "stroke": "#64748b",
-                        "strokeWidth": 1.5,
-                        "headSize": 6
+                        "x1": 640,
+                        "y1": 299.25,
+                        "x2": 640,
+                        "y2": 308.25,
+                        "stroke": "$muted",
+                        "strokeWidth": 1.91,
+                        "headSize": 7.64
                       },
                       {
                         "type": "arrow",
-                        "x1": 450,
-                        "y1": 318,
-                        "x2": 450,
-                        "y2": 326,
-                        "stroke": "#64748b",
-                        "strokeWidth": 1.5,
-                        "headSize": 6
+                        "x1": 640,
+                        "y1": 357.75,
+                        "x2": 640,
+                        "y2": 366.75,
+                        "stroke": "$muted",
+                        "strokeWidth": 1.91,
+                        "headSize": 7.64
                       },
                       {
                         "type": "arrow",
-                        "x1": 450,
-                        "y1": 370,
-                        "x2": 450,
-                        "y2": 378,
-                        "stroke": "#64748b",
-                        "strokeWidth": 1.5,
-                        "headSize": 6
+                        "x1": 640,
+                        "y1": 416.25,
+                        "x2": 640,
+                        "y2": 425.25,
+                        "stroke": "$muted",
+                        "strokeWidth": 1.91,
+                        "headSize": 7.64
                       }
                     ]
                   }
@@ -2312,11 +2312,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 690,
-                        "y": 140,
+                        "x": 981.33,
+                        "y": 157.5,
                         "content": "Increasing abstraction",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -2329,13 +2329,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 690,
-                    "y1": 155,
-                    "x2": 690,
-                    "y2": 405,
-                    "stroke": "#4fc3f7",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 981.33,
+                    "y1": 174.38,
+                    "x2": 981.33,
+                    "y2": 455.63,
+                    "stroke": "$primary",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -2351,10 +2351,10 @@
                       {
                         "type": "latex",
                         "expression": "\\text{GPT-4:} \\sim 1.8 \\text{ trillion parameters}",
-                        "x": 450,
-                        "y": 490,
-                        "fontSize": 18,
-                        "color": "#fbbf24",
+                        "x": 640,
+                        "y": 551.25,
+                        "fontSize": 22.93,
+                        "color": "$warning",
                         "align": "center"
                       }
                     ]
@@ -2371,11 +2371,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 540,
+                        "x": 640,
+                        "y": 607.5,
                         "content": "Each layer has millions of learnable weights",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -2393,8 +2393,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 169,
             "controls": false,
@@ -2411,10 +2411,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 55,
+                        "x": 640,
+                        "y": 61.88,
                         "content": "Step 6: Predicting the Next Token",
-                        "fontSize": 28,
+                        "fontSize": 35.66,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -2433,11 +2433,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 95,
+                        "x": 640,
+                        "y": 106.88,
                         "content": "The output is a probability distribution over the entire vocabulary",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -2457,22 +2457,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 234,
-                            "y": 140,
-                            "width": 80,
-                            "height": 34,
+                            "x": 332.8,
+                            "y": 157.5,
+                            "width": 113.78,
+                            "height": 38.25,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 274,
-                            "y": 162,
+                            "x": 389.69,
+                            "y": 182.25,
                             "content": "The",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -2483,22 +2483,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 322,
-                            "y": 140,
-                            "width": 80,
-                            "height": 34,
+                            "x": 457.96,
+                            "y": 157.5,
+                            "width": 113.78,
+                            "height": 38.25,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 362,
-                            "y": 162,
+                            "x": 514.84,
+                            "y": 182.25,
                             "content": "capital",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -2509,22 +2509,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 410,
-                            "y": 140,
-                            "width": 80,
-                            "height": 34,
+                            "x": 583.11,
+                            "y": 157.5,
+                            "width": 113.78,
+                            "height": 38.25,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 162,
+                            "x": 640,
+                            "y": 182.25,
                             "content": "of",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -2535,22 +2535,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 498,
-                            "y": 140,
-                            "width": 80,
-                            "height": 34,
+                            "x": 708.27,
+                            "y": 157.5,
+                            "width": 113.78,
+                            "height": 38.25,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 538,
-                            "y": 162,
+                            "x": 765.16,
+                            "y": 182.25,
                             "content": "France",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -2561,22 +2561,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 586,
-                            "y": 140,
-                            "width": 80,
-                            "height": 34,
+                            "x": 833.42,
+                            "y": 157.5,
+                            "width": 113.78,
+                            "height": 38.25,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 626,
-                            "y": 162,
+                            "x": 890.31,
+                            "y": 182.25,
                             "content": "is",
-                            "fontSize": 13,
-                            "fill": "#c8d6e5",
+                            "fontSize": 16.56,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -2592,13 +2592,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 450,
-                    "y1": 180,
-                    "x2": 450,
-                    "y2": 200,
-                    "stroke": "#64748b",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 640,
+                    "y1": 202.5,
+                    "x2": 640,
+                    "y2": 225,
+                    "stroke": "$muted",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -2613,11 +2613,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 210,
+                        "x": 640,
+                        "y": 236.25,
                         "content": "Transformer (96 layers)",
-                        "fontSize": 11,
-                        "fill": "#64748b",
+                        "fontSize": 14.01,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -2630,13 +2630,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 450,
-                    "y1": 218,
-                    "x2": 450,
-                    "y2": 238,
-                    "stroke": "#64748b",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 640,
+                    "y1": 245.25,
+                    "x2": 640,
+                    "y2": 267.75,
+                    "stroke": "$muted",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -2651,38 +2651,38 @@
                       {
                         "label": "Paris",
                         "value": 92,
-                        "color": "#34d399"
+                        "color": "$success"
                       },
                       {
                         "label": "Lyon",
                         "value": 3,
-                        "color": "#4fc3f7"
+                        "color": "$primary"
                       },
                       {
                         "label": "the",
                         "value": 2,
-                        "color": "#a78bfa"
+                        "color": "$secondary"
                       },
                       {
                         "label": "a",
                         "value": 1,
-                        "color": "#f472b6"
+                        "color": "$tertiary"
                       },
                       {
                         "label": "Berlin",
                         "value": 0.5,
-                        "color": "#64748b"
+                        "color": "$muted"
                       },
                       {
                         "label": "...",
                         "value": 1.5,
-                        "color": "#64748b"
+                        "color": "$muted"
                       }
                     ],
-                    "x": 150,
-                    "y": 240,
-                    "width": 600,
-                    "height": 200,
+                    "x": 213.33,
+                    "y": 270,
+                    "width": 853.33,
+                    "height": 225,
                     "barColor": "#4fc3f7",
                     "labelColor": "#c8d6e5",
                     "labelFontSize": 12,
@@ -2704,10 +2704,10 @@
                       {
                         "type": "latex",
                         "expression": "P(w_i) = \\frac{e^{z_i}}{\\sum_j e^{z_j}} \\quad \\text{(softmax)}",
-                        "x": 450,
-                        "y": 480,
-                        "fontSize": 20,
-                        "color": "#fbbf24",
+                        "x": 640,
+                        "y": 540,
+                        "fontSize": 25.47,
+                        "color": "$warning",
                         "align": "center"
                       }
                     ]
@@ -2724,11 +2724,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 540,
+                        "x": 640,
+                        "y": 607.5,
                         "content": "Temperature controls randomness: T=0 -> greedy, T=1 -> diverse",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -2746,8 +2746,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 234,
             "controls": false,
@@ -2764,10 +2764,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 55,
+                        "x": 640,
+                        "y": 61.88,
                         "content": "Step 7: Autoregressive Generation",
-                        "fontSize": 28,
+                        "fontSize": 35.66,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -2786,11 +2786,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 95,
+                        "x": 640,
+                        "y": 106.88,
                         "content": "Generate one token at a time, feeding output back as input",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -2810,22 +2810,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 381,
-                            "y": 150,
-                            "width": 65,
-                            "height": 32,
+                            "x": 541.87,
+                            "y": 168.75,
+                            "width": 92.44,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 413.5,
-                            "y": 171,
+                            "x": 588.09,
+                            "y": 192.38,
                             "content": "The",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -2836,22 +2836,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 454,
-                            "y": 150,
-                            "width": 65,
-                            "height": 32,
+                            "x": 645.69,
+                            "y": 168.75,
+                            "width": 92.44,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 486.5,
-                            "y": 171,
+                            "x": 691.91,
+                            "y": 192.38,
                             "content": "cat",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -2867,13 +2867,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 450,
-                    "y1": 188,
-                    "x2": 450,
-                    "y2": 205,
-                    "stroke": "#64748b",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 640,
+                    "y1": 211.5,
+                    "x2": 640,
+                    "y2": 230.63,
+                    "stroke": "$muted",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -2888,11 +2888,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 215,
+                        "x": 640,
+                        "y": 241.88,
                         "content": "predict next",
-                        "fontSize": 10,
-                        "fill": "#64748b",
+                        "fontSize": 12.74,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -2912,22 +2912,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 344.5,
-                            "y": 230,
-                            "width": 65,
-                            "height": 32,
+                            "x": 489.96,
+                            "y": 258.75,
+                            "width": 92.44,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 377,
-                            "y": 251,
+                            "x": 536.18,
+                            "y": 282.38,
                             "content": "The",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -2938,22 +2938,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 417.5,
-                            "y": 230,
-                            "width": 65,
-                            "height": 32,
+                            "x": 593.78,
+                            "y": 258.75,
+                            "width": 92.44,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 251,
+                            "x": 640,
+                            "y": 282.38,
                             "content": "cat",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -2964,22 +2964,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 490.5,
-                            "y": 230,
-                            "width": 65,
-                            "height": 32,
+                            "x": 697.6,
+                            "y": 258.75,
+                            "width": 92.44,
+                            "height": 36,
                             "fill": "rgba(52,211,153,0.2)",
-                            "stroke": "#34d399",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$success",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 523,
-                            "y": 251,
+                            "x": 743.82,
+                            "y": 282.38,
                             "content": "sat",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -2995,13 +2995,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 450,
-                    "y1": 268,
-                    "x2": 450,
-                    "y2": 285,
-                    "stroke": "#64748b",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 640,
+                    "y1": 301.5,
+                    "x2": 640,
+                    "y2": 320.63,
+                    "stroke": "$muted",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -3016,11 +3016,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 295,
+                        "x": 640,
+                        "y": 331.88,
                         "content": "predict next",
-                        "fontSize": 10,
-                        "fill": "#64748b",
+                        "fontSize": 12.74,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -3040,22 +3040,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 308,
-                            "y": 310,
-                            "width": 65,
-                            "height": 32,
+                            "x": 438.04,
+                            "y": 348.75,
+                            "width": 92.44,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 340.5,
-                            "y": 331,
+                            "x": 484.27,
+                            "y": 372.38,
                             "content": "The",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3066,22 +3066,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 381,
-                            "y": 310,
-                            "width": 65,
-                            "height": 32,
+                            "x": 541.87,
+                            "y": 348.75,
+                            "width": 92.44,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 413.5,
-                            "y": 331,
+                            "x": 588.09,
+                            "y": 372.38,
                             "content": "cat",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3092,22 +3092,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 454,
-                            "y": 310,
-                            "width": 65,
-                            "height": 32,
+                            "x": 645.69,
+                            "y": 348.75,
+                            "width": 92.44,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 486.5,
-                            "y": 331,
+                            "x": 691.91,
+                            "y": 372.38,
                             "content": "sat",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3118,22 +3118,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 527,
-                            "y": 310,
-                            "width": 65,
-                            "height": 32,
+                            "x": 749.51,
+                            "y": 348.75,
+                            "width": 92.44,
+                            "height": 36,
                             "fill": "rgba(52,211,153,0.2)",
-                            "stroke": "#34d399",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$success",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 559.5,
-                            "y": 331,
+                            "x": 795.73,
+                            "y": 372.38,
                             "content": "on",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3149,13 +3149,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 450,
-                    "y1": 348,
-                    "x2": 450,
-                    "y2": 365,
-                    "stroke": "#64748b",
-                    "strokeWidth": 2,
-                    "headSize": 8,
+                    "x1": 640,
+                    "y1": 391.5,
+                    "x2": 640,
+                    "y2": 410.63,
+                    "stroke": "$muted",
+                    "strokeWidth": 2.55,
+                    "headSize": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -3170,11 +3170,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 375,
+                        "x": 640,
+                        "y": 421.88,
                         "content": "...until",
-                        "fontSize": 10,
-                        "fill": "#64748b",
+                        "fontSize": 12.74,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -3194,22 +3194,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 222,
-                            "y": 390,
-                            "width": 60,
-                            "height": 32,
+                            "x": 315.73,
+                            "y": 438.75,
+                            "width": 85.33,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 252,
-                            "y": 411,
+                            "x": 358.4,
+                            "y": 462.38,
                             "content": "The",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3220,22 +3220,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 288,
-                            "y": 390,
-                            "width": 60,
-                            "height": 32,
+                            "x": 409.6,
+                            "y": 438.75,
+                            "width": 85.33,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 318,
-                            "y": 411,
+                            "x": 452.27,
+                            "y": 462.38,
                             "content": "cat",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3246,22 +3246,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 354,
-                            "y": 390,
-                            "width": 60,
-                            "height": 32,
+                            "x": 503.47,
+                            "y": 438.75,
+                            "width": 85.33,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 384,
-                            "y": 411,
+                            "x": 546.13,
+                            "y": 462.38,
                             "content": "sat",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3272,22 +3272,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 420,
-                            "y": 390,
-                            "width": 60,
-                            "height": 32,
+                            "x": 597.33,
+                            "y": 438.75,
+                            "width": 85.33,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 450,
-                            "y": 411,
+                            "x": 640,
+                            "y": 462.38,
                             "content": "on",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3298,22 +3298,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 486,
-                            "y": 390,
-                            "width": 60,
-                            "height": 32,
+                            "x": 691.2,
+                            "y": 438.75,
+                            "width": 85.33,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 516,
-                            "y": 411,
+                            "x": 733.87,
+                            "y": 462.38,
                             "content": "the",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3324,22 +3324,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 552,
-                            "y": 390,
-                            "width": 60,
-                            "height": 32,
+                            "x": 785.07,
+                            "y": 438.75,
+                            "width": 85.33,
+                            "height": 36,
                             "fill": "rgba(79,195,247,0.12)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 582,
-                            "y": 411,
+                            "x": 827.73,
+                            "y": 462.38,
                             "content": "mat",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3350,22 +3350,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 618,
-                            "y": 390,
-                            "width": 60,
-                            "height": 32,
+                            "x": 878.93,
+                            "y": 438.75,
+                            "width": 85.33,
+                            "height": 36,
                             "fill": "rgba(248,113,113,0.2)",
-                            "stroke": "#f87171",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$error",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 648,
-                            "y": 411,
+                            "x": 921.6,
+                            "y": 462.38,
                             "content": "<EOS>",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle",
                             "fontFamily": "monospace"
                           }
@@ -3385,11 +3385,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 460,
+                        "x": 640,
+                        "y": 517.5,
                         "content": "<EOS> = End of Sequence token signals completion",
-                        "fontSize": 12,
-                        "fill": "#f87171",
+                        "fontSize": 15.28,
+                        "fill": "$error",
                         "textAnchor": "middle"
                       }
                     ]
@@ -3406,11 +3406,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 500,
+                        "x": 640,
+                        "y": 562.5,
                         "content": "The entire context is re-processed each step (KV-cache optimizes this)",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -3423,12 +3423,12 @@
                 "children": [
                   {
                     "type": "line",
-                    "x1": 549,
-                    "y1": 166,
-                    "x2": 708,
-                    "y2": 406,
-                    "stroke": "#fbbf24",
-                    "strokeWidth": 2,
+                    "x1": 780.8,
+                    "y1": 186.75,
+                    "x2": 1006.93,
+                    "y2": 456.75,
+                    "stroke": "$warning",
+                    "strokeWidth": 2.55,
                     "strokeDasharray": "4 4",
                     "fadeIn": 15
                   }
@@ -3444,11 +3444,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 564,
-                        "y": 290,
+                        "x": 802.13,
+                        "y": 326.25,
                         "content": "loop",
-                        "fontSize": 10,
-                        "fill": "#fbbf24",
+                        "fontSize": 12.74,
+                        "fill": "$warning",
                         "textAnchor": "middle"
                       }
                     ]
@@ -3466,8 +3466,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 214,
             "controls": false,
@@ -3484,10 +3484,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 55,
+                        "x": 640,
+                        "y": 61.88,
                         "content": "Step 8: From Text to Structure",
-                        "fontSize": 28,
+                        "fontSize": 35.66,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -3506,11 +3506,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 95,
+                        "x": 640,
+                        "y": 106.88,
                         "content": "LLMs can be trained to emit structured JSON, including tool calls",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -3527,11 +3527,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 225,
-                        "y": 145,
+                        "x": 320,
+                        "y": 163.13,
                         "content": "Normal generation:",
-                        "fontSize": 13,
-                        "fill": "#64748b",
+                        "fontSize": 16.56,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -3544,14 +3544,14 @@
                 "children": [
                   {
                     "type": "rect",
-                    "x": 75,
-                    "y": 155,
-                    "width": 300,
-                    "height": 80,
+                    "x": 106.67,
+                    "y": 174.38,
+                    "width": 426.67,
+                    "height": 90,
                     "fill": "rgba(79,195,247,0.08)",
-                    "stroke": "#4fc3f7",
-                    "strokeWidth": 1.5,
-                    "rx": 8,
+                    "stroke": "$primary",
+                    "strokeWidth": 1.91,
+                    "rx": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -3566,11 +3566,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 225,
-                        "y": 185,
+                        "x": 320,
+                        "y": 208.13,
                         "content": "\"The capital of France is Paris,",
-                        "fontSize": 12,
-                        "fill": "#c8d6e5",
+                        "fontSize": 15.28,
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontFamily": "monospace"
                       }
@@ -3588,11 +3588,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 225,
-                        "y": 205,
+                        "x": 320,
+                        "y": 230.63,
                         "content": "a beautiful city known for...\"",
-                        "fontSize": 12,
-                        "fill": "#c8d6e5",
+                        "fontSize": 15.28,
+                        "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontFamily": "monospace"
                       }
@@ -3610,11 +3610,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 675,
-                        "y": 145,
+                        "x": 960,
+                        "y": 163.13,
                         "content": "Tool call generation:",
-                        "fontSize": 13,
-                        "fill": "#64748b",
+                        "fontSize": 16.56,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -3627,14 +3627,14 @@
                 "children": [
                   {
                     "type": "rect",
-                    "x": 525,
-                    "y": 155,
-                    "width": 300,
-                    "height": 125,
+                    "x": 746.67,
+                    "y": 174.38,
+                    "width": 426.67,
+                    "height": 140.63,
                     "fill": "rgba(251,191,36,0.08)",
-                    "stroke": "#fbbf24",
-                    "strokeWidth": 1.5,
-                    "rx": 8,
+                    "stroke": "$warning",
+                    "strokeWidth": 1.91,
+                    "rx": 10.19,
                     "fadeIn": 12
                   }
                 ]
@@ -3649,11 +3649,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 555,
-                        "y": 178,
+                        "x": 789.33,
+                        "y": 200.25,
                         "content": "{",
-                        "fontSize": 11,
-                        "fill": "#fbbf24",
+                        "fontSize": 14.01,
+                        "fill": "$warning",
                         "textAnchor": "start",
                         "fontFamily": "monospace"
                       }
@@ -3671,11 +3671,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 570,
-                        "y": 195,
+                        "x": 810.67,
+                        "y": 219.38,
                         "content": "\"tool\": \"search\",",
-                        "fontSize": 11,
-                        "fill": "#c8d6e5",
+                        "fontSize": 14.01,
+                        "fill": "$foreground",
                         "textAnchor": "start",
                         "fontFamily": "monospace"
                       }
@@ -3693,11 +3693,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 570,
-                        "y": 212,
+                        "x": 810.67,
+                        "y": 238.5,
                         "content": "\"args\": {",
-                        "fontSize": 11,
-                        "fill": "#c8d6e5",
+                        "fontSize": 14.01,
+                        "fill": "$foreground",
                         "textAnchor": "start",
                         "fontFamily": "monospace"
                       }
@@ -3715,11 +3715,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 585,
-                        "y": 229,
+                        "x": 832,
+                        "y": 257.63,
                         "content": "\"query\": \"capital of France\"",
-                        "fontSize": 11,
-                        "fill": "#34d399",
+                        "fontSize": 14.01,
+                        "fill": "$success",
                         "textAnchor": "start",
                         "fontFamily": "monospace"
                       }
@@ -3737,11 +3737,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 570,
-                        "y": 246,
+                        "x": 810.67,
+                        "y": 276.75,
                         "content": "}",
-                        "fontSize": 11,
-                        "fill": "#c8d6e5",
+                        "fontSize": 14.01,
+                        "fill": "$foreground",
                         "textAnchor": "start",
                         "fontFamily": "monospace"
                       }
@@ -3759,11 +3759,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 555,
-                        "y": 263,
+                        "x": 789.33,
+                        "y": 295.88,
                         "content": "}",
-                        "fontSize": 11,
-                        "fill": "#fbbf24",
+                        "fontSize": 14.01,
+                        "fill": "$warning",
                         "textAnchor": "start",
                         "fontFamily": "monospace"
                       }
@@ -3781,11 +3781,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 330,
+                        "x": 640,
+                        "y": 371.25,
                         "content": "Same model, same mechanism -- the training data teaches the format",
-                        "fontSize": 14,
-                        "fill": "#94a3b8",
+                        "fontSize": 17.83,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -3805,22 +3805,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 167.5,
-                            "y": 370,
-                            "width": 130,
-                            "height": 36,
+                            "x": 238.22,
+                            "y": 416.25,
+                            "width": 184.89,
+                            "height": 40.5,
                             "fill": "rgba(167,139,250,0.15)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 232.5,
-                            "y": 393,
+                            "x": 330.67,
+                            "y": 442.13,
                             "content": "System prompt",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -3830,22 +3830,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 312.5,
-                            "y": 370,
-                            "width": 130,
-                            "height": 36,
+                            "x": 444.44,
+                            "y": 416.25,
+                            "width": 184.89,
+                            "height": 40.5,
                             "fill": "rgba(251,191,36,0.15)",
-                            "stroke": "#fbbf24",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$warning",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 377.5,
-                            "y": 393,
+                            "x": 536.89,
+                            "y": 442.13,
                             "content": "Tool schemas",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -3855,22 +3855,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 457.5,
-                            "y": 370,
-                            "width": 130,
-                            "height": 36,
+                            "x": 650.67,
+                            "y": 416.25,
+                            "width": 184.89,
+                            "height": 40.5,
                             "fill": "rgba(79,195,247,0.15)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 522.5,
-                            "y": 393,
+                            "x": 743.11,
+                            "y": 442.13,
                             "content": "User query",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -3880,22 +3880,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 602.5,
-                            "y": 370,
-                            "width": 130,
-                            "height": 36,
+                            "x": 856.89,
+                            "y": 416.25,
+                            "width": 184.89,
+                            "height": 40.5,
                             "fill": "rgba(52,211,153,0.15)",
-                            "stroke": "#34d399",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$success",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 667.5,
-                            "y": 393,
+                            "x": 949.33,
+                            "y": 442.13,
                             "content": "LLM decides",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -3914,11 +3914,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 440,
+                        "x": 640,
+                        "y": 495,
                         "content": "The model sees tool definitions and learns when to call them",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -3935,11 +3935,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 480,
+                        "x": 640,
+                        "y": 540,
                         "content": "Formats: OpenAI function_call | Anthropic tool_use | Open-source ReAct",
-                        "fontSize": 11,
-                        "fill": "#64748b",
+                        "fontSize": 14.01,
+                        "fill": "$muted",
                         "textAnchor": "middle",
                         "fontFamily": "monospace"
                       }
@@ -3958,8 +3958,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 160,
             "controls": false,
@@ -3976,10 +3976,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 55,
+                        "x": 640,
+                        "y": 61.88,
                         "content": "Step 9: The Agentic Loop",
-                        "fontSize": 28,
+                        "fontSize": 35.66,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -3998,11 +3998,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 95,
+                        "x": 640,
+                        "y": 106.88,
                         "content": "Observe -> Reason -> Act -> Observe (repeat)",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -4018,50 +4018,50 @@
                     "nodes": [
                       {
                         "id": "user",
-                        "x": 450,
-                        "y": 140,
+                        "x": 640,
+                        "y": 157.5,
                         "label": "User",
-                        "color": "#4fc3f7",
+                        "color": "$primary",
                         "radius": 28
                       },
                       {
                         "id": "llm",
-                        "x": 450,
-                        "y": 280,
+                        "x": 640,
+                        "y": 315,
                         "label": "LLM",
-                        "color": "#fbbf24",
+                        "color": "$warning",
                         "radius": 32
                       },
                       {
                         "id": "tool1",
-                        "x": 250,
-                        "y": 420,
+                        "x": 355.56,
+                        "y": 472.5,
                         "label": "Search",
-                        "color": "#34d399",
+                        "color": "$success",
                         "radius": 24
                       },
                       {
                         "id": "tool2",
-                        "x": 450,
-                        "y": 420,
+                        "x": 640,
+                        "y": 472.5,
                         "label": "Code",
-                        "color": "#a78bfa",
+                        "color": "$secondary",
                         "radius": 24
                       },
                       {
                         "id": "tool3",
-                        "x": 650,
-                        "y": 420,
+                        "x": 924.44,
+                        "y": 472.5,
                         "label": "Files",
-                        "color": "#f472b6",
+                        "color": "$tertiary",
                         "radius": 24
                       },
                       {
                         "id": "thread",
-                        "x": 720,
-                        "y": 280,
+                        "x": 1024,
+                        "y": 315,
                         "label": "Thread",
-                        "color": "#64748b",
+                        "color": "$muted",
                         "radius": 26
                       }
                     ],
@@ -4071,56 +4071,56 @@
                         "to": "llm",
                         "directed": true,
                         "label": "query",
-                        "color": "#4fc3f7"
+                        "color": "$primary"
                       },
                       {
                         "from": "llm",
                         "to": "tool1",
                         "directed": true,
                         "label": "call",
-                        "color": "#fbbf24"
+                        "color": "$warning"
                       },
                       {
                         "from": "llm",
                         "to": "tool2",
                         "directed": true,
                         "label": "call",
-                        "color": "#fbbf24"
+                        "color": "$warning"
                       },
                       {
                         "from": "llm",
                         "to": "tool3",
                         "directed": true,
                         "label": "call",
-                        "color": "#fbbf24"
+                        "color": "$warning"
                       },
                       {
                         "from": "tool1",
                         "to": "thread",
                         "directed": true,
                         "label": "result",
-                        "color": "#34d399"
+                        "color": "$success"
                       },
                       {
                         "from": "tool2",
                         "to": "thread",
                         "directed": true,
                         "label": "result",
-                        "color": "#a78bfa"
+                        "color": "$secondary"
                       },
                       {
                         "from": "tool3",
                         "to": "thread",
                         "directed": true,
                         "label": "result",
-                        "color": "#f472b6"
+                        "color": "$tertiary"
                       },
                       {
                         "from": "thread",
                         "to": "llm",
                         "directed": true,
                         "label": "context",
-                        "color": "#64748b"
+                        "color": "$muted"
                       }
                     ],
                     "nodeColor": "#a78bfa",
@@ -4142,11 +4142,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 180,
-                        "y": 210,
+                        "x": 256,
+                        "y": 236.25,
                         "content": "The thread accumulates context:",
-                        "fontSize": 12,
-                        "fill": "#94a3b8",
+                        "fontSize": 15.28,
+                        "fill": "$subtitle",
                         "textAnchor": "start"
                       }
                     ]
@@ -4163,11 +4163,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 180,
-                        "y": 230,
+                        "x": 256,
+                        "y": 258.75,
                         "content": "1. User message",
-                        "fontSize": 11,
-                        "fill": "#4fc3f7",
+                        "fontSize": 14.01,
+                        "fill": "$primary",
                         "textAnchor": "start"
                       }
                     ]
@@ -4184,11 +4184,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 180,
-                        "y": 248,
+                        "x": 256,
+                        "y": 279,
                         "content": "2. LLM reasoning + tool call",
-                        "fontSize": 11,
-                        "fill": "#fbbf24",
+                        "fontSize": 14.01,
+                        "fill": "$warning",
                         "textAnchor": "start"
                       }
                     ]
@@ -4205,11 +4205,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 180,
-                        "y": 266,
+                        "x": 256,
+                        "y": 299.25,
                         "content": "3. Tool result",
-                        "fontSize": 11,
-                        "fill": "#34d399",
+                        "fontSize": 14.01,
+                        "fill": "$success",
                         "textAnchor": "start"
                       }
                     ]
@@ -4226,11 +4226,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 180,
-                        "y": 284,
+                        "x": 256,
+                        "y": 319.5,
                         "content": "4. LLM reasons again...",
-                        "fontSize": 11,
-                        "fill": "#c8d6e5",
+                        "fontSize": 14.01,
+                        "fill": "$foreground",
                         "textAnchor": "start"
                       }
                     ]
@@ -4247,11 +4247,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 180,
-                        "y": 302,
+                        "x": 256,
+                        "y": 339.75,
                         "content": "5. Until: final answer or",
-                        "fontSize": 11,
-                        "fill": "#f87171",
+                        "fontSize": 14.01,
+                        "fill": "$error",
                         "textAnchor": "start"
                       }
                     ]
@@ -4268,11 +4268,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 180,
-                        "y": 318,
+                        "x": 256,
+                        "y": 357.75,
                         "content": "   max iterations reached",
-                        "fontSize": 11,
-                        "fill": "#f87171",
+                        "fontSize": 14.01,
+                        "fill": "$error",
                         "textAnchor": "start"
                       }
                     ]
@@ -4289,11 +4289,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 530,
+                        "x": 640,
+                        "y": 596.25,
                         "content": "Each iteration: full transformer forward pass on the growing thread",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -4311,8 +4311,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 207,
             "controls": false,
@@ -4329,10 +4329,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 55,
+                        "x": 640,
+                        "y": 61.88,
                         "content": "Putting It All Together",
-                        "fontSize": 28,
+                        "fontSize": 35.66,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -4351,11 +4351,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 95,
+                        "x": 640,
+                        "y": 106.88,
                         "content": "From keystrokes to autonomous action",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -4375,22 +4375,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 102,
-                            "y": 160,
-                            "width": 80,
-                            "height": 46,
+                            "x": 145.07,
+                            "y": 180,
+                            "width": 113.78,
+                            "height": 51.75,
                             "fill": "rgba(79,195,247,0.15)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 142,
-                            "y": 188,
+                            "x": 201.96,
+                            "y": 211.5,
                             "content": "Text",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4400,22 +4400,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 190,
-                            "y": 160,
-                            "width": 80,
-                            "height": 46,
+                            "x": 270.22,
+                            "y": 180,
+                            "width": 113.78,
+                            "height": 51.75,
                             "fill": "rgba(99,102,241,0.15)",
-                            "stroke": "#6366f1",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 230,
-                            "y": 188,
+                            "x": 327.11,
+                            "y": 211.5,
                             "content": "Tokens",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4425,22 +4425,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 278,
-                            "y": 160,
-                            "width": 80,
-                            "height": 46,
+                            "x": 395.38,
+                            "y": 180,
+                            "width": 113.78,
+                            "height": 51.75,
                             "fill": "rgba(167,139,250,0.15)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 318,
-                            "y": 188,
+                            "x": 452.27,
+                            "y": 211.5,
                             "content": "Vectors",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4450,22 +4450,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 366,
-                            "y": 160,
-                            "width": 80,
-                            "height": 46,
+                            "x": 520.53,
+                            "y": 180,
+                            "width": 113.78,
+                            "height": 51.75,
                             "fill": "rgba(251,191,36,0.15)",
-                            "stroke": "#fbbf24",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$warning",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 406,
-                            "y": 188,
+                            "x": 577.42,
+                            "y": 211.5,
                             "content": "Attention",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4475,22 +4475,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 454,
-                            "y": 160,
-                            "width": 80,
-                            "height": 46,
+                            "x": 645.69,
+                            "y": 180,
+                            "width": 113.78,
+                            "height": 51.75,
                             "fill": "rgba(244,114,182,0.15)",
-                            "stroke": "#f472b6",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$tertiary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 494,
-                            "y": 188,
+                            "x": 702.58,
+                            "y": 211.5,
                             "content": "Layers",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4500,22 +4500,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 542,
-                            "y": 160,
-                            "width": 80,
-                            "height": 46,
+                            "x": 770.84,
+                            "y": 180,
+                            "width": 113.78,
+                            "height": 51.75,
                             "fill": "rgba(52,211,153,0.15)",
-                            "stroke": "#34d399",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$success",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 582,
-                            "y": 188,
+                            "x": 827.73,
+                            "y": 211.5,
                             "content": "Softmax",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4525,22 +4525,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 630,
-                            "y": 160,
-                            "width": 80,
-                            "height": 46,
+                            "x": 896,
+                            "y": 180,
+                            "width": 113.78,
+                            "height": 51.75,
                             "fill": "rgba(79,195,247,0.15)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 670,
-                            "y": 188,
+                            "x": 952.89,
+                            "y": 211.5,
                             "content": "Token",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4550,22 +4550,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 718,
-                            "y": 160,
-                            "width": 80,
-                            "height": 46,
+                            "x": 1021.16,
+                            "y": 180,
+                            "width": 113.78,
+                            "height": 51.75,
                             "fill": "rgba(251,191,36,0.15)",
-                            "stroke": "#fbbf24",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$warning",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 758,
-                            "y": 188,
+                            "x": 1078.04,
+                            "y": 211.5,
                             "content": "Tool?",
-                            "fontSize": 11,
-                            "fill": "#c8d6e5",
+                            "fontSize": 14.01,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4580,11 +4580,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 142,
-                    "y": 221,
+                    "x": 201.96,
+                    "y": 248.63,
                     "content": "Input",
-                    "fontSize": 9,
-                    "fill": "#64748b",
+                    "fontSize": 11.46,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -4595,11 +4595,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 230,
-                    "y": 221,
+                    "x": 327.11,
+                    "y": 248.63,
                     "content": "BPE",
-                    "fontSize": 9,
-                    "fill": "#64748b",
+                    "fontSize": 11.46,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -4610,11 +4610,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 318,
-                    "y": 221,
+                    "x": 452.27,
+                    "y": 248.63,
                     "content": "Embed",
-                    "fontSize": 9,
-                    "fill": "#64748b",
+                    "fontSize": 11.46,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -4625,11 +4625,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 406,
-                    "y": 221,
+                    "x": 577.42,
+                    "y": 248.63,
                     "content": "QKV",
-                    "fontSize": 9,
-                    "fill": "#64748b",
+                    "fontSize": 11.46,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -4640,11 +4640,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 494,
-                    "y": 221,
+                    "x": 702.58,
+                    "y": 248.63,
                     "content": "Nx",
-                    "fontSize": 9,
-                    "fill": "#64748b",
+                    "fontSize": 11.46,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -4655,11 +4655,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 582,
-                    "y": 221,
+                    "x": 827.73,
+                    "y": 248.63,
                     "content": "P(w)",
-                    "fontSize": 9,
-                    "fill": "#64748b",
+                    "fontSize": 11.46,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -4670,11 +4670,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 670,
-                    "y": 221,
+                    "x": 952.89,
+                    "y": 248.63,
                     "content": "Sample",
-                    "fontSize": 9,
-                    "fill": "#64748b",
+                    "fontSize": 11.46,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -4685,11 +4685,11 @@
                 "children": [
                   {
                     "type": "text",
-                    "x": 758,
-                    "y": 221,
+                    "x": 1078.04,
+                    "y": 248.63,
                     "content": "Decide",
-                    "fontSize": 9,
-                    "fill": "#64748b",
+                    "fontSize": 11.46,
+                    "fill": "$muted",
                     "textAnchor": "middle"
                   }
                 ]
@@ -4704,11 +4704,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 246,
+                        "x": 640,
+                        "y": 276.75,
                         "content": "Autoregressive loop",
-                        "fontSize": 11,
-                        "fill": "#fbbf24",
+                        "fontSize": 14.01,
+                        "fill": "$warning",
                         "textAnchor": "middle"
                       }
                     ]
@@ -4721,12 +4721,12 @@
                 "children": [
                   {
                     "type": "line",
-                    "x1": 670,
-                    "y1": 231,
-                    "x2": 142,
-                    "y2": 231,
-                    "stroke": "#fbbf24",
-                    "strokeWidth": 2,
+                    "x1": 952.89,
+                    "y1": 259.88,
+                    "x2": 201.96,
+                    "y2": 259.88,
+                    "stroke": "$warning",
+                    "strokeWidth": 2.55,
                     "strokeDasharray": "6 3",
                     "fadeIn": 12
                   }
@@ -4738,13 +4738,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 142,
-                    "y1": 231,
-                    "x2": 142,
-                    "y2": 209,
-                    "stroke": "#fbbf24",
-                    "strokeWidth": 2,
-                    "headSize": 6,
+                    "x1": 201.96,
+                    "y1": 259.88,
+                    "x2": 201.96,
+                    "y2": 235.13,
+                    "stroke": "$warning",
+                    "strokeWidth": 2.55,
+                    "headSize": 7.64,
                     "fadeIn": 12
                   }
                 ]
@@ -4759,11 +4759,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 300,
+                        "x": 640,
+                        "y": 337.5,
                         "content": "When the model predicts a tool call token pattern:",
-                        "fontSize": 13,
-                        "fill": "#94a3b8",
+                        "fontSize": 16.56,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -4783,22 +4783,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 152,
-                            "y": 330,
-                            "width": 140,
-                            "height": 38,
+                            "x": 216.18,
+                            "y": 371.25,
+                            "width": 199.11,
+                            "height": 42.75,
                             "fill": "rgba(251,191,36,0.15)",
-                            "stroke": "#fbbf24",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$warning",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 222,
-                            "y": 354,
+                            "x": 315.73,
+                            "y": 398.25,
                             "content": "Tool Call JSON",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4808,22 +4808,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 304,
-                            "y": 330,
-                            "width": 140,
-                            "height": 38,
+                            "x": 432.36,
+                            "y": 371.25,
+                            "width": 199.11,
+                            "height": 42.75,
                             "fill": "rgba(52,211,153,0.15)",
-                            "stroke": "#34d399",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$success",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 374,
-                            "y": 354,
+                            "x": 531.91,
+                            "y": 398.25,
                             "content": "Execute Tool",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4833,22 +4833,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 456,
-                            "y": 330,
-                            "width": 140,
-                            "height": 38,
+                            "x": 648.53,
+                            "y": 371.25,
+                            "width": 199.11,
+                            "height": 42.75,
                             "fill": "rgba(167,139,250,0.15)",
-                            "stroke": "#a78bfa",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$secondary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 526,
-                            "y": 354,
+                            "x": 748.09,
+                            "y": 398.25,
                             "content": "Result",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4858,22 +4858,22 @@
                         "children": [
                           {
                             "type": "rect",
-                            "x": 608,
-                            "y": 330,
-                            "width": 140,
-                            "height": 38,
+                            "x": 864.71,
+                            "y": 371.25,
+                            "width": 199.11,
+                            "height": 42.75,
                             "fill": "rgba(79,195,247,0.15)",
-                            "stroke": "#4fc3f7",
-                            "strokeWidth": 1.5,
-                            "rx": 6
+                            "stroke": "$primary",
+                            "strokeWidth": 1.91,
+                            "rx": 7.64
                           },
                           {
                             "type": "text",
-                            "x": 678,
-                            "y": 354,
+                            "x": 964.27,
+                            "y": 398.25,
                             "content": "Back to Thread",
-                            "fontSize": 12,
-                            "fill": "#c8d6e5",
+                            "fontSize": 15.28,
+                            "fill": "$foreground",
                             "textAnchor": "middle"
                           }
                         ]
@@ -4888,12 +4888,12 @@
                 "children": [
                   {
                     "type": "line",
-                    "x1": 678,
-                    "y1": 378,
-                    "x2": 222,
-                    "y2": 378,
-                    "stroke": "#f87171",
-                    "strokeWidth": 2,
+                    "x1": 964.27,
+                    "y1": 425.25,
+                    "x2": 315.73,
+                    "y2": 425.25,
+                    "stroke": "$error",
+                    "strokeWidth": 2.55,
                     "strokeDasharray": "6 3",
                     "fadeIn": 12
                   }
@@ -4905,13 +4905,13 @@
                 "children": [
                   {
                     "type": "arrow",
-                    "x1": 222,
-                    "y1": 378,
-                    "x2": 222,
-                    "y2": 370,
-                    "stroke": "#f87171",
-                    "strokeWidth": 2,
-                    "headSize": 6,
+                    "x1": 315.73,
+                    "y1": 425.25,
+                    "x2": 315.73,
+                    "y2": 416.25,
+                    "stroke": "$error",
+                    "strokeWidth": 2.55,
+                    "headSize": 7.64,
                     "fadeIn": 12
                   }
                 ]
@@ -4926,11 +4926,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 393,
+                        "x": 640,
+                        "y": 442.13,
                         "content": "Agentic loop (until final answer)",
-                        "fontSize": 11,
-                        "fill": "#f87171",
+                        "fontSize": 14.01,
+                        "fill": "$error",
                         "textAnchor": "middle"
                       }
                     ]
@@ -4947,11 +4947,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 465,
+                        "x": 640,
+                        "y": 523.13,
                         "content": "The entire autoregressive pipeline runs inside each agentic iteration",
-                        "fontSize": 12,
-                        "fill": "#64748b",
+                        "fontSize": 15.28,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]
@@ -4968,11 +4968,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 510,
+                        "x": 640,
+                        "y": 573.75,
                         "content": "GPT-4: ~1.8T params | 128K context | 96 layers | ~50K vocab",
-                        "fontSize": 11,
-                        "fill": "#94a3b8",
+                        "fontSize": 14.01,
+                        "fill": "$subtitle",
                         "textAnchor": "middle",
                         "fontFamily": "monospace"
                       }
@@ -4991,8 +4991,8 @@
         "children": [
           {
             "type": "player",
-            "width": 900,
-            "height": 640,
+            "width": 1280,
+            "height": 720,
             "fps": 30,
             "durationInFrames": 165,
             "controls": false,
@@ -5009,10 +5009,10 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 220,
+                        "x": 640,
+                        "y": 247.5,
                         "content": "From Words to Agents",
-                        "fontSize": 34,
+                        "fontSize": 43.3,
                         "fill": "$foreground",
                         "textAnchor": "middle",
                         "fontWeight": "bold"
@@ -5031,11 +5031,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 265,
+                        "x": 640,
+                        "y": 298.13,
                         "content": "Every intelligent agent action begins with predicting the next token",
-                        "fontSize": 16,
-                        "fill": "#94a3b8",
+                        "fontSize": 20.38,
+                        "fill": "$subtitle",
                         "textAnchor": "middle"
                       }
                     ]
@@ -5052,11 +5052,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 320,
+                        "x": 640,
+                        "y": 360,
                         "content": "Tokenization: text -> integer IDs",
-                        "fontSize": 12,
-                        "fill": "#4fc3f7",
+                        "fontSize": 15.28,
+                        "fill": "$primary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -5073,11 +5073,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 342,
+                        "x": 640,
+                        "y": 384.75,
                         "content": "Embeddings: IDs -> dense vectors",
-                        "fontSize": 12,
-                        "fill": "#a78bfa",
+                        "fontSize": 15.28,
+                        "fill": "$secondary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -5094,11 +5094,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 364,
+                        "x": 640,
+                        "y": 409.5,
                         "content": "Attention: tokens learn to look at each other",
-                        "fontSize": 12,
-                        "fill": "#f472b6",
+                        "fontSize": 15.28,
+                        "fill": "$tertiary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -5115,11 +5115,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 386,
+                        "x": 640,
+                        "y": 434.25,
                         "content": "Transformer: attention + FFN, stacked N times",
-                        "fontSize": 12,
-                        "fill": "#34d399",
+                        "fontSize": 15.28,
+                        "fill": "$success",
                         "textAnchor": "middle"
                       }
                     ]
@@ -5136,11 +5136,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 408,
+                        "x": 640,
+                        "y": 459,
                         "content": "Softmax: probability distribution over vocabulary",
-                        "fontSize": 12,
-                        "fill": "#fbbf24",
+                        "fontSize": 15.28,
+                        "fill": "$warning",
                         "textAnchor": "middle"
                       }
                     ]
@@ -5157,11 +5157,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 430,
+                        "x": 640,
+                        "y": 483.75,
                         "content": "Autoregressive: generate one token at a time",
-                        "fontSize": 12,
-                        "fill": "#fb923c",
+                        "fontSize": 15.28,
+                        "fill": "$warning",
                         "textAnchor": "middle"
                       }
                     ]
@@ -5178,11 +5178,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 452,
+                        "x": 640,
+                        "y": 508.5,
                         "content": "Tool calls: structured output from same mechanism",
-                        "fontSize": 12,
-                        "fill": "#6366f1",
+                        "fontSize": 15.28,
+                        "fill": "$secondary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -5199,11 +5199,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 474,
+                        "x": 640,
+                        "y": 533.25,
                         "content": "Agentic loop: reason -> act -> observe -> repeat",
-                        "fontSize": 12,
-                        "fill": "#22d3ee",
+                        "fontSize": 15.28,
+                        "fill": "$primary",
                         "textAnchor": "middle"
                       }
                     ]
@@ -5220,11 +5220,11 @@
                     "children": [
                       {
                         "type": "text",
-                        "x": 450,
-                        "y": 570,
+                        "x": 640,
+                        "y": 641.25,
                         "content": "Built with Elucim -- animated explanations for the web",
-                        "fontSize": 13,
-                        "fill": "#64748b",
+                        "fontSize": 16.56,
+                        "fill": "$muted",
                         "textAnchor": "middle"
                       }
                     ]

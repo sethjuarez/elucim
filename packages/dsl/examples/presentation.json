@@ -17,7 +17,7 @@
             "height": 600,
             "fps": 30,
             "durationInFrames": 90,
-            "background": "#0d0d1a",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": true,
@@ -31,7 +31,7 @@
                     "x": 400,
                     "y": 250,
                     "content": "Welcome to Elucim",
-                    "fill": "#fff",
+                    "fill": "$foreground",
                     "fontSize": 48,
                     "textAnchor": "middle"
                   }
@@ -73,16 +73,25 @@
             "height": 600,
             "fps": 30,
             "durationInFrames": 120,
-            "background": "#0d0d1a",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": true,
             "children": [
               {
                 "type": "axes",
-                "domain": [-4, 4],
-                "range": [-2, 2],
-                "origin": [400, 300],
+                "domain": [
+                  -4,
+                  4
+                ],
+                "range": [
+                  -2,
+                  2
+                ],
+                "origin": [
+                  400,
+                  300
+                ],
                 "scale": 80,
                 "showGrid": true,
                 "fadeIn": 20
@@ -94,10 +103,16 @@
                   {
                     "type": "functionPlot",
                     "fn": "sin(x)",
-                    "domain": [-4, 4],
-                    "origin": [400, 300],
+                    "domain": [
+                      -4,
+                      4
+                    ],
+                    "origin": [
+                      400,
+                      300
+                    ],
                     "scale": 80,
-                    "color": "#4a9eff",
+                    "color": "$primary",
                     "draw": 60
                   }
                 ]
@@ -109,10 +124,16 @@
                   {
                     "type": "functionPlot",
                     "fn": "cos(x)",
-                    "domain": [-4, 4],
-                    "origin": [400, 300],
+                    "domain": [
+                      -4,
+                      4
+                    ],
+                    "origin": [
+                      400,
+                      300
+                    ],
                     "scale": 80,
-                    "color": "#ff6b6b",
+                    "color": "$error",
                     "draw": 60
                   }
                 ]
@@ -131,7 +152,7 @@
             "height": 600,
             "fps": 30,
             "durationInFrames": 60,
-            "background": "#0d0d1a",
+            "background": "$background",
             "controls": false,
             "autoPlay": true,
             "loop": true,
@@ -145,7 +166,7 @@
                     "x": 400,
                     "y": 300,
                     "content": "Thank You!",
-                    "fill": "#fff",
+                    "fill": "$foreground",
                     "fontSize": 64,
                     "textAnchor": "middle"
                   }

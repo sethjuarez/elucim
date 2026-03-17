@@ -23,8 +23,10 @@ describe('resolveColor', () => {
   });
 
   it('resolves known $tokens to CSS var() with fallback', () => {
-    expect(resolveColor('$foreground')).toBe('var(--elucim-foreground, #e0e0e0)');
-    expect(resolveColor('$background')).toBe('var(--elucim-background, #0f172a)');
+    expect(resolveColor('$foreground')).toBe('var(--elucim-foreground, #c8d6e5)');
+    expect(resolveColor('$background')).toBe('var(--elucim-background, #0a0a1e)');
+    expect(resolveColor('$title')).toBe('var(--elucim-title, #e0e7ff)');
+    expect(resolveColor('$subtitle')).toBe('var(--elucim-subtitle, #94a3b8)');
     expect(resolveColor('$accent')).toBe('var(--elucim-accent, #4fc3f7)');
     expect(resolveColor('$muted')).toBe('var(--elucim-muted, #64748b)');
     expect(resolveColor('$surface')).toBe('var(--elucim-surface, #1e293b)');
@@ -49,6 +51,8 @@ describe('resolveColor', () => {
   it('TOKEN_NAMES includes all standard tokens', () => {
     expect(TOKEN_NAMES).toContain('foreground');
     expect(TOKEN_NAMES).toContain('background');
+    expect(TOKEN_NAMES).toContain('title');
+    expect(TOKEN_NAMES).toContain('subtitle');
     expect(TOKEN_NAMES).toContain('accent');
     expect(TOKEN_NAMES).toContain('muted');
     expect(TOKEN_NAMES).toContain('surface');
@@ -59,7 +63,7 @@ describe('resolveColor', () => {
     expect(TOKEN_NAMES).toContain('success');
     expect(TOKEN_NAMES).toContain('warning');
     expect(TOKEN_NAMES).toContain('error');
-    expect(TOKEN_NAMES.length).toBe(12);
+    expect(TOKEN_NAMES.length).toBe(14);
   });
 
   it('SEMANTIC_TOKENS has cssVar and fallback for each token', () => {

@@ -7,7 +7,7 @@
     "height": 600,
     "fps": 30,
     "durationInFrames": 90,
-    "background": "#0d0d1a",
+    "background": "$background",
     "children": [
       {
         "type": "fadeIn",
@@ -19,7 +19,7 @@
             "cy": 300,
             "r": 100,
             "fill": "none",
-            "stroke": "#3b82f6",
+            "stroke": "$primary",
             "strokeWidth": 3,
             "draw": 60,
             "easing": "easeInOutCubic"
@@ -39,7 +39,7 @@
                 "x": 400,
                 "y": 440,
                 "content": "Hello, Elucim!",
-                "fill": "#fff",
+                "fill": "$foreground",
                 "fontSize": 28,
                 "textAnchor": "middle"
               }

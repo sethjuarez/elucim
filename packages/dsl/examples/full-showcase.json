@@ -7,7 +7,7 @@
     "height": 600,
     "fps": 30,
     "durationInFrames": 240,
-    "background": "#0d0d1a",
+    "background": "$background",
     "children": [
       {
         "type": "sequence",
@@ -18,7 +18,7 @@
             "cx": 100,
             "cy": 100,
             "r": 40,
-            "fill": "#3b82f6",
+            "fill": "$primary",
             "stroke": "#60a5fa",
             "strokeWidth": 2,
             "draw": 30,
@@ -57,7 +57,20 @@
           },
           {
             "type": "polygon",
-            "points": [[600, 70], [640, 130], [560, 130]],
+            "points": [
+              [
+                600,
+                70
+              ],
+              [
+                640,
+                130
+              ],
+              [
+                560,
+                130
+              ]
+            ],
             "fill": "none",
             "stroke": "#ef4444",
             "strokeWidth": 2,
@@ -68,7 +81,7 @@
             "x": 700,
             "y": 105,
             "content": "Hello",
-            "fill": "#fff",
+            "fill": "$foreground",
             "fontSize": 20,
             "fadeIn": 30
           }
@@ -80,9 +93,18 @@
         "children": [
           {
             "type": "axes",
-            "domain": [-4, 4],
-            "range": [-2, 2],
-            "origin": [250, 350],
+            "domain": [
+              -4,
+              4
+            ],
+            "range": [
+              -2,
+              2
+            ],
+            "origin": [
+              250,
+              350
+            ],
             "scale": 50,
             "showGrid": true,
             "fadeIn": 20
@@ -96,10 +118,16 @@
           {
             "type": "functionPlot",
             "fn": "sin(x)",
-            "domain": [-4, 4],
-            "origin": [250, 350],
+            "domain": [
+              -4,
+              4
+            ],
+            "origin": [
+              250,
+              350
+            ],
             "scale": 50,
-            "color": "#4a9eff",
+            "color": "$primary",
             "draw": 45
           }
         ]
@@ -114,9 +142,18 @@
             "children": [
               {
                 "type": "vector",
-                "from": [0, 0],
-                "to": [2, 1.5],
-                "origin": [250, 350],
+                "from": [
+                  0,
+                  0
+                ],
+                "to": [
+                  2,
+                  1.5
+                ],
+                "origin": [
+                  250,
+                  350
+                ],
                 "scale": 50,
                 "color": "#ffe66d",
                 "label": "v"
@@ -136,10 +173,19 @@
               {
                 "type": "vectorField",
                 "fn": "[-y, x]",
-                "domain": [-3, 3],
-                "range": [-2, 2],
+                "domain": [
+                  -3,
+                  3
+                ],
+                "range": [
+                  -2,
+                  2
+                ],
                 "step": 1,
-                "origin": [600, 350],
+                "origin": [
+                  600,
+                  350
+                ],
                 "scale": 40,
                 "color": "#06b6d4",
                 "normalize": true
@@ -158,11 +204,20 @@
             "children": [
               {
                 "type": "matrix",
-                "values": [[1, 0], [0, 1]],
+                "values": [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ],
                 "x": 550,
                 "y": 160,
                 "cellSize": 36,
-                "color": "#fff",
+                "color": "$foreground",
                 "fontSize": 16
               }
             ]
@@ -180,14 +235,43 @@
               {
                 "type": "graph",
                 "nodes": [
-                  { "id": "A", "x": 100, "y": 500, "label": "A", "color": "#3b82f6" },
-                  { "id": "B", "x": 200, "y": 450, "label": "B", "color": "#10b981" },
-                  { "id": "C", "x": 200, "y": 550, "label": "C", "color": "#f59e0b" }
+                  {
+                    "id": "A",
+                    "x": 100,
+                    "y": 500,
+                    "label": "A",
+                    "color": "$primary"
+                  },
+                  {
+                    "id": "B",
+                    "x": 200,
+                    "y": 450,
+                    "label": "B",
+                    "color": "#10b981"
+                  },
+                  {
+                    "id": "C",
+                    "x": 200,
+                    "y": 550,
+                    "label": "C",
+                    "color": "#f59e0b"
+                  }
                 ],
                 "edges": [
-                  { "from": "A", "to": "B", "directed": true },
-                  { "from": "A", "to": "C", "directed": true },
-                  { "from": "B", "to": "C" }
+                  {
+                    "from": "A",
+                    "to": "B",
+                    "directed": true
+                  },
+                  {
+                    "from": "A",
+                    "to": "C",
+                    "directed": true
+                  },
+                  {
+                    "from": "B",
+                    "to": "C"
+                  }
                 ],
                 "nodeRadius": 15,
                 "edgeColor": "#666"
@@ -209,7 +293,7 @@
                 "expression": "E = mc^2",
                 "x": 400,
                 "y": 530,
-                "color": "#fff",
+                "color": "$foreground",
                 "fontSize": 28
               }
             ]
@@ -224,11 +308,46 @@
             "type": "stagger",
             "staggerDelay": 6,
             "children": [
-              { "type": "circle", "cx": 350, "cy": 200, "r": 8, "fill": "#ef4444", "fadeIn": 15 },
-              { "type": "circle", "cx": 375, "cy": 200, "r": 8, "fill": "#f97316", "fadeIn": 15 },
-              { "type": "circle", "cx": 400, "cy": 200, "r": 8, "fill": "#eab308", "fadeIn": 15 },
-              { "type": "circle", "cx": 425, "cy": 200, "r": 8, "fill": "#22c55e", "fadeIn": 15 },
-              { "type": "circle", "cx": 450, "cy": 200, "r": 8, "fill": "#3b82f6", "fadeIn": 15 }
+              {
+                "type": "circle",
+                "cx": 350,
+                "cy": 200,
+                "r": 8,
+                "fill": "#ef4444",
+                "fadeIn": 15
+              },
+              {
+                "type": "circle",
+                "cx": 375,
+                "cy": 200,
+                "r": 8,
+                "fill": "#f97316",
+                "fadeIn": 15
+              },
+              {
+                "type": "circle",
+                "cx": 400,
+                "cy": 200,
+                "r": 8,
+                "fill": "#eab308",
+                "fadeIn": 15
+              },
+              {
+                "type": "circle",
+                "cx": 425,
+                "cy": 200,
+                "r": 8,
+                "fill": "#22c55e",
+                "fadeIn": 15
+              },
+              {
+                "type": "circle",
+                "cx": 450,
+                "cy": 200,
+                "r": 8,
+                "fill": "$primary",
+                "fadeIn": 15
+              }
             ]
           }
         ]
@@ -240,8 +359,20 @@
           {
             "type": "transform",
             "duration": 50,
-            "translate": { "from": [0, 0], "to": [100, 0] },
-            "rotate": { "from": 0, "to": 180 },
+            "translate": {
+              "from": [
+                0,
+                0
+              ],
+              "to": [
+                100,
+                0
+              ]
+            },
+            "rotate": {
+              "from": 0,
+              "to": 180
+            },
             "children": [
               {
                 "type": "rect",

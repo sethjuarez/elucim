@@ -69,6 +69,8 @@ function builderThemeToVars(t: typeof darkTheme): Record<string, string> {
   return {
     '--elucim-foreground': t.text,
     '--elucim-background': t.background,
+    '--elucim-title': t.title,
+    '--elucim-subtitle': t.subtitle,
     '--elucim-accent': t.primary,
     '--elucim-muted': t.muted,
     '--elucim-surface': t.background,
