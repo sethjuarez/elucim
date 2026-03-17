@@ -117,12 +117,12 @@ export const IconBarChart = (p?: IconProps) => svg(16, <>
 
 /** Graph / network — connected nodes */
 export const IconGraph = (p?: IconProps) => svg(16, <>
-  <line x1="5" y1="7" x2="19" y2="7" strokeWidth={1.5} />
-  <line x1="19" y1="7" x2="12" y2="19" strokeWidth={1.5} />
-  <line x1="12" y1="19" x2="5" y2="7" strokeWidth={1.5} />
-  <circle cx="5" cy="7" r="2.5" fill="currentColor" />
-  <circle cx="19" cy="7" r="2.5" fill="currentColor" />
-  <circle cx="12" cy="19" r="2.5" fill="currentColor" />
+  <circle cx="6" cy="6" r="2.5" fill="currentColor" stroke="none" />
+  <circle cx="18" cy="6" r="2.5" fill="currentColor" stroke="none" />
+  <circle cx="12" cy="18" r="2.5" fill="currentColor" stroke="none" />
+  <line x1="8" y1="7.5" x2="16" y2="7.5" strokeWidth={1.5} />
+  <line x1="17" y1="8.5" x2="13.5" y2="16" strokeWidth={1.5} />
+  <line x1="7" y1="8.5" x2="10.5" y2="16" strokeWidth={1.5} />
 </>, p);
 
 // ─── History ────────────────────────────────────────────────────────────────
@@ -203,12 +203,12 @@ export const IconFitToView = (p?: IconProps) => svg(14, <>
 
 // ─── Panel chrome (default 12px) ───────────────────────────────────────────
 
-/** Pin — thumbtack; rotated 45° when unpinned, straight when pinned */
+/** Pin — thumbtack; filled when pinned, outline when floating */
 export const IconPin = ({ pinned, ...p }: IconProps & { pinned?: boolean }) => svg(12, <>
   <g transform={pinned ? '' : 'rotate(-45 12 12)'}>
-    <line x1="12" y1="17" x2="12" y2="21" />
-    <path d="M7 11V7l2-2h6l2 2v4" />
-    <rect x="6" y="11" width="12" height="2" rx="1" fill="currentColor" stroke="none" />
+    <path d="M12 17v4" />
+    <path d="M8 11V8l1.5-2h5l1.5 2v3" fill={pinned ? 'currentColor' : 'none'} />
+    <rect x="6" y="11" width="12" height="2.5" rx="1" fill="currentColor" stroke="none" />
   </g>
 </>, p);
 
