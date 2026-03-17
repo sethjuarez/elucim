@@ -109,11 +109,17 @@ export async function renderToPng(
   const encoded = btoa(unescape(encodeURIComponent(svgString)));
   const dataUri = `data:image/svg+xml;base64,${encoded}`;
 
-  // 9. Rasterize: data URI → Image → OffscreenCanvas/Canvas → PNG bytes
+  // 9. Rasterize: data URI → Image → Canvas → PNG bytes
+  //    Prefer DOM Image path — createImageBitmap(svgBlob) fails in Chromium
+  //    for SVG content. Only use OffscreenCanvas path in worker contexts
+  //    where Image/document aren't available.
+  if (typeof Image !== 'undefined' && typeof document !== 'undefined') {
+    return rasterizeDom(dataUri, w, h);
+  }
   if (typeof OffscreenCanvas !== 'undefined') {
     return rasterizeOffscreen(dataUri, w, h);
   }
-  return rasterizeDom(dataUri, w, h);
+  throw new Error('renderToPng requires Image+document (browser) or OffscreenCanvas (worker)');
 }
 
 /** Rasterize using OffscreenCanvas (no DOM insertion needed). */
