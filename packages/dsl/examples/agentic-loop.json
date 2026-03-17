@@ -8,7 +8,6 @@
     "transition": "fade",
     "transitionDuration": 10,
     "showHud": true,
-    "showNotes": true,
     "slides": [
       {
         "type": "slide",
@@ -5235,6 +5234,7 @@
           }
         ]
       }
-    ]
+    ],
+    "showNotes": true
   }
 }

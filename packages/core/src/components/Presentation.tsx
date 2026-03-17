@@ -337,36 +337,30 @@ export function Presentation({
 
   const aspectRatio = width / height;
 
-  return (
-    <PresentationContext.Provider value={contextValue}>
-      <div
-        ref={containerRef}
-        tabIndex={0}
-        onClick={handleClick}
-        data-testid="elucim-presentation"
-        style={{
-          width: '100%',
-          height: showNotes ? '80vh' : 'auto',
-          background,
-          position: 'relative',
-          outline: 'none',
-          overflow: 'hidden',
-          aspectRatio: `${width} / ${height}`,
-          margin: '0 auto',
-          cursor: 'none',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}
-        onMouseMove={(e) => {
-          // Show cursor on mouse move, hide after 2s
-          const el = e.currentTarget;
-          el.style.cursor = 'default';
-          clearTimeout((el as any).__cursorTimeout);
-          (el as any).__cursorTimeout = setTimeout(() => {
-            el.style.cursor = 'none';
-          }, 2000);
-        }}
-      >
-        {/* Exiting slide (during transition) */}
+  const presentationStyle: React.CSSProperties = {
+    width: '100%',
+    background,
+    position: 'relative',
+    outline: 'none',
+    overflow: 'hidden',
+    aspectRatio: `${width} / ${height}`,
+    margin: '0 auto',
+    cursor: 'none',
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    el.style.cursor = 'default';
+    clearTimeout((el as any).__cursorTimeout);
+    (el as any).__cursorTimeout = setTimeout(() => {
+      el.style.cursor = 'none';
+    }, 2000);
+  };
+
+  const slideContent = (
+    <>
+      {/* Exiting slide (during transition) */}
         {transitioning && prevSlide && (
           <div
             style={{
@@ -562,33 +556,47 @@ export function Presentation({
             </svg>
           </button>
         )}
-      </div>
+      </>
+  );
 
-      {/* Presenter notes panel */}
-      {showNotes && (
-        <div
-          data-testid="elucim-presenter-notes"
-          style={{
-            padding: '16px 24px',
-            background: 'color-mix(in srgb, currentColor 8%, transparent)',
-            borderTop: '1px solid color-mix(in srgb, currentColor 15%, transparent)',
-            color: 'inherit',
-            fontSize: 15,
-            lineHeight: 1.6,
-            maxHeight: '20vh',
-            overflowY: 'auto',
-          }}
-        >
-          <div style={{ fontSize: 11, textTransform: 'uppercase', opacity: 0.5, marginBottom: 8, letterSpacing: 1 }}>
-            Presenter Notes — Slide {slideIndex + 1}{currentTitle ? `: ${currentTitle}` : ''}
-          </div>
-          {currentNotes ? (
-            <div style={{ whiteSpace: 'pre-wrap' }}>{currentNotes}</div>
-          ) : (
-            <div style={{ opacity: 0.4, fontStyle: 'italic' }}>No notes for this slide.</div>
-          )}
-        </div>
+  const notesPanel = showNotes ? (
+    <div
+      data-testid="elucim-presenter-notes"
+      style={{
+        padding: '16px 24px',
+        background: 'color-mix(in srgb, currentColor 8%, transparent)',
+        borderTop: '1px solid color-mix(in srgb, currentColor 15%, transparent)',
+        color: 'inherit',
+        fontSize: 15,
+        lineHeight: 1.6,
+        maxHeight: '20vh',
+        overflowY: 'auto' as const,
+      }}
+    >
+      <div style={{ fontSize: 11, textTransform: 'uppercase' as const, opacity: 0.5, marginBottom: 8, letterSpacing: 1 }}>
+        Presenter Notes — Slide {slideIndex + 1}{currentTitle ? `: ${currentTitle}` : ''}
+      </div>
+      {currentNotes ? (
+        <div style={{ whiteSpace: 'pre-wrap' }}>{currentNotes}</div>
+      ) : (
+        <div style={{ opacity: 0.4, fontStyle: 'italic' }}>No notes for this slide.</div>
       )}
+    </div>
+  ) : null;
+
+  return (
+    <PresentationContext.Provider value={contextValue}>
+      <div
+        ref={containerRef}
+        tabIndex={0}
+        onClick={handleClick}
+        data-testid="elucim-presentation"
+        style={presentationStyle}
+        onMouseMove={handleMouseMove}
+      >
+        {slideContent}
+      </div>
+      {notesPanel}
     </PresentationContext.Provider>
   );
 }

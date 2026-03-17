@@ -15,7 +15,7 @@ export function FullCalculusPresentation() {
     <DslRenderer
       dsl={calculusJson as unknown as ElucimDocument}
       colorScheme="auto"
-      style={{ width: '100%', maxWidth: 900 }}
+      style={{ width: '100%' }}
     />
   );
 }
@@ -25,7 +25,7 @@ export function FullAgenticPresentation() {
     <DslRenderer
       dsl={agenticJson as unknown as ElucimDocument}
       colorScheme="auto"
-      style={{ width: '100%', maxWidth: 900 }}
+      style={{ width: '100%' }}
     />
   );
 }
