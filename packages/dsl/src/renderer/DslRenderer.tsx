@@ -179,11 +179,19 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
   // Resolve poster to a frame override
   const posterOverrides = poster !== undefined ? resolvePoster(poster, dsl) : undefined;
 
+  // Resolve the CSS colorScheme value to pass to Scene/Player
+  const resolvedColorScheme = colorScheme
+    ? (colorScheme === 'auto'
+      ? (prefersDark ? 'dark' : 'light')
+      : colorScheme) as 'light' | 'dark'
+    : undefined;
+
   return (
     <div className={className} style={{ ...schemeVars, ...themeVars, ...style }} data-testid="dsl-root">
       {renderRoot(dsl.root, {
         frame: posterOverrides?.frame,
         playerRef,
+        colorScheme: resolvedColorScheme,
       })}
     </div>
   );

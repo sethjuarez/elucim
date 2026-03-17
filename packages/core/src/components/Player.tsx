@@ -221,7 +221,7 @@ export const Player = forwardRef<PlayerRef, PlayerProps>(function Player(
         maxWidth: '100%',
         outline: 'none',
         fontFamily: 'system-ui, sans-serif',
-        colorScheme: 'light dark',
+        ...(sceneProps.colorScheme ? { colorScheme: sceneProps.colorScheme } : {}),
       }}
       data-testid="elucim-player"
     >

@@ -27,6 +27,14 @@ export interface SceneProps {
   className?: string;
   /** CSS style */
   style?: React.CSSProperties;
+  /**
+   * CSS color-scheme for this element.
+   * - `'light'` — force light appearance for native controls / light-dark()
+   * - `'dark'` — force dark appearance
+   * - `'light dark'` — let browser decide based on prefers-color-scheme
+   * - `undefined` — inherit from parent (recommended when embedded in a themed page)
+   */
+  colorScheme?: 'light' | 'dark' | 'light dark';
 }
 
 /**
@@ -46,6 +54,7 @@ export const Scene = forwardRef<SVGSVGElement, SceneProps>(function Scene(
     frame: controlledFrame,
     className,
     style,
+    colorScheme,
   },
   ref
 ) {
@@ -110,7 +119,7 @@ export const Scene = forwardRef<SVGSVGElement, SceneProps>(function Scene(
           aspectRatio: insidePresentation ? undefined : `${width} / ${height}`,
           overflow: 'hidden',
           background: effectiveBg,
-          colorScheme: 'light dark',
+          ...(colorScheme ? { colorScheme } : {}),
           color: 'var(--elucim-scene-fg, light-dark(#333, #e0e0e0))',
           ...style,
         }}

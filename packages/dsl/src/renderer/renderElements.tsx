@@ -34,6 +34,8 @@ function resolvePreset(preset?: ScenePreset, width?: number, height?: number): {
 export interface RenderRootOverrides {
   frame?: number;
   playerRef?: React.RefObject<PlayerRef | null>;
+  /** CSS color-scheme to pass to Scene/Player. When set, overrides browser prefers-color-scheme. */
+  colorScheme?: 'light' | 'dark' | 'light dark';
 }
 
 export function renderRoot(
@@ -76,6 +78,7 @@ export function renderScene(node: SceneNode, overrides?: RenderRootOverrides): R
       fps={node.fps}
       durationInFrames={node.durationInFrames}
       background={resolveColor(node.background)}
+      colorScheme={overrides?.colorScheme}
       {...(hasFrameOverride ? { frame: overrides!.frame, autoPlay: false } : {})}
     >
       {node.children.map((child, i) => renderElement(child, i))}
@@ -96,6 +99,7 @@ export function renderPlayer(node: PlayerNode, overrides?: RenderRootOverrides):
       controls={node.controls}
       loop={node.loop}
       autoPlay={node.autoPlay}
+      colorScheme={overrides?.colorScheme}
     >
       {node.children.map((child, i) => renderElement(child, i))}
     </Player>
