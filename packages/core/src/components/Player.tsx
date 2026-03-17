@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Scene, type SceneProps } from './Scene';
-import { useInsidePresentation } from './Presentation';
+import { useInsidePresentation, usePresentationContextSafe } from './Presentation';
+import type { SlidePlayerHandle } from './Presentation';
 
 export interface PlayerRef {
   /** Get the underlying SVG element */
@@ -71,6 +72,26 @@ export const Player = forwardRef<PlayerRef, PlayerProps>(function Player(
     isPlaying: () => playing,
   }), [durationInFrames, playing]);
 
+  // Register with Presentation so "next" can complete animations first
+  const presCtx = usePresentationContextSafe();
+  const handleRef = useRef<SlidePlayerHandle | null>(null);
+  if (!handleRef.current) {
+    handleRef.current = {
+      isPlaying: () => playing,
+      seekToFrame: (f: number) => setFrame(Math.max(0, Math.min(f, durationInFrames - 1))),
+      getTotalFrames: () => durationInFrames,
+      pause: () => setPlaying(false),
+    };
+  }
+  // Keep closure in sync with latest state
+  handleRef.current.isPlaying = () => playing;
+
+  useEffect(() => {
+    if (!presCtx || !handleRef.current) return;
+    const handle = handleRef.current;
+    presCtx.registerSlidePlayer(handle);
+    return () => presCtx.unregisterSlidePlayer(handle);
+  }, [presCtx]);
   const tick = useCallback(
     (time: number) => {
       if (lastTimeRef.current === null) {

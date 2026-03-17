@@ -20,6 +20,18 @@ interface PresentationContextValue {
   /** Whether currently in fullscreen */
   isFullscreen: boolean;
   toggleFullscreen: () => void;
+  /** Register a Player ref for the current slide (used internally by Player) */
+  registerSlidePlayer: (ref: SlidePlayerHandle) => void;
+  /** Unregister a Player ref (cleanup on unmount) */
+  unregisterSlidePlayer: (ref: SlidePlayerHandle) => void;
+}
+
+/** Minimal interface for a slide's player that Presentation needs */
+export interface SlidePlayerHandle {
+  isPlaying(): boolean;
+  seekToFrame(frame: number): void;
+  getTotalFrames(): number;
+  pause(): void;
 }
 
 const PresentationContext = createContext<PresentationContextValue | null>(null);
@@ -28,6 +40,11 @@ export function usePresentationContext() {
   const ctx = useContext(PresentationContext);
   if (!ctx) throw new Error('usePresentationContext must be used inside <Presentation>');
   return ctx;
+}
+
+/** Returns PresentationContext or null. Safe to call outside a Presentation. */
+export function usePresentationContextSafe(): PresentationContextValue | null {
+  return useContext(PresentationContext);
 }
 
 /** Returns true when rendered inside a <Presentation>. Safe to call anywhere. */
@@ -170,6 +187,15 @@ export function Presentation({
   const [prevSlideIndex, setPrevSlideIndex] = useState(startSlide);
   const containerRef = useRef<HTMLDivElement>(null);
   const transitionRef = useRef<number>(0);
+  const slidePlayersRef = useRef<Set<SlidePlayerHandle>>(new Set());
+
+  const registerSlidePlayer = useCallback((ref: SlidePlayerHandle) => {
+    slidePlayersRef.current.add(ref);
+  }, []);
+
+  const unregisterSlidePlayer = useCallback((ref: SlidePlayerHandle) => {
+    slidePlayersRef.current.delete(ref);
+  }, []);
 
   // Extract slides from children
   const slides = useMemo(() => {
@@ -224,9 +250,23 @@ export function Presentation({
     onSlideChange?.(clamped);
   }, [slideIndex, totalSlides, transitioning, animateTransition, onSlideChange]);
 
+  /** Try to complete slide animations; returns true if animations were skipped. */
+  const completeSlideAnimations = useCallback((): boolean => {
+    let skipped = false;
+    for (const player of slidePlayersRef.current) {
+      if (player.isPlaying()) {
+        player.seekToFrame(player.getTotalFrames() - 1);
+        player.pause();
+        skipped = true;
+      }
+    }
+    return skipped;
+  }, []);
+
   const next = useCallback(() => {
+    if (completeSlideAnimations()) return;
     if (slideIndex < totalSlides - 1) goTo(slideIndex + 1);
-  }, [slideIndex, totalSlides, goTo]);
+  }, [slideIndex, totalSlides, goTo, completeSlideAnimations]);
 
   const prev = useCallback(() => {
     if (slideIndex > 0) goTo(slideIndex - 1);
@@ -328,6 +368,8 @@ export function Presentation({
     prev,
     isFullscreen,
     toggleFullscreen,
+    registerSlidePlayer,
+    unregisterSlidePlayer,
   };
 
   const currentSlide = slides[slideIndex];
