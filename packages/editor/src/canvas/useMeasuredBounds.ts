@@ -126,6 +126,10 @@ function getRotationCenter(
   if (typeof el.x === 'number' && ('content' in el || 'expression' in el)) {
     return [el.x, el.y];
   }
+  // Matrix rotates around its position origin [x, y]
+  if (typeof el.x === 'number' && typeof el.y === 'number' && Array.isArray(el.values)) {
+    return [el.x, el.y];
+  }
   // Default: center of measured bounds
   return [bbox.x + bbox.width / 2, bbox.y + bbox.height / 2];
 }
