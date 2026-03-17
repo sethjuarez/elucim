@@ -61,6 +61,7 @@ export {
 // Renderer
 export { DslRenderer, type DslRendererProps, type DslRendererRef, type ElucimTheme } from './renderer/DslRenderer';
 export { renderToSvgString, type RenderToSvgStringOptions } from './renderer/renderToSvgString';
+export { renderToPng, type RenderToPngOptions } from './renderer/renderToPng';
 export {
   renderRoot,
   renderScene,
