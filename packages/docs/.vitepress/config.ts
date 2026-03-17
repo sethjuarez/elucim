@@ -53,14 +53,6 @@ export default defineConfig({
             { text: 'Creating Visuals', link: '/guide/creating-visuals' },
           ],
         },
-        {
-          text: 'Visual Editor',
-          items: [
-            { text: 'Editor Overview', link: '/guide/editor' },
-            { text: 'Inspector & Properties', link: '/guide/editor-inspector' },
-            { text: 'Editor Theming', link: '/guide/editor-theming' },
-          ],
-        },
       ],
       '/api/': [
         {
@@ -72,13 +64,12 @@ export default defineConfig({
             { text: 'Hooks', link: '/api/hooks' },
             { text: 'Easing', link: '/api/easing' },
             { text: 'Export', link: '/api/export' },
-            { text: 'Editor', link: '/api/editor' },
           ],
         },
       ],
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/sethjuarez/elucim' },
+      { icon: 'github', link: 'https://github.com/example/elucim' },
     ],
     footer: {
       message: 'Released under the MIT License.',
