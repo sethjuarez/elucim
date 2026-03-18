@@ -64,7 +64,7 @@ export function renderRoot(
       }
       return renderPlayer(node, overrides);
     case 'presentation':
-      return renderPresentation(node);
+      return renderPresentation(node, overrides);
   }
 }
 
@@ -106,7 +106,7 @@ export function renderPlayer(node: PlayerNode, overrides?: RenderRootOverrides):
   );
 }
 
-export function renderPresentation(node: PresentationNode): React.ReactNode {
+export function renderPresentation(node: PresentationNode, overrides?: RenderRootOverrides): React.ReactNode {
   const { width, height } = resolvePreset(node.preset, node.width, node.height);
   return (
     <Presentation
@@ -117,6 +117,7 @@ export function renderPresentation(node: PresentationNode): React.ReactNode {
       transitionDuration={node.transitionDuration}
       showHUD={node.showHud}
       showNotes={node.showNotes}
+      colorScheme={overrides?.colorScheme}
     >
       {node.slides.map((slide, i) => renderSlide(slide, i))}
     </Presentation>

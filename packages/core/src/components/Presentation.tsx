@@ -142,6 +142,13 @@ export interface PresentationProps {
   startSlide?: number;
   /** Called when slide changes */
   onSlideChange?: (index: number) => void;
+  /**
+   * CSS color-scheme for this element.
+   * - `'light'` — force light mode (light-dark() picks light values)
+   * - `'dark'` — force dark mode (light-dark() picks dark values)
+   * - `'light dark'` — let browser decide based on prefers-color-scheme
+   */
+  colorScheme?: 'light' | 'dark' | 'light dark';
   /** Children — must be <Slide> components */
   children: React.ReactNode;
 }
@@ -178,6 +185,7 @@ export function Presentation({
   showNotes = false,
   startSlide = 0,
   onSlideChange,
+  colorScheme,
   children,
 }: PresentationProps) {
   const [slideIndex, setSlideIndex] = useState(startSlide);
@@ -382,6 +390,7 @@ export function Presentation({
   const presentationStyle: React.CSSProperties = {
     width: '100%',
     background,
+    ...(colorScheme ? { colorScheme } : {}),
     position: 'relative',
     outline: 'none',
     overflow: 'hidden',
