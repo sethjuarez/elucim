@@ -1,5 +1,21 @@
 # @elucim/dsl
 
+## [0.8.4](https://github.com/sethjuarez/elucim/compare/dsl-v0.8.3...dsl-v0.8.4) (2026-03-18)
+
+
+### Bug Fixes
+
+* move @elucim/core to peerDependencies in dsl and editor ([67d8437](https://github.com/sethjuarez/elucim/commit/67d8437a8aa82abc9184295e9cf8b0c3409e897e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.8.4
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.8.4
+
 ## [0.8.3](https://github.com/sethjuarez/elucim/compare/dsl-v0.8.2...dsl-v0.8.3) (2026-03-17)
 
 
