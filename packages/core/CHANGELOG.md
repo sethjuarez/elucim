@@ -1,5 +1,21 @@
 # @elucim/core
 
+## [0.12.0](https://github.com/sethjuarez/elucim/compare/core-v0.11.0...core-v0.12.0) (2026-03-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* ElucimEditor 'theme' prop is now ElucimTheme (content tokens). Use 'editorTheme' for explicit chrome overrides.
+
+### Features
+
+* unified ElucimTheme, fitToContainer, error boundary, auto-derive editor chrome ([2109651](https://github.com/sethjuarez/elucim/commit/21096512cb2c36378569ef3ee31282a93d583f56))
+
+
+### Bug Fixes
+
+* **core:** Presentation next button advances slide on first click ([f9fa47c](https://github.com/sethjuarez/elucim/commit/f9fa47c0c6794e096288d28ce3926e01c3bd97a9))
+
 ## [0.11.0](https://github.com/sethjuarez/elucim/compare/core-v0.10.0...core-v0.11.0) (2026-03-18)
 
 
