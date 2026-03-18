@@ -1,5 +1,5 @@
 {
-  "packages/core": "0.13.0",
-  "packages/dsl": "0.13.0",
-  "packages/editor": "0.13.0"
+  "packages/core": "0.13.1",
+  "packages/dsl": "0.13.1",
+  "packages/editor": "0.13.1"
 }
