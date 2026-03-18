@@ -68,14 +68,15 @@ export function ElucimCanvas({ className, style, editorColorScheme }: ElucimCanv
   const background = resolveColor(rawBackground) ?? '#0f172a';
 
   // Set --elucim-* content theme CSS vars so $token references in elements resolve correctly.
-  // When the background itself is a $token, we can't use luminance detection (circular).
-  // Fall back to the editor's own color scheme to break the cycle.
+  // When editorColorScheme is explicitly light/dark, use it directly — this avoids
+  // luminance detection failures with var() or $token backgrounds.
   const sceneThemeVars = useMemo(() => {
-    if (rawBackground?.startsWith('$')) {
+    if (editorColorScheme === 'light' || editorColorScheme === 'dark') {
       return contentThemeVars(editorColorScheme === 'light' ? LIGHT_THEME : DARK_THEME);
     }
+    // No explicit scheme — fall back to luminance detection from background hex
     return contentThemeVars(isDarkBackground(background) ? DARK_THEME : LIGHT_THEME);
-  }, [rawBackground, background, editorColorScheme]);
+  }, [background, editorColorScheme]);
 
   // Get children from root
   const children: ElementNode[] = ('children' in root && Array.isArray(root.children)) ? root.children : [];

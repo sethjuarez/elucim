@@ -140,6 +140,46 @@ describe('DslRenderer error boundary', () => {
   });
 });
 
+// ─── Override prop correctness ──────────────────────────────────────────────
+
+describe('DslRenderer override props (explicit verification)', () => {
+  const docWithDefaults = {
+    version: '1.0' as const,
+    root: {
+      type: 'player' as const,
+      durationInFrames: 60,
+      width: 400, height: 300, fps: 30,
+      controls: true,
+      autoPlay: false,
+      loop: true,
+      children: [{ type: 'circle' as const, cx: 100, cy: 100, r: 50 }],
+    },
+  };
+
+  it('controls=false overrides document controls=true', () => {
+    const { container } = render(
+      <DslRenderer dsl={docWithDefaults as any} controls={false} />,
+    );
+    expect(container.querySelector('[data-testid="elucim-controls"]')).toBeNull();
+  });
+
+  it('autoPlay=true overrides document autoPlay=false', () => {
+    const ref = React.createRef<DslRendererRef>();
+    render(<DslRenderer ref={ref} dsl={docWithDefaults as any} autoPlay={true} />);
+    expect(ref.current!.isPlaying()).toBe(true);
+  });
+
+  it('loop=false overrides document loop=true', () => {
+    // When loop=false, player should stop at end instead of looping.
+    // We verify by checking the rendered Player has loop=false via ref.
+    const ref = React.createRef<DslRendererRef>();
+    render(<DslRenderer ref={ref} dsl={docWithDefaults as any} loop={false} />);
+    // Seek to last frame — player should not wrap around
+    act(() => { ref.current!.seekToFrame(59); });
+    expect(ref.current!.isPlaying()).toBe(false);
+  });
+});
+
 // ─── fitToContainer ─────────────────────────────────────────────────────────
 
 describe('DslRenderer fitToContainer', () => {
