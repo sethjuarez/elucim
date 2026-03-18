@@ -84,15 +84,14 @@ export function deriveEditorTheme(
     derived['bg'] = contentTheme.background;
   }
   if (contentTheme.surface) {
-    derived['surface'] = contentTheme.surface;
-    // Derive panel and chrome as semi-transparent versions of surface
-    derived['panel'] = colorScheme === 'light'
-      ? 'rgba(255, 255, 255, 0.95)'
-      : 'rgba(22, 22, 42, 0.93)';
-    derived['chrome'] = colorScheme === 'light'
-      ? 'rgba(241, 245, 249, 0.9)'
-      : 'rgba(15, 23, 42, 0.8)';
-    derived['input-bg'] = colorScheme === 'light' ? '#ffffff' : '#0f172a';
+    const s = contentTheme.surface;
+    derived['surface'] = s;
+    // Use color-mix() so derivation works with both hex values and var() references
+    derived['panel'] = `color-mix(in srgb, ${s} 95%, transparent)`;
+    derived['chrome'] = `color-mix(in srgb, ${s} 85%, transparent)`;
+    derived['input-bg'] = colorScheme === 'light'
+      ? `color-mix(in srgb, ${s}, white)`
+      : `color-mix(in srgb, ${s} 70%, black)`;
   }
   if (contentTheme.foreground) {
     derived['fg'] = contentTheme.foreground;

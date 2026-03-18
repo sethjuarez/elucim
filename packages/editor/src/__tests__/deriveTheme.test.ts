@@ -46,16 +46,24 @@ describe('deriveEditorTheme', () => {
     expect(deriveEditorTheme(contentTheme, 'light')['color-scheme']).toBe('light');
   });
 
-  it('derives light panel/chrome for light scheme', () => {
-    const result = deriveEditorTheme(contentTheme, 'light');
-    expect(result['panel']).toContain('255');  // white-ish
-    expect(result['chrome']).toContain('241'); // light gray-ish
+  it('derives panel/chrome using color-mix from surface', () => {
+    const result = deriveEditorTheme(contentTheme, 'dark');
+    expect(result['panel']).toBe('color-mix(in srgb, #1e293b 95%, transparent)');
+    expect(result['chrome']).toBe('color-mix(in srgb, #1e293b 85%, transparent)');
+    expect(result['input-bg']).toBe('color-mix(in srgb, #1e293b 70%, black)');
   });
 
-  it('derives dark panel/chrome for dark scheme', () => {
-    const result = deriveEditorTheme(contentTheme, 'dark');
-    expect(result['panel']).toContain('22');   // dark-ish
-    expect(result['chrome']).toContain('15');   // darker
+  it('derives light input-bg using color-mix with white', () => {
+    const result = deriveEditorTheme(contentTheme, 'light');
+    expect(result['panel']).toBe('color-mix(in srgb, #1e293b 95%, transparent)');
+    expect(result['input-bg']).toBe('color-mix(in srgb, #1e293b, white)');
+  });
+
+  it('works with var() surface values', () => {
+    const theme: ElucimTheme = { surface: 'var(--my-surface)' };
+    const result = deriveEditorTheme(theme, 'dark');
+    expect(result['panel']).toBe('color-mix(in srgb, var(--my-surface) 95%, transparent)');
+    expect(result['chrome']).toBe('color-mix(in srgb, var(--my-surface) 85%, transparent)');
   });
 
   it('prefers accent over primary when both set', () => {
