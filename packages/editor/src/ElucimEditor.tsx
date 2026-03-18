@@ -1,7 +1,8 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ElucimDocument } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
 import { EditorProvider } from './state/EditorProvider';
+import { useEditorDocument } from './state/EditorProvider';
 import { ElucimCanvas } from './canvas/ElucimCanvas';
 import { Toolbar } from './toolbar/Toolbar';
 import { Inspector } from './inspector/Inspector';
@@ -25,27 +26,57 @@ export interface ElucimEditorProps {
    * or full CSS variable names (e.g. `"--elucim-editor-accent"`).
    */
   theme?: Record<string, string>;
+  /** Called whenever the document changes. Receives the updated document. */
+  onDocumentChange?: (document: ElucimDocument) => void;
   /** CSS class for the editor container */
   className?: string;
   /** Inline styles for the editor container */
   style?: React.CSSProperties;
 }
 
+/** Bridges internal editor state to the external onDocumentChange callback. */
+function DocumentBridge({ onChange }: { onChange?: (doc: ElucimDocument) => void }) {
+  const doc = useEditorDocument();
+  const cbRef = useRef(onChange);
+  cbRef.current = onChange;
+  const isFirst = useRef(true);
+
+  useEffect(() => {
+    if (isFirst.current) { isFirst.current = false; return; }
+    cbRef.current?.(doc);
+  }, [doc]);
+
+  return null;
+}
+
 /**
  * A visual editor for creating and editing Elucim animated scenes.
  * Full-bleed canvas with floating toolbar, contextual inspector, and Premiere-style timeline.
  */
-export function ElucimEditor({ initialDocument, initialFrame, theme, className, style }: ElucimEditorProps) {
+export function ElucimEditor({ initialDocument, initialFrame, theme, className, style, onDocumentChange }: ElucimEditorProps) {
   return (
     <EditorErrorBoundary>
       <EditorProvider initialDocument={initialDocument} initialFrame={initialFrame}>
-        <EditorLayout theme={theme} className={className} style={style} />
+        <DocumentBridge onChange={onDocumentChange} />
+        <ElucimEditorLayout theme={theme} className={className} style={style} />
       </EditorProvider>
     </EditorErrorBoundary>
   );
 }
 
-function EditorLayout({ theme, className, style }: { theme?: Record<string, string>; className?: string; style?: React.CSSProperties }) {
+export interface ElucimEditorLayoutProps {
+  theme?: Record<string, string>;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+/**
+ * The internal layout component used by ElucimEditor.
+ * Must be rendered inside an EditorProvider. Useful for consumers who need
+ * custom composition (e.g. adding panels inside the editor context) while
+ * keeping the standard floating-panel layout, scrollbar styles, and theme injection.
+ */
+export function ElucimEditorLayout({ theme, className, style }: ElucimEditorLayoutProps) {
   const { state, dispatch } = useEditorState();
   const icons = useEditorIcons();
   const containerRef = useRef<HTMLDivElement>(null);
