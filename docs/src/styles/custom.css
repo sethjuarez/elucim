@@ -1,5 +1,12 @@
 /* Elucim docs — custom styles */
 
+/* ─── Theme-adaptive images ──────────────────────────────────── */
+/* Show dark screenshots by default, swap to light when Starlight is in light mode */
+.theme-img-light { display: none; }
+.theme-img-dark  { display: block; }
+[data-theme='light'] .theme-img-light { display: block; }
+[data-theme='light'] .theme-img-dark  { display: none; }
+
 /* ─── Typography ─────────────────────────────────────────────── */
 :root {
   --sl-color-accent-low: #1a1a3a;
