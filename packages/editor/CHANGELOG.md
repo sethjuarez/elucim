@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.11.0](https://github.com/sethjuarez/elucim/compare/editor-v0.10.0...editor-v0.11.0) (2026-03-18)
+
+
+### Features
+
+* DslRenderer overrides, onPlayStateChange, initialFrame='last' ([2cb8b9e](https://github.com/sethjuarez/elucim/commit/2cb8b9e309cca7acd40bf9d4da8dc561f7284f5c))
+
+
+### Bug Fixes
+
+* **editor:** resolve \ backgrounds without circular dependency ([3a1fef5](https://github.com/sethjuarez/elucim/commit/3a1fef5b2051747f7a7c14dbfbc55f6dd193d1d2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.11.0
+    * @elucim/dsl bumped to 0.11.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.11.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.11.0
+
 ## [0.10.0](https://github.com/sethjuarez/elucim/compare/editor-v0.9.0...editor-v0.10.0) (2026-03-18)
 
 

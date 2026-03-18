@@ -1,5 +1,21 @@
 # @elucim/dsl
 
+## [0.11.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.10.0...dsl-v0.11.0) (2026-03-18)
+
+
+### Features
+
+* DslRenderer overrides, onPlayStateChange, initialFrame='last' ([2cb8b9e](https://github.com/sethjuarez/elucim/commit/2cb8b9e309cca7acd40bf9d4da8dc561f7284f5c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.11.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.11.0
+
 ## [0.10.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.9.0...dsl-v0.10.0) (2026-03-18)
 
 
