@@ -272,7 +272,7 @@ export function Presentation({
   }, []);
 
   const next = useCallback(() => {
-    if (completeSlideAnimations()) return;
+    completeSlideAnimations();
     if (slideIndex < totalSlides - 1) goTo(slideIndex + 1);
   }, [slideIndex, totalSlides, goTo, completeSlideAnimations]);
 
