@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.12.0](https://github.com/sethjuarez/elucim/compare/editor-v0.11.0...editor-v0.12.0) (2026-03-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* ElucimEditor 'theme' prop is now ElucimTheme (content tokens). Use 'editorTheme' for explicit chrome overrides.
+
+### Features
+
+* unified ElucimTheme, fitToContainer, error boundary, auto-derive editor chrome ([2109651](https://github.com/sethjuarez/elucim/commit/21096512cb2c36378569ef3ee31282a93d583f56))
+
+
+### Bug Fixes
+
+* **editor:** inspector dropdown renders via portal to escape panel clipping ([cef706a](https://github.com/sethjuarez/elucim/commit/cef706a4b7c8794c3660f2fc10335a33b6019885))
+* **editor:** use color-mix() for derived panel/chrome/input-bg ([cab1da8](https://github.com/sethjuarez/elucim/commit/cab1da8e13e1b89397f0234d4627f89cfbadbac6))
+* **editor:** use explicit colorScheme over luminance detection for var() backgrounds ([842514c](https://github.com/sethjuarez/elucim/commit/842514c9eef08f2e9e32129e1d7e66cdf8ffb3c4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.12.0
+    * @elucim/dsl bumped to 0.12.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.12.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.12.0
+
 ## [0.11.0](https://github.com/sethjuarez/elucim/compare/editor-v0.10.0...editor-v0.11.0) (2026-03-18)
 
 
