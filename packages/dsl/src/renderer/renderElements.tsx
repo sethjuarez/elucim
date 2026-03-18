@@ -36,6 +36,14 @@ export interface RenderRootOverrides {
   playerRef?: React.RefObject<PlayerRef | null>;
   /** CSS color-scheme to pass to Scene/Player. When set, overrides browser prefers-color-scheme. */
   colorScheme?: 'light' | 'dark' | 'light dark';
+  /** Override Player controls visibility. */
+  controls?: boolean;
+  /** Override Player autoPlay setting. */
+  autoPlay?: boolean;
+  /** Override Player loop setting. */
+  loop?: boolean;
+  /** Callback fired when playback state changes. */
+  onPlayStateChange?: (playing: boolean) => void;
 }
 
 export function renderRoot(
@@ -96,9 +104,10 @@ export function renderPlayer(node: PlayerNode, overrides?: RenderRootOverrides):
       fps={node.fps}
       durationInFrames={node.durationInFrames}
       background={resolveColor(node.background)}
-      controls={node.controls}
-      loop={node.loop}
-      autoPlay={node.autoPlay}
+      controls={overrides?.controls ?? node.controls}
+      loop={overrides?.loop ?? node.loop}
+      autoPlay={overrides?.autoPlay ?? node.autoPlay}
+      onPlayStateChange={overrides?.onPlayStateChange}
       colorScheme={overrides?.colorScheme}
     >
       {node.children.map((child, i) => renderElement(child, i))}

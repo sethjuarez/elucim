@@ -25,6 +25,8 @@ export interface PlayerProps extends Omit<SceneProps, 'frame' | 'autoPlay'> {
   loop?: boolean;
   /** Auto-play on mount. Default: false */
   autoPlay?: boolean;
+  /** Called whenever playback state changes. */
+  onPlayStateChange?: (playing: boolean) => void;
   /** Background color of controls bar. Default: auto (light/dark aware) */
   controlsBackground?: string;
   /** Text/icon color of controls bar. Default: auto (light/dark aware) */
@@ -42,6 +44,7 @@ export const Player = forwardRef<PlayerRef, PlayerProps>(function Player(
     controls = true,
     loop = true,
     autoPlay = false,
+    onPlayStateChange,
     durationInFrames,
     fps = 60,
     width = 1920,
@@ -60,6 +63,15 @@ export const Player = forwardRef<PlayerRef, PlayerProps>(function Player(
   const rafRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // Fire onPlayStateChange callback
+  const playCallbackRef = useRef(onPlayStateChange);
+  playCallbackRef.current = onPlayStateChange;
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    playCallbackRef.current?.(playing);
+  }, [playing]);
 
   useImperativeHandle(ref, () => ({
     getSvgElement: () => svgRef.current,

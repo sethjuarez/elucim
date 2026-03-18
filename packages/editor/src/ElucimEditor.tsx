@@ -18,12 +18,13 @@ import { CANVAS_ID } from './state/types';
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
   initialDocument?: ElucimDocument;
-  /** Initial animation frame (e.g. durationInFrames - 1 to show all fadeIn elements). */
-  initialFrame?: number;
+  /** Initial animation frame. Use `'last'` to start at the final frame. */
+  initialFrame?: number | 'last';
   /**
    * Theme overrides for editor chrome colors.
    * Keys can be bare names (e.g. `"accent"`) which map to `--elucim-editor-accent`,
    * or full CSS variable names (e.g. `"--elucim-editor-accent"`).
+   * Values can be hex, named colors, or CSS var() references.
    */
   theme?: Record<string, string>;
   /** Called whenever the document changes. Receives the updated document. */
@@ -54,9 +55,14 @@ function DocumentBridge({ onChange }: { onChange?: (doc: ElucimDocument) => void
  * Full-bleed canvas with floating toolbar, contextual inspector, and Premiere-style timeline.
  */
 export function ElucimEditor({ initialDocument, initialFrame, theme, className, style, onDocumentChange }: ElucimEditorProps) {
+  // Resolve 'last' to the actual final frame number
+  const resolvedFrame = initialFrame === 'last'
+    ? Math.max(0, ((initialDocument?.root as any)?.durationInFrames ?? 1) - 1)
+    : initialFrame;
+
   return (
     <EditorErrorBoundary>
-      <EditorProvider initialDocument={initialDocument} initialFrame={initialFrame}>
+      <EditorProvider initialDocument={initialDocument} initialFrame={resolvedFrame}>
         <DocumentBridge onChange={onDocumentChange} />
         <ElucimEditorLayout theme={theme} className={className} style={style} />
       </EditorProvider>

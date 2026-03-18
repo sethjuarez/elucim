@@ -33,7 +33,11 @@ export interface DslRendererProps {
   dsl: ElucimDocument;
   className?: string;
   style?: React.CSSProperties;
-  /** Inject theme colors as CSS custom properties (e.g. --elucim-foreground) */
+  /**
+   * Inject theme colors as CSS custom properties (e.g. --elucim-foreground).
+   * Values can be hex colors, named colors, or CSS var() references
+   * (e.g. `{ accent: "var(--my-app-accent)" }`).
+   */
   theme?: ElucimTheme;
   /**
    * Color scheme for semantic token resolution.
@@ -48,6 +52,14 @@ export interface DslRendererProps {
   colorScheme?: 'light' | 'dark' | 'auto';
   /** Render a static frame instead of interactive player. 'first' | 'last' | frame number */
   poster?: 'first' | 'last' | number;
+  /** Override the document's controls setting (Player root only). */
+  controls?: boolean;
+  /** Override the document's autoPlay setting (Player root only). */
+  autoPlay?: boolean;
+  /** Override the document's loop setting (Player root only). */
+  loop?: boolean;
+  /** Called whenever playback state changes (play/pause). */
+  onPlayStateChange?: (playing: boolean) => void;
   /** Callback fired when DSL validation fails */
   onError?: (errors: Array<{ path: string; message: string }>) => void;
 }
@@ -108,7 +120,7 @@ function usePrefersDark(): boolean {
 }
 
 export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function DslRenderer(
-  { dsl, className, style, theme, colorScheme, poster, onError },
+  { dsl, className, style, theme, colorScheme, poster, controls, autoPlay, loop, onPlayStateChange, onError },
   ref
 ) {
   const playerRef = useRef<import('@elucim/core').PlayerRef>(null);
@@ -192,6 +204,10 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
         frame: posterOverrides?.frame,
         playerRef,
         colorScheme: resolvedColorScheme,
+        controls,
+        autoPlay,
+        loop,
+        onPlayStateChange,
       })}
     </div>
   );
