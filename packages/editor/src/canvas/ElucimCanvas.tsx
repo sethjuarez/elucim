@@ -239,9 +239,10 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
       className={`elucim-editor-canvas ${className ?? ''}`}
       style={{
         position: 'absolute',
-        inset: 0,
+        inset: 15,
         overflow: 'hidden',
         cursor,
+        borderRadius: 6,
         ...style,
       }}
       onPointerDown={(e) => { handlePanStart(e); handleMarqueeStart(e); }}

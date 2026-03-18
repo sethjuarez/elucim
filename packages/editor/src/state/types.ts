@@ -120,20 +120,20 @@ export function createDefaultDocument(): ElucimDocument {
   };
 }
 
-export function createInitialState(document?: ElucimDocument): EditorState {
+export function createInitialState(document?: ElucimDocument, initialFrame?: number): EditorState {
   return {
     document: document ?? createDefaultDocument(),
-    selectedIds: [],
+    selectedIds: [CANVAS_ID],
     viewport: { x: 0, y: 0, zoom: 1 },
     past: [],
     future: [],
-    currentFrame: 0,
+    currentFrame: initialFrame ?? 0,
     isPlaying: false,
     activeTool: 'select',
     isPanning: false,
     toolbarPosition: { x: 12, y: 12 },
     inspectorPosition: null,
-    inspectorPinned: false,
+    inspectorPinned: true,
     toolbarCollapsed: false,
     themeOverrides: {},
   };

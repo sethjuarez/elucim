@@ -51,8 +51,8 @@ test.describe('Editor — Initial Render', () => {
     await expect(page.getByText('arrow-1')).toBeVisible();
     await expect(page.getByText('text-1')).toBeVisible();
 
-    // No inspector visible (nothing selected)
-    await expect(page.getByText('Inspector')).not.toBeVisible();
+    // Inspector visible by default (canvas selected, inspector pinned)
+    await expect(page.getByText('Inspector')).toBeVisible();
 
     // Zoom controls visible
     await expect(page.getByRole('button', { name: 'Zoom in' })).toBeVisible();

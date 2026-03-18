@@ -91,11 +91,28 @@ export function Timeline({ className, style }: TimelineProps) {
     dispatch({ type: 'SET_FRAME', frame: durationInFrames - 1 });
   }, [dispatch, durationInFrames]);
 
-  const handleRulerClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const scrubRef = useRef<boolean>(false);
+
+  const scrubFromEvent = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     dispatch({ type: 'SET_FRAME', frame: Math.round(ratio * (durationInFrames - 1)) });
   }, [dispatch, durationInFrames]);
+
+  const handleRulerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    scrubRef.current = true;
+    scrubFromEvent(e);
+  }, [scrubFromEvent]);
+
+  const handleRulerPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!scrubRef.current) return;
+    scrubFromEvent(e);
+  }, [scrubFromEvent]);
+
+  const handleRulerPointerUp = useCallback(() => {
+    scrubRef.current = false;
+  }, []);
 
   // ── Rename handlers ──
   const handleLabelDoubleClick = useCallback((id: string, currentLabel: string) => {
@@ -196,7 +213,9 @@ export function Timeline({ className, style }: TimelineProps) {
       <div style={{ position: 'relative' }} data-track-area>
         {/* Ruler */}
         <div
-          onClick={handleRulerClick}
+          onPointerDown={handleRulerPointerDown}
+          onPointerMove={handleRulerPointerMove}
+          onPointerUp={handleRulerPointerUp}
           style={{
             height: RULER_HEIGHT,
             background: v('--elucim-editor-input-bg'),

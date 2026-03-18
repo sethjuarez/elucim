@@ -18,12 +18,16 @@ const EditorContext = createContext<EditorContextValue | null>(null);
 export interface EditorProviderProps {
   /** Initial document to edit. If not provided, creates an empty player scene. */
   initialDocument?: ElucimDocument;
+  /** Initial animation frame (e.g. durationInFrames - 1 to show all fadeIn elements). */
+  initialFrame?: number;
   children: ReactNode;
 }
 
-export function EditorProvider({ initialDocument, children }: EditorProviderProps) {
-  const [state, dispatch] = useReducer(editorReducer, initialDocument, (doc) =>
-    createInitialState(doc),
+export function EditorProvider({ initialDocument, initialFrame, children }: EditorProviderProps) {
+  const [state, dispatch] = useReducer(
+    editorReducer,
+    { doc: initialDocument, frame: initialFrame },
+    ({ doc, frame }) => createInitialState(doc, frame),
   );
 
   const value = useMemo(() => ({ state, dispatch }), [state, dispatch]);

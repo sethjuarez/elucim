@@ -17,6 +17,8 @@ import { CANVAS_ID } from './state/types';
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
   initialDocument?: ElucimDocument;
+  /** Initial animation frame (e.g. durationInFrames - 1 to show all fadeIn elements). */
+  initialFrame?: number;
   /**
    * Theme overrides for editor chrome colors.
    * Keys can be bare names (e.g. `"accent"`) which map to `--elucim-editor-accent`,
@@ -33,10 +35,10 @@ export interface ElucimEditorProps {
  * A visual editor for creating and editing Elucim animated scenes.
  * Full-bleed canvas with floating toolbar, contextual inspector, and Premiere-style timeline.
  */
-export function ElucimEditor({ initialDocument, theme, className, style }: ElucimEditorProps) {
+export function ElucimEditor({ initialDocument, initialFrame, theme, className, style }: ElucimEditorProps) {
   return (
     <EditorErrorBoundary>
-      <EditorProvider initialDocument={initialDocument}>
+      <EditorProvider initialDocument={initialDocument} initialFrame={initialFrame}>
         <EditorLayout theme={theme} className={className} style={style} />
       </EditorProvider>
     </EditorErrorBoundary>
@@ -53,7 +55,7 @@ function EditorLayout({ theme, className, style }: { theme?: Record<string, stri
     merged[k] = val;
   }
   const themeVars = buildThemeVars(merged);
-  const colorScheme = state.themeOverrides['--elucim-editor-color-scheme'] || 'dark';
+  const colorScheme = merged['--elucim-editor-color-scheme'] || merged['color-scheme'] || 'dark';
 
   const handleToolbarPosition = useCallback((pos: { x: number; y: number }) => {
     dispatch({ type: 'SET_TOOLBAR_POSITION', position: pos });

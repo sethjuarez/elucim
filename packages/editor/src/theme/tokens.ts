@@ -9,7 +9,7 @@
  * with `editor-` for chrome-specific values that don't apply to rendered content.
  */
 
-/** Default values for every editor CSS custom property. */
+/** Default values for every editor CSS custom property (dark mode). */
 export const EDITOR_TOKENS: Record<string, string> = {
   // ── Core ──────────────────────────────────────────────────────────────
   '--elucim-editor-accent':          '#4a9eff',
@@ -35,6 +35,25 @@ export const EDITOR_TOKENS: Record<string, string> = {
   '--elucim-editor-error':           '#f87171',
 };
 
+/** Light-mode defaults — used when `color-scheme: "light"` is passed. */
+export const EDITOR_TOKENS_LIGHT: Record<string, string> = {
+  '--elucim-editor-accent':          '#2563eb',
+  '--elucim-editor-bg':              '#f1f5f9',
+  '--elucim-editor-surface':         '#ffffff',
+  '--elucim-editor-panel':           'rgba(255, 255, 255, 0.95)',
+  '--elucim-editor-chrome':          'rgba(241, 245, 249, 0.9)',
+  '--elucim-editor-fg':              '#1e293b',
+  '--elucim-editor-text-secondary':  '#475569',
+  '--elucim-editor-text-muted':      '#94a3b8',
+  '--elucim-editor-text-disabled':   '#cbd5e1',
+  '--elucim-editor-border':          '#e2e8f0',
+  '--elucim-editor-border-subtle':   '#f1f5f9',
+  '--elucim-editor-input-bg':        '#ffffff',
+  '--elucim-editor-success':         '#34d399',
+  '--elucim-editor-info':            '#4fc3f7',
+  '--elucim-editor-error':           '#f87171',
+};
+
 /** Helper: returns `var(--token, fallback)` string for use in inline styles. */
 export function v(token: string): string {
   const fallback = EDITOR_TOKENS[token];
@@ -43,13 +62,22 @@ export function v(token: string): string {
 
 /**
  * Build a CSS custom-property style object from a theme override map.
- * Merges user overrides on top of the full default token set, then returns
+ * Merges user overrides on top of the default token set, then returns
  * a React-compatible `CSSProperties` record.
+ *
+ * When the overrides contain `color-scheme: "light"` (or the full
+ * `--elucim-editor-color-scheme: "light"`), light-mode defaults are
+ * used as the base so host apps only need to override a few tokens.
  */
 export function buildThemeVars(
   overrides?: Record<string, string>,
 ): React.CSSProperties {
-  const vars: Record<string, string> = { ...EDITOR_TOKENS };
+  const isLight = overrides && (
+    overrides['color-scheme'] === 'light' ||
+    overrides['--elucim-editor-color-scheme'] === 'light'
+  );
+  const defaults = isLight ? EDITOR_TOKENS_LIGHT : EDITOR_TOKENS;
+  const vars: Record<string, string> = { ...defaults };
   if (overrides) {
     for (const [key, val] of Object.entries(overrides)) {
       // Accept bare names (e.g. "accent") or full CSS var names

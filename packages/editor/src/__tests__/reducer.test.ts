@@ -30,7 +30,8 @@ const line1: LineNode = { type: 'line', id: 'l1', x1: 0, y1: 0, x2: 200, y2: 200
 describe('createInitialState', () => {
   it('creates default state with empty document', () => {
     const state = createInitialState();
-    expect(state.selectedIds).toEqual([]);
+    expect(state.selectedIds).toEqual(['__canvas__']);
+    expect(state.inspectorPinned).toBe(true);
     expect(state.viewport).toEqual({ x: 0, y: 0, zoom: 1 });
     expect(state.past).toEqual([]);
     expect(state.future).toEqual([]);
@@ -38,6 +39,11 @@ describe('createInitialState', () => {
     expect(state.isPlaying).toBe(false);
     expect(state.activeTool).toBe('select');
     expect(state.document.version).toBe('1.0');
+  });
+
+  it('accepts initialFrame', () => {
+    const state = createInitialState(undefined, 42);
+    expect(state.currentFrame).toBe(42);
   });
 
   it('accepts a custom document', () => {
@@ -75,10 +81,12 @@ describe('selection actions', () => {
 
   it('SELECT_TOGGLE toggles selection', () => {
     let state = stateWithElements(circle1, rect1);
+    // starts with ['__canvas__'] — toggle c1 on
     state = editorReducer(state, { type: 'SELECT_TOGGLE', id: 'c1' });
-    expect(state.selectedIds).toEqual(['c1']);
+    expect(state.selectedIds).toContain('c1');
+    // toggle c1 off
     state = editorReducer(state, { type: 'SELECT_TOGGLE', id: 'c1' });
-    expect(state.selectedIds).toEqual([]);
+    expect(state.selectedIds).not.toContain('c1');
   });
 
   it('DESELECT_ALL clears selection', () => {
@@ -89,7 +97,9 @@ describe('selection actions', () => {
   });
 
   it('DESELECT_ALL returns same state if already empty', () => {
-    const state = stateWithElements(circle1);
+    let state = stateWithElements(circle1);
+    // Clear the default selection first
+    state = editorReducer(state, { type: 'DESELECT_ALL' });
     const next = editorReducer(state, { type: 'DESELECT_ALL' });
     expect(next).toBe(state);
   });

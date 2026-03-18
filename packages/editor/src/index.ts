@@ -38,7 +38,7 @@ export { EditorMenuBar } from './toolbar/EditorMenuBar';
 export { Timeline, type TimelineProps } from './timeline/Timeline';
 
 // Theme
-export { EDITOR_TOKENS, v, buildThemeVars, makeRotateCursor, ROTATE_CURSOR } from './theme/tokens';
+export { EDITOR_TOKENS, EDITOR_TOKENS_LIGHT, v, buildThemeVars, makeRotateCursor, ROTATE_CURSOR } from './theme/tokens';
 
 // Icons (overridable)
 export {
