@@ -10,14 +10,15 @@ import calculusJson from '../../../packages/dsl/examples/calculus-explained.json
 import agenticJson from '../../../packages/dsl/examples/agentic-loop.json';
 
 /** Watch Starlight's data-theme attribute on <html> */
-function useStarlightColorScheme(): 'light' | 'dark' {
-  const [scheme, setScheme] = useState<'light' | 'dark'>(() => {
-    if (typeof document === 'undefined') return 'dark';
-    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-  });
+function useStarlightColorScheme(): 'light' | 'dark' | 'auto' {
+  // Start with 'auto' to avoid SSR hydration mismatch — DslRenderer
+  // will use prefers-color-scheme until the client effect reads Starlight's
+  // data-theme attribute and switches to the explicit value.
+  const [scheme, setScheme] = useState<'light' | 'dark' | 'auto'>('auto');
   useEffect(() => {
     const update = () => {
-      setScheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
+      const attr = document.documentElement.getAttribute('data-theme');
+      setScheme(attr === 'light' ? 'light' : attr === 'dark' ? 'dark' : 'auto');
     };
     update();
     const observer = new MutationObserver(update);
