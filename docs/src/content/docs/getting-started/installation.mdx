@@ -10,7 +10,12 @@ description: Install Elucim and set up your first project.
 pnpm add @elucim/core react react-dom
 
 # DSL package (optional — for JSON-based authoring)
+# @elucim/core is a peer dependency, install it alongside
 pnpm add @elucim/dsl @elucim/core react react-dom
+
+# Editor (optional — visual canvas editor)
+# Requires both @elucim/core and @elucim/dsl as peer dependencies
+pnpm add @elucim/editor @elucim/core @elucim/dsl react react-dom
 ```
 
 ## KaTeX (for LaTeX rendering)

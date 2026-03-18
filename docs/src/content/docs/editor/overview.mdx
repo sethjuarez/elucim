@@ -52,6 +52,23 @@ function App() {
 }
 ```
 
+### Starting at a Specific Frame
+
+Use `initialFrame` to open the editor at a specific animation frame — useful when elements use `fadeIn` animations and you want to see them fully visible on load:
+
+```tsx
+function App() {
+  const lastFrame = myScene.root.durationInFrames! - 1;
+  return (
+    <ElucimEditor
+      initialDocument={myScene}
+      initialFrame={lastFrame}
+      style={{ width: '100vw', height: '100vh' }}
+    />
+  );
+}
+```
+
 ## Editor Layout
 
 The editor uses a **floating panel** design — all UI chrome hovers over an infinite canvas:

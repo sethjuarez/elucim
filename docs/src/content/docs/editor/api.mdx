@@ -10,6 +10,7 @@ The main editor component — all-in-one canvas, toolbar, inspector, and timelin
 ```ts
 interface ElucimEditorProps {
   initialDocument?: ElucimDocument;
+  initialFrame?: number;
   theme?: Record<string, string>;
   className?: string;
   style?: React.CSSProperties;
@@ -19,6 +20,7 @@ interface ElucimEditorProps {
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `initialDocument` | `ElucimDocument` | Empty 800×600 scene | Starting scene document |
+| `initialFrame` | `number` | `0` | Starting frame when editor loads |
 | `theme` | `Record<string, string>` | — | Token overrides (see [Theming](/editor/theming/)) |
 | `className` | `string` | — | CSS class on root element |
 | `style` | `CSSProperties` | — | Inline styles on root element |
@@ -203,6 +205,9 @@ const ROTATE_CURSOR: string;
 
 // Full token registry with defaults
 const EDITOR_TOKENS: Record<string, string>;
+
+// Light-mode token defaults (used when color-scheme: 'light')
+const EDITOR_TOKENS_LIGHT: Record<string, string>;
 ```
 
 ### Templates

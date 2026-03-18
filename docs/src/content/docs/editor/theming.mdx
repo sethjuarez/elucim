@@ -162,6 +162,24 @@ import { EDITOR_TOKENS } from '@elucim/editor';
 // { '--elucim-editor-accent': '#4a9eff', '--elucim-editor-bg': '#1a1a2e', ... }
 ```
 
+### `EDITOR_TOKENS_LIGHT` — Light Mode Defaults
+
+Light-mode token registry. When you pass `{ 'color-scheme': 'light' }` in the theme, `buildThemeVars()` uses these as the base instead of the dark defaults:
+
+```tsx
+import { EDITOR_TOKENS_LIGHT } from '@elucim/editor';
+// { '--elucim-editor-accent': '#2563eb', '--elucim-editor-bg': '#f1f5f9', ... }
+```
+
+You can also use `EDITOR_TOKENS_LIGHT` to build a fully custom light theme:
+
+```tsx
+<ElucimEditor
+  theme={{ 'color-scheme': 'light', accent: '#e040fb' }}
+  style={{ width: '100vw', height: '100vh' }}
+/>
+```
+
 ### `makeRotateCursor(color)` — Themed Rotation Cursor
 
 Generates an SVG data-URL cursor for the rotation handle. CSS custom properties can't be used inside `url()` data URIs, so this function takes a resolved color value:
