@@ -1,5 +1,22 @@
 # @elucim/dsl
 
+## [0.9.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.8.4...dsl-v0.9.0) (2026-03-18)
+
+
+### Bug Fixes
+
+* pipe colorScheme through to Presentation component ([98a50dc](https://github.com/sethjuarez/elucim/commit/98a50dc92db764b546e7da05f420a98e0a3f8217))
+* Presentation dark mode default + remove legacy VitePress docs ([0bdf8b5](https://github.com/sethjuarez/elucim/commit/0bdf8b5b081088b2f79908732b42ace3eafdbabf))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.9.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.9.0
+
 ## [0.8.4](https://github.com/sethjuarez/elucim/compare/dsl-v0.8.3...dsl-v0.8.4) (2026-03-18)
 
 
