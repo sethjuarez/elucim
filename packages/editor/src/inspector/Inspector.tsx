@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ElementNode } from '@elucim/dsl';
+import { SEMANTIC_TOKENS } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
 import { CANVAS_ID } from '../state/types';
@@ -204,13 +205,23 @@ function NumberField({ label, value, onChange, step = 1 }: {
 function ColorField({ label, value, onChange }: {
   label: string; value: string | undefined; onChange: (v: string) => void;
 }) {
+  // Resolve $token to its fallback hex for the color swatch preview
+  const swatchColor = (() => {
+    if (!value) return '#ffffff';
+    if (value.startsWith('$')) {
+      const token = value.slice(1);
+      return SEMANTIC_TOKENS[token]?.fallback ?? '#ffffff';
+    }
+    return value.startsWith('#') ? value : '#ffffff';
+  })();
+
   return (
     <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
       <span style={{ color: v('--elucim-editor-text-secondary'), minWidth: 44, fontSize: 10 }}>{label}</span>
       <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
         <input
           type="color"
-          value={value?.startsWith('#') ? value : '#ffffff'}
+          value={swatchColor}
           onChange={e => onChange(e.target.value)}
           style={{ width: 20, height: 20, padding: 0, border: 'none', cursor: 'pointer' }}
         />

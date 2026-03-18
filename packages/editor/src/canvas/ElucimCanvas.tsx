@@ -1,8 +1,8 @@
-import React, { useRef, useCallback, useState, useEffect } from 'react';
+import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { Scene } from '@elucim/core';
 import { renderElement } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
-import { resolveColor } from '@elucim/dsl';
+import { resolveColor, darkTheme, lightTheme } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
 import { SelectionOverlay } from './SelectionOverlay';
@@ -25,6 +25,42 @@ export interface ElucimCanvasProps {
 }
 
 /**
+ * Build --elucim-* CSS custom properties from a builder Theme so that
+ * $token references in element color props resolve correctly.
+ */
+function contentThemeVars(t: typeof darkTheme): React.CSSProperties {
+  return {
+    '--elucim-foreground': t.text,
+    '--elucim-background': t.background,
+    '--elucim-title': t.title,
+    '--elucim-subtitle': t.subtitle,
+    '--elucim-accent': t.primary,
+    '--elucim-muted': t.muted,
+    '--elucim-surface': t.background,
+    '--elucim-border': t.boxStroke,
+    '--elucim-primary': t.primary,
+    '--elucim-secondary': t.secondary,
+    '--elucim-tertiary': t.tertiary,
+    '--elucim-success': t.success,
+    '--elucim-warning': t.warning,
+    '--elucim-error': t.error,
+  } as React.CSSProperties;
+}
+
+/** Determine whether a resolved background color is dark. */
+function isDarkBackground(bg: string): boolean {
+  // Extract hex color from var() fallback or raw hex
+  const match = bg.match(/#([0-9a-f]{6}|[0-9a-f]{3})\b/i);
+  if (!match) return true; // assume dark by default
+  const hex = match[1];
+  const r = parseInt(hex.length === 3 ? hex[0] + hex[0] : hex.slice(0, 2), 16);
+  const g = parseInt(hex.length === 3 ? hex[1] + hex[1] : hex.slice(2, 4), 16);
+  const b = parseInt(hex.length === 3 ? hex[2] + hex[2] : hex.slice(4, 6), 16);
+  // Relative luminance approximation
+  return (0.299 * r + 0.587 * g + 0.114 * b) < 128;
+}
+
+/**
  * Full-bleed editor canvas with viewport pan/zoom, dot grid, minimap, and zoom controls.
  */
 export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
@@ -42,6 +78,13 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
   const fps = ('fps' in root ? root.fps : undefined) ?? 60;
   const durationInFrames = ('durationInFrames' in root ? root.durationInFrames : undefined) ?? 120;
   const background = resolveColor(('background' in root ? root.background : undefined) as string | undefined) ?? '#0f172a';
+
+  // Set --elucim-* content theme CSS vars so $token references in elements resolve correctly.
+  // Picks dark or light theme based on the scene background luminance.
+  const sceneThemeVars = useMemo(
+    () => contentThemeVars(isDarkBackground(background) ? darkTheme : lightTheme),
+    [background],
+  );
 
   // Get children from root
   const children: ElementNode[] = ('children' in root && Array.isArray(root.children)) ? root.children : [];
@@ -268,6 +311,7 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
           border: `1px solid ${v('--elucim-editor-border')}`,
           boxShadow: '0 2px 16px rgba(0,0,0,0.35)',
           borderRadius: 2,
+          ...sceneThemeVars,
         }}
       >
         {/* Scene layer */}
