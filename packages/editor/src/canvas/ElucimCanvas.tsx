@@ -2,7 +2,7 @@ import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react'
 import { Scene } from '@elucim/core';
 import { renderElement } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
-import { resolveColor, DARK_THEME, LIGHT_THEME, themeToVars } from '@elucim/core';
+import { resolveColor, DARK_THEME, LIGHT_THEME, themeToVars, type ElucimTheme } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
 import { SelectionOverlay } from './SelectionOverlay';
@@ -24,6 +24,8 @@ export interface ElucimCanvasProps {
   style?: React.CSSProperties;
   /** Editor color scheme — used to pick content theme when background is a $token. */
   editorColorScheme?: string;
+  /** Explicit content theme — when provided, used for scene CSS vars instead of built-in presets. */
+  contentTheme?: ElucimTheme;
 }
 
 /**
@@ -50,7 +52,7 @@ function isDarkBackground(bg: string): boolean {
 /**
  * Full-bleed editor canvas with viewport pan/zoom, dot grid, minimap, and zoom controls.
  */
-export function ElucimCanvas({ className, style, editorColorScheme }: ElucimCanvasProps) {
+export function ElucimCanvas({ className, style, editorColorScheme, contentTheme }: ElucimCanvasProps) {
   const { state, dispatch } = useEditorState();
   const { document, selectedIds, currentFrame, viewport, isPanning } = state;
   const root = document.root;
@@ -71,12 +73,15 @@ export function ElucimCanvas({ className, style, editorColorScheme }: ElucimCanv
   // When editorColorScheme is explicitly light/dark, use it directly — this avoids
   // luminance detection failures with var() or $token backgrounds.
   const sceneThemeVars = useMemo(() => {
+    if (contentTheme) {
+      return themeToVars(contentTheme) as React.CSSProperties;
+    }
     if (editorColorScheme === 'light' || editorColorScheme === 'dark') {
       return contentThemeVars(editorColorScheme === 'light' ? LIGHT_THEME : DARK_THEME);
     }
     // No explicit scheme — fall back to luminance detection from background hex
     return contentThemeVars(isDarkBackground(background) ? DARK_THEME : LIGHT_THEME);
-  }, [background, editorColorScheme]);
+  }, [background, editorColorScheme, contentTheme]);
 
   // Get children from root
   const children: ElementNode[] = ('children' in root && Array.isArray(root.children)) ? root.children : [];
