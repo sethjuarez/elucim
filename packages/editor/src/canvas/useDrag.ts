@@ -42,7 +42,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
   const accDx = useRef(0);
   const accDy = useRef(0);
   const didDrag = useRef(false);
-  const shiftKeyRef = useRef(false);
+  const modifierKeyRef = useRef(false);
   const activeDragType = useRef<'move' | 'resize' | 'rotate' | null>(null);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
@@ -59,7 +59,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
 
     if (!editorId) return;
 
-    shiftKeyRef.current = e.shiftKey;
+    modifierKeyRef.current = e.shiftKey || e.ctrlKey || e.metaKey;
 
     if (handleAttr) {
       const isRotate = handleAttr === 'rotate';
@@ -149,7 +149,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
     const drag = dragRef.current;
     if (drag && !didDrag.current) {
       // No significant drag movement — treat as a click → select
-      if (shiftKeyRef.current) {
+      if (modifierKeyRef.current) {
         dispatch({ type: 'SELECT_TOGGLE', id: drag.elementId });
       } else {
         dispatch({ type: 'SELECT', ids: [drag.elementId] });
