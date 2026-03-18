@@ -131,7 +131,7 @@ export function createInitialState(document?: ElucimDocument, initialFrame?: num
     isPlaying: false,
     activeTool: 'select',
     isPanning: false,
-    toolbarPosition: { x: 12, y: 12 },
+    toolbarPosition: { x: 24, y: 24 },
     inspectorPosition: null,
     inspectorPinned: true,
     toolbarCollapsed: false,
