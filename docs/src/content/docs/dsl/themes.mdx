@@ -28,7 +28,7 @@ The theme is passed to the `SlideBuilder`, which uses it for default colors on t
 | `secondary` | `string` | Secondary accent |
 | `tertiary` | `string` | Third accent |
 | `muted` | `string` | Muted / annotation color |
-| `text` | `string` | Default body text color |
+| `foreground` | `string` | Default body text color |
 | `boxFill` | `string` | Fill color for diagram boxes |
 | `boxStroke` | `string` | Stroke color for diagram boxes |
 | `success` | `string` | Positive / success color |
@@ -47,7 +47,7 @@ The theme is passed to the `SlideBuilder`, which uses it for default colors on t
 | `secondary` | `#a78bfa` | `#7c3aed` |
 | `tertiary` | `#f472b6` | `#db2777` |
 | `muted` | `#64748b` | `#94a3b8` |
-| `text` | `#c8d6e5` | `#334155` |
+| `foreground` | `#c8d6e5` | `#334155` |
 | `boxFill` | `rgba(79,195,247,0.12)` | `rgba(37,99,235,0.08)` |
 | `boxStroke` | `#4fc3f7` | `#2563eb` |
 | `success` | `#34d399` | `#16a34a` |
@@ -83,7 +83,7 @@ const solarized: Theme = {
   secondary: '#2aa198',
   tertiary: '#d33682',
   muted: '#586e75',
-  text: '#eee8d5',
+  foreground: '#eee8d5',
   boxFill: 'rgba(38,139,210,0.15)',
   boxStroke: '#268bd2',
   success: '#859900',
@@ -191,3 +191,81 @@ This scene renders with blue accents on a dark background by default, but automa
 :::note
 Semantic tokens (`$accent`) and Builder API themes (`darkTheme`, `lightTheme`) serve different purposes. Tokens are resolved at **render time** via CSS — the JSON stays the same. Builder themes are applied at **build time** — the JSON contains concrete color values.
 :::
+
+## Core Theme Utilities
+
+The `@elucim/core` package exports theme utilities used by both `DslRenderer` and `ElucimEditor`:
+
+```ts
+import {
+  type ElucimTheme,
+  DARK_THEME,
+  LIGHT_THEME,
+  SEMANTIC_TOKENS,
+  resolveColor,
+  themeToVars,
+} from '@elucim/core';
+```
+
+### ElucimTheme
+
+The unified theme type accepted by both `DslRenderer` and `ElucimEditor`. All fields are optional — only set the tokens you want to override:
+
+```ts
+interface ElucimTheme {
+  foreground?: string;
+  background?: string;
+  title?: string;
+  subtitle?: string;
+  muted?: string;
+  primary?: string;
+  secondary?: string;
+  tertiary?: string;
+  accent?: string;
+  surface?: string;
+  border?: string;
+  success?: string;
+  warning?: string;
+  error?: string;
+}
+```
+
+Values can be hex colors, named colors, or CSS `var()` references (e.g. `"var(--my-brand-color)"`).
+
+### DARK_THEME / LIGHT_THEME
+
+Pre-built theme presets with sensible defaults:
+
+```ts
+<DslRenderer dsl={doc} theme={DARK_THEME} colorScheme="dark" />
+<DslRenderer dsl={doc} theme={LIGHT_THEME} colorScheme="light" />
+```
+
+### themeToVars()
+
+Converts an `ElucimTheme` into CSS custom property declarations (`--elucim-{key}: value`):
+
+```ts
+const vars = themeToVars(myTheme);
+// { '--elucim-foreground': '#e0e0e0', '--elucim-background': '#1a1a2e', ... }
+```
+
+### resolveColor()
+
+Resolves `$token` syntax to CSS `var()` references with fallbacks:
+
+```ts
+resolveColor('$accent');    // → 'var(--elucim-accent, #4fc3f7)'
+resolveColor('#ff0000');    // → '#ff0000' (unchanged)
+resolveColor('\\$literal'); // → '$literal' (escaped)
+```
+
+### SEMANTIC_TOKENS
+
+Registry of all standard token names and their default fallback values:
+
+```ts
+SEMANTIC_TOKENS.foreground  // '#e0e0e0'
+SEMANTIC_TOKENS.accent      // '#4fc3f7'
+SEMANTIC_TOKENS.surface     // '#1e293b'
+```

@@ -275,7 +275,8 @@ function v(token: string): string;
 // Merge theme overrides with defaults
 function buildThemeVars(overrides?: Record<string, string>): Record<string, string>;
 
-// Derive editor chrome from an ElucimTheme content theme
+// Derive editor chrome from an ElucimTheme content theme.
+// Uses CSS color-mix() for panel/chrome/input-bg, so var() surface values work correctly.
 function deriveEditorTheme(contentTheme: ElucimTheme, colorScheme: 'light' | 'dark'): Record<string, string>;
 
 // Generate SVG rotation cursor with custom color
@@ -290,6 +291,34 @@ const EDITOR_TOKENS: Record<string, string>;
 // Light-mode token defaults (used when color-scheme: 'light')
 const EDITOR_TOKENS_LIGHT: Record<string, string>;
 ```
+
+#### `deriveEditorTheme` in detail
+
+Automatically maps content tokens → editor chrome tokens:
+
+```tsx
+import { deriveEditorTheme } from '@elucim/editor';
+import type { ElucimTheme } from '@elucim/core';
+
+const myTheme: ElucimTheme = {
+  foreground: '#e0e0e0',
+  background: '#1a1a2e',
+  surface: 'var(--my-surface)',  // CSS var() values work
+  primary: '#4fc3f7',
+};
+
+const chrome = deriveEditorTheme(myTheme, 'dark');
+// chrome.panel  → 'color-mix(in srgb, var(--my-surface) 95%, transparent)'
+// chrome.chrome → 'color-mix(in srgb, var(--my-surface) 85%, transparent)'
+// chrome.fg     → '#e0e0e0'
+// chrome.accent → '#4fc3f7'
+```
+
+Panel, chrome, and input-bg use CSS `color-mix()` to derive semi-transparent variants from the surface color. This works with both hex values and `var()` references — no JavaScript color parsing needed.
+
+:::tip
+You rarely need to call `deriveEditorTheme` directly — `ElucimEditor` calls it automatically when you pass a `theme` prop. Use `editorTheme` only to override specific tokens.
+:::
 
 ### Templates
 

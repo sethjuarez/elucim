@@ -187,6 +187,20 @@ Use `fitToContainer` to make the scene fill its parent container width and scale
 
 The SVG `viewBox` handles resolution-independent scaling — no CSS transforms needed.
 
+## Color Scheme
+
+The `colorScheme` prop controls which default token values are injected (light or dark palette):
+
+```tsx
+<DslRenderer dsl={doc} colorScheme="dark" />   {/* Dark palette defaults */}
+<DslRenderer dsl={doc} colorScheme="light" />  {/* Light palette defaults */}
+<DslRenderer dsl={doc} colorScheme="auto" />   {/* Detect from background luminance */}
+```
+
+When set to `"light"` or `"dark"`, the value is **authoritative** — it directly selects the palette without luminance detection. This is the recommended approach when theme values include CSS `var()` references, since `var()` strings can't be parsed for luminance at render time.
+
+When set to `"auto"` (or omitted), the renderer detects the background color's luminance and selects the appropriate palette. This only works with resolved color values (hex, rgb), not `var()` references.
+
 ## Theme Tokens
 
 The `theme` prop injects CSS custom properties onto the renderer wrapper. Each key becomes `--elucim-{key}`:
