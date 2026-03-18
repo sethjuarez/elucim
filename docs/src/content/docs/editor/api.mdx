@@ -10,7 +10,7 @@ The main editor component — all-in-one canvas, toolbar, inspector, and timelin
 ```ts
 interface ElucimEditorProps {
   initialDocument?: ElucimDocument;
-  initialFrame?: number;
+  initialFrame?: number | 'last';
   theme?: Record<string, string>;
   onDocumentChange?: (document: ElucimDocument) => void;
   className?: string;
@@ -21,8 +21,8 @@ interface ElucimEditorProps {
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `initialDocument` | `ElucimDocument` | Empty 800×600 scene | Starting scene document |
-| `initialFrame` | `number` | `0` | Starting frame when editor loads |
-| `theme` | `Record<string, string>` | — | Token overrides (see [Theming](/editor/theming/)) |
+| `initialFrame` | `number \| 'last'` | `0` | Starting frame. Use `'last'` to start at final frame. |
+| `theme` | `Record<string, string>` | — | Token overrides — accepts hex, named colors, or `var()` refs (see [Theming](/editor/theming/)) |
 | `onDocumentChange` | `(doc: ElucimDocument) => void` | — | Called on every document change (skips initial mount) |
 | `className` | `string` | — | CSS class on root element |
 | `style` | `CSSProperties` | — | Inline styles on root element |

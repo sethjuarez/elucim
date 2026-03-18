@@ -12,8 +12,13 @@ The `<DslRenderer>` component takes an `ElucimDocument` and renders it as a full
 | `dsl` | `ElucimDocument` | **required** | The DSL document to render |
 | `className` | `string` | — | CSS class for the root wrapper |
 | `style` | `React.CSSProperties` | — | Inline styles for the root wrapper |
-| `theme` | `ElucimTheme` | — | Inject CSS custom properties for theming |
+| `theme` | `ElucimTheme` | — | Inject CSS custom properties for theming. Values can be hex, named colors, or `var()` references. |
+| `colorScheme` | `'light' \| 'dark' \| 'auto'` | — | Semantic token resolution: injects light or dark CSS variables |
 | `poster` | `'first' \| 'last' \| number` | — | Render a static frame instead of an interactive player |
+| `controls` | `boolean` | — | Override the document's `controls` setting (Player root only) |
+| `autoPlay` | `boolean` | — | Override the document's `autoPlay` setting (Player root only) |
+| `loop` | `boolean` | — | Override the document's `loop` setting (Player root only) |
+| `onPlayStateChange` | `(playing: boolean) => void` | — | Called when playback starts or stops |
 | `onError` | `(errors: Array<{path, message}>) => void` | — | Callback fired when DSL validation fails |
 | `ref` | `React.Ref<DslRendererRef>` | — | Imperative handle for programmatic control |
 
