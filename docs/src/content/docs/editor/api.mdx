@@ -12,6 +12,7 @@ interface ElucimEditorProps {
   initialDocument?: ElucimDocument;
   initialFrame?: number;
   theme?: Record<string, string>;
+  onDocumentChange?: (document: ElucimDocument) => void;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -22,14 +23,58 @@ interface ElucimEditorProps {
 | `initialDocument` | `ElucimDocument` | Empty 800×600 scene | Starting scene document |
 | `initialFrame` | `number` | `0` | Starting frame when editor loads |
 | `theme` | `Record<string, string>` | — | Token overrides (see [Theming](/editor/theming/)) |
+| `onDocumentChange` | `(doc: ElucimDocument) => void` | — | Called on every document change (skips initial mount) |
 | `className` | `string` | — | CSS class on root element |
 | `style` | `CSSProperties` | — | Inline styles on root element |
+
+### Observing document changes
+
+```tsx
+function MyApp() {
+  const handleChange = (doc: ElucimDocument) => {
+    // Called on every edit — debounce if doing expensive work
+    console.log('Document changed:', doc);
+  };
+
+  return (
+    <ElucimEditor
+      initialDocument={myDoc}
+      onDocumentChange={handleChange}
+    />
+  );
+}
+```
+
+## ElucimEditorLayout
+
+The internal layout component used by `ElucimEditor`. Must be rendered inside an `EditorProvider`.
+Use this when you need custom composition (e.g. adding your own panels) while keeping the
+standard floating-panel layout, scrollbar styles, and theme injection.
+
+```tsx
+import { EditorProvider, ElucimEditorLayout, useEditorDocument } from '@elucim/editor';
+
+function SaveButton() {
+  const doc = useEditorDocument();
+  return <button onClick={() => save(doc)}>Save</button>;
+}
+
+function MyEditor({ doc }: { doc: ElucimDocument }) {
+  return (
+    <EditorProvider initialDocument={doc}>
+      <ElucimEditorLayout theme={myTheme} />
+      <SaveButton />
+    </EditorProvider>
+  );
+}
+```
 
 ## Components
 
 | Export | Description |
 |--------|-------------|
 | `ElucimEditor` | Main editor — canvas + toolbar + inspector + timeline |
+| `ElucimEditorLayout` | Internal layout for custom composition inside `EditorProvider` |
 | `ElucimCanvas` | Canvas with zoom/pan and selection overlays |
 | `Toolbar` | Element template palette |
 | `Inspector` | Property editing panel |
