@@ -151,7 +151,7 @@ function App() {
     } as any,
   };
 
-  const lastFrame = doc.root.durationInFrames! - 1;
+  const lastFrame = (doc.root as any).durationInFrames! - 1;
   return (
     <ElucimEditor
       initialDocument={doc}
