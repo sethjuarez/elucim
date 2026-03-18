@@ -2,10 +2,26 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ReactDOM from 'react-dom/client';
 import { act } from 'react-dom/test-utils';
 import { Player, type PlayerRef } from '../components/Player';
+
+// Default matchMedia mock — no reduced motion
+beforeEach(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }),
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function renderPlayer(props: Partial<React.ComponentProps<typeof Player>> & { playerRef?: React.RefObject<PlayerRef | null> }) {
   const container = document.createElement('div');
@@ -60,6 +76,45 @@ describe('Player onPlayStateChange', () => {
     const cb = vi.fn();
     const { unmount } = renderPlayer({ autoPlay: true, onPlayStateChange: cb });
     expect(cb).not.toHaveBeenCalled();
+    unmount();
+  });
+});
+
+// ─── Reduced motion ──────────────────────────────────────────────────────────
+
+describe('Player with prefers-reduced-motion', () => {
+  function mockReducedMotion(matches: boolean) {
+    (window.matchMedia as any).mockReturnValue({
+      matches,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
+  }
+
+  it('starts at final frame when autoPlay + reduced motion', () => {
+    mockReducedMotion(true);
+    const ref = React.createRef<PlayerRef>();
+    const { unmount } = renderPlayer({ playerRef: ref, autoPlay: true });
+    // Should not be playing — reduced motion skips animation
+    expect(ref.current!.isPlaying()).toBe(false);
+    unmount();
+  });
+
+  it('play() jumps to final frame with reduced motion', () => {
+    mockReducedMotion(true);
+    const ref = React.createRef<PlayerRef>();
+    const { unmount } = renderPlayer({ playerRef: ref });
+    act(() => { ref.current!.play(); });
+    // The effect detects reducedMotion → jumps to end → sets playing false
+    expect(ref.current!.isPlaying()).toBe(false);
+    unmount();
+  });
+
+  it('starts at frame 0 without reduced motion', () => {
+    mockReducedMotion(false);
+    const ref = React.createRef<PlayerRef>();
+    const { unmount } = renderPlayer({ playerRef: ref });
+    expect(ref.current!.isPlaying()).toBe(false);
     unmount();
   });
 });

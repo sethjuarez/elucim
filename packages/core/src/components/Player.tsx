@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect, forwardRef, useImperat
 import { Scene, type SceneProps } from './Scene';
 import { useInsidePresentation, usePresentationContextSafe } from './Presentation';
 import type { SlidePlayerHandle } from './Presentation';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 export interface PlayerRef {
   /** Get the underlying SVG element */
@@ -58,8 +59,9 @@ export const Player = forwardRef<PlayerRef, PlayerProps>(function Player(
   ref
 ) {
   const fitToContainer = sceneProps.fitToContainer ?? false;
-  const [frame, setFrame] = useState(0);
-  const [playing, setPlaying] = useState(autoPlay);
+  const reducedMotion = useReducedMotion();
+  const [frame, setFrame] = useState(() => reducedMotion ? durationInFrames - 1 : 0);
+  const [playing, setPlaying] = useState(() => autoPlay && !reducedMotion);
   const lastTimeRef = useRef<number | null>(null);
   const rafRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -134,11 +136,16 @@ export const Player = forwardRef<PlayerRef, PlayerProps>(function Player(
 
   useEffect(() => {
     if (playing) {
+      if (reducedMotion) {
+        setFrame(durationInFrames - 1);
+        setPlaying(false);
+        return;
+      }
       lastTimeRef.current = null;
       rafRef.current = requestAnimationFrame(tick);
     }
     return () => cancelAnimationFrame(rafRef.current);
-  }, [playing, tick]);
+  }, [playing, tick, reducedMotion, durationInFrames]);
 
   const togglePlay = useCallback(() => {
     setPlaying((p) => !p);

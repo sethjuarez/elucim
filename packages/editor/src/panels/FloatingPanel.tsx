@@ -103,7 +103,7 @@ export function FloatingPanel({
         backdropFilter: 'blur(8px)',
         border: `1px solid ${v('--elucim-editor-border')}`,
         borderRadius: 8,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+        boxShadow: v('--elucim-editor-shadow-panel'),
         color: v('--elucim-editor-fg'),
         fontSize: 11,
         overflow: 'hidden',

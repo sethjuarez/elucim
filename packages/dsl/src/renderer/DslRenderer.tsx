@@ -120,7 +120,7 @@ class DslErrorBoundary extends React.Component<DslErrorBoundaryProps, DslErrorBo
       if (this.props.fallback !== undefined) return this.props.fallback;
       return (
         <div
-          style={{ color: '#ff6b6b', fontFamily: 'monospace', padding: 16, fontSize: 13 }}
+          style={{ color: 'var(--elucim-error, #f87171)', fontFamily: 'monospace', padding: 16, fontSize: 13 }}
           data-testid="dsl-render-error"
         >
           <strong>Render Error:</strong> {this.state.error.message}
@@ -168,7 +168,7 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
     return (
       <div
         className={className}
-        style={{ color: '#ff6b6b', fontFamily: 'monospace', padding: 16, fontSize: 13, ...style }}
+        style={{ color: 'var(--elucim-error, #f87171)', fontFamily: 'monospace', padding: 16, fontSize: 13, ...style }}
         data-testid="dsl-error"
       >
         <strong>Elucim DSL Validation Errors ({filteredErrors.length}):</strong>
@@ -177,14 +177,14 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
             <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>{parent} ({errs.length})</summary>
             <ul style={{ margin: '4px 0', paddingLeft: 20 }}>
               {errs.map((err, i) => (
-                <li key={i}><code style={{ color: '#ffa07a' }}>{err.path}</code>: {err.message}</li>
+                <li key={i}><code style={{ color: 'var(--elucim-warning, #ffa07a)' }}>{err.path}</code>: {err.message}</li>
               ))}
             </ul>
           </details>
         ))}
         <details style={{ marginTop: 12 }}>
           <summary style={{ cursor: 'pointer', opacity: 0.7 }}>Raw JSON</summary>
-          <pre style={{ fontSize: 11, maxHeight: 300, overflow: 'auto', marginTop: 4, padding: 8, background: 'rgba(0,0,0,0.3)', borderRadius: 4 }}>
+          <pre style={{ fontSize: 11, maxHeight: 300, overflow: 'auto', marginTop: 4, padding: 8, background: 'var(--elucim-surface, rgba(0,0,0,0.3))', borderRadius: 4 }}>
             {JSON.stringify(dsl, null, 2)}
           </pre>
         </details>

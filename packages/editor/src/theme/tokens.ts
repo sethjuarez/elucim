@@ -35,6 +35,21 @@ export const EDITOR_TOKENS: Record<string, string> = {
   '--elucim-editor-success':         '#34d399',
   '--elucim-editor-info':            '#4fc3f7',
   '--elucim-editor-error':           '#f87171',
+
+  // ── Sizing & spacing ────────────────────────────────────────────────
+  '--elucim-editor-input-height':    '20px',
+  '--elucim-editor-font-xs':         '9px',
+  '--elucim-editor-font-sm':         '10px',
+  '--elucim-editor-radius-sm':       '3px',
+  '--elucim-editor-space-xs':        '2px',
+  '--elucim-editor-space-sm':        '4px',
+  '--elucim-editor-shadow-panel':    '0 4px 24px rgba(0,0,0,0.4)',
+  '--elucim-editor-shadow-dropdown': '0 4px 12px rgba(0,0,0,0.3)',
+
+  // ── Motion ──────────────────────────────────────────────────────────
+  '--elucim-editor-duration-fast':    '150ms',
+  '--elucim-editor-duration-normal':  '250ms',
+  '--elucim-editor-easing-default':   'cubic-bezier(0.4, 0, 0.2, 1)',
 };
 
 /** Light-mode defaults — used when `color-scheme: "light"` is passed. */
@@ -54,11 +69,27 @@ export const EDITOR_TOKENS_LIGHT: Record<string, string> = {
   '--elucim-editor-success':         '#34d399',
   '--elucim-editor-info':            '#4fc3f7',
   '--elucim-editor-error':           '#f87171',
+
+  // ── Sizing & spacing ────────────────────────────────────────────────
+  '--elucim-editor-input-height':    '20px',
+  '--elucim-editor-font-xs':         '9px',
+  '--elucim-editor-font-sm':         '10px',
+  '--elucim-editor-radius-sm':       '3px',
+  '--elucim-editor-space-xs':        '2px',
+  '--elucim-editor-space-sm':        '4px',
+  '--elucim-editor-shadow-panel':    '0 4px 24px rgba(0,0,0,0.15)',
+  '--elucim-editor-shadow-dropdown': '0 4px 12px rgba(0,0,0,0.1)',
+
+  // ── Motion ──────────────────────────────────────────────────────────
+  '--elucim-editor-duration-fast':    '150ms',
+  '--elucim-editor-duration-normal':  '250ms',
+  '--elucim-editor-easing-default':   'cubic-bezier(0.4, 0, 0.2, 1)',
 };
 
 /** Helper: returns `var(--token, fallback)` string for use in inline styles. */
-export function v(token: string): string {
-  const fallback = EDITOR_TOKENS[token];
+export function v(token: string, scheme?: 'light' | 'dark'): string {
+  const tokens = scheme === 'light' ? EDITOR_TOKENS_LIGHT : EDITOR_TOKENS;
+  const fallback = tokens[token];
   return fallback ? `var(${token}, ${fallback})` : `var(${token})`;
 }
 

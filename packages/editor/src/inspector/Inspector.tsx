@@ -134,11 +134,16 @@ function InspectorSection({ title, children }: { title: string; children: React.
   const icons = useEditorIcons();
   return (
     <div style={{ marginBottom: 8 }}>
-      <div
+      <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
         style={{
+          background: 'none',
+          border: 'none',
+          width: '100%',
+          textAlign: 'left',
           cursor: 'pointer',
-          fontSize: 10,
+          fontSize: v('--elucim-editor-font-sm'),
           textTransform: 'uppercase',
           letterSpacing: 1,
           color: v('--elucim-editor-text-secondary'),
@@ -147,11 +152,11 @@ function InspectorSection({ title, children }: { title: string; children: React.
           userSelect: 'none',
         }}
       >
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: v('--elucim-editor-space-sm') }}>
           {open ? icons.ChevronDown() : icons.ChevronRight()} {title}
         </span>
-      </div>
-      {open && <div style={{ padding: '6px 0', display: 'flex', flexDirection: 'column', gap: 4 }}>{children}</div>}
+      </button>
+      {open && <div style={{ padding: '6px 0', display: 'flex', flexDirection: 'column', gap: v('--elucim-editor-space-sm') }}>{children}</div>}
     </div>
   );
 }
@@ -174,8 +179,8 @@ function NumberField({ label, value, onChange, step = 1 }: {
     else setLocalStr(String(value ?? ''));
   };
   return (
-    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-      <span style={{ color: v('--elucim-editor-text-secondary'), minWidth: 44, fontSize: 10 }}>{label}</span>
+    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: v('--elucim-editor-space-sm') }}>
+      <span style={{ color: v('--elucim-editor-text-secondary'), minWidth: 44, fontSize: v('--elucim-editor-font-sm') }}>{label}</span>
       <input
         type="number"
         value={localStr}
@@ -191,11 +196,11 @@ function NumberField({ label, value, onChange, step = 1 }: {
           width: 60,
           background: v('--elucim-editor-input-bg'),
           border: `1px solid ${v('--elucim-editor-border')}`,
-          borderRadius: 3,
+          borderRadius: v('--elucim-editor-radius-sm'),
           color: v('--elucim-editor-fg'),
           padding: '1px 4px',
-          fontSize: 10,
-          height: 20,
+          fontSize: v('--elucim-editor-font-sm'),
+          height: v('--elucim-editor-input-height'),
           boxSizing: 'border-box',
         }}
       />
@@ -217,14 +222,15 @@ function ColorField({ label, value, onChange }: {
   })();
 
   return (
-    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-      <span style={{ color: v('--elucim-editor-text-secondary'), minWidth: 44, fontSize: 10 }}>{label}</span>
-      <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: v('--elucim-editor-space-sm') }}>
+      <span style={{ color: v('--elucim-editor-text-secondary'), minWidth: 44, fontSize: v('--elucim-editor-font-sm') }}>{label}</span>
+      <div style={{ display: 'flex', gap: v('--elucim-editor-radius-sm'), alignItems: 'center' }}>
         <input
           type="color"
           value={swatchColor}
           onChange={e => onChange(e.target.value)}
-          style={{ width: 20, height: 20, padding: 0, border: 'none', cursor: 'pointer' }}
+          aria-label={label}
+          style={{ width: 20, height: v('--elucim-editor-input-height'), padding: 0, border: 'none', cursor: 'pointer' }}
         />
         <input
           type="text"
@@ -234,11 +240,11 @@ function ColorField({ label, value, onChange }: {
             width: 60,
             background: v('--elucim-editor-input-bg'),
             border: `1px solid ${v('--elucim-editor-border')}`,
-            borderRadius: 3,
+            borderRadius: v('--elucim-editor-radius-sm'),
             color: v('--elucim-editor-fg'),
             padding: '1px 4px',
-            fontSize: 10,
-            height: 20,
+            fontSize: v('--elucim-editor-font-sm'),
+            height: v('--elucim-editor-input-height'),
             boxSizing: 'border-box',
           }}
         />
@@ -251,8 +257,8 @@ function TextField({ label, value, onChange }: {
   label: string; value: string | undefined; onChange: (v: string) => void;
 }) {
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <span style={{ color: v('--elucim-editor-text-secondary'), fontSize: 10 }}>{label}</span>
+    <label style={{ display: 'flex', flexDirection: 'column', gap: v('--elucim-editor-space-xs') }}>
+      <span style={{ color: v('--elucim-editor-text-secondary'), fontSize: v('--elucim-editor-font-sm') }}>{label}</span>
       <input
         type="text"
         value={value ?? ''}
@@ -261,10 +267,10 @@ function TextField({ label, value, onChange }: {
           width: '100%',
           background: v('--elucim-editor-input-bg'),
           border: `1px solid ${v('--elucim-editor-border')}`,
-          borderRadius: 3,
+          borderRadius: v('--elucim-editor-radius-sm'),
           color: v('--elucim-editor-fg'),
           padding: '2px 4px',
-          fontSize: 10,
+          fontSize: v('--elucim-editor-font-sm'),
           height: 22,
           boxSizing: 'border-box',
         }}
@@ -277,8 +283,8 @@ function SelectField({ label, value, options, onChange }: {
   label: string; value: string; options: readonly string[]; onChange: (v: string) => void;
 }) {
   return (
-    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-      <span style={{ color: v('--elucim-editor-text-secondary'), minWidth: 44, fontSize: 10 }}>{label}</span>
+    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: v('--elucim-editor-space-sm') }}>
+      <span style={{ color: v('--elucim-editor-text-secondary'), minWidth: 44, fontSize: v('--elucim-editor-font-sm') }}>{label}</span>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
@@ -286,11 +292,11 @@ function SelectField({ label, value, options, onChange }: {
           width: 90,
           background: v('--elucim-editor-input-bg'),
           border: `1px solid ${v('--elucim-editor-border')}`,
-          borderRadius: 3,
+          borderRadius: v('--elucim-editor-radius-sm'),
           color: v('--elucim-editor-fg'),
           padding: '1px 2px',
-          fontSize: 9,
-          height: 20,
+          fontSize: v('--elucim-editor-font-xs'),
+          height: v('--elucim-editor-input-height'),
           boxSizing: 'border-box',
           cursor: 'pointer',
         }}
@@ -304,6 +310,7 @@ function SelectField({ label, value, options, onChange }: {
 function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: string) => void }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
@@ -320,6 +327,14 @@ function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: 
     }
   }, [open]);
 
+  // Auto-focus first menu item when dropdown opens
+  useEffect(() => {
+    if (open && menuRef.current) {
+      const first = menuRef.current.querySelector<HTMLElement>('[role="menuitem"]');
+      first?.focus();
+    }
+  }, [open]);
+
   // Close on outside click
   useEffect(() => {
     if (!open) return;
@@ -332,6 +347,40 @@ function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: 
     return () => document.removeEventListener('pointerdown', handler);
   }, [open]);
 
+  const handleMenuKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const items = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]');
+    if (!items || items.length === 0) return;
+    const focused = document.activeElement as HTMLElement;
+    const idx = Array.from(items).indexOf(focused);
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const next = idx < items.length - 1 ? idx + 1 : 0;
+        items[next].focus();
+        break;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        const prev = idx > 0 ? idx - 1 : items.length - 1;
+        items[prev].focus();
+        break;
+      }
+      case 'Enter':
+      case ' ': {
+        e.preventDefault();
+        if (idx >= 0) focused.click();
+        break;
+      }
+      case 'Escape': {
+        e.preventDefault();
+        setOpen(false);
+        btnRef.current?.focus();
+        break;
+      }
+    }
+  };
+
   return (
     <div style={{ position: 'relative' }}>
       <button
@@ -340,12 +389,14 @@ function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: 
           if (options.length === 1) { onAdd(options[0]); }
           else { setOpen(!open); }
         }}
+        aria-haspopup="true"
+        aria-expanded={open}
         style={{
           background: 'none',
           border: `1px dashed ${v('--elucim-editor-border')}`,
-          borderRadius: 3,
+          borderRadius: v('--elucim-editor-radius-sm'),
           color: v('--elucim-editor-text-muted'),
-          fontSize: 9,
+          fontSize: v('--elucim-editor-font-xs'),
           padding: '2px 6px',
           cursor: 'pointer',
           width: '100%',
@@ -355,22 +406,29 @@ function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: 
         + Add {options.length === 1 ? options[0] : 'property…'}
       </button>
       {open && options.length > 1 && createPortal(
-        <div style={{
-          ...menuStyle,
-          background: v('--elucim-editor-surface'),
-          border: `1px solid ${v('--elucim-editor-border')}`,
-          borderRadius: 3,
-          zIndex: 10000,
-          padding: 2,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-        }}>
+        <div
+          ref={menuRef}
+          role="menu"
+          onKeyDown={handleMenuKeyDown}
+          style={{
+            ...menuStyle,
+            background: v('--elucim-editor-surface'),
+            border: `1px solid ${v('--elucim-editor-border')}`,
+            borderRadius: v('--elucim-editor-radius-sm'),
+            zIndex: 10000,
+            padding: 2,
+            boxShadow: v('--elucim-editor-shadow-dropdown'),
+          }}
+        >
           {options.map(opt => (
             <div
               key={opt}
+              role="menuitem"
+              tabIndex={0}
               onClick={() => { onAdd(opt); setOpen(false); }}
               style={{
                 padding: '3px 6px',
-                fontSize: 9,
+                fontSize: v('--elucim-editor-font-xs'),
                 cursor: 'pointer',
                 borderRadius: 2,
                 color: v('--elucim-editor-fg'),
@@ -690,7 +748,7 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
     ];
     sections.push(
       <InspectorSection key="graph" title="Graph">
-        <div style={{ fontSize: 9, color: v('--elucim-editor-text-muted'), padding: '2px 0' }}>Nodes</div>
+        <div style={{ fontSize: v('--elucim-editor-font-xs'), color: v('--elucim-editor-text-muted'), padding: '2px 0' }}>Nodes</div>
         <ArrayEditor
           columns={nodeColumns}
           rows={el.nodes}
@@ -699,7 +757,7 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
         />
         {Array.isArray(el.edges) && (
           <>
-            <div style={{ fontSize: 9, color: v('--elucim-editor-text-muted'), padding: '4px 0 2px' }}>Edges</div>
+            <div style={{ fontSize: v('--elucim-editor-font-xs'), color: v('--elucim-editor-text-muted'), padding: '4px 0 2px' }}>Edges</div>
             <ArrayEditor
               columns={edgeColumns}
               rows={el.edges}

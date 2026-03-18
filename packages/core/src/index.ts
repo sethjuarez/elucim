@@ -15,6 +15,7 @@ export {
 // Hooks
 export { useCurrentFrame } from './hooks/useCurrentFrame';
 export { interpolate, type InterpolateOptions } from './hooks/interpolate';
+export { useReducedMotion } from './hooks/useReducedMotion';
 
 // Context
 export { useElucimContext, type ElucimContextValue } from './context';
