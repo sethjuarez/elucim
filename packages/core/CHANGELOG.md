@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.11.0](https://github.com/sethjuarez/elucim/compare/core-v0.10.0...core-v0.11.0) (2026-03-18)
+
+
+### Features
+
+* DslRenderer overrides, onPlayStateChange, initialFrame='last' ([2cb8b9e](https://github.com/sethjuarez/elucim/commit/2cb8b9e309cca7acd40bf9d4da8dc561f7284f5c))
+
 ## [0.10.0](https://github.com/sethjuarez/elucim/compare/core-v0.9.0...core-v0.10.0) (2026-03-18)
 
 
