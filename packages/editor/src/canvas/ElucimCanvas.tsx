@@ -243,6 +243,8 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
         overflow: 'hidden',
         cursor,
         borderRadius: 6,
+        border: `1px solid ${v('--elucim-editor-border')}`,
+        boxShadow: `inset 0 0 0 0 transparent, 0 2px 8px rgba(0,0,0,0.25)`,
         ...style,
       }}
       onPointerDown={(e) => { handlePanStart(e); handleMarqueeStart(e); }}
@@ -316,7 +318,7 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
                 height={bounds.height}
                 fill="transparent"
                 transform={transform}
-                style={{ pointerEvents: 'all', cursor: isPanning ? 'grab' : 'pointer' }}
+                style={{ pointerEvents: 'all', cursor: isPanning ? 'grab' : 'default' }}
               />
             );
           })}

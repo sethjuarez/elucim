@@ -92,23 +92,26 @@ export function Timeline({ className, style }: TimelineProps) {
   }, [dispatch, durationInFrames]);
 
   const scrubRef = useRef<boolean>(false);
+  const rulerRef = useRef<HTMLDivElement>(null);
 
-  const scrubFromEvent = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const scrubFromClientX = useCallback((clientX: number) => {
+    const ruler = rulerRef.current;
+    if (!ruler) return;
+    const rect = ruler.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     dispatch({ type: 'SET_FRAME', frame: Math.round(ratio * (durationInFrames - 1)) });
   }, [dispatch, durationInFrames]);
 
   const handleRulerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     scrubRef.current = true;
-    scrubFromEvent(e);
-  }, [scrubFromEvent]);
+    scrubFromClientX(e.clientX);
+  }, [scrubFromClientX]);
 
   const handleRulerPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!scrubRef.current) return;
-    scrubFromEvent(e);
-  }, [scrubFromEvent]);
+    scrubFromClientX(e.clientX);
+  }, [scrubFromClientX]);
 
   const handleRulerPointerUp = useCallback(() => {
     scrubRef.current = false;
@@ -173,9 +176,10 @@ export function Timeline({ className, style }: TimelineProps) {
     const trackWidth = trackArea.clientWidth - LABEL_WIDTH;
     const pixelDelta = e.clientX - drag.startX;
     const frameDelta = Math.round((pixelDelta / trackWidth) * durationInFrames);
-    const newVal = Math.max(0, Math.min(durationInFrames, drag.startVal + (drag.prop === 'fadeOut' ? -frameDelta : frameDelta)));
-    if (newVal !== drag.startVal + (drag.prop === 'fadeOut' ? -frameDelta : frameDelta)) return;
-    dispatch({ type: 'UPDATE_ELEMENT', id: drag.elementId, changes: { [drag.prop]: Math.max(0, newVal) } as any });
+    // fadeOut: drag left = grow, drag right = shrink (inverted)
+    const adjustedDelta = drag.prop === 'fadeOut' ? -frameDelta : frameDelta;
+    const newVal = Math.max(0, Math.min(durationInFrames, drag.startVal + adjustedDelta));
+    dispatch({ type: 'UPDATE_ELEMENT', id: drag.elementId, changes: { [drag.prop]: newVal } as any });
   }, [dispatch, durationInFrames]);
 
   const handleBarEdgeUp = useCallback(() => {
@@ -192,6 +196,7 @@ export function Timeline({ className, style }: TimelineProps) {
         borderTop: `1px solid ${v('--elucim-editor-border')}`,
         fontSize: 11,
         userSelect: 'none',
+        overflow: 'hidden',
         ...style,
       }}
       onPointerMove={handleBarEdgeMove}
@@ -213,13 +218,14 @@ export function Timeline({ className, style }: TimelineProps) {
       <div style={{ position: 'relative' }} data-track-area>
         {/* Ruler */}
         <div
+          ref={rulerRef}
           onPointerDown={handleRulerPointerDown}
           onPointerMove={handleRulerPointerMove}
           onPointerUp={handleRulerPointerUp}
           style={{
             height: RULER_HEIGHT,
             background: v('--elucim-editor-input-bg'),
-            cursor: 'pointer',
+            cursor: 'ew-resize',
             position: 'relative',
             borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
             marginLeft: LABEL_WIDTH,
@@ -235,15 +241,41 @@ export function Timeline({ className, style }: TimelineProps) {
               </div>
             );
           })}
-          <div style={{
-            position: 'absolute',
-            left: `${playheadPercent}%`,
-            top: 0,
-            width: 2,
-            height: '100%',
-            background: v('--elucim-editor-accent'),
-            transform: 'translateX(-1px)',
-          }} />
+          {/* Playhead handle + line */}
+          <div
+            onPointerDown={handleRulerPointerDown}
+            onPointerMove={handleRulerPointerMove}
+            onPointerUp={handleRulerPointerUp}
+            style={{
+              position: 'absolute',
+              left: `${playheadPercent}%`,
+              top: 0,
+              transform: 'translateX(-6px)',
+              width: 12,
+              height: '100%',
+              cursor: 'ew-resize',
+              zIndex: 2,
+            }}
+          >
+            {/* Triangle handle */}
+            <div style={{
+              width: 0,
+              height: 0,
+              borderLeft: '6px solid transparent',
+              borderRight: '6px solid transparent',
+              borderTop: `8px solid ${v('--elucim-editor-accent')}`,
+            }} />
+            {/* Vertical line */}
+            <div style={{
+              position: 'absolute',
+              left: 5,
+              top: 8,
+              width: 2,
+              height: 'calc(100% - 8px)',
+              background: v('--elucim-editor-accent'),
+              borderRadius: 1,
+            }} />
+          </div>
         </div>
 
         {/* Element tracks */}
@@ -274,7 +306,7 @@ export function Timeline({ className, style }: TimelineProps) {
                   borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
                   borderTop: isDropTarget ? `2px solid ${v('--elucim-editor-accent')}` : undefined,
                   background: isSelected ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 7%, transparent)` : 'transparent',
-                  cursor: 'grab',
+                  cursor: 'default',
                   opacity: dragIdx === i ? 0.5 : 1,
                 }}
               >
@@ -344,6 +376,7 @@ export function Timeline({ className, style }: TimelineProps) {
                       title={`fadeOut: ${fadeOut}f`}
                       onEdgeDrag={handleBarEdgeDown(id, 'fadeOut', fadeOut)}
                       onClick={() => setEasingPickerId(easingPickerId === `${id}-fadeOut` ? null : `${id}-fadeOut`)}
+                      edgeSide="left"
                     />
                   )}
                 </div>
@@ -416,10 +449,11 @@ export function Timeline({ className, style }: TimelineProps) {
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
-function AnimationBar({ left, width, color, title, onEdgeDrag, onClick }: {
+function AnimationBar({ left, width, color, title, onEdgeDrag, onClick, edgeSide = 'right' }: {
   left: number; width: number; color: string; title: string;
   onEdgeDrag: (e: React.PointerEvent) => void;
   onClick: () => void;
+  edgeSide?: 'left' | 'right';
 }) {
   return (
     <div
@@ -436,18 +470,18 @@ function AnimationBar({ left, width, color, title, onEdgeDrag, onClick }: {
         cursor: 'pointer',
       }}
     >
-      {/* Right edge drag handle */}
+      {/* Drag handle on the moveable edge */}
       <div
         onPointerDown={onEdgeDrag}
         style={{
           position: 'absolute',
-          right: -2,
+          ...(edgeSide === 'left' ? { left: -2 } : { right: -2 }),
           top: 0,
           width: 5,
           height: '100%',
           cursor: 'ew-resize',
           background: `color-mix(in srgb, ${color} 80%, transparent)`,
-          borderRadius: '0 2px 2px 0',
+          borderRadius: edgeSide === 'left' ? '2px 0 0 2px' : '0 2px 2px 0',
         }}
       />
     </div>

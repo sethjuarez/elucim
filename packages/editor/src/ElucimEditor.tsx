@@ -75,8 +75,12 @@ function EditorLayout({ theme, className, style }: { theme?: Record<string, stri
 
   // Compute inspector position near the selected element when unpinned
   const inspectorPos = React.useMemo(() => {
-    if (state.inspectorPinned && state.inspectorPosition) {
-      return state.inspectorPosition;
+    // When pinned, use stored position — or default to right of canvas
+    if (state.inspectorPinned) {
+      if (state.inspectorPosition) return state.inspectorPosition;
+      const container = containerRef.current;
+      const maxX = (container?.clientWidth ?? 900) - 250;
+      return { x: Math.max(8, maxX), y: 60 };
     }
 
     // Canvas selection — position at top-right area
@@ -212,7 +216,9 @@ function EditorLayout({ theme, className, style }: { theme?: Record<string, stri
       </div>
 
       {/* Timeline — stays at bottom */}
-      <Timeline />
+      <div style={{ padding: '0 15px 15px 15px', marginTop: -11 }}>
+        <Timeline style={{ borderRadius: 6, border: `1px solid ${v('--elucim-editor-border')}`, boxSizing: 'border-box', overflow: 'hidden' }} />
+      </div>
     </div>
   );
 }

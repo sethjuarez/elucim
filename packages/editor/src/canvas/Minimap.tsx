@@ -88,7 +88,7 @@ export function Minimap({
         width={MINIMAP_WIDTH}
         height={MINIMAP_HEIGHT}
         onClick={handleClick}
-        style={{ display: 'block', cursor: 'pointer' }}
+        style={{ display: 'block', cursor: 'crosshair' }}
       >
         {/* Scene background */}
         <rect x={sceneX} y={sceneY} width={sceneW} height={sceneH} fill={v('--elucim-editor-input-bg')} stroke={v('--elucim-editor-border')} strokeWidth={0.5} />

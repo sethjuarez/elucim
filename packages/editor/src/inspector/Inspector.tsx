@@ -261,6 +261,93 @@ function TextField({ label, value, onChange }: {
   );
 }
 
+function SelectField({ label, value, options, onChange }: {
+  label: string; value: string; options: readonly string[]; onChange: (v: string) => void;
+}) {
+  return (
+    <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
+      <span style={{ color: v('--elucim-editor-text-secondary'), minWidth: 44, fontSize: 10 }}>{label}</span>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        style={{
+          width: 90,
+          background: v('--elucim-editor-input-bg'),
+          border: `1px solid ${v('--elucim-editor-border')}`,
+          borderRadius: 3,
+          color: v('--elucim-editor-fg'),
+          padding: '1px 2px',
+          fontSize: 9,
+          height: 20,
+          boxSizing: 'border-box',
+          cursor: 'pointer',
+        }}
+      >
+        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => {
+          if (options.length === 1) { onAdd(options[0]); }
+          else { setOpen(!open); }
+        }}
+        style={{
+          background: 'none',
+          border: `1px dashed ${v('--elucim-editor-border')}`,
+          borderRadius: 3,
+          color: v('--elucim-editor-text-muted'),
+          fontSize: 9,
+          padding: '2px 6px',
+          cursor: 'pointer',
+          width: '100%',
+          textAlign: 'left',
+        }}
+      >
+        + Add {options.length === 1 ? options[0] : 'property…'}
+      </button>
+      {open && options.length > 1 && (
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          background: v('--elucim-editor-surface'),
+          border: `1px solid ${v('--elucim-editor-border')}`,
+          borderRadius: 3,
+          zIndex: 10,
+          padding: 2,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        }}>
+          {options.map(opt => (
+            <div
+              key={opt}
+              onClick={() => { onAdd(opt); setOpen(false); }}
+              style={{
+                padding: '3px 6px',
+                fontSize: 9,
+                cursor: 'pointer',
+                borderRadius: 2,
+                color: v('--elucim-editor-fg'),
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = v('--elucim-editor-border'))}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              {opt}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Position Fields (property-based) ──────────────────────────────────────
 
 function PositionFields({ element, onChange }: { element: ElementNode; onChange: (field: string, value: any) => void }) {
@@ -301,27 +388,73 @@ function PositionFields({ element, onChange }: { element: ElementNode; onChange:
 
 function StyleFields({ element, onChange }: { element: ElementNode; onChange: (field: string, value: any) => void }) {
   const el = element as any;
+  const [showExtras, setShowExtras] = useState(false);
+  const hasOpacity = el.opacity !== undefined && el.opacity !== 1;
   return (
     <>
       {'fill' in el && <ColorField label="Fill" value={el.fill} onChange={v => onChange('fill', v)} />}
       {'stroke' in el && <ColorField label="Stroke" value={el.stroke} onChange={v => onChange('stroke', v)} />}
       {'color' in el && <ColorField label="Color" value={el.color} onChange={v => onChange('color', v)} />}
       {'strokeWidth' in el && <NumberField label="Stroke W" value={el.strokeWidth} onChange={v => onChange('strokeWidth', v)} step={0.5} />}
-      {'opacity' in el && <NumberField label="Opacity" value={el.opacity} onChange={v => onChange('opacity', v)} step={0.1} />}
+      {(hasOpacity || showExtras) && (
+        <NumberField label="Opacity" value={el.opacity ?? 1} onChange={v => onChange('opacity', v)} step={0.05} />
+      )}
       {'fontSize' in el && <NumberField label="Font Size" value={el.fontSize} onChange={v => onChange('fontSize', v)} />}
+      {!hasOpacity && !showExtras && (
+        <AddFieldButton options={['Opacity']} onAdd={() => setShowExtras(true)} />
+      )}
     </>
   );
 }
 
 // ─── Animation Fields ──────────────────────────────────────────────────────
 
+const EASING_OPTIONS = [
+  'linear',
+  'easeInQuad', 'easeOutQuad', 'easeInOutQuad',
+  'easeInCubic', 'easeOutCubic', 'easeInOutCubic',
+  'easeInSine', 'easeOutSine', 'easeInOutSine',
+  'easeOutElastic', 'easeOutBounce',
+  'easeInBack', 'easeOutBack',
+];
+
 function AnimationFields({ element, onChange }: { element: ElementNode; onChange: (field: string, value: any) => void }) {
   const el = element as any;
+  const [extras, setExtras] = useState<Set<string>>(new Set());
+
+  const hasFadeIn = el.fadeIn !== undefined && el.fadeIn > 0;
+  const hasFadeOut = el.fadeOut !== undefined && el.fadeOut > 0;
+  const hasDraw = el.draw !== undefined && el.draw > 0;
+  const hasEasing = el.easing !== undefined && el.easing !== 'linear';
+
+  const addable: string[] = [];
+  if (!hasFadeIn && !extras.has('fadeIn')) addable.push('Fade In');
+  if (!hasFadeOut && !extras.has('fadeOut')) addable.push('Fade Out');
+  if (!hasDraw && !extras.has('draw')) addable.push('Draw');
+  if (!hasEasing && !extras.has('easing')) addable.push('Easing');
+
+  const addField = (label: string) => {
+    const key = label === 'Fade In' ? 'fadeIn' : label === 'Fade Out' ? 'fadeOut' : label.toLowerCase();
+    setExtras(prev => new Set(prev).add(key));
+  };
+
   return (
     <>
-      <NumberField label="Fade In" value={el.fadeIn} onChange={v => onChange('fadeIn', v)} />
-      <NumberField label="Fade Out" value={el.fadeOut} onChange={v => onChange('fadeOut', v)} />
-      {'draw' in el && <NumberField label="Draw" value={el.draw} onChange={v => onChange('draw', v)} />}
+      {(hasFadeIn || extras.has('fadeIn')) && (
+        <NumberField label="Fade In" value={el.fadeIn} onChange={v => onChange('fadeIn', v)} />
+      )}
+      {(hasFadeOut || extras.has('fadeOut')) && (
+        <NumberField label="Fade Out" value={el.fadeOut} onChange={v => onChange('fadeOut', v)} />
+      )}
+      {(hasDraw || extras.has('draw')) && (
+        <NumberField label="Draw" value={el.draw} onChange={v => onChange('draw', v)} />
+      )}
+      {(hasEasing || extras.has('easing')) && (
+        <SelectField label="Easing" value={el.easing ?? 'linear'} options={EASING_OPTIONS} onChange={v => onChange('easing', v)} />
+      )}
+      {addable.length > 0 && (
+        <AddFieldButton options={addable} onAdd={addField} />
+      )}
     </>
   );
 }
@@ -330,10 +463,77 @@ function AnimationFields({ element, onChange }: { element: ElementNode; onChange
 
 function TransformFields({ element, onChange }: { element: ElementNode; onChange: (field: string, value: any) => void }) {
   const el = element as any;
+  const [extras, setExtras] = useState<Set<string>>(new Set());
+
+  const hasRotation = el.rotation !== undefined && el.rotation !== 0;
+  const hasScale = el.scale !== undefined && el.scale !== 1;
+  const hasTranslate = Array.isArray(el.translate);
+  const hasOrigin = Array.isArray(el.rotationOrigin);
+  const hasZIndex = el.zIndex !== undefined && el.zIndex !== 0;
+
+  const addable: string[] = [];
+  if (!hasRotation && !extras.has('rotation')) addable.push('Rotation');
+  if (!hasScale && !extras.has('scale')) addable.push('Scale');
+  if (!hasTranslate && !extras.has('translate')) addable.push('Translate');
+  if (!hasOrigin && !extras.has('origin')) addable.push('Origin');
+  if (!hasZIndex && !extras.has('zIndex')) addable.push('Z-Index');
+
+  const addField = (label: string) => {
+    const key = label === 'Z-Index' ? 'zIndex' : label.toLowerCase();
+    setExtras(prev => new Set(prev).add(key));
+  };
+
+  const scaleVal = el.scale;
+  const translateVal = el.translate;
+  const rotOriginVal = el.rotationOrigin;
+
   return (
     <>
-      <NumberField label="Rotation" value={el.rotation} onChange={v => onChange('rotation', v)} />
-      <NumberField label="Z-Index" value={el.zIndex} onChange={v => onChange('zIndex', v)} />
+      {(hasRotation || extras.has('rotation')) && (
+        <NumberField label="Rotation" value={el.rotation} onChange={v => onChange('rotation', v)} />
+      )}
+      {(hasScale || extras.has('scale')) && (
+        <NumberField
+          label="Scale"
+          value={typeof scaleVal === 'number' ? scaleVal : (Array.isArray(scaleVal) ? scaleVal[0] : undefined)}
+          onChange={v => onChange('scale', v)}
+          step={0.1}
+        />
+      )}
+      {(hasTranslate || extras.has('translate')) && (
+        <>
+          <NumberField
+            label="Translate X"
+            value={Array.isArray(translateVal) ? translateVal[0] : undefined}
+            onChange={v => onChange('translate', [v, Array.isArray(translateVal) ? translateVal[1] : 0])}
+          />
+          <NumberField
+            label="Translate Y"
+            value={Array.isArray(translateVal) ? translateVal[1] : undefined}
+            onChange={v => onChange('translate', [Array.isArray(translateVal) ? translateVal[0] : 0, v])}
+          />
+        </>
+      )}
+      {(hasOrigin || extras.has('origin')) && (
+        <>
+          <NumberField
+            label="Origin X"
+            value={Array.isArray(rotOriginVal) ? rotOriginVal[0] : undefined}
+            onChange={v => onChange('rotationOrigin', [v, Array.isArray(rotOriginVal) ? rotOriginVal[1] : 0])}
+          />
+          <NumberField
+            label="Origin Y"
+            value={Array.isArray(rotOriginVal) ? rotOriginVal[1] : undefined}
+            onChange={v => onChange('rotationOrigin', [Array.isArray(rotOriginVal) ? rotOriginVal[0] : 0, v])}
+          />
+        </>
+      )}
+      {(hasZIndex || extras.has('zIndex')) && (
+        <NumberField label="Z-Index" value={el.zIndex} onChange={v => onChange('zIndex', v)} />
+      )}
+      {addable.length > 0 && (
+        <AddFieldButton options={addable} onAdd={addField} />
+      )}
     </>
   );
 }

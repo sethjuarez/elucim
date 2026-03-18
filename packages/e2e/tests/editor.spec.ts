@@ -59,7 +59,7 @@ test.describe('Editor — Initial Render', () => {
     await expect(page.getByRole('button', { name: 'Zoom out' })).toBeVisible();
 
     // Timeline frame display
-    await expect(page.getByText('0 / 119 @ 60fps')).toBeVisible();
+    await expect(page.getByText('119 / 119 @ 60fps')).toBeVisible();
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/01-initial-render.png`, fullPage: true });
   });
@@ -149,7 +149,7 @@ test.describe('Editor — Add Elements from Toolbar', () => {
     await page.waitForTimeout(200);
 
     // Should now have 6 elements in timeline
-    const tracks = page.locator('.elucim-editor-timeline [style*="cursor: grab"]');
+    const tracks = page.locator('.elucim-editor-timeline [style*="cursor: default"]');
     const trackCount = await tracks.count();
     expect(trackCount).toBeGreaterThanOrEqual(6);
 
@@ -160,7 +160,7 @@ test.describe('Editor — Add Elements from Toolbar', () => {
     await page.getByRole('button', { name: 'Circle' }).click();
     await page.waitForTimeout(200);
 
-    const tracks = page.locator('.elucim-editor-timeline [style*="cursor: grab"]');
+    const tracks = page.locator('.elucim-editor-timeline [style*="cursor: default"]');
     const trackCount = await tracks.count();
     expect(trackCount).toBeGreaterThanOrEqual(6);
 
@@ -268,6 +268,11 @@ test.describe('Editor — Timeline Controls', () => {
   });
 
   test('step forward', async ({ page }) => {
+    // Go to start first (demo starts at last frame)
+    const startBtn = page.getByRole('button', { name: 'Start' });
+    await startBtn.click();
+    await page.waitForTimeout(200);
+
     const stepBtn = page.getByRole('button', { name: 'Step forward' });
     for (let i = 0; i < 5; i++) {
       await stepBtn.click();
@@ -279,7 +284,7 @@ test.describe('Editor — Timeline Controls', () => {
   });
 
   test('ruler click seeks to position', async ({ page }) => {
-    const ruler = page.locator('.elucim-editor-timeline [style*="cursor: grab"]').first();
+    const ruler = page.locator('.elucim-editor-timeline [style*="cursor: ew-resize"]').first();
     const rulerBox = await ruler.boundingBox();
     if (rulerBox) {
       await page.mouse.click(rulerBox.x + rulerBox.width * 0.5, rulerBox.y + rulerBox.height / 2);
@@ -554,11 +559,11 @@ test.describe('Editor — Marquee Selection', () => {
     await expect(inspector).toBeVisible();
     await expect(inspector).toContainText('Rect');
 
-    // Click on empty canvas area (far right, vertically centered — away from elements)
+    // Click on empty canvas area (center-left — away from elements and pinned inspector on right)
     const canvas = page.locator('.elucim-editor-canvas');
     const box = await canvas.boundingBox();
     if (!box) throw new Error('Canvas not found');
-    await page.mouse.click(box.x + box.width - 50, box.y + box.height * 0.3);
+    await page.mouse.click(box.x + box.width * 0.15, box.y + box.height * 0.15);
     await page.waitForTimeout(500);
 
     // Inspector should show canvas properties

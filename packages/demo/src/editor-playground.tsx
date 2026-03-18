@@ -5,7 +5,7 @@ import type { ElucimDocument } from '@elucim/dsl';
 
 /**
  * Pre-populated document with several elements for visual testing.
- * No fadeIn/draw animations — elements visible immediately at frame 0.
+ * Some elements have fadeIn animations to demonstrate initialFrame.
  */
 const DEMO_DOCUMENT: ElucimDocument = {
   version: '1.0',
@@ -29,6 +29,7 @@ const DEMO_DOCUMENT: ElucimDocument = {
         fill: 'none',
         stroke: '#4fc3f7',
         strokeWidth: 2,
+        fadeIn: 30,
       },
       {
         type: 'circle',
@@ -39,6 +40,7 @@ const DEMO_DOCUMENT: ElucimDocument = {
         fill: 'none',
         stroke: '#a78bfa',
         strokeWidth: 2,
+        fadeIn: 20,
       },
       {
         type: 'line',
@@ -132,9 +134,11 @@ const DEMO_DOCUMENT: ElucimDocument = {
 };
 
 function App() {
+  const lastFrame = DEMO_DOCUMENT.root.durationInFrames! - 1;
   return (
     <ElucimEditor
       initialDocument={DEMO_DOCUMENT}
+      initialFrame={lastFrame}
       style={{ width: '100%', height: '100vh' }}
     />
   );

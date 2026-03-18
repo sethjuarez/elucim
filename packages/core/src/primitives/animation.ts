@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCurrentFrame } from '../hooks/useCurrentFrame';
+import { useElucimContext } from '../context';
 import { interpolate } from '../hooks/interpolate';
 import type { EasingFunction } from '../easing/types';
 
@@ -22,6 +23,7 @@ export function useAnimation(
   totalLength?: number
 ): { opacity: number; strokeDasharray?: string; strokeDashoffset?: number } {
   const frame = useCurrentFrame();
+  const { durationInFrames } = useElucimContext();
   const { fadeIn, fadeOut, draw, easing } = props;
 
   let opacity = 1;
@@ -31,15 +33,13 @@ export function useAnimation(
   }
 
   if (fadeOut !== undefined && fadeOut > 0) {
-    // fadeOut starts fadeOut frames before the end - but we don't know duration here
-    // so we compute relative to the frame; caller can set durationInFrames in Sequence
+    const fadeOutStart = durationInFrames - fadeOut;
     const fadeOutOpacity = interpolate(
       frame,
-      [0, fadeOut],
+      [fadeOutStart, durationInFrames - 1],
       [1, 0],
       { easing, extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
     );
-    // This is a simplification; proper implementation would know end frame
     opacity *= fadeOutOpacity;
   }
 
