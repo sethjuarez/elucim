@@ -559,11 +559,12 @@ test.describe('Editor — Marquee Selection', () => {
     await expect(inspector).toBeVisible();
     await expect(inspector).toContainText('Rect');
 
-    // Click on empty canvas area (center-left — away from elements and pinned inspector on right)
+    // Click on empty canvas area — avoid floating panels (toolbar on left, inspector on right)
+    // and all element hit rects. Bottom-left quadrant past toolbar is reliably empty.
     const canvas = page.locator('.elucim-editor-canvas');
     const box = await canvas.boundingBox();
     if (!box) throw new Error('Canvas not found');
-    await page.mouse.click(box.x + box.width * 0.15, box.y + box.height * 0.15);
+    await page.mouse.click(box.x + box.width * 0.2, box.y + box.height * 0.85);
     await page.waitForTimeout(500);
 
     // Inspector should show canvas properties
