@@ -208,7 +208,7 @@ export function ElucimEditorLayout({ theme, className, style }: ElucimEditorLayo
       {/* Main canvas area — full-bleed */}
       <div ref={containerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         {/* Canvas fills everything */}
-        <ElucimCanvas />
+        <ElucimCanvas editorColorScheme={colorScheme} />
 
         {/* Floating Toolbar */}
         <FloatingPanel

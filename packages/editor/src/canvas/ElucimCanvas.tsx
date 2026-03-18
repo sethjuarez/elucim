@@ -22,6 +22,8 @@ import type { ContextMenuItem } from './ContextMenu';
 export interface ElucimCanvasProps {
   className?: string;
   style?: React.CSSProperties;
+  /** Editor color scheme — used to pick content theme when background is a $token. */
+  editorColorScheme?: string;
 }
 
 /**
@@ -63,7 +65,7 @@ function isDarkBackground(bg: string): boolean {
 /**
  * Full-bleed editor canvas with viewport pan/zoom, dot grid, minimap, and zoom controls.
  */
-export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
+export function ElucimCanvas({ className, style, editorColorScheme }: ElucimCanvasProps) {
   const { state, dispatch } = useEditorState();
   const { document, selectedIds, currentFrame, viewport, isPanning } = state;
   const root = document.root;
@@ -77,14 +79,18 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
   const height = ('height' in root ? root.height : undefined) ?? 600;
   const fps = ('fps' in root ? root.fps : undefined) ?? 60;
   const durationInFrames = ('durationInFrames' in root ? root.durationInFrames : undefined) ?? 120;
-  const background = resolveColor(('background' in root ? root.background : undefined) as string | undefined) ?? '#0f172a';
+  const rawBackground = ('background' in root ? root.background : undefined) as string | undefined;
+  const background = resolveColor(rawBackground) ?? '#0f172a';
 
   // Set --elucim-* content theme CSS vars so $token references in elements resolve correctly.
-  // Picks dark or light theme based on the scene background luminance.
-  const sceneThemeVars = useMemo(
-    () => contentThemeVars(isDarkBackground(background) ? darkTheme : lightTheme),
-    [background],
-  );
+  // When the background itself is a $token, we can't use luminance detection (circular).
+  // Fall back to the editor's own color scheme to break the cycle.
+  const sceneThemeVars = useMemo(() => {
+    if (rawBackground?.startsWith('$')) {
+      return contentThemeVars(editorColorScheme === 'light' ? lightTheme : darkTheme);
+    }
+    return contentThemeVars(isDarkBackground(background) ? darkTheme : lightTheme);
+  }, [rawBackground, background, editorColorScheme]);
 
   // Get children from root
   const children: ElementNode[] = ('children' in root && Array.isArray(root.children)) ? root.children : [];
