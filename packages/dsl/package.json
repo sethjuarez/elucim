@@ -48,13 +48,12 @@
     "lint": "tsc --noEmit"
   },
   "peerDependencies": {
+    "@elucim/core": ">=0.8.0",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },
-  "dependencies": {
-    "@elucim/core": "workspace:*"
-  },
   "devDependencies": {
+    "@elucim/core": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.0",

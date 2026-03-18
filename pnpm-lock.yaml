@@ -122,11 +122,10 @@ importers:
         version: 3.5.29(typescript@5.9.3)
 
   packages/dsl:
-    dependencies:
+    devDependencies:
       '@elucim/core':
         specifier: workspace:*
         version: link:../core
-    devDependencies:
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -175,16 +174,16 @@ importers:
 
   packages/editor:
     dependencies:
+      lucide-react:
+        specifier: ^0.577.0
+        version: 0.577.0(react@18.3.1)
+    devDependencies:
       '@elucim/core':
         specifier: workspace:*
         version: link:../core
       '@elucim/dsl':
         specifier: workspace:*
         version: link:../dsl
-      lucide-react:
-        specifier: ^0.577.0
-        version: 0.577.0(react@18.3.1)
-    devDependencies:
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
