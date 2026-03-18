@@ -134,11 +134,29 @@ const DEMO_DOCUMENT: ElucimDocument = {
 };
 
 function App() {
-  const lastFrame = DEMO_DOCUMENT.root.durationInFrames! - 1;
+  const params = new URLSearchParams(window.location.search);
+  const isLight = params.get('theme') === 'light';
+
+  const doc: ElucimDocument = {
+    ...DEMO_DOCUMENT,
+    root: {
+      ...DEMO_DOCUMENT.root,
+      background: isLight ? '#f1f5f9' : '#0f172a',
+      children: (DEMO_DOCUMENT.root as any).children.map((el: any) => {
+        if (el.id === 'text-1') return { ...el, fill: isLight ? '#1e293b' : '#e0e0e0' };
+        if (el.id === 'matrix-1') return { ...el, color: isLight ? '#1e293b' : '#e0e0e0' };
+        if (el.id === 'barchart-1') return { ...el, labelColor: isLight ? '#1e293b' : '#e0e0e0' };
+        return el;
+      }),
+    } as any,
+  };
+
+  const lastFrame = doc.root.durationInFrames! - 1;
   return (
     <ElucimEditor
-      initialDocument={DEMO_DOCUMENT}
+      initialDocument={doc}
       initialFrame={lastFrame}
+      theme={isLight ? { 'color-scheme': 'light' } : undefined}
       style={{ width: '100%', height: '100vh' }}
     />
   );
