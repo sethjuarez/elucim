@@ -169,18 +169,29 @@ All available dispatch actions:
 | Action | Payload | Description |
 |--------|---------|-------------|
 | `SELECT` | `ids: string[]` | Replace selection |
-| `SELECT_ADD` | `ids: string[]` | Add to selection |
-| `SELECT_TOGGLE` | `ids: string[]` | Toggle selection |
+| `SELECT_ADD` | `id: string` | Add to selection |
+| `SELECT_TOGGLE` | `id: string` | Toggle element in/out of selection |
 | `DESELECT_ALL` | — | Clear selection |
 | `SET_DOCUMENT` | `document: ElucimDocument` | Replace entire document |
 | `UPDATE_ELEMENT` | `id: string, changes: object` | Update element properties |
 | `UPDATE_CANVAS` | `changes: object` | Update scene root properties |
 | `ADD_ELEMENT` | `element: object` | Add element to scene |
 | `DELETE_ELEMENTS` | `ids: string[]` | Remove elements |
-| `MOVE_ELEMENT` | `id: string, dx: number, dy: number` | Translate element |
-| `RESIZE_ELEMENT` | `id: string, changes: object` | Resize element |
-| `ROTATE_ELEMENT` | `id: string, rotation: number` | Rotate element |
-| `SET_VIEWPORT` | `viewport: object` | Update zoom/pan |
+| `DUPLICATE_ELEMENTS` | `ids: string[], offset?: {dx, dy}` | Clone elements with offset (default +20,+20) |
+| `MOVE_ELEMENT` | `id: string, dx: number, dy: number` | Translate element (moves all selected if multi-selected) |
+| `RESIZE_ELEMENT` | `id: string, handle: string, dx, dy, constrain?: boolean` | Resize element. `constrain` forces uniform scaling. |
+| `ROTATE_ELEMENT` | `id: string, angleDeg: number` | Rotate element |
+| `GROUP_ELEMENTS` | `ids: string[]` | Group 2+ elements |
+| `UNGROUP` | `id: string` | Ungroup a group element |
+| `RENAME_ELEMENT` | `id: string, newId: string` | Rename element ID |
+| `REORDER_ELEMENT` | `id: string, newIndex: number` | Change element z-order by index |
+| `BRING_FORWARD` | `ids: string[]` | Move elements one step forward |
+| `SEND_BACKWARD` | `ids: string[]` | Move elements one step backward |
+| `BRING_TO_FRONT` | `ids: string[]` | Move elements to front |
+| `SEND_TO_BACK` | `ids: string[]` | Move elements to back |
+| `ALIGN_ELEMENTS` | `ids: string[], direction: AlignDirection` | Align elements (left, right, top, bottom, center-h, center-v) |
+| `DISTRIBUTE_ELEMENTS` | `ids: string[], direction: DistributeDirection` | Distribute 3+ elements evenly (horizontal, vertical) |
+| `SET_VIEWPORT` | `viewport: Partial<Viewport>` | Update zoom/pan |
 | `SET_FRAME` | `frame: number` | Seek to frame |
 | `SET_PLAYING` | `playing: boolean` | Play or pause |
 | `SET_TOOL` | `tool: EditorTool` | Switch active tool |
@@ -198,6 +209,71 @@ import { CANVAS_ID } from '@elucim/editor';
 
 const isCanvasSelected = selectedIds.includes(CANVAS_ID);
 ```
+
+## Keyboard Shortcuts
+
+All shortcuts work when the editor canvas is focused. They are disabled when typing in input fields.
+
+### Editing
+
+| Shortcut | Action |
+|----------|--------|
+| `Delete` / `Backspace` | Delete selected elements |
+| `Ctrl+Z` | Undo |
+| `Ctrl+Y` / `Ctrl+Shift+Z` | Redo |
+| `Ctrl+A` | Select all elements |
+| `Ctrl+D` | Duplicate selected elements |
+| `Ctrl+C` | Copy selected elements |
+| `Ctrl+V` | Paste copied elements |
+| `Ctrl+G` | Group selected elements (2+) |
+| `Ctrl+Shift+G` | Ungroup selected group |
+| `Escape` | Deselect all, reset to select tool |
+
+### Z-Order
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+]` | Bring forward one step |
+| `Ctrl+[` | Send backward one step |
+| `Ctrl+Shift+]` | Bring to front |
+| `Ctrl+Shift+[` | Send to back |
+
+### Navigation
+
+| Shortcut | Action |
+|----------|--------|
+| `Arrow Keys` | Nudge selected elements by 1px |
+| `Shift+Arrow Keys` | Nudge by 10px |
+| `Ctrl+=` / `Ctrl+-` | Zoom in / out |
+| `Ctrl+0` | Zoom to fit |
+| `Ctrl+1` | Zoom to 100% |
+| `Space` (hold) | Pan mode |
+| `Ctrl/Cmd+Scroll` | Zoom at cursor |
+
+### Mouse Modifiers
+
+| Interaction | Behavior |
+|-------------|----------|
+| **Click** element | Select (replaces selection) |
+| **Shift/Ctrl/Cmd+Click** element | Toggle in/out of selection |
+| **Drag** element | Move selected elements |
+| **Alt+Drag** element | Duplicate in place, then drag copy |
+| **Shift+Drag** resize handle | Constrained (uniform) resize |
+| **Drag** on empty canvas | Marquee selection |
+| **Shift+Drag** on empty canvas | Add to existing selection |
+| **Middle-click drag** | Pan |
+| **Right-click** | Context menu |
+
+## Context Menu
+
+Right-click on elements or the canvas to access:
+
+- **Group / Ungroup** — combine or split element groups
+- **Duplicate / Copy / Paste / Delete** — clipboard and element operations
+- **Bring Forward / Send Backward / Bring to Front / Send to Back** — z-order controls
+- **Align** (when 2+ selected) — Left, Right, Top, Bottom, Center ↔, Center ↕
+- **Distribute** (when 3+ selected) — Horizontal, Vertical (even spacing)
+- **Select All / Deselect All**
 
 ## Utilities
 

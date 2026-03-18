@@ -239,6 +239,30 @@ See [Themes → Semantic Color Tokens](/dsl/themes/#semantic-color-tokens) for t
 The `theme` prop on DslRenderer sets CSS custom properties on the host side. The `$token` syntax inside DSL documents consumes them. Together, they enable theme-adaptive visualizations without modifying the JSON.
 :::
 
+## Accessibility
+
+### Reduced Motion
+
+Elucim respects the `prefers-reduced-motion` media query. When the user has requested reduced motion, the `Player` component skips animations and immediately shows the final frame.
+
+This applies to both `autoPlay` scenes (which start at the final frame) and manual play triggers (which jump to the end instead of animating).
+
+Use the `useReducedMotion()` hook in your own components to match this behavior:
+
+```tsx
+import { useReducedMotion } from '@elucim/core';
+
+function MyComponent() {
+  const reducedMotion = useReducedMotion();
+  // true when prefers-reduced-motion: reduce is active
+  // Updates reactively if the user changes their preference
+}
+```
+
+### Error Colors
+
+Error and validation UIs use semantic CSS custom properties (`--elucim-error`, `--elucim-warning`, `--elucim-surface`) with hardcoded fallbacks. This means error displays automatically adapt to your theme while remaining readable without one.
+
 ## Presentations
 
 If the root node is a `presentation`, the renderer outputs a full slide deck with navigation, transitions, and optional presenter notes — all driven by the JSON:

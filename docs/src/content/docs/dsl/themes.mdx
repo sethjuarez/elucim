@@ -269,3 +269,37 @@ SEMANTIC_TOKENS.foreground  // '#e0e0e0'
 SEMANTIC_TOKENS.accent      // '#4fc3f7'
 SEMANTIC_TOKENS.surface     // '#1e293b'
 ```
+
+## Editor Design Tokens
+
+The visual editor uses its own set of CSS custom properties for chrome styling. These are defined in `EDITOR_TOKENS` (dark) and `EDITOR_TOKENS_LIGHT` and can be overridden via the `editorTheme` prop.
+
+### Sizing & Spacing
+
+| Token | Default | Description |
+|-------|---------|-------------|
+| `--elucim-editor-input-height` | `20px` | Standard input field height |
+| `--elucim-editor-font-xs` | `9px` | Extra-small font (labels, buttons) |
+| `--elucim-editor-font-sm` | `10px` | Small font (field values) |
+| `--elucim-editor-radius-sm` | `3px` | Small border radius |
+| `--elucim-editor-space-xs` | `2px` | Extra-small spacing |
+| `--elucim-editor-space-sm` | `4px` | Small spacing (gaps) |
+
+### Shadows
+
+| Token | Dark | Light |
+|-------|------|-------|
+| `--elucim-editor-shadow-panel` | `0 4px 24px rgba(0,0,0,0.4)` | `0 4px 24px rgba(0,0,0,0.15)` |
+| `--elucim-editor-shadow-dropdown` | `0 4px 12px rgba(0,0,0,0.3)` | `0 4px 12px rgba(0,0,0,0.1)` |
+
+### Motion
+
+| Token | Default | Description |
+|-------|---------|-------------|
+| `--elucim-editor-duration-fast` | `150ms` | Quick transitions (hover, focus) |
+| `--elucim-editor-duration-normal` | `250ms` | Standard transitions (panel open/close) |
+| `--elucim-editor-easing-default` | `cubic-bezier(0.4, 0, 0.2, 1)` | Default easing curve |
+
+:::tip
+Override any of these via the `editorTheme` prop on `ElucimEditor` to customize the editor chrome without changing content theming.
+:::
