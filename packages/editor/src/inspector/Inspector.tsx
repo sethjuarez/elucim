@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ElementNode } from '@elucim/dsl';
 import { SEMANTIC_TOKENS } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
@@ -303,14 +304,32 @@ function SelectField({ label, value, options, onChange }: {
 function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: string) => void }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const [flipUp, setFlipUp] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     if (open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      setFlipUp(spaceBelow < 120);
+      const flipUp = spaceBelow < 120;
+      setMenuStyle({
+        position: 'fixed',
+        left: rect.left,
+        width: rect.width,
+        ...(flipUp ? { bottom: window.innerHeight - rect.top } : { top: rect.bottom }),
+      });
     }
+  }, [open]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (btnRef.current && !btnRef.current.parentElement?.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
   }, [open]);
 
   return (
@@ -335,16 +354,13 @@ function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: 
       >
         + Add {options.length === 1 ? options[0] : 'property…'}
       </button>
-      {open && options.length > 1 && (
+      {open && options.length > 1 && createPortal(
         <div style={{
-          position: 'absolute',
-          ...(flipUp ? { bottom: '100%' } : { top: '100%' }),
-          left: 0,
-          right: 0,
+          ...menuStyle,
           background: v('--elucim-editor-surface'),
           border: `1px solid ${v('--elucim-editor-border')}`,
           borderRadius: 3,
-          zIndex: 10,
+          zIndex: 10000,
           padding: 2,
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         }}>
@@ -365,7 +381,8 @@ function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: 
               {opt}
             </div>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
