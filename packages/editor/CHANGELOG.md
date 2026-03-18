@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.13.0](https://github.com/sethjuarez/elucim/compare/editor-v0.12.0...editor-v0.13.0) (2026-03-18)
+
+
+### Features
+
+* **editor:** comprehensive editor usability features ([3e7766a](https://github.com/sethjuarez/elucim/commit/3e7766ad1eeef10edfebe538a7ae95faf11cd27c))
+* **editor:** Ctrl/Cmd+Click toggles element selection ([724df52](https://github.com/sethjuarez/elucim/commit/724df52e5f9bc822b6fc9c1ac0fb1ea2ea04124f))
+
+
+### Bug Fixes
+
+* **editor:** a11y, design tokens, error colors, reduced-motion ([#27](https://github.com/sethjuarez/elucim/issues/27) [#28](https://github.com/sethjuarez/elucim/issues/28) [#29](https://github.com/sethjuarez/elucim/issues/29) [#30](https://github.com/sethjuarez/elucim/issues/30)) ([25e9391](https://github.com/sethjuarez/elucim/commit/25e939164fafd2a25e1b1f477b970214d6803b7f))
+* **editor:** drag-move all selected elements together ([8d0e36c](https://github.com/sethjuarez/elucim/commit/8d0e36c2b69facbef8ec8c12a9e272cf8093a1c3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.13.0
+    * @elucim/dsl bumped to 0.13.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.13.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.13.0
+
 ## [0.12.0](https://github.com/sethjuarez/elucim/compare/editor-v0.11.0...editor-v0.12.0) (2026-03-18)
 
 
