@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.13.0](https://github.com/sethjuarez/elucim/compare/core-v0.12.0...core-v0.13.0) (2026-03-18)
+
+
+### Bug Fixes
+
+* **editor:** a11y, design tokens, error colors, reduced-motion ([#27](https://github.com/sethjuarez/elucim/issues/27) [#28](https://github.com/sethjuarez/elucim/issues/28) [#29](https://github.com/sethjuarez/elucim/issues/29) [#30](https://github.com/sethjuarez/elucim/issues/30)) ([25e9391](https://github.com/sethjuarez/elucim/commit/25e939164fafd2a25e1b1f477b970214d6803b7f))
+
 ## [0.12.0](https://github.com/sethjuarez/elucim/compare/core-v0.11.0...core-v0.12.0) (2026-03-18)
 
 

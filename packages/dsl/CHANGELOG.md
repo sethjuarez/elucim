@@ -1,5 +1,21 @@
 # @elucim/dsl
 
+## [0.13.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.12.0...dsl-v0.13.0) (2026-03-18)
+
+
+### Bug Fixes
+
+* **editor:** a11y, design tokens, error colors, reduced-motion ([#27](https://github.com/sethjuarez/elucim/issues/27) [#28](https://github.com/sethjuarez/elucim/issues/28) [#29](https://github.com/sethjuarez/elucim/issues/29) [#30](https://github.com/sethjuarez/elucim/issues/30)) ([25e9391](https://github.com/sethjuarez/elucim/commit/25e939164fafd2a25e1b1f477b970214d6803b7f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.13.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.13.0
+
 ## [0.12.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.11.0...dsl-v0.12.0) (2026-03-18)
 
 
