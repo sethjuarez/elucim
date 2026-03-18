@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.13.1](https://github.com/sethjuarez/elucim/compare/editor-v0.13.0...editor-v0.13.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* **editor:** thread content theme to canvas scene wrapper ([f206b08](https://github.com/sethjuarez/elucim/commit/f206b0852a80812adee139f109068391e492fba7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.13.1
+    * @elucim/dsl bumped to 0.13.1
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.13.1
+    * @elucim/dsl bumped from >=0.8.0 to >=0.13.1
+
 ## [0.13.0](https://github.com/sethjuarez/elucim/compare/editor-v0.12.0...editor-v0.13.0) (2026-03-18)
 
 
