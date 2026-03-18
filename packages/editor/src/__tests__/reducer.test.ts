@@ -164,6 +164,26 @@ describe('document mutation actions', () => {
     expect(root.children[0].y2).toBe(210);
   });
 
+  it('MOVE_ELEMENT moves all selected elements when target is in multi-selection', () => {
+    let state = stateWithElements(circle1, rect1);
+    state = { ...state, selectedIds: ['c1', 'r1'] };
+    const next = editorReducer(state, { type: 'MOVE_ELEMENT', id: 'c1', dx: 10, dy: 20 });
+    const root = next.document.root as any;
+    expect(root.children[0].cx).toBe(110);
+    expect(root.children[0].cy).toBe(120);
+    expect(root.children[1].x).toBe(60);
+    expect(root.children[1].y).toBe(70);
+  });
+
+  it('MOVE_ELEMENT moves only target when not in multi-selection', () => {
+    let state = stateWithElements(circle1, rect1);
+    state = { ...state, selectedIds: ['c1'] };
+    const next = editorReducer(state, { type: 'MOVE_ELEMENT', id: 'c1', dx: 10, dy: 20 });
+    const root = next.document.root as any;
+    expect(root.children[0].cx).toBe(110);
+    expect(root.children[1].x).toBe(50); // rect unchanged
+  });
+
   it('SET_DOCUMENT replaces the entire document', () => {
     const state = stateWithElements(circle1);
     const newDoc: ElucimDocument = {

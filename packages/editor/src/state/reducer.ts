@@ -322,9 +322,16 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'MOVE_ELEMENT': {
       const doc = cloneDoc(state.document);
-      const loc = findElementById(doc.root, action.id);
-      if (!loc?.parent) return state;
-      loc.parent[loc.index] = applyMove(loc.element, action.dx, action.dy);
+      // If the dragged element is in a multi-selection, move all selected elements
+      const idsToMove = state.selectedIds.length > 1 && state.selectedIds.includes(action.id)
+        ? state.selectedIds
+        : [action.id];
+      for (const id of idsToMove) {
+        const loc = findElementById(doc.root, id);
+        if (loc?.parent) {
+          loc.parent[loc.index] = applyMove(loc.element, action.dx, action.dy);
+        }
+      }
       return { ...state, document: doc };
     }
 
