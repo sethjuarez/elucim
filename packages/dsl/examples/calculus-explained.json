@@ -5,6 +5,7 @@
     "type": "presentation",
     "width": 1280,
     "height": 720,
+    "background": "$background",
     "transition": "fade",
     "transitionDuration": 500,
     "showHud": true,

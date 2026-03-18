@@ -38,7 +38,7 @@ jobs:
       - run: pnpm --filter @elucim/dsl build
 
       # Build the Astro/Starlight docs site
-      - run: pnpm --filter @elucim/docs build
+      - run: pnpm --filter ./docs build
 
       - uses: actions/upload-pages-artifact@v3
         with:

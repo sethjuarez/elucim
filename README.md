@@ -12,7 +12,7 @@ A JavaScript/TypeScript library for creating animated concept explanations — 3
 | **Phase 2: Math Primitives** | ✅ Complete | Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX (KaTeX) |
 | **Phase 3: Animation System** | ✅ Complete | FadeIn/Out, Draw, Write, Transform, Morph, Stagger, Parallel, Timeline DSL |
 | **Phase 4: New Primitives** | ✅ Complete | Polygon, VectorField, LaTeX, Image, Group, BarChart |
-| **Phase 5: Tooling** | ✅ Complete | Interactive Explorer, Video Export, VitePress docs site |
+| **Phase 5: Tooling** | ✅ Complete | Interactive Explorer, Video Export, Starlight docs site |
 | **Phase 6: Presentation** | ✅ Complete | Slide mode, transitions, HUD, keyboard nav, presenter notes |
 | **Phase 7: DSL** | ✅ Complete | JSON DSL for AI agents, safe math evaluator, validator, DslRenderer |
 | **Phase 8: Composability** | ✅ Complete | Universal SpatialProps (rotation, scale, translate), z-index stacking, Group container |
@@ -45,7 +45,6 @@ packages/
   editor/     — Visual editor: canvas, toolbar, inspector, timeline, theming
   demo/       — Demo playground with 15+ interactive scenes
   explorer/   — Storybook-style primitive browser with live controls
-  docs/       — Starlight (Astro) documentation site
   e2e/        — Playwright visual regression tests
 ```
 

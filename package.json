@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "pnpm --filter @elucim/demo dev",
     "dev:explorer": "pnpm --filter @elucim/explorer dev",
-    "dev:docs": "pnpm --filter @elucim/docs dev",
+    "dev:docs": "pnpm --filter ./docs dev",
     "build": "pnpm --filter @elucim/core build && pnpm --filter @elucim/dsl build && pnpm --filter @elucim/editor build",
     "test": "pnpm --filter @elucim/core test && pnpm --filter @elucim/dsl test && pnpm --filter @elucim/editor test",
     "test:dsl": "pnpm --filter @elucim/dsl test",

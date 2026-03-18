@@ -171,7 +171,7 @@ export interface PresentationProps {
 export function Presentation({
   width = 1920,
   height = 1080,
-  background = '#0d0d1a',
+  background = 'var(--elucim-background, light-dark(#f5f5fa, #0d0d1a))',
   transition = 'fade',
   transitionDuration = 400,
   showHUD = true,
