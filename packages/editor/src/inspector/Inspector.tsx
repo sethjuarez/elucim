@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ElementNode } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
@@ -291,9 +291,21 @@ function SelectField({ label, value, options, onChange }: {
 
 function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: string) => void }) {
   const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [flipUp, setFlipUp] = useState(false);
+
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setFlipUp(spaceBelow < 120);
+    }
+  }, [open]);
+
   return (
     <div style={{ position: 'relative' }}>
       <button
+        ref={btnRef}
         onClick={() => {
           if (options.length === 1) { onAdd(options[0]); }
           else { setOpen(!open); }
@@ -315,7 +327,7 @@ function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: 
       {open && options.length > 1 && (
         <div style={{
           position: 'absolute',
-          top: '100%',
+          ...(flipUp ? { bottom: '100%' } : { top: '100%' }),
           left: 0,
           right: 0,
           background: v('--elucim-editor-surface'),

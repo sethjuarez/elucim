@@ -2,6 +2,7 @@ import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { Scene } from '@elucim/core';
 import { renderElement } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
+import { resolveColor } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
 import { SelectionOverlay } from './SelectionOverlay';
@@ -40,7 +41,7 @@ export function ElucimCanvas({ className, style }: ElucimCanvasProps) {
   const height = ('height' in root ? root.height : undefined) ?? 600;
   const fps = ('fps' in root ? root.fps : undefined) ?? 60;
   const durationInFrames = ('durationInFrames' in root ? root.durationInFrames : undefined) ?? 120;
-  const background = ('background' in root ? root.background : undefined) ?? '#0f172a';
+  const background = resolveColor(('background' in root ? root.background : undefined) as string | undefined) ?? '#0f172a';
 
   // Get children from root
   const children: ElementNode[] = ('children' in root && Array.isArray(root.children)) ? root.children : [];
