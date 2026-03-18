@@ -1,5 +1,14 @@
 # @elucim/core
 
+## [0.9.0](https://github.com/sethjuarez/elucim/compare/core-v0.8.4...core-v0.9.0) (2026-03-18)
+
+
+### Bug Fixes
+
+* fadeOut timing bug, smart inspector, timeline UX ([d9bb410](https://github.com/sethjuarez/elucim/commit/d9bb4104dc702af163c1fdc47cfec925e2e27982))
+* pipe colorScheme through to Presentation component ([98a50dc](https://github.com/sethjuarez/elucim/commit/98a50dc92db764b546e7da05f420a98e0a3f8217))
+* Presentation dark mode default + remove legacy VitePress docs ([0bdf8b5](https://github.com/sethjuarez/elucim/commit/0bdf8b5b081088b2f79908732b42ace3eafdbabf))
+
 ## [0.8.4](https://github.com/sethjuarez/elucim/compare/core-v0.8.3...core-v0.8.4) (2026-03-18)
 
 

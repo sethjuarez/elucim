@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.9.0](https://github.com/sethjuarez/elucim/compare/editor-v0.8.4...editor-v0.9.0) (2026-03-18)
+
+
+### Features
+
+* **editor:** initialFrame prop, timeline scrub, canvas padding, light theme support ([c90a6c6](https://github.com/sethjuarez/elucim/commit/c90a6c6aff8b9f2cec83edda2e94757be858c862))
+
+
+### Bug Fixes
+
+* fadeOut timing bug, smart inspector, timeline UX ([d9bb410](https://github.com/sethjuarez/elucim/commit/d9bb4104dc702af163c1fdc47cfec925e2e27982))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.9.0
+    * @elucim/dsl bumped to 0.9.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.9.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.9.0
+
 ## [0.8.4](https://github.com/sethjuarez/elucim/compare/editor-v0.8.3...editor-v0.8.4) (2026-03-18)
 
 
