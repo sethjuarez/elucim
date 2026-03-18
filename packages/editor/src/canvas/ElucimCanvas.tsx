@@ -2,7 +2,7 @@ import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react'
 import { Scene } from '@elucim/core';
 import { renderElement } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
-import { resolveColor, darkTheme, lightTheme } from '@elucim/dsl';
+import { resolveColor, DARK_THEME, LIGHT_THEME, themeToVars } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
 import { SelectionOverlay } from './SelectionOverlay';
@@ -27,26 +27,11 @@ export interface ElucimCanvasProps {
 }
 
 /**
- * Build --elucim-* CSS custom properties from a builder Theme so that
+ * Build --elucim-* CSS custom properties from a core theme preset so that
  * $token references in element color props resolve correctly.
  */
-function contentThemeVars(t: typeof darkTheme): React.CSSProperties {
-  return {
-    '--elucim-foreground': t.text,
-    '--elucim-background': t.background,
-    '--elucim-title': t.title,
-    '--elucim-subtitle': t.subtitle,
-    '--elucim-accent': t.primary,
-    '--elucim-muted': t.muted,
-    '--elucim-surface': t.background,
-    '--elucim-border': t.boxStroke,
-    '--elucim-primary': t.primary,
-    '--elucim-secondary': t.secondary,
-    '--elucim-tertiary': t.tertiary,
-    '--elucim-success': t.success,
-    '--elucim-warning': t.warning,
-    '--elucim-error': t.error,
-  } as React.CSSProperties;
+function contentThemeVars(t: typeof DARK_THEME): React.CSSProperties {
+  return themeToVars(t) as React.CSSProperties;
 }
 
 /** Determine whether a resolved background color is dark. */
@@ -87,9 +72,9 @@ export function ElucimCanvas({ className, style, editorColorScheme }: ElucimCanv
   // Fall back to the editor's own color scheme to break the cycle.
   const sceneThemeVars = useMemo(() => {
     if (rawBackground?.startsWith('$')) {
-      return contentThemeVars(editorColorScheme === 'light' ? lightTheme : darkTheme);
+      return contentThemeVars(editorColorScheme === 'light' ? LIGHT_THEME : DARK_THEME);
     }
-    return contentThemeVars(isDarkBackground(background) ? darkTheme : lightTheme);
+    return contentThemeVars(isDarkBackground(background) ? DARK_THEME : LIGHT_THEME);
   }, [rawBackground, background, editorColorScheme]);
 
   // Get children from root

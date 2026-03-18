@@ -11,7 +11,8 @@ The main editor component — all-in-one canvas, toolbar, inspector, and timelin
 interface ElucimEditorProps {
   initialDocument?: ElucimDocument;
   initialFrame?: number | 'last';
-  theme?: Record<string, string>;
+  theme?: ElucimTheme;           // unified content theme
+  editorTheme?: Record<string, string>;  // explicit chrome overrides
   onDocumentChange?: (document: ElucimDocument) => void;
   className?: string;
   style?: React.CSSProperties;
@@ -22,7 +23,8 @@ interface ElucimEditorProps {
 |------|------|---------|-------------|
 | `initialDocument` | `ElucimDocument` | Empty 800×600 scene | Starting scene document |
 | `initialFrame` | `number \| 'last'` | `0` | Starting frame. Use `'last'` to start at final frame. |
-| `theme` | `Record<string, string>` | — | Token overrides — accepts hex, named colors, or `var()` refs (see [Theming](/editor/theming/)) |
+| `theme` | `ElucimTheme` | — | Unified content theme — same type used by `DslRenderer`. Editor chrome is auto-derived from content tokens. |
+| `editorTheme` | `Record<string, string>` | — | Explicit chrome overrides — accepts hex, named colors, or `var()` refs. Overrides auto-derived values. |
 | `onDocumentChange` | `(doc: ElucimDocument) => void` | — | Called on every document change (skips initial mount) |
 | `className` | `string` | — | CSS class on root element |
 | `style` | `CSSProperties` | — | Inline styles on root element |
@@ -233,6 +235,37 @@ function isPointInBounds(
 function computeSnap(value: number, gridSize: number): number;
 ```
 
+### Unified Theming
+
+Pass the same `ElucimTheme` to both `DslRenderer` and `ElucimEditor` — the editor automatically derives its chrome tokens from the content theme:
+
+```tsx
+import type { ElucimTheme } from '@elucim/core';
+
+const myTheme: ElucimTheme = {
+  foreground: '#e0e0e0',
+  background: '#1a1a2e',
+  primary: '#4fc3f7',
+  muted: '#64748b',
+  surface: '#1e293b',
+  border: '#334155',
+};
+
+// Same theme for both — no duplicate token maps needed
+<DslRenderer dsl={doc} theme={myTheme} colorScheme="dark" />
+<ElucimEditor initialDocument={doc} theme={myTheme} />
+```
+
+Use `editorTheme` to override specific chrome tokens while keeping the auto-derivation:
+
+```tsx
+<ElucimEditor
+  initialDocument={doc}
+  theme={myTheme}
+  editorTheme={{ 'color-scheme': 'light', accent: '#ff6b35' }}
+/>
+```
+
 ### Theming
 
 ```ts
@@ -241,6 +274,9 @@ function v(token: string): string;
 
 // Merge theme overrides with defaults
 function buildThemeVars(overrides?: Record<string, string>): Record<string, string>;
+
+// Derive editor chrome from an ElucimTheme content theme
+function deriveEditorTheme(contentTheme: ElucimTheme, colorScheme: 'light' | 'dark'): Record<string, string>;
 
 // Generate SVG rotation cursor with custom color
 function makeRotateCursor(color?: string): string;

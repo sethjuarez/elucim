@@ -59,7 +59,7 @@ export {
 } from './validator/validate';
 
 // Renderer
-export { DslRenderer, type DslRendererProps, type DslRendererRef, type ElucimTheme } from './renderer/DslRenderer';
+export { DslRenderer, type DslRendererProps, type DslRendererRef } from './renderer/DslRenderer';
 export { renderToSvgString, type RenderToSvgStringOptions } from './renderer/renderToSvgString';
 export { renderToPng, stripCssFunctions, type RenderToPngOptions } from './renderer/renderToPng';
 export {
@@ -75,8 +75,12 @@ export {
 // Easing resolver
 export { resolveEasing } from './renderer/resolveEasing';
 
-// Color token resolver
-export { resolveColor, SEMANTIC_TOKENS, TOKEN_NAMES } from './renderer/resolveColor';
+// Color token resolver (canonical source: @elucim/core)
+export { resolveColor, SEMANTIC_TOKENS, TOKEN_NAMES } from '@elucim/core';
+
+// Theme (canonical source: @elucim/core)
+export type { ElucimTheme } from '@elucim/core';
+export { DARK_THEME, LIGHT_THEME, themeToVars, DARK_THEME_VARS, LIGHT_THEME_VARS } from '@elucim/core';
 
 // Builders — fluent API for programmatic presentation authoring
 export {
@@ -85,4 +89,4 @@ export {
   type PresentationOptions,
 } from './builders/PresentationBuilder';
 export { SlideBuilder } from './builders/SlideBuilder';
-export { darkTheme, lightTheme, type Theme } from './builders/themes';
+export { darkTheme, lightTheme, type BuilderTheme, type Theme } from './builders/themes';

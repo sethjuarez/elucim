@@ -156,7 +156,7 @@ function App() {
     <ElucimEditor
       initialDocument={doc}
       initialFrame={lastFrame}
-      theme={isLight ? { 'color-scheme': 'light' } : undefined}
+      editorTheme={isLight ? { 'color-scheme': 'light' } : undefined}
       style={{ width: '100%', height: '100vh' }}
     />
   );

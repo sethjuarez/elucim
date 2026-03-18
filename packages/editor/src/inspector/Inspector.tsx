@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ElementNode } from '@elucim/dsl';
-import { SEMANTIC_TOKENS } from '@elucim/dsl';
+import { SEMANTIC_TOKENS } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
 import { CANVAS_ID } from '../state/types';

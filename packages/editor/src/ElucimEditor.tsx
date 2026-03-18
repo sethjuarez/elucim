@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ElucimDocument } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
+import type { ElucimTheme } from '@elucim/core';
 import { EditorProvider } from './state/EditorProvider';
 import { useEditorDocument } from './state/EditorProvider';
 import { ElucimCanvas } from './canvas/ElucimCanvas';
@@ -12,7 +13,7 @@ import { EditorErrorBoundary } from './panels/EditorErrorBoundary';
 import { useEditorState } from './state/EditorProvider';
 import { getElementBounds } from './utils/bounds';
 import { useEditorIcons } from './theme/icons';
-import { buildThemeVars, v } from './theme/tokens';
+import { buildThemeVars, deriveEditorTheme, v } from './theme/tokens';
 import { CANVAS_ID } from './state/types';
 
 export interface ElucimEditorProps {
@@ -21,12 +22,17 @@ export interface ElucimEditorProps {
   /** Initial animation frame. Use `'last'` to start at the final frame. */
   initialFrame?: number | 'last';
   /**
-   * Theme overrides for editor chrome colors.
-   * Keys can be bare names (e.g. `"accent"`) which map to `--elucim-editor-accent`,
-   * or full CSS variable names (e.g. `"--elucim-editor-accent"`).
-   * Values can be hex, named colors, or CSS var() references.
+   * Unified content theme.  When provided, editor chrome is automatically
+   * derived from these content tokens (foreground → fg, primary → accent, etc.).
+   * Pass the same `ElucimTheme` you use with `DslRenderer`.
    */
-  theme?: Record<string, string>;
+  theme?: ElucimTheme;
+  /**
+   * Explicit overrides for editor chrome tokens.
+   * Keys can be bare names (e.g. `"accent"`) or full CSS variable names.
+   * These override any values auto-derived from `theme`.
+   */
+  editorTheme?: Record<string, string>;
   /** Called whenever the document changes. Receives the updated document. */
   onDocumentChange?: (document: ElucimDocument) => void;
   /** CSS class for the editor container */
@@ -54,7 +60,7 @@ function DocumentBridge({ onChange }: { onChange?: (doc: ElucimDocument) => void
  * A visual editor for creating and editing Elucim animated scenes.
  * Full-bleed canvas with floating toolbar, contextual inspector, and Premiere-style timeline.
  */
-export function ElucimEditor({ initialDocument, initialFrame, theme, className, style, onDocumentChange }: ElucimEditorProps) {
+export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange }: ElucimEditorProps) {
   // Resolve 'last' to the actual final frame number
   const resolvedFrame = initialFrame === 'last'
     ? Math.max(0, ((initialDocument?.root as any)?.durationInFrames ?? 1) - 1)
@@ -64,14 +70,15 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, className, 
     <EditorErrorBoundary>
       <EditorProvider initialDocument={initialDocument} initialFrame={resolvedFrame}>
         <DocumentBridge onChange={onDocumentChange} />
-        <ElucimEditorLayout theme={theme} className={className} style={style} />
+        <ElucimEditorLayout theme={theme} editorTheme={editorTheme} className={className} style={style} />
       </EditorProvider>
     </EditorErrorBoundary>
   );
 }
 
 export interface ElucimEditorLayoutProps {
-  theme?: Record<string, string>;
+  theme?: ElucimTheme;
+  editorTheme?: Record<string, string>;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -82,17 +89,22 @@ export interface ElucimEditorLayoutProps {
  * custom composition (e.g. adding panels inside the editor context) while
  * keeping the standard floating-panel layout, scrollbar styles, and theme injection.
  */
-export function ElucimEditorLayout({ theme, className, style }: ElucimEditorLayoutProps) {
+export function ElucimEditorLayout({ theme, editorTheme, className, style }: ElucimEditorLayoutProps) {
   const { state, dispatch } = useEditorState();
   const icons = useEditorIcons();
   const containerRef = useRef<HTMLDivElement>(null);
-  // Merge: defaults ← external theme prop ← runtime theme overrides from "Apply theme"
-  const merged = { ...theme };
+
+  // Derive editor chrome from content theme, then layer explicit overrides
+  const colorSchemeHint = editorTheme?.['color-scheme'] ?? editorTheme?.['--elucim-editor-color-scheme'] ?? 'dark';
+  const derived = theme
+    ? deriveEditorTheme(theme, colorSchemeHint as 'light' | 'dark')
+    : {};
+  const merged = { ...derived, ...editorTheme };
   for (const [k, val] of Object.entries(state.themeOverrides)) {
     merged[k] = val;
   }
   const themeVars = buildThemeVars(merged);
-  const colorScheme = merged['--elucim-editor-color-scheme'] || merged['color-scheme'] || 'dark';
+  const colorScheme = merged['--elucim-editor-color-scheme'] || merged['color-scheme'] || colorSchemeHint;
 
   const handleToolbarPosition = useCallback((pos: { x: number; y: number }) => {
     dispatch({ type: 'SET_TOOLBAR_POSITION', position: pos });

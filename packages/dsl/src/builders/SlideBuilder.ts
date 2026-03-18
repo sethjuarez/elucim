@@ -106,7 +106,7 @@ export class SlideBuilder {
         x: opts.x, y: opts.y,
         content,
         fontSize: opts.fontSize ?? 14,
-        fill: opts.color ?? this.theme.text,
+        fill: opts.color ?? this.theme.foreground,
         textAnchor: opts.anchor ?? 'middle',
         fontWeight: opts.fontWeight,
         fontFamily: opts.fontFamily,
@@ -190,7 +190,7 @@ export class SlideBuilder {
       bars,
       x: opts.x, y: opts.y, width: opts.width, height: opts.height,
       barColor: opts.barColor ?? this.theme.primary,
-      labelColor: opts.labelColor ?? this.theme.text,
+      labelColor: opts.labelColor ?? this.theme.foreground,
       labelFontSize: opts.labelFontSize,
       maxValue: opts.maxValue,
       valueFormat: opts.valueFormat,
@@ -211,7 +211,7 @@ export class SlideBuilder {
       type: 'matrix', values,
       x: opts?.x ?? this.cx, y: opts?.y ?? 300,
       cellSize: opts?.cellSize ?? 50,
-      color: opts?.color ?? this.theme.text,
+      color: opts?.color ?? this.theme.foreground,
       bracketColor: opts?.bracketColor ?? this.theme.primary,
       fontSize: opts?.fontSize,
       fadeIn: duration,
@@ -283,7 +283,7 @@ export class SlideBuilder {
             x: pos.cx, y: pos.cy + 5,
             content: label,
             fontSize: opts?.fontSize ?? 13,
-            fill: opts?.textColor ?? this.theme.text,
+            fill: opts?.textColor ?? this.theme.foreground,
             textAnchor: 'middle' as const,
             fontFamily: opts?.fontFamily,
           },
@@ -338,7 +338,7 @@ export class SlideBuilder {
             x: pos.cx, y: pos.cy + 5,
             content: label,
             fontSize: opts?.fontSize ?? 13,
-            fill: opts?.textColor ?? this.theme.text,
+            fill: opts?.textColor ?? this.theme.foreground,
             textAnchor: 'middle' as const,
           },
         ],
@@ -446,3 +446,4 @@ export class SlideBuilder {
     return { elements: this.elements, durationInFrames: duration };
   }
 }
+

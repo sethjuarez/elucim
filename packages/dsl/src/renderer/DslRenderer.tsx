@@ -2,17 +2,16 @@ import React, { forwardRef, useRef, useImperativeHandle, useSyncExternalStore } 
 import { validate } from '../validator/validate';
 import type { ElucimDocument } from '../schema/types';
 import { renderRoot } from './renderElements';
-import { SEMANTIC_TOKENS } from './resolveColor';
-import { darkTheme, lightTheme } from '../builders/themes';
+import {
+  type ElucimTheme,
+  DARK_THEME_VARS, LIGHT_THEME_VARS,
+  themeToVars,
+} from '@elucim/core';
+
+// Re-export ElucimTheme for consumers importing from @elucim/dsl
+export type { ElucimTheme } from '@elucim/core';
 
 // ─── DslRenderer ────────────────────────────────────────────────────────────
-
-export interface ElucimTheme {
-  foreground?: string;
-  background?: string;
-  accent?: string;
-  [key: string]: string | undefined;
-}
 
 export interface DslRendererRef {
   /** Get the underlying SVG element */
@@ -34,9 +33,9 @@ export interface DslRendererProps {
   className?: string;
   style?: React.CSSProperties;
   /**
-   * Inject theme colors as CSS custom properties (e.g. --elucim-foreground).
-   * Values can be hex colors, named colors, or CSS var() references
-   * (e.g. `{ accent: "var(--my-app-accent)" }`).
+   * Theme for semantic token resolution.
+   * Keys map to `--elucim-{key}` CSS custom properties and `$token` DSL syntax.
+   * Values can be hex colors, named colors, or CSS `var()` references.
    */
   theme?: ElucimTheme;
   /**
@@ -45,9 +44,7 @@ export interface DslRendererProps {
    * - `'light'` — inject light theme CSS variables
    * - `'auto'` — detect from `prefers-color-scheme` media query
    *
-   * DSL documents using `$token` syntax (e.g. `$background`, `$foreground`)
-   * will automatically adapt. Explicit `theme` values take priority over
-   * colorScheme defaults.
+   * Explicit `theme` values take priority over colorScheme defaults.
    */
   colorScheme?: 'light' | 'dark' | 'auto';
   /** Render a static frame instead of interactive player. 'first' | 'last' | frame number */
@@ -58,47 +55,23 @@ export interface DslRendererProps {
   autoPlay?: boolean;
   /** Override the document's loop setting (Player root only). */
   loop?: boolean;
+  /**
+   * When true, the rendered scene fills its parent container width and
+   * scales proportionally.  Default: false.
+   */
+  fitToContainer?: boolean;
   /** Called whenever playback state changes (play/pause). */
   onPlayStateChange?: (playing: boolean) => void;
+  /** Called when a React render error occurs inside the scene tree. */
+  onRenderError?: (error: Error) => void;
+  /** Custom fallback UI shown when a render error occurs. */
+  fallback?: React.ReactNode;
   /** Callback fired when DSL validation fails */
   onError?: (errors: Array<{ path: string; message: string }>) => void;
 }
 
-/** Convert theme object to CSS custom properties. */
-function themeToVars(theme?: ElucimTheme): React.CSSProperties {
-  if (!theme) return {};
-  const vars: Record<string, string> = {};
-  for (const [key, value] of Object.entries(theme)) {
-    if (value !== undefined) {
-      vars[`--elucim-${key}`] = value;
-    }
-  }
-  return vars as React.CSSProperties;
-}
+// ─── Color scheme detection ─────────────────────────────────────────────────
 
-/** Map a builder Theme to semantic token CSS variables. */
-function builderThemeToVars(t: typeof darkTheme): Record<string, string> {
-  return {
-    '--elucim-foreground': t.text,
-    '--elucim-background': t.background,
-    '--elucim-title': t.title,
-    '--elucim-subtitle': t.subtitle,
-    '--elucim-accent': t.primary,
-    '--elucim-muted': t.muted,
-    '--elucim-surface': t.background,
-    '--elucim-primary': t.primary,
-    '--elucim-secondary': t.secondary,
-    '--elucim-tertiary': t.tertiary,
-    '--elucim-success': t.success,
-    '--elucim-warning': t.warning,
-    '--elucim-error': t.error,
-  };
-}
-
-const DARK_VARS = builderThemeToVars(darkTheme);
-const LIGHT_VARS = builderThemeToVars(lightTheme);
-
-/** Subscribe to prefers-color-scheme changes. */
 function subscribeColorScheme(cb: () => void) {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return () => {};
   const mql = window.matchMedia('(prefers-color-scheme: dark)');
@@ -112,15 +85,56 @@ function getColorSchemeSnapshot(): boolean {
 }
 
 function getColorSchemeServerSnapshot(): boolean {
-  return true; // default to dark on server
+  return true;
 }
 
 function usePrefersDark(): boolean {
   return useSyncExternalStore(subscribeColorScheme, getColorSchemeSnapshot, getColorSchemeServerSnapshot);
 }
 
+// ─── Error boundary ─────────────────────────────────────────────────────────
+
+interface DslErrorBoundaryProps {
+  onRenderError?: (error: Error) => void;
+  fallback?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+interface DslErrorBoundaryState {
+  error: Error | null;
+}
+
+class DslErrorBoundary extends React.Component<DslErrorBoundaryProps, DslErrorBoundaryState> {
+  state: DslErrorBoundaryState = { error: null };
+
+  static getDerivedStateFromError(error: Error): DslErrorBoundaryState {
+    return { error };
+  }
+
+  componentDidCatch(error: Error) {
+    this.props.onRenderError?.(error);
+  }
+
+  render() {
+    if (this.state.error) {
+      if (this.props.fallback !== undefined) return this.props.fallback;
+      return (
+        <div
+          style={{ color: '#ff6b6b', fontFamily: 'monospace', padding: 16, fontSize: 13 }}
+          data-testid="dsl-render-error"
+        >
+          <strong>Render Error:</strong> {this.state.error.message}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ─── DslRenderer component ──────────────────────────────────────────────────
+
 export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function DslRenderer(
-  { dsl, className, style, theme, colorScheme, poster, controls, autoPlay, loop, onPlayStateChange, onError },
+  { dsl, className, style, theme, colorScheme, poster, controls, autoPlay, loop, fitToContainer, onPlayStateChange, onRenderError, fallback, onError },
   ref
 ) {
   const playerRef = useRef<import('@elucim/core').PlayerRef>(null);
@@ -142,7 +156,6 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
       .map(e => ({ path: e.path, message: e.message }));
     onError?.(filteredErrors);
 
-    // Group errors by parent node path for readability
     const grouped = new Map<string, typeof filteredErrors>();
     for (const err of filteredErrors) {
       const parts = err.path.split('.');
@@ -179,36 +192,39 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
     );
   }
 
-  const themeVars = themeToVars(theme);
+  const themeVarsCss = themeToVars(theme) as React.CSSProperties;
 
   // Resolve colorScheme → CSS variables for semantic tokens
   let schemeVars: React.CSSProperties = {};
   if (colorScheme) {
     const isDark = colorScheme === 'auto' ? prefersDark : colorScheme === 'dark';
-    schemeVars = (isDark ? DARK_VARS : LIGHT_VARS) as React.CSSProperties;
+    schemeVars = (isDark ? DARK_THEME_VARS : LIGHT_THEME_VARS) as React.CSSProperties;
   }
 
-  // Resolve poster to a frame override
   const posterOverrides = poster !== undefined ? resolvePoster(poster, dsl) : undefined;
 
-  // Resolve the CSS colorScheme value to pass to Scene/Player
   const resolvedColorScheme = colorScheme
     ? (colorScheme === 'auto'
       ? (prefersDark ? 'dark' : 'light')
       : colorScheme) as 'light' | 'dark'
     : undefined;
 
+  const content = renderRoot(dsl.root, {
+    frame: posterOverrides?.frame,
+    playerRef,
+    colorScheme: resolvedColorScheme,
+    controls,
+    autoPlay,
+    loop,
+    fitToContainer,
+    onPlayStateChange,
+  });
+
   return (
-    <div className={className} style={{ ...schemeVars, ...themeVars, ...style }} data-testid="dsl-root">
-      {renderRoot(dsl.root, {
-        frame: posterOverrides?.frame,
-        playerRef,
-        colorScheme: resolvedColorScheme,
-        controls,
-        autoPlay,
-        loop,
-        onPlayStateChange,
-      })}
+    <div className={className} style={{ ...schemeVars, ...themeVarsCss, ...style }} data-testid="dsl-root">
+      <DslErrorBoundary onRenderError={onRenderError} fallback={fallback}>
+        {content}
+      </DslErrorBoundary>
     </div>
   );
 });

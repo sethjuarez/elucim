@@ -42,6 +42,8 @@ export interface RenderRootOverrides {
   autoPlay?: boolean;
   /** Override Player loop setting. */
   loop?: boolean;
+  /** When true, scene fills its parent container. */
+  fitToContainer?: boolean;
   /** Callback fired when playback state changes. */
   onPlayStateChange?: (playing: boolean) => void;
 }
@@ -87,6 +89,7 @@ export function renderScene(node: SceneNode, overrides?: RenderRootOverrides): R
       durationInFrames={node.durationInFrames}
       background={resolveColor(node.background)}
       colorScheme={overrides?.colorScheme}
+      fitToContainer={overrides?.fitToContainer}
       {...(hasFrameOverride ? { frame: overrides!.frame, autoPlay: false } : {})}
     >
       {node.children.map((child, i) => renderElement(child, i))}
@@ -108,6 +111,7 @@ export function renderPlayer(node: PlayerNode, overrides?: RenderRootOverrides):
       loop={overrides?.loop ?? node.loop}
       autoPlay={overrides?.autoPlay ?? node.autoPlay}
       onPlayStateChange={overrides?.onPlayStateChange}
+      fitToContainer={overrides?.fitToContainer}
       colorScheme={overrides?.colorScheme}
     >
       {node.children.map((child, i) => renderElement(child, i))}

@@ -40,6 +40,16 @@ export { Group, type GroupProps } from './primitives/Group';
 export { useAnimation, type AnimationProps } from './primitives/animation';
 export { buildTransform, withTransform, sortByZIndex, type SpatialProps, type BaseElementProps } from './primitives/transform';
 
+// Theme
+export {
+  type ElucimTheme,
+  SEMANTIC_TOKENS, TOKEN_NAMES,
+  resolveColor,
+  themeToVars,
+  DARK_THEME, LIGHT_THEME,
+  DARK_THEME_VARS, LIGHT_THEME_VARS,
+} from './theme';
+
 // Easing
 export {
   type EasingFunction,

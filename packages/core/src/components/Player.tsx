@@ -57,6 +57,7 @@ export const Player = forwardRef<PlayerRef, PlayerProps>(function Player(
   },
   ref
 ) {
+  const fitToContainer = sceneProps.fitToContainer ?? false;
   const [frame, setFrame] = useState(0);
   const [playing, setPlaying] = useState(autoPlay);
   const lastTimeRef = useRef<number | null>(null);
@@ -228,7 +229,7 @@ export const Player = forwardRef<PlayerRef, PlayerProps>(function Player(
       ref={containerRef}
       tabIndex={0}
       style={{
-        width: insidePresentation ? '100%' : width,
+        width: insidePresentation ? '100%' : (fitToContainer ? '100%' : width),
         height: insidePresentation ? '100%' : undefined,
         maxWidth: '100%',
         outline: 'none',

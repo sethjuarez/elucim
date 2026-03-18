@@ -25,6 +25,12 @@ export interface SceneProps {
   frame?: number;
   /** CSS class name */
   className?: string;
+  /**
+   * When true, the scene fills its parent container width and scales
+   * proportionally via CSS `aspect-ratio`.  The SVG `viewBox` handles
+   * resolution-independent rendering.  Default: false.
+   */
+  fitToContainer?: boolean;
   /** CSS style */
   style?: React.CSSProperties;
   /**
@@ -53,6 +59,7 @@ export const Scene = forwardRef<SVGSVGElement, SceneProps>(function Scene(
     autoPlay = false,
     frame: controlledFrame,
     className,
+    fitToContainer = false,
     style,
     colorScheme,
   },
@@ -113,7 +120,7 @@ export const Scene = forwardRef<SVGSVGElement, SceneProps>(function Scene(
         className={className}
         style={{
           position: 'relative',
-          width: insidePresentation ? '100%' : width,
+          width: insidePresentation ? '100%' : (fitToContainer ? '100%' : width),
           height: insidePresentation ? '100%' : undefined,
           maxWidth: '100%',
           aspectRatio: insidePresentation ? undefined : `${width} / ${height}`,

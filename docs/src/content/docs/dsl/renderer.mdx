@@ -12,13 +12,16 @@ The `<DslRenderer>` component takes an `ElucimDocument` and renders it as a full
 | `dsl` | `ElucimDocument` | **required** | The DSL document to render |
 | `className` | `string` | — | CSS class for the root wrapper |
 | `style` | `React.CSSProperties` | — | Inline styles for the root wrapper |
-| `theme` | `ElucimTheme` | — | Inject CSS custom properties for theming. Values can be hex, named colors, or `var()` references. |
+| `theme` | `ElucimTheme` | — | Unified content theme. Inject CSS custom properties for theming. Values can be hex, named colors, or `var()` references. Same type used by `ElucimEditor`. |
 | `colorScheme` | `'light' \| 'dark' \| 'auto'` | — | Semantic token resolution: injects light or dark CSS variables |
 | `poster` | `'first' \| 'last' \| number` | — | Render a static frame instead of an interactive player |
 | `controls` | `boolean` | — | Override the document's `controls` setting (Player root only) |
 | `autoPlay` | `boolean` | — | Override the document's `autoPlay` setting (Player root only) |
 | `loop` | `boolean` | — | Override the document's `loop` setting (Player root only) |
+| `fitToContainer` | `boolean` | `false` | When true, scene fills parent width and scales proportionally |
 | `onPlayStateChange` | `(playing: boolean) => void` | — | Called when playback starts or stops |
+| `onRenderError` | `(error: Error) => void` | — | Called when a React render error occurs inside the scene tree |
+| `fallback` | `React.ReactNode` | — | Custom UI shown when a render error occurs |
 | `onError` | `(errors: Array<{path, message}>) => void` | — | Callback fired when DSL validation fails |
 | `ref` | `React.Ref<DslRendererRef>` | — | Imperative handle for programmatic control |
 
@@ -159,6 +162,30 @@ Use the `onError` callback to intercept validation failures:
   }}
 />
 ```
+
+### Render Error Handling
+
+Use `onRenderError` and `fallback` to catch React render crashes inside the scene tree:
+
+```tsx
+<DslRenderer
+  dsl={doc}
+  onRenderError={(error) => console.error('Scene crashed:', error)}
+  fallback={<div>Something went wrong rendering this animation.</div>}
+/>
+```
+
+## Responsive Rendering
+
+Use `fitToContainer` to make the scene fill its parent container width and scale proportionally:
+
+```tsx
+<div style={{ width: '100%', maxWidth: 960 }}>
+  <DslRenderer dsl={doc} fitToContainer />
+</div>
+```
+
+The SVG `viewBox` handles resolution-independent scaling — no CSS transforms needed.
 
 ## Theme Tokens
 

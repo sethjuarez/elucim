@@ -5,9 +5,11 @@
  * consumers can theme the entire editor chrome by overriding these variables
  * on a parent element or passing a `theme` prop to `<ElucimEditor>`.
  *
- * Token names deliberately mirror the DSL's `--elucim-*` namespace, extended
- * with `editor-` for chrome-specific values that don't apply to rendered content.
+ * When an `ElucimTheme` (content theme) is provided, the editor chrome tokens
+ * are automatically derived from the content colors via `deriveEditorTheme()`.
  */
+
+import type { ElucimTheme } from '@elucim/core';
 
 /** Default values for every editor CSS custom property (dark mode). */
 export const EDITOR_TOKENS: Record<string, string> = {
@@ -58,6 +60,61 @@ export const EDITOR_TOKENS_LIGHT: Record<string, string> = {
 export function v(token: string): string {
   const fallback = EDITOR_TOKENS[token];
   return fallback ? `var(${token}, ${fallback})` : `var(${token})`;
+}
+
+/**
+ * Derive editor chrome tokens from a content theme.
+ *
+ * Maps content semantic tokens (foreground, background, primary, etc.) to
+ * editor-chrome CSS custom properties so consumers pass one theme to both
+ * DslRenderer and ElucimEditor.
+ *
+ * Returns a Record that can be spread into editor theme overrides.
+ */
+export function deriveEditorTheme(
+  contentTheme: ElucimTheme,
+  colorScheme: 'light' | 'dark',
+): Record<string, string> {
+  const derived: Record<string, string> = {};
+
+  if (contentTheme.primary || contentTheme.accent) {
+    derived['accent'] = (contentTheme.accent ?? contentTheme.primary)!;
+  }
+  if (contentTheme.background) {
+    derived['bg'] = contentTheme.background;
+  }
+  if (contentTheme.surface) {
+    derived['surface'] = contentTheme.surface;
+    // Derive panel and chrome as semi-transparent versions of surface
+    derived['panel'] = colorScheme === 'light'
+      ? 'rgba(255, 255, 255, 0.95)'
+      : 'rgba(22, 22, 42, 0.93)';
+    derived['chrome'] = colorScheme === 'light'
+      ? 'rgba(241, 245, 249, 0.9)'
+      : 'rgba(15, 23, 42, 0.8)';
+    derived['input-bg'] = colorScheme === 'light' ? '#ffffff' : '#0f172a';
+  }
+  if (contentTheme.foreground) {
+    derived['fg'] = contentTheme.foreground;
+  }
+  if (contentTheme.muted) {
+    derived['text-muted'] = contentTheme.muted;
+  }
+  if (contentTheme.subtitle) {
+    derived['text-secondary'] = contentTheme.subtitle;
+  }
+  if (contentTheme.border) {
+    derived['border'] = contentTheme.border;
+  }
+  if (contentTheme.success) {
+    derived['success'] = contentTheme.success;
+  }
+  if (contentTheme.error) {
+    derived['error'] = contentTheme.error;
+  }
+
+  derived['color-scheme'] = colorScheme;
+  return derived;
 }
 
 /**
