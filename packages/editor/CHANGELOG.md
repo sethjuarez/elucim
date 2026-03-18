@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.10.0](https://github.com/sethjuarez/elucim/compare/editor-v0.9.0...editor-v0.10.0) (2026-03-18)
+
+
+### Features
+
+* **editor:** add onDocumentChange callback and export ElucimEditorLayout ([c891eef](https://github.com/sethjuarez/elucim/commit/c891eef0c4c10c502fede165cc6eeac9d132b0e5))
+
+
+### Bug Fixes
+
+* **editor:** resolve \ syntax in all element color props ([4a65ff7](https://github.com/sethjuarez/elucim/commit/4a65ff72fd7153bb790248d520defe0064fbb02f)), closes [#20](https://github.com/sethjuarez/elucim/issues/20)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.10.0
+    * @elucim/dsl bumped to 0.10.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.10.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.10.0
+
 ## [0.9.0](https://github.com/sethjuarez/elucim/compare/editor-v0.8.4...editor-v0.9.0) (2026-03-18)
 
 
