@@ -1,5 +1,5 @@
 import type { ElucimDocument, ElementNode } from '@elucim/dsl';
-import type { EditorState, EditorAction } from './types';
+import type { EditorState, EditorAction, AlignDirection, DistributeDirection } from './types';
 import { isUndoableAction } from './types';
 
 const MAX_HISTORY = 50;
@@ -251,6 +251,42 @@ function applyResize(element: ElementNode, handle: string, dx: number, dy: numbe
   return resized as ElementNode;
 }
 
+// ─── Duplicate helper ───────────────────────────────────────────────────────
+
+function cloneElement(element: ElementNode, offset: { dx: number; dy: number }): ElementNode {
+  const clone = JSON.parse(JSON.stringify(element));
+  if ('id' in clone) clone.id = `${clone.id}-copy-${Date.now().toString(36).slice(-4)}`;
+  return applyMove(clone, offset.dx, offset.dy);
+}
+
+// ─── Bounding box helper for alignment ──────────────────────────────────────
+
+interface Bounds { x: number; y: number; width: number; height: number }
+
+function getElementBounds(el: ElementNode): Bounds | null {
+  if ('x' in el && typeof el.x === 'number' && 'width' in el && typeof el.width === 'number') {
+    return { x: el.x, y: (el as any).y ?? 0, width: el.width, height: (el as any).height ?? 0 };
+  }
+  if ('cx' in el && typeof el.cx === 'number' && 'r' in el && typeof el.r === 'number') {
+    return { x: el.cx - el.r, y: (el as any).cy - el.r, width: el.r * 2, height: el.r * 2 };
+  }
+  if ('x1' in el && typeof el.x1 === 'number') {
+    const x = Math.min(el.x1, (el as any).x2);
+    const y = Math.min((el as any).y1, (el as any).y2);
+    return { x, y, width: Math.abs((el as any).x2 - el.x1), height: Math.abs((el as any).y2 - (el as any).y1) };
+  }
+  if ('points' in el && Array.isArray(el.points) && el.points.length > 0) {
+    const pts = el.points as [number, number][];
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const minX = Math.min(...xs), minY = Math.min(...ys);
+    return { x: minX, y: minY, width: Math.max(...xs) - minX, height: Math.max(...ys) - minY };
+  }
+  if ('origin' in el && Array.isArray(el.origin)) {
+    return { x: el.origin[0], y: el.origin[1], width: 0, height: 0 };
+  }
+  return null;
+}
+
 // ─── Reducer ───────────────────────────────────────────────────────────────
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
@@ -320,6 +356,24 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       };
     }
 
+    case 'DUPLICATE_ELEMENTS': {
+      const doc = cloneDoc(state.document);
+      const rootChildren = getChildren(doc.root);
+      if (!rootChildren) return state;
+      const offset = action.offset ?? { dx: 20, dy: 20 };
+      const newIds: string[] = [];
+      for (const id of action.ids) {
+        const loc = findElementById(doc.root, id);
+        if (loc?.parent) {
+          const clone = cloneElement(loc.element, offset);
+          const cloneId = ('id' in clone && clone.id) ? clone.id : undefined;
+          loc.parent.splice(loc.index + 1, 0, clone);
+          if (cloneId) newIds.push(cloneId);
+        }
+      }
+      return { ...state, document: doc, selectedIds: newIds.length > 0 ? newIds : state.selectedIds };
+    }
+
     case 'MOVE_ELEMENT': {
       const doc = cloneDoc(state.document);
       // If the dragged element is in a multi-selection, move all selected elements
@@ -357,7 +411,15 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const doc = cloneDoc(state.document);
       const loc = findElementById(doc.root, action.id);
       if (!loc?.parent) return state;
-      loc.parent[loc.index] = applyResize(loc.element, action.handle, action.dx, action.dy);
+      let { dx, dy } = action;
+      if (action.constrain) {
+        // Constrained resize: use larger axis for uniform scaling
+        const absDx = Math.abs(dx), absDy = Math.abs(dy);
+        const d = absDx > absDy ? dx : dy;
+        dx = d;
+        dy = d;
+      }
+      loc.parent[loc.index] = applyResize(loc.element, action.handle, dx, dy);
       return { ...state, document: doc };
     }
 
@@ -467,6 +529,157 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'SET_EDITOR_THEME':
       return { ...state, themeOverrides: action.overrides };
+
+    // ─── Z-order actions ─────────────────────────────────────────────────
+
+    case 'BRING_FORWARD': {
+      const doc = cloneDoc(state.document);
+      const rootChildren = getChildren(doc.root);
+      if (!rootChildren) return state;
+      // Process from end to start to avoid index shift issues
+      const sorted = action.ids
+        .map(id => { const loc = findElementById(doc.root, id); return loc && loc.parent === rootChildren ? loc.index : -1; })
+        .filter(i => i >= 0)
+        .sort((a, b) => b - a);
+      for (const idx of sorted) {
+        if (idx < rootChildren.length - 1) {
+          const [el] = rootChildren.splice(idx, 1);
+          rootChildren.splice(idx + 1, 0, el);
+        }
+      }
+      return { ...state, document: doc };
+    }
+
+    case 'SEND_BACKWARD': {
+      const doc = cloneDoc(state.document);
+      const rootChildren = getChildren(doc.root);
+      if (!rootChildren) return state;
+      const sorted = action.ids
+        .map(id => { const loc = findElementById(doc.root, id); return loc && loc.parent === rootChildren ? loc.index : -1; })
+        .filter(i => i >= 0)
+        .sort((a, b) => a - b);
+      for (const idx of sorted) {
+        if (idx > 0) {
+          const [el] = rootChildren.splice(idx, 1);
+          rootChildren.splice(idx - 1, 0, el);
+        }
+      }
+      return { ...state, document: doc };
+    }
+
+    case 'BRING_TO_FRONT': {
+      const doc = cloneDoc(state.document);
+      const rootChildren = getChildren(doc.root);
+      if (!rootChildren) return state;
+      const sorted = action.ids
+        .map(id => { const loc = findElementById(doc.root, id); return loc && loc.parent === rootChildren ? loc.index : -1; })
+        .filter(i => i >= 0)
+        .sort((a, b) => b - a);
+      const removed: ElementNode[] = [];
+      for (const idx of sorted) {
+        removed.unshift(...rootChildren.splice(idx, 1));
+      }
+      rootChildren.push(...removed);
+      return { ...state, document: doc };
+    }
+
+    case 'SEND_TO_BACK': {
+      const doc = cloneDoc(state.document);
+      const rootChildren = getChildren(doc.root);
+      if (!rootChildren) return state;
+      const sorted = action.ids
+        .map(id => { const loc = findElementById(doc.root, id); return loc && loc.parent === rootChildren ? loc.index : -1; })
+        .filter(i => i >= 0)
+        .sort((a, b) => b - a);
+      const removed: ElementNode[] = [];
+      for (const idx of sorted) {
+        removed.unshift(...rootChildren.splice(idx, 1));
+      }
+      rootChildren.unshift(...removed);
+      return { ...state, document: doc };
+    }
+
+    // ─── Alignment & distribution ────────────────────────────────────────
+
+    case 'ALIGN_ELEMENTS': {
+      if (action.ids.length < 2) return state;
+      const doc = cloneDoc(state.document);
+      const elements = action.ids.map(id => findElementById(doc.root, id)).filter(Boolean) as ElementLocation[];
+      const boundsArr = elements.map(loc => ({ loc, bounds: getElementBounds(loc.element) })).filter(b => b.bounds !== null) as { loc: ElementLocation; bounds: Bounds }[];
+      if (boundsArr.length < 2) return state;
+
+      let target: number;
+      switch (action.direction) {
+        case 'left':
+          target = Math.min(...boundsArr.map(b => b.bounds.x));
+          for (const { loc, bounds } of boundsArr) {
+            loc.parent![loc.index] = applyMove(loc.element, target - bounds.x, 0);
+          }
+          break;
+        case 'right':
+          target = Math.max(...boundsArr.map(b => b.bounds.x + b.bounds.width));
+          for (const { loc, bounds } of boundsArr) {
+            loc.parent![loc.index] = applyMove(loc.element, target - (bounds.x + bounds.width), 0);
+          }
+          break;
+        case 'top':
+          target = Math.min(...boundsArr.map(b => b.bounds.y));
+          for (const { loc, bounds } of boundsArr) {
+            loc.parent![loc.index] = applyMove(loc.element, 0, target - bounds.y);
+          }
+          break;
+        case 'bottom':
+          target = Math.max(...boundsArr.map(b => b.bounds.y + b.bounds.height));
+          for (const { loc, bounds } of boundsArr) {
+            loc.parent![loc.index] = applyMove(loc.element, 0, target - (bounds.y + bounds.height));
+          }
+          break;
+        case 'center-h':
+          target = boundsArr.reduce((s, b) => s + b.bounds.x + b.bounds.width / 2, 0) / boundsArr.length;
+          for (const { loc, bounds } of boundsArr) {
+            loc.parent![loc.index] = applyMove(loc.element, target - (bounds.x + bounds.width / 2), 0);
+          }
+          break;
+        case 'center-v':
+          target = boundsArr.reduce((s, b) => s + b.bounds.y + b.bounds.height / 2, 0) / boundsArr.length;
+          for (const { loc, bounds } of boundsArr) {
+            loc.parent![loc.index] = applyMove(loc.element, 0, target - (bounds.y + bounds.height / 2));
+          }
+          break;
+      }
+      return { ...state, document: doc };
+    }
+
+    case 'DISTRIBUTE_ELEMENTS': {
+      if (action.ids.length < 3) return state;
+      const doc = cloneDoc(state.document);
+      const elements = action.ids.map(id => findElementById(doc.root, id)).filter(Boolean) as ElementLocation[];
+      const boundsArr = elements.map(loc => ({ loc, bounds: getElementBounds(loc.element) })).filter(b => b.bounds !== null) as { loc: ElementLocation; bounds: Bounds }[];
+      if (boundsArr.length < 3) return state;
+
+      if (action.direction === 'horizontal') {
+        boundsArr.sort((a, b) => a.bounds.x - b.bounds.x);
+        const first = boundsArr[0].bounds.x + boundsArr[0].bounds.width / 2;
+        const last = boundsArr[boundsArr.length - 1].bounds.x + boundsArr[boundsArr.length - 1].bounds.width / 2;
+        const step = (last - first) / (boundsArr.length - 1);
+        for (let i = 1; i < boundsArr.length - 1; i++) {
+          const targetCenter = first + step * i;
+          const currentCenter = boundsArr[i].bounds.x + boundsArr[i].bounds.width / 2;
+          boundsArr[i].loc.parent![boundsArr[i].loc.index] = applyMove(boundsArr[i].loc.element, targetCenter - currentCenter, 0);
+        }
+      } else {
+        boundsArr.sort((a, b) => a.bounds.y - b.bounds.y);
+        const first = boundsArr[0].bounds.y + boundsArr[0].bounds.height / 2;
+        const last = boundsArr[boundsArr.length - 1].bounds.y + boundsArr[boundsArr.length - 1].bounds.height / 2;
+        const step = (last - first) / (boundsArr.length - 1);
+        for (let i = 1; i < boundsArr.length - 1; i++) {
+          const targetCenter = first + step * i;
+          const currentCenter = boundsArr[i].bounds.y + boundsArr[i].bounds.height / 2;
+          boundsArr[i].loc.parent![boundsArr[i].loc.index] = applyMove(boundsArr[i].loc.element, 0, targetCenter - currentCenter);
+        }
+      }
+      return { ...state, document: doc };
+    }
 
     case 'ZOOM_TO_FIT':
       return { ...state, viewport: { x: 0, y: 0, zoom: 1 } };

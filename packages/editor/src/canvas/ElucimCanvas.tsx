@@ -130,6 +130,7 @@ export function ElucimCanvas({ className, style, editorColorScheme }: ElucimCanv
     svgRef: overlaySvgRef,
     sceneWidth: width,
     sceneHeight: height,
+    selectedIds,
   });
 
   // Keyboard shortcuts
@@ -144,6 +145,8 @@ export function ElucimCanvas({ className, style, editorColorScheme }: ElucimCanv
   useKeyboardShortcuts({
     dispatch,
     selectedIds,
+    document: state.document,
+    zoom: state.viewport.zoom,
     getDocumentJson,
     importDocument: handleImport,
   });
@@ -225,21 +228,23 @@ export function ElucimCanvas({ className, style, editorColorScheme }: ElucimCanv
       { label: '', onClick: () => {}, separator: true },
       {
         label: 'Duplicate',
+        shortcut: 'Ctrl+D',
         disabled: !hasSelection,
-        onClick: () => {
-          for (const id of ids) {
-            const idx = elementIds.indexOf(id);
-            if (idx >= 0) {
-              const clone = JSON.parse(JSON.stringify(children[idx]));
-              if ('id' in clone) clone.id = `${clone.id}-copy-${Date.now().toString(36).slice(-4)}`;
-              if ('x' in clone && typeof clone.x === 'number') clone.x += 20;
-              if ('y' in clone && typeof clone.y === 'number') clone.y += 20;
-              if ('cx' in clone && typeof clone.cx === 'number') clone.cx += 20;
-              if ('cy' in clone && typeof clone.cy === 'number') clone.cy += 20;
-              dispatch({ type: 'ADD_ELEMENT', element: clone });
-            }
-          }
-        },
+        onClick: () => dispatch({ type: 'DUPLICATE_ELEMENTS', ids }),
+        separator: false,
+      },
+      {
+        label: 'Copy',
+        shortcut: 'Ctrl+C',
+        disabled: !hasSelection,
+        onClick: () => { /* handled by keyboard */ },
+        separator: false,
+      },
+      {
+        label: 'Paste',
+        shortcut: 'Ctrl+V',
+        disabled: false,
+        onClick: () => { /* handled by keyboard */ },
         separator: false,
       },
       {
@@ -250,6 +255,89 @@ export function ElucimCanvas({ className, style, editorColorScheme }: ElucimCanv
         separator: false,
       },
       { label: '', onClick: () => {}, separator: true },
+      {
+        label: 'Bring Forward',
+        shortcut: 'Ctrl+]',
+        disabled: !hasSelection,
+        onClick: () => dispatch({ type: 'BRING_FORWARD', ids }),
+        separator: false,
+      },
+      {
+        label: 'Send Backward',
+        shortcut: 'Ctrl+[',
+        disabled: !hasSelection,
+        onClick: () => dispatch({ type: 'SEND_BACKWARD', ids }),
+        separator: false,
+      },
+      {
+        label: 'Bring to Front',
+        shortcut: 'Ctrl+Shift+]',
+        disabled: !hasSelection,
+        onClick: () => dispatch({ type: 'BRING_TO_FRONT', ids }),
+        separator: false,
+      },
+      {
+        label: 'Send to Back',
+        shortcut: 'Ctrl+Shift+[',
+        disabled: !hasSelection,
+        onClick: () => dispatch({ type: 'SEND_TO_BACK', ids }),
+        separator: false,
+      },
+      { label: '', onClick: () => {}, separator: true },
+      ...(ids.length >= 2 ? [
+        {
+          label: 'Align Left',
+          disabled: false,
+          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'left' as const }),
+          separator: false,
+        },
+        {
+          label: 'Align Right',
+          disabled: false,
+          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'right' as const }),
+          separator: false,
+        },
+        {
+          label: 'Align Top',
+          disabled: false,
+          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'top' as const }),
+          separator: false,
+        },
+        {
+          label: 'Align Bottom',
+          disabled: false,
+          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'bottom' as const }),
+          separator: false,
+        },
+        {
+          label: 'Align Center ↔',
+          disabled: false,
+          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'center-h' as const }),
+          separator: false,
+        },
+        {
+          label: 'Align Center ↕',
+          disabled: false,
+          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'center-v' as const }),
+          separator: false,
+        },
+        { label: '', onClick: () => {}, separator: true },
+      ] : []),
+      ...(ids.length >= 3 ? [
+        {
+          label: 'Distribute Horizontal',
+          disabled: false,
+          onClick: () => dispatch({ type: 'DISTRIBUTE_ELEMENTS', ids, direction: 'horizontal' as const }),
+          separator: false,
+        },
+        {
+          label: 'Distribute Vertical',
+          disabled: false,
+          onClick: () => dispatch({ type: 'DISTRIBUTE_ELEMENTS', ids, direction: 'vertical' as const }),
+          separator: false,
+        },
+        { label: '', onClick: () => {}, separator: true },
+      ] : []),
       {
         label: 'Select All',
         shortcut: 'Ctrl+A',

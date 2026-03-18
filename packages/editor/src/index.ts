@@ -5,7 +5,7 @@ export { ElucimEditor, ElucimEditorLayout, type ElucimEditorProps, type ElucimEd
 
 // State management (for advanced integrations)
 export { EditorProvider, useEditorState, useEditorDocument, useEditorSelection, type EditorProviderProps } from './state/EditorProvider';
-export type { EditorState, EditorAction, EditorTool, Viewport, PanelPosition } from './state/types';
+export type { EditorState, EditorAction, EditorTool, Viewport, PanelPosition, AlignDirection, DistributeDirection } from './state/types';
 export { createInitialState, createDefaultDocument, CANVAS_ID, MIN_ZOOM, MAX_ZOOM } from './state/types';
 export { editorReducer, findElementById, collectAllIds } from './state/reducer';
 

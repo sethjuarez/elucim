@@ -196,6 +196,141 @@ describe('document mutation actions', () => {
   });
 });
 
+// ─── Duplicate ──────────────────────────────────────────────────────────────
+
+describe('DUPLICATE_ELEMENTS', () => {
+  it('duplicates selected elements with offset', () => {
+    let state = stateWithElements(circle1, rect1);
+    state = editorReducer(state, { type: 'DUPLICATE_ELEMENTS', ids: ['c1'] });
+    const root = state.document.root as any;
+    expect(root.children).toHaveLength(3);
+    const clone = root.children[1]; // inserted after c1
+    expect(clone.id).toContain('c1-copy');
+    expect(clone.cx).toBe(120); // original 100 + 20 offset
+  });
+
+  it('duplicates with custom offset', () => {
+    let state = stateWithElements(circle1);
+    state = editorReducer(state, { type: 'DUPLICATE_ELEMENTS', ids: ['c1'], offset: { dx: 0, dy: 0 } });
+    const root = state.document.root as any;
+    expect(root.children).toHaveLength(2);
+    expect(root.children[1].cx).toBe(100); // no offset
+  });
+
+  it('selects duplicated elements', () => {
+    let state = stateWithElements(circle1, rect1);
+    state = editorReducer(state, { type: 'DUPLICATE_ELEMENTS', ids: ['c1', 'r1'] });
+    expect(state.selectedIds).toHaveLength(2);
+    expect(state.selectedIds[0]).toContain('c1-copy');
+  });
+});
+
+// ─── Z-order ────────────────────────────────────────────────────────────────
+
+describe('z-order actions', () => {
+  it('BRING_FORWARD moves element one step forward', () => {
+    let state = stateWithElements(circle1, rect1, line1);
+    state = editorReducer(state, { type: 'BRING_FORWARD', ids: ['c1'] });
+    const ids = (state.document.root as any).children.map((c: any) => c.id);
+    expect(ids).toEqual(['r1', 'c1', 'l1']);
+  });
+
+  it('SEND_BACKWARD moves element one step backward', () => {
+    let state = stateWithElements(circle1, rect1, line1);
+    state = editorReducer(state, { type: 'SEND_BACKWARD', ids: ['r1'] });
+    const ids = (state.document.root as any).children.map((c: any) => c.id);
+    expect(ids).toEqual(['r1', 'c1', 'l1']);
+  });
+
+  it('BRING_TO_FRONT moves element to end', () => {
+    let state = stateWithElements(circle1, rect1, line1);
+    state = editorReducer(state, { type: 'BRING_TO_FRONT', ids: ['c1'] });
+    const ids = (state.document.root as any).children.map((c: any) => c.id);
+    expect(ids).toEqual(['r1', 'l1', 'c1']);
+  });
+
+  it('SEND_TO_BACK moves element to beginning', () => {
+    let state = stateWithElements(circle1, rect1, line1);
+    state = editorReducer(state, { type: 'SEND_TO_BACK', ids: ['l1'] });
+    const ids = (state.document.root as any).children.map((c: any) => c.id);
+    expect(ids).toEqual(['l1', 'c1', 'r1']);
+  });
+
+  it('BRING_FORWARD at end is no-op', () => {
+    let state = stateWithElements(circle1, rect1);
+    state = editorReducer(state, { type: 'BRING_FORWARD', ids: ['r1'] });
+    const ids = (state.document.root as any).children.map((c: any) => c.id);
+    expect(ids).toEqual(['c1', 'r1']);
+  });
+});
+
+// ─── Alignment ──────────────────────────────────────────────────────────────
+
+describe('ALIGN_ELEMENTS', () => {
+  it('aligns elements left', () => {
+    const r2: RectNode = { type: 'rect', id: 'r2', x: 200, y: 50, width: 80, height: 60 };
+    let state = stateWithElements(rect1, r2);
+    state = editorReducer(state, { type: 'ALIGN_ELEMENTS', ids: ['r1', 'r2'], direction: 'left' });
+    const root = state.document.root as any;
+    expect(root.children[0].x).toBe(50);
+    expect(root.children[1].x).toBe(50);
+  });
+
+  it('aligns elements right', () => {
+    const r2: RectNode = { type: 'rect', id: 'r2', x: 200, y: 50, width: 80, height: 60 };
+    let state = stateWithElements(rect1, r2);
+    state = editorReducer(state, { type: 'ALIGN_ELEMENTS', ids: ['r1', 'r2'], direction: 'right' });
+    const root = state.document.root as any;
+    // Right edge: rect1 50+100=150, r2 200+80=280 → align to 280
+    expect(root.children[0].x).toBe(180); // 280-100
+    expect(root.children[1].x).toBe(200); // 280-80
+  });
+
+  it('requires at least 2 elements', () => {
+    let state = stateWithElements(rect1);
+    const next = editorReducer(state, { type: 'ALIGN_ELEMENTS', ids: ['r1'], direction: 'left' });
+    // Returns early — document unchanged (but history was pushed)
+    expect((next.document.root as any).children[0].x).toBe(50);
+  });
+});
+
+// ─── Distribution ───────────────────────────────────────────────────────────
+
+describe('DISTRIBUTE_ELEMENTS', () => {
+  it('distributes 3 elements horizontally', () => {
+    const r1: RectNode = { type: 'rect', id: 'r1', x: 0, y: 0, width: 20, height: 20 };
+    const r2: RectNode = { type: 'rect', id: 'r2', x: 10, y: 0, width: 20, height: 20 };
+    const r3: RectNode = { type: 'rect', id: 'r3', x: 100, y: 0, width: 20, height: 20 };
+    let state = stateWithElements(r1, r2, r3);
+    state = editorReducer(state, { type: 'DISTRIBUTE_ELEMENTS', ids: ['r1', 'r2', 'r3'], direction: 'horizontal' });
+    const root = state.document.root as any;
+    // Centers: r1=10, r3=110 → middle should be 60 → x = 60-10 = 50
+    expect(root.children[0].x).toBe(0);   // first stays
+    expect(root.children[1].x).toBe(50);  // middle distributed
+    expect(root.children[2].x).toBe(100); // last stays
+  });
+
+  it('requires at least 3 elements', () => {
+    let state = stateWithElements(rect1, circle1);
+    const next = editorReducer(state, { type: 'DISTRIBUTE_ELEMENTS', ids: ['r1', 'c1'], direction: 'horizontal' });
+    // Returns early — document unchanged (but history was pushed)
+    expect((next.document.root as any).children[0].x).toBe(50);
+  });
+});
+
+// ─── Constrained Resize ─────────────────────────────────────────────────────
+
+describe('constrained resize', () => {
+  it('uses uniform delta when constrain is true', () => {
+    let state = stateWithElements(rect1);
+    // Drag SE handle with dx=30, dy=10, constrain=true → uses 30 for both
+    state = editorReducer(state, { type: 'RESIZE_ELEMENT', id: 'r1', handle: 'se', dx: 30, dy: 10, constrain: true });
+    const root = state.document.root as any;
+    expect(root.children[0].width).toBe(130);  // 100 + 30
+    expect(root.children[0].height).toBe(110); // 80 + 30
+  });
+});
+
 // ─── Undo / Redo ───────────────────────────────────────────────────────────
 
 describe('undo/redo', () => {

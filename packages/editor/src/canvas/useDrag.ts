@@ -11,6 +11,7 @@ export interface DragState {
   handle?: string;
   initialBounds?: BoundingBox;
   graphNodeId?: string;
+  altDuplicated?: boolean;
 }
 
 interface UseDragOptions {
@@ -18,6 +19,7 @@ interface UseDragOptions {
   svgRef: React.RefObject<SVGSVGElement | null>;
   sceneWidth: number;
   sceneHeight: number;
+  selectedIds: string[];
 }
 
 /** Convert a mouse event to SVG coordinates */
@@ -37,7 +39,7 @@ function toSvgCoords(
  * Hook providing drag-to-move, resize, and rotation interactions.
  * Returns pointer event handlers to attach to the overlay SVG.
  */
-export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOptions) {
+export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight, selectedIds }: UseDragOptions) {
   const dragRef = useRef<DragState | null>(null);
   const accDx = useRef(0);
   const accDy = useRef(0);
@@ -114,6 +116,14 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
 
     if (drag.type === 'move') {
       if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
+        // Alt+drag: duplicate on first drag movement
+        if (e.altKey && !drag.altDuplicated) {
+          drag.altDuplicated = true;
+          const idsToClone = selectedIds.length > 1 && selectedIds.includes(drag.elementId)
+            ? [...selectedIds]
+            : [drag.elementId];
+          dispatch({ type: 'DUPLICATE_ELEMENTS', ids: idsToClone, offset: { dx: 0, dy: 0 } });
+        }
         didDrag.current = true;
         dispatch({ type: 'MOVE_ELEMENT', id: drag.elementId, dx, dy });
         accDx.current += dx;
@@ -130,7 +140,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
       const handle = drag.handle!;
       if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
         didDrag.current = true;
-        dispatch({ type: 'RESIZE_ELEMENT', id: drag.elementId, handle, dx, dy });
+        dispatch({ type: 'RESIZE_ELEMENT', id: drag.elementId, handle, dx, dy, constrain: e.shiftKey });
         accDx.current += dx;
         accDy.current += dy;
       }
@@ -143,7 +153,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight }: UseDragOp
         accDy.current += dy;
       }
     }
-  }, [dispatch, svgRef, sceneWidth, sceneHeight]);
+  }, [dispatch, svgRef, sceneWidth, sceneHeight, selectedIds]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     const drag = dragRef.current;

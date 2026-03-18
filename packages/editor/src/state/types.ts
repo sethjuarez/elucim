@@ -55,6 +55,9 @@ export type EditorTool =
 
 // ─── Actions ───────────────────────────────────────────────────────────────
 
+export type AlignDirection = 'left' | 'right' | 'top' | 'bottom' | 'center-h' | 'center-v';
+export type DistributeDirection = 'horizontal' | 'vertical';
+
 export type EditorAction =
   | { type: 'SELECT'; ids: string[] }
   | { type: 'SELECT_ADD'; id: string }
@@ -65,14 +68,21 @@ export type EditorAction =
   | { type: 'UPDATE_CANVAS'; changes: Record<string, any> }
   | { type: 'ADD_ELEMENT'; element: ElementNode; parentPath?: string }
   | { type: 'DELETE_ELEMENTS'; ids: string[] }
+  | { type: 'DUPLICATE_ELEMENTS'; ids: string[]; offset?: { dx: number; dy: number } }
   | { type: 'MOVE_ELEMENT'; id: string; dx: number; dy: number }
   | { type: 'MOVE_GRAPH_NODE'; graphId: string; nodeId: string; dx: number; dy: number }
-  | { type: 'RESIZE_ELEMENT'; id: string; handle: string; dx: number; dy: number }
+  | { type: 'RESIZE_ELEMENT'; id: string; handle: string; dx: number; dy: number; constrain?: boolean }
   | { type: 'ROTATE_ELEMENT'; id: string; angleDeg: number }
   | { type: 'GROUP_ELEMENTS'; ids: string[] }
   | { type: 'UNGROUP'; id: string }
   | { type: 'RENAME_ELEMENT'; id: string; newId: string }
   | { type: 'REORDER_ELEMENT'; id: string; newIndex: number }
+  | { type: 'BRING_FORWARD'; ids: string[] }
+  | { type: 'SEND_BACKWARD'; ids: string[] }
+  | { type: 'BRING_TO_FRONT'; ids: string[] }
+  | { type: 'SEND_TO_BACK'; ids: string[] }
+  | { type: 'ALIGN_ELEMENTS'; ids: string[]; direction: AlignDirection }
+  | { type: 'DISTRIBUTE_ELEMENTS'; ids: string[]; direction: DistributeDirection }
   | { type: 'SET_VIEWPORT'; viewport: Partial<Viewport> }
   | { type: 'SET_FRAME'; frame: number }
   | { type: 'SET_PLAYING'; playing: boolean }
@@ -152,10 +162,17 @@ export function isUndoableAction(action: EditorAction): boolean {
     case 'UPDATE_CANVAS':
     case 'ADD_ELEMENT':
     case 'DELETE_ELEMENTS':
+    case 'DUPLICATE_ELEMENTS':
     case 'MOVE_ELEMENT':
     case 'RESIZE_ELEMENT':
     case 'ROTATE_ELEMENT':
     case 'SET_DOCUMENT':
+    case 'BRING_FORWARD':
+    case 'SEND_BACKWARD':
+    case 'BRING_TO_FRONT':
+    case 'SEND_TO_BACK':
+    case 'ALIGN_ELEMENTS':
+    case 'DISTRIBUTE_ELEMENTS':
       return true;
     default:
       return false;
