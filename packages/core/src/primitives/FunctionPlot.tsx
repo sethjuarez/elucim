@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useId, useMemo } from 'react';
 import { useCurrentFrame } from '../hooks/useCurrentFrame';
 import { interpolate } from '../hooks/interpolate';
 import type { EasingFunction } from '../easing/types';
@@ -50,35 +50,46 @@ export function FunctionPlot({
   translate,
 }: FunctionPlotProps) {
   const frame = useCurrentFrame();
+  const clipId = useId();
 
   // Generate the path data
+  // Use a generous soft limit to prevent absurd SVG coordinates, while the
+  // clipPath handles the precise visual clipping at yClamp boundaries.
+  const softLimit = useMemo(() => {
+    const range = yClamp[1] - yClamp[0];
+    return [yClamp[0] - range * 2, yClamp[1] + range * 2] as [number, number];
+  }, [yClamp]);
+
   const pathData = useMemo(() => {
     const [xMin, xMax] = domain;
     const step = (xMax - xMin) / samples;
     const [ox, oy] = origin;
     const points: string[] = [];
+    let needsMove = true;
 
     for (let i = 0; i <= samples; i++) {
       const x = xMin + i * step;
-      let y = fn(x);
+      const y = fn(x);
 
-      // Clamp y to avoid visual overflow
-      if (y < yClamp[0]) y = yClamp[0];
-      if (y > yClamp[1]) y = yClamp[1];
-      if (!isFinite(y)) continue;
+      // Skip non-finite or extreme values; start a new sub-path after gaps
+      if (!isFinite(y) || y < softLimit[0] || y > softLimit[1]) {
+        needsMove = true;
+        continue;
+      }
 
       const svgX = ox + x * scale;
       const svgY = oy - y * scale;
 
-      if (points.length === 0) {
+      if (needsMove) {
         points.push(`M ${svgX} ${svgY}`);
+        needsMove = false;
       } else {
         points.push(`L ${svgX} ${svgY}`);
       }
     }
 
     return points.join(' ');
-  }, [fn, domain, yClamp, origin, scale, samples]);
+  }, [fn, domain, softLimit, origin, scale, samples]);
 
   // Approximate total path length for draw animation
   const approxLength = useMemo(() => {
@@ -87,25 +98,39 @@ export function FunctionPlot({
     let len = 0;
     let prevX = 0;
     let prevY = 0;
+    let hasPrev = false;
 
     for (let i = 0; i <= samples; i++) {
       const x = xMin + i * step;
-      let y = fn(x);
-      if (y < yClamp[0]) y = yClamp[0];
-      if (y > yClamp[1]) y = yClamp[1];
-      if (!isFinite(y)) continue;
+      const y = fn(x);
+      if (!isFinite(y) || y < softLimit[0] || y > softLimit[1]) {
+        hasPrev = false;
+        continue;
+      }
 
       const svgX = origin[0] + x * scale;
       const svgY = origin[1] - y * scale;
 
-      if (i > 0) {
+      if (hasPrev) {
         len += Math.sqrt((svgX - prevX) ** 2 + (svgY - prevY) ** 2);
       }
       prevX = svgX;
       prevY = svgY;
+      hasPrev = true;
     }
     return len;
-  }, [fn, domain, yClamp, origin, scale, samples]);
+  }, [fn, domain, softLimit, origin, scale, samples]);
+
+  // Clip rect: visible region based on domain and yClamp
+  const clipRect = useMemo(() => {
+    const [ox, oy] = origin;
+    const [xMin, xMax] = domain;
+    const svgLeft = ox + xMin * scale;
+    const svgRight = ox + xMax * scale;
+    const svgTop = oy - yClamp[1] * scale;
+    const svgBottom = oy - yClamp[0] * scale;
+    return { x: svgLeft, y: svgTop, width: svgRight - svgLeft, height: svgBottom - svgTop };
+  }, [origin, domain, yClamp, scale]);
 
   // Compute draw progress
   let dashArray: string | undefined;
@@ -118,18 +143,26 @@ export function FunctionPlot({
   }
 
   const el = (
-    <path
-      d={pathData}
-      fill="none"
-      stroke={color}
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      opacity={opacity}
-      strokeDasharray={dashArray}
-      strokeDashoffset={dashOffset}
-      data-testid="elucim-function-plot"
-    />
+    <g>
+      <defs>
+        <clipPath id={clipId}>
+          <rect x={clipRect.x} y={clipRect.y} width={clipRect.width} height={clipRect.height} />
+        </clipPath>
+      </defs>
+      <path
+        d={pathData}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={opacity}
+        strokeDasharray={dashArray}
+        strokeDashoffset={dashOffset}
+        clipPath={`url(#${clipId})`}
+        data-testid="elucim-function-plot"
+      />
+    </g>
   );
 
   return withTransform(el, { rotation, rotationOrigin, translate }, origin);
