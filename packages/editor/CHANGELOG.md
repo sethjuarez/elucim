@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.14.0](https://github.com/sethjuarez/elucim/compare/editor-v0.13.1...editor-v0.14.0) (2026-03-20)
+
+
+### Features
+
+* **editor:** add group/ungroup buttons to inspector ([2113f6a](https://github.com/sethjuarez/elucim/commit/2113f6a8aa11124f39df07f2ab05940c27f1d748))
+* image picker and resolver architecture ([aa0fbf3](https://github.com/sethjuarez/elucim/commit/aa0fbf34fa4acabcb294d96ccc58af737f1946ce))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.14.0
+    * @elucim/dsl bumped to 0.14.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.14.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.14.0
+
 ## [0.13.1](https://github.com/sethjuarez/elucim/compare/editor-v0.13.0...editor-v0.13.1) (2026-03-18)
 
 

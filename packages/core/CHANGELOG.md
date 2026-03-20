@@ -1,5 +1,18 @@
 # @elucim/core
 
+## [0.14.0](https://github.com/sethjuarez/elucim/compare/core-v0.13.1...core-v0.14.0) (2026-03-20)
+
+
+### Features
+
+* image picker and resolver architecture ([aa0fbf3](https://github.com/sethjuarez/elucim/commit/aa0fbf34fa4acabcb294d96ccc58af737f1946ce))
+
+
+### Bug Fixes
+
+* replace y-value clamping with SVG clipPath in FunctionPlot ([7b7a989](https://github.com/sethjuarez/elucim/commit/7b7a989f33ad813f17b521a61c853f65127d7fb2))
+* shorten arrow line to arrowhead base and add short-arrow guards ([cb0a546](https://github.com/sethjuarez/elucim/commit/cb0a5469f9392cf39408702188227649b69bce4d))
+
 ## [0.13.1](https://github.com/sethjuarez/elucim/compare/core-v0.13.0...core-v0.13.1) (2026-03-18)
 
 
