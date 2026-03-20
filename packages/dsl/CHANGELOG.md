@@ -1,5 +1,21 @@
 # @elucim/dsl
 
+## [0.14.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.13.1...dsl-v0.14.0) (2026-03-20)
+
+
+### Features
+
+* image picker and resolver architecture ([aa0fbf3](https://github.com/sethjuarez/elucim/commit/aa0fbf34fa4acabcb294d96ccc58af737f1946ce))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.14.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.14.0
+
 ## [0.13.1](https://github.com/sethjuarez/elucim/compare/dsl-v0.13.0...dsl-v0.13.1) (2026-03-18)
 
 
