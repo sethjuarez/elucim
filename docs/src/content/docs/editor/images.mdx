@@ -1,0 +1,144 @@
+---
+title: Image Assets
+description: How to integrate custom image pickers and asset resolvers with the Elucim editor and player.
+---
+
+Elucim supports two ways to work with images:
+
+1. **Direct URLs** — set `src` to a URL or data URI (simple, no setup)
+2. **Asset references** — store an opaque `ref` in the document, resolved to a URL at render time (flexible, app-integrated)
+
+Asset references let you integrate Elucim with your app's asset library, CMS, or API without baking URLs into the document.
+
+## How it works
+
+The system has three pieces:
+
+| Piece | Package | Purpose |
+|-------|---------|---------|
+| `ImageResolverProvider` | `@elucim/core` | React context that resolves `ref` → URL |
+| `onBrowseImage` | `@elucim/editor` | Callback for the editor's image picker UI |
+| `BrowseImageResult` | `@elucim/editor` | What the picker returns (ref, displayName, src, dimensions) |
+
+### Resolution rules
+
+When an `<Image>` element has an `imageRef` prop:
+
+1. If a resolver is provided → call `resolver(ref)` to get the URL
+2. If no resolver → fall back to `src`
+3. If no `imageRef` → use `src` directly
+
+## Editor integration
+
+### Image picker
+
+Provide `onBrowseImage` to let users pick images from your app's asset library:
+
+```tsx
+import { ElucimEditor, type BrowseImageResult } from '@elucim/editor';
+
+async function handleBrowseImage(): Promise<BrowseImageResult | null> {
+  // Open your app's asset picker (modal, dialog, etc.)
+  const asset = await myAssetPicker.open();
+  if (!asset) return null; // user cancelled
+
+  return {
+    ref: asset.id,             // opaque ID stored in the document
+    displayName: asset.name,   // shown in the inspector
+    src: asset.thumbnailUrl,   // optional fallback URL
+    width: asset.width,        // optional — auto-sizes the element
+    height: asset.height,
+  };
+}
+
+<ElucimEditor onBrowseImage={handleBrowseImage} />
+```
+
+When `onBrowseImage` is set, the inspector shows a **"…"** browse button next to image fields. When a `ref` is set, the inspector shows the asset name instead of the URL field.
+
+### Image resolver
+
+Provide `imageResolver` so ref-based images render correctly in the editor preview:
+
+```tsx
+<ElucimEditor
+  onBrowseImage={handleBrowseImage}
+  imageResolver={(ref) => `https://cdn.example.com/assets/${ref}`}
+/>
+```
+
+## Player / viewer integration
+
+The player needs the same resolver to render ref-based images:
+
+```tsx
+import { DslRenderer, type ImageResolverFn } from '@elucim/dsl';
+
+const resolver: ImageResolverFn = (ref) =>
+  `https://cdn.example.com/assets/${ref}`;
+
+<DslRenderer
+  dsl={document}
+  imageResolver={resolver}
+/>
+```
+
+Or wrap any component tree with the provider directly:
+
+```tsx
+import { ImageResolverProvider } from '@elucim/core';
+
+<ImageResolverProvider resolver={resolver}>
+  <Player width={800} height={600} fps={30} durationInFrames={120}>
+    {/* Images with imageRef will be resolved */}
+  </Player>
+</ImageResolverProvider>
+```
+
+## Async resolvers
+
+Resolvers can return a `Promise<string>` for signed URLs or token-gated assets:
+
+```tsx
+const resolver: ImageResolverFn = async (ref) => {
+  const res = await fetch(`/api/assets/${ref}/url`);
+  return res.text();
+};
+```
+
+During async resolution, the image falls back to `src` (if provided) until the resolved URL is ready.
+
+## DSL schema
+
+In the JSON DSL, images can include `ref` and `displayName`:
+
+```json
+{
+  "type": "image",
+  "ref": "asset-abc-123",
+  "displayName": "Hero Banner",
+  "src": "https://example.com/fallback.png",
+  "x": 0, "y": 0, "width": 800, "height": 450
+}
+```
+
+Either `src` or `ref` (or both) must be present. The validator rejects images with neither.
+
+## Type reference
+
+```ts
+// The resolver function — sync or async
+type ImageResolverFn = (ref: string) => string | Promise<string>;
+
+// What the image picker returns
+interface BrowseImageResult {
+  src?: string;          // URL or data URI
+  ref?: string;          // opaque asset reference
+  displayName?: string;  // human-readable label
+  width?: number;        // natural width in pixels
+  height?: number;       // natural height in pixels
+}
+
+// The picker callback
+type BrowseImageFn = () => Promise<BrowseImageResult | null>;
+```

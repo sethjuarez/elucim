@@ -289,6 +289,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         <Image
           key={key}
           src={node.src}
+          imageRef={node.ref}
           x={node.x} y={node.y} width={node.width} height={node.height}
           preserveAspectRatio={node.preserveAspectRatio}
           borderRadius={node.borderRadius}

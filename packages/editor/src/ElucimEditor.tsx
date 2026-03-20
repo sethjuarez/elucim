@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ElucimDocument } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
+import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider } from './state/EditorProvider';
+import { ImagePickerProvider, type BrowseImageFn } from './image/ImagePickerProvider';
 import { useEditorDocument } from './state/EditorProvider';
 import { ElucimCanvas } from './canvas/ElucimCanvas';
 import { Toolbar } from './toolbar/Toolbar';
@@ -35,6 +37,17 @@ export interface ElucimEditorProps {
   editorTheme?: Record<string, string>;
   /** Called whenever the document changes. Receives the updated document. */
   onDocumentChange?: (document: ElucimDocument) => void;
+  /**
+   * Image picker callback.  When provided, the Inspector shows a "…" browse
+   * button next to image `src` fields.  Return `null` if the user cancels.
+   */
+  onBrowseImage?: BrowseImageFn;
+  /**
+   * Image resolver for consumer-managed assets.
+   * When provided, image elements with a `ref` resolve via this function
+   * in both the canvas preview and exported documents.
+   */
+  imageResolver?: ImageResolverFn;
   /** CSS class for the editor container */
   className?: string;
   /** Inline styles for the editor container */
@@ -60,13 +73,13 @@ function DocumentBridge({ onChange }: { onChange?: (doc: ElucimDocument) => void
  * A visual editor for creating and editing Elucim animated scenes.
  * Full-bleed canvas with floating toolbar, contextual inspector, and Premiere-style timeline.
  */
-export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange }: ElucimEditorProps) {
+export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange, onBrowseImage, imageResolver }: ElucimEditorProps) {
   // Resolve 'last' to the actual final frame number
   const resolvedFrame = initialFrame === 'last'
     ? Math.max(0, ((initialDocument?.root as any)?.durationInFrames ?? 1) - 1)
     : initialFrame;
 
-  return (
+  let inner = (
     <EditorErrorBoundary>
       <EditorProvider initialDocument={initialDocument} initialFrame={resolvedFrame}>
         <DocumentBridge onChange={onDocumentChange} />
@@ -74,6 +87,15 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
       </EditorProvider>
     </EditorErrorBoundary>
   );
+
+  if (imageResolver) {
+    inner = <ImageResolverProvider resolver={imageResolver}>{inner}</ImageResolverProvider>;
+  }
+  if (onBrowseImage) {
+    inner = <ImagePickerProvider onBrowse={onBrowseImage}>{inner}</ImagePickerProvider>;
+  }
+
+  return inner;
 }
 
 export interface ElucimEditorLayoutProps {

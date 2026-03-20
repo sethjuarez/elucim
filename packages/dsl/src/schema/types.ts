@@ -465,7 +465,12 @@ export interface BarChartNode {
 export interface ImageNode {
   type: 'image';
   id?: string;
-  src: string;
+  /** Image URL or data URI. Used directly, or as fallback when ref is set. */
+  src?: string;
+  /** Opaque consumer reference resolved via ImageResolverProvider at render time. */
+  ref?: string;
+  /** Human-readable label for the image (shown in editor inspector). */
+  displayName?: string;
   x: number;
   y: number;
   width: number;

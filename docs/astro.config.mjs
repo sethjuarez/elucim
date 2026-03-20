@@ -128,6 +128,7 @@ export default defineConfig({
           items: [
             { slug: 'editor/overview' },
             { slug: 'editor/inspector' },
+            { slug: 'editor/images' },
             { slug: 'editor/theming' },
             { slug: 'editor/api' },
           ],

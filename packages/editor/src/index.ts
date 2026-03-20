@@ -31,6 +31,12 @@ export { ELEMENT_TEMPLATES, getTemplatesByCategory, CATEGORY_LABELS, type Elemen
 export { Inspector, type InspectorProps } from './inspector/Inspector';
 export { ArrayEditor, MatrixEditor, type ArrayEditorProps, type MatrixEditorProps, type ColumnDef } from './inspector/ArrayEditor';
 
+// Image picker
+export { ImagePickerProvider, useImagePicker, type BrowseImageResult, type BrowseImageFn } from './image/ImagePickerProvider';
+
+// Image resolver (re-export from @elucim/core for convenience)
+export { ImageResolverProvider, useImageResolver, type ImageResolverFn } from '@elucim/core';
+
 // Menu bar
 export { EditorMenuBar } from './toolbar/EditorMenuBar';
 

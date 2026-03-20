@@ -14,6 +14,8 @@ interface ElucimEditorProps {
   theme?: ElucimTheme;           // unified content theme
   editorTheme?: Record<string, string>;  // explicit chrome overrides
   onDocumentChange?: (document: ElucimDocument) => void;
+  onBrowseImage?: BrowseImageFn; // custom image picker callback
+  imageResolver?: ImageResolverFn; // resolve image refs to URLs
   className?: string;
   style?: React.CSSProperties;
 }
@@ -26,6 +28,8 @@ interface ElucimEditorProps {
 | `theme` | `ElucimTheme` | — | Unified content theme — same type used by `DslRenderer`. Editor chrome is auto-derived from content tokens. |
 | `editorTheme` | `Record<string, string>` | — | Explicit chrome overrides — accepts hex, named colors, or `var()` refs. Overrides auto-derived values. |
 | `onDocumentChange` | `(doc: ElucimDocument) => void` | — | Called on every document change (skips initial mount) |
+| `onBrowseImage` | `BrowseImageFn` | — | Custom image picker callback. When set, shows a "…" browse button next to image fields. See [Image Assets](/editor/images/). |
+| `imageResolver` | `ImageResolverFn` | — | Resolves opaque image `ref` values to renderable URLs. See [Image Assets](/editor/images/). |
 | `className` | `string` | — | CSS class on root element |
 | `style` | `CSSProperties` | — | Inline styles on root element |
 

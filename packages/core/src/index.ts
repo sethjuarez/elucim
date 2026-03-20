@@ -20,6 +20,9 @@ export { useReducedMotion } from './hooks/useReducedMotion';
 // Context
 export { useElucimContext, type ElucimContextValue } from './context';
 
+// Providers
+export { ImageResolverProvider, useImageResolver, type ImageResolverFn } from './providers/ImageResolverProvider';
+
 // Primitives
 export { BezierCurve, type BezierCurveProps } from './primitives/BezierCurve';
 export { Circle, type CircleProps } from './primitives/Circle';

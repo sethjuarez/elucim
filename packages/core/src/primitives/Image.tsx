@@ -1,10 +1,13 @@
-import React, { useId } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
+import { useImageResolver } from '../providers/ImageResolverProvider';
 
 export interface ImageProps extends AnimationProps, SpatialProps, BaseElementProps {
-  /** Image URL or data URI */
-  src: string;
+  /** Image URL or data URI (used directly, or as fallback when imageRef is set) */
+  src?: string;
+  /** Opaque consumer reference resolved via ImageResolverProvider at render time */
+  imageRef?: string;
   /** X position in SVG coordinates */
   x: number;
   /** Y position in SVG coordinates */
@@ -29,6 +32,7 @@ export interface ImageProps extends AnimationProps, SpatialProps, BaseElementPro
  */
 export function Image({
   src,
+  imageRef,
   x,
   y,
   width,
@@ -48,6 +52,33 @@ export function Image({
   const clipId = useId();
   const anim = useAnimation({ fadeIn, fadeOut, easing });
   const needsClip = borderRadius > 0 || clipShape !== 'none';
+  const resolver = useImageResolver();
+
+  // Resolve imageRef → URL, falling back to src
+  const [resolvedSrc, setResolvedSrc] = useState<string>(() => {
+    if (imageRef && resolver) {
+      const result = resolver(imageRef);
+      if (typeof result === 'string') return result;
+      // Promise — will be handled by useEffect; use src as placeholder
+      return src ?? '';
+    }
+    return src ?? '';
+  });
+
+  useEffect(() => {
+    if (!imageRef || !resolver) {
+      setResolvedSrc(src ?? '');
+      return;
+    }
+    const result = resolver(imageRef);
+    if (typeof result === 'string') {
+      setResolvedSrc(result);
+    } else {
+      let cancelled = false;
+      result.then((url) => { if (!cancelled) setResolvedSrc(url); });
+      return () => { cancelled = true; };
+    }
+  }, [imageRef, resolver, src]);
 
   const cx = x + width / 2;
   const cy = y + height / 2;
@@ -70,7 +101,7 @@ export function Image({
     <g data-testid="elucim-image" opacity={baseOpacity * anim.opacity}>
       {clipPathContent}
       <image
-        href={src}
+        href={resolvedSrc}
         x={x}
         y={y}
         width={width}

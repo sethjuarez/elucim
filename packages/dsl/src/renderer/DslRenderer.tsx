@@ -4,12 +4,15 @@ import type { ElucimDocument } from '../schema/types';
 import { renderRoot } from './renderElements';
 import {
   type ElucimTheme,
+  type ImageResolverFn,
+  ImageResolverProvider,
   DARK_THEME_VARS, LIGHT_THEME_VARS,
   themeToVars,
 } from '@elucim/core';
 
 // Re-export ElucimTheme for consumers importing from @elucim/dsl
 export type { ElucimTheme } from '@elucim/core';
+export type { ImageResolverFn } from '@elucim/core';
 
 // ─── DslRenderer ────────────────────────────────────────────────────────────
 
@@ -68,6 +71,12 @@ export interface DslRendererProps {
   fallback?: React.ReactNode;
   /** Callback fired when DSL validation fails */
   onError?: (errors: Array<{ path: string; message: string }>) => void;
+  /**
+   * Image resolver for consumer-managed assets.
+   * When provided, `<Image>` elements with a `ref` field call this function
+   * to obtain a renderable URL instead of using `src` directly.
+   */
+  imageResolver?: ImageResolverFn;
 }
 
 // ─── Color scheme detection ─────────────────────────────────────────────────
@@ -134,7 +143,7 @@ class DslErrorBoundary extends React.Component<DslErrorBoundaryProps, DslErrorBo
 // ─── DslRenderer component ──────────────────────────────────────────────────
 
 export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function DslRenderer(
-  { dsl, className, style, theme, colorScheme, poster, controls, autoPlay, loop, fitToContainer, onPlayStateChange, onRenderError, fallback, onError },
+  { dsl, className, style, theme, colorScheme, poster, controls, autoPlay, loop, fitToContainer, onPlayStateChange, onRenderError, fallback, onError, imageResolver },
   ref
 ) {
   const playerRef = useRef<import('@elucim/core').PlayerRef>(null);
@@ -220,13 +229,17 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
     onPlayStateChange,
   });
 
-  return (
+  const inner = (
     <div className={className} style={{ ...schemeVars, ...themeVarsCss, ...style }} data-testid="dsl-root">
       <DslErrorBoundary onRenderError={onRenderError} fallback={fallback}>
         {content}
       </DslErrorBoundary>
     </div>
   );
+
+  return imageResolver
+    ? <ImageResolverProvider resolver={imageResolver}>{inner}</ImageResolverProvider>
+    : inner;
 });
 
 function resolvePoster(poster: 'first' | 'last' | number, dsl: ElucimDocument): { frame: number } {

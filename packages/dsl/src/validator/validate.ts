@@ -489,8 +489,10 @@ function validateSpatialPropsNoScale(node: Record<string, unknown>, path: string
 }
 
 function validateImage(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
-  if (typeof node.src !== 'string') {
-    errors.push({ path: `${path}.src`, message: 'Image requires a "src" string', severity: 'error' });
+  const hasSrc = typeof node.src === 'string';
+  const hasRef = typeof node.ref === 'string';
+  if (!hasSrc && !hasRef) {
+    errors.push({ path: `${path}.src`, message: 'Image requires a "src" or "ref" string', severity: 'error' });
   }
   requireNumber(node, 'x', path, errors);
   requireNumber(node, 'y', path, errors);

@@ -17,7 +17,8 @@ The `<Image>` primitive embeds an external image (PNG, JPEG, SVG, WebP, or GIF) 
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `src` | `string` | — | **Required.** Image URL or data URI |
+| `src` | `string` | — | Image URL or data URI. Required unless `imageRef` is provided. |
+| `imageRef` | `string` | — | Opaque consumer reference resolved via `ImageResolverProvider` at render time |
 | `x` | `number` | — | **Required.** X coordinate of the top-left corner |
 | `y` | `number` | — | **Required.** Y coordinate of the top-left corner |
 | `width` | `number` | — | **Required.** Rendered width |
@@ -104,6 +105,34 @@ The `<Image>` primitive embeds an external image (PNG, JPEG, SVG, WebP, or GIF) 
 :::tip
 **Supported formats:** PNG, JPEG, SVG, WebP, and GIF. You can also use inline data URIs (e.g. `src="data:image/png;base64,…"`).
 :::
+
+## Asset References
+
+Instead of hardcoding URLs, you can use opaque **asset references** via the `imageRef` prop. At render time, an `ImageResolverProvider` resolves the reference to a URL.
+
+This is useful when your app manages images through a CMS, asset library, or API — the document stores an ID, and the resolver provides the actual URL at runtime.
+
+```tsx
+import { ImageResolverProvider, Image, Player } from '@elucim/core';
+
+const resolver = (ref) => `https://cdn.example.com/assets/${ref}`;
+
+<ImageResolverProvider resolver={resolver}>
+  <Player width={500} height={300} fps={30} durationInFrames={60}>
+    <Image imageRef="hero-banner" x={0} y={0} width={500} height={300} />
+  </Player>
+</ImageResolverProvider>
+```
+
+**Resolution rules:**
+
+1. `imageRef` + resolver → resolved URL
+2. `imageRef` + no resolver → falls back to `src`
+3. No `imageRef` → uses `src` directly
+
+Async resolvers are also supported — return a `Promise<string>` for signed URLs or token-gated assets.
+
+See the [Image Assets guide](/editor/images/) for the full workflow including the editor's image picker.
 
 :::caution
 **CORS:** When loading images from external domains, make sure the server sends appropriate CORS headers. Images blocked by CORS will not render in the SVG context.

@@ -82,6 +82,9 @@ export { resolveColor, SEMANTIC_TOKENS, TOKEN_NAMES } from '@elucim/core';
 export type { ElucimTheme } from '@elucim/core';
 export { DARK_THEME, LIGHT_THEME, themeToVars, DARK_THEME_VARS, LIGHT_THEME_VARS } from '@elucim/core';
 
+// Image resolver (canonical source: @elucim/core)
+export { ImageResolverProvider, useImageResolver, type ImageResolverFn } from '@elucim/core';
+
 // Builders — fluent API for programmatic presentation authoring
 export {
   presentation,
