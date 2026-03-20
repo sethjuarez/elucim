@@ -6,6 +6,7 @@ import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
 import { CANVAS_ID } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
+import { useImagePicker } from '../image/ImagePickerProvider';
 import { v } from '../theme/tokens';
 import { ArrayEditor, MatrixEditor, type ColumnDef } from './ArrayEditor';
 
@@ -20,6 +21,7 @@ export interface InspectorProps {
  */
 export function Inspector({ className, style }: InspectorProps) {
   const { state, dispatch } = useEditorState();
+  const icons = useEditorIcons();
   const { selectedIds, document } = state;
 
   const isCanvasSelected = selectedIds.length === 1 && selectedIds[0] === CANVAS_ID;
@@ -69,6 +71,7 @@ export function Inspector({ className, style }: InspectorProps) {
   }
 
   if (!element) {
+    const multiSelected = selectedIds.length >= 2;
     return (
       <div
         className={`elucim-editor-inspector ${className ?? ''}`}
@@ -80,6 +83,16 @@ export function Inspector({ className, style }: InspectorProps) {
         }}
       >
         {selectedIds.length === 0 ? 'No selection' : `${selectedIds.length} elements selected`}
+        {multiSelected && (
+          <div style={{ marginTop: 10 }}>
+            <InspectorActionButton
+              icon={icons.Group({ size: 14 })}
+              label="Group"
+              title="Group selected elements (Ctrl+G)"
+              onClick={() => dispatch({ type: 'GROUP_ELEMENTS', ids: selectedIds })}
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -96,9 +109,19 @@ export function Inspector({ className, style }: InspectorProps) {
       }}
     >
       {/* Element type header */}
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: v('--elucim-editor-accent') }}>
-        {element.type.charAt(0).toUpperCase() + element.type.slice(1)}
-        {'id' in element && element.id ? ` — ${element.id}` : ''}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: v('--elucim-editor-accent') }}>
+          {element.type.charAt(0).toUpperCase() + element.type.slice(1)}
+          {'id' in element && element.id ? ` — ${element.id}` : ''}
+        </div>
+        {element.type === 'group' && elementId && (
+          <InspectorActionButton
+            icon={icons.Ungroup({ size: 14 })}
+            label="Ungroup"
+            title="Ungroup elements (Ctrl+Shift+G)"
+            onClick={() => dispatch({ type: 'UNGROUP', id: elementId })}
+          />
+        )}
       </div>
 
       {/* Position section */}
@@ -124,6 +147,34 @@ export function Inspector({ className, style }: InspectorProps) {
       {/* Element-specific section */}
       <ElementSpecificFields element={element} onChange={handleChange} />
     </div>
+  );
+}
+
+// ─── Action button (group/ungroup) ─────────────────────────────────────────
+
+function InspectorActionButton({ icon, label, title, onClick }: {
+  icon: React.ReactNode; label: string; title: string; onClick: () => void;
+}) {
+  return (
+    <button
+      title={title}
+      onClick={onClick}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '3px 8px',
+        border: `1px solid ${v('--elucim-editor-border')}`,
+        borderRadius: 4,
+        background: v('--elucim-editor-surface'),
+        color: v('--elucim-editor-fg'),
+        cursor: 'pointer',
+        fontSize: 11,
+      }}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
   );
 }
 
@@ -636,6 +687,88 @@ function TransformFields({ element, onChange }: { element: ElementNode; onChange
   );
 }
 
+// ─── Image source field with optional browse button ────────────────────────
+
+function ImageSourceField({ elementId, src, imageRef, displayName, onChange }: {
+  elementId?: string;
+  src?: string;
+  imageRef?: string;
+  displayName?: string;
+  onChange: (field: string, value: any) => void;
+}) {
+  const browseImage = useImagePicker();
+  const { dispatch } = useEditorState();
+
+  const handleBrowse = useCallback(async () => {
+    if (!browseImage || !elementId) return;
+    const result = await browseImage();
+    if (!result) return;
+    const changes: Record<string, any> = {};
+    if (result.src != null) changes.src = result.src;
+    if (result.ref != null) changes.ref = result.ref;
+    if (result.displayName != null) changes.displayName = result.displayName;
+    if (result.width != null) changes.width = result.width;
+    if (result.height != null) changes.height = result.height;
+    dispatch({ type: 'UPDATE_ELEMENT', id: elementId, changes: changes as any });
+  }, [browseImage, elementId, dispatch]);
+
+  return (
+    <div>
+      {imageRef ? (
+        <div>
+          <div style={{ fontSize: 10, color: v('--elucim-editor-text-muted'), marginBottom: 2 }}>Asset</div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '3px 6px',
+            border: `1px solid ${v('--elucim-editor-border')}`,
+            borderRadius: 4,
+            background: v('--elucim-editor-surface'),
+            fontSize: 11,
+            color: v('--elucim-editor-fg'),
+          }}>
+            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {displayName || imageRef}
+            </span>
+            {browseImage && (
+              <button
+                title="Change image…"
+                onClick={handleBrowse}
+                style={{
+                  padding: '1px 4px', border: `1px solid ${v('--elucim-editor-border')}`,
+                  borderRadius: 3, background: 'transparent',
+                  color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 12, lineHeight: 1,
+                }}
+              >
+                …
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
+          <div style={{ flex: 1 }}>
+            <TextField label="Source" value={src ?? ''} onChange={val => onChange('src', val)} />
+          </div>
+          {browseImage && (
+            <button
+              title="Browse for image…"
+              onClick={handleBrowse}
+              style={{
+                padding: '3px 6px', marginBottom: 1,
+                border: `1px solid ${v('--elucim-editor-border')}`,
+                borderRadius: 4, background: v('--elucim-editor-surface'),
+                color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 12, lineHeight: 1,
+              }}
+            >
+              …
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Element-Specific Fields (property-based) ──────────────────────────────
 
 function ElementSpecificFields({ element, onChange }: { element: ElementNode; onChange: (field: string, value: any) => void }) {
@@ -673,10 +806,16 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
   }
 
   // Image source
-  if ('src' in el) {
+  if ((el as any).type === 'image') {
     sections.push(
       <InspectorSection key="image" title="Image">
-        <TextField label="Source" value={el.src} onChange={v => onChange('src', v)} />
+        <ImageSourceField
+          elementId={(el as any).id}
+          src={el.src}
+          imageRef={el.ref}
+          displayName={el.displayName}
+          onChange={onChange}
+        />
       </InspectorSection>
     );
   }
