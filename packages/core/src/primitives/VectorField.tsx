@@ -111,17 +111,25 @@ export function VectorField({
         const p2x = a.x2 - headSize * Math.cos(angle + ha);
         const p2y = a.y2 - headSize * Math.sin(angle + ha);
 
+        // Shorten line to stop at arrowhead base
+        const baseOff = headSize * Math.cos(ha);
+        const showLine = Math.sqrt((a.x2 - a.x1) ** 2 + (a.y2 - a.y1) ** 2) > baseOff;
+        const lx2 = a.x2 - baseOff * Math.cos(angle);
+        const ly2 = a.y2 - baseOff * Math.sin(angle);
+
         return (
           <g key={i}>
-            <line
-              x1={a.x1}
-              y1={a.y1}
-              x2={a.x2}
-              y2={a.y2}
-              stroke={color}
-              strokeWidth={strokeWidth}
-              opacity={0.6 + 0.4 * Math.min(a.mag / maxLength, 1)}
-            />
+            {showLine && (
+              <line
+                x1={a.x1}
+                y1={a.y1}
+                x2={lx2}
+                y2={ly2}
+                stroke={color}
+                strokeWidth={strokeWidth}
+                opacity={0.6 + 0.4 * Math.min(a.mag / maxLength, 1)}
+              />
+            )}
             <polygon
               points={`${a.x2},${a.y2} ${p1x},${p1y} ${p2x},${p2y}`}
               fill={color}

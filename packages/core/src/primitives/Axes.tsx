@@ -113,7 +113,7 @@ export function Axes({
       )}
 
       {/* X axis */}
-      <line x1={xMin} y1={oy} x2={xMax} y2={oy} stroke={axisColor} strokeWidth={1.5} />
+      <line x1={xMin} y1={oy} x2={xMax - arrowSize} y2={oy} stroke={axisColor} strokeWidth={1.5} />
       {/* X arrowhead */}
       <polygon
         points={`${xMax},${oy} ${xMax - arrowSize},${oy - arrowSize / 2} ${xMax - arrowSize},${oy + arrowSize / 2}`}
@@ -121,7 +121,7 @@ export function Axes({
       />
 
       {/* Y axis */}
-      <line x1={ox} y1={yMax} x2={ox} y2={yMin} stroke={axisColor} strokeWidth={1.5} />
+      <line x1={ox} y1={yMax} x2={ox} y2={yMin + arrowSize} stroke={axisColor} strokeWidth={1.5} />
       {/* Y arrowhead */}
       <polygon
         points={`${ox},${yMin} ${ox - arrowSize / 2},${yMin + arrowSize} ${ox + arrowSize / 2},${yMin + arrowSize}`}

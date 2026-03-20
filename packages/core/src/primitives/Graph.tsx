@@ -88,16 +88,31 @@ export function Graph({
 
         const eColor = edge.color ?? edgeColor;
 
+        // Shorten line to arrowhead base when directed
+        const arrowSize = 8;
+        let lx2 = x2;
+        let ly2 = y2;
+        const edgeLen = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        const baseOff = arrowSize * Math.cos(Math.PI / 6);
+        if (edge.directed && edgeLen > baseOff) {
+          const edgeAngle = Math.atan2(y2 - y1, x2 - x1);
+          lx2 = x2 - baseOff * Math.cos(edgeAngle);
+          ly2 = y2 - baseOff * Math.sin(edgeAngle);
+        }
+        const showEdgeLine = edgeLen > (edge.directed ? baseOff : 0);
+
         return (
           <g key={`edge-${i}`}>
-            <line
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              stroke={eColor}
-              strokeWidth={edgeWidth}
-            />
+            {showEdgeLine && (
+              <line
+                x1={x1}
+                y1={y1}
+                x2={lx2}
+                y2={ly2}
+                stroke={eColor}
+                strokeWidth={edgeWidth}
+              />
+            )}
             {edge.directed && (
               <ArrowHead x1={x1} y1={y1} x2={x2} y2={y2} color={eColor} size={8} />
             )}

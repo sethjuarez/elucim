@@ -35,7 +35,6 @@ export function Arrow({
   translate,
 }: ArrowProps) {
   const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-  const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, length);
 
   // Compute arrowhead points
   const angle = Math.atan2(y2 - y1, x2 - x1);
@@ -45,21 +44,32 @@ export function Arrow({
   const p2x = x2 - headSize * Math.cos(angle + headAngle);
   const p2y = y2 - headSize * Math.sin(angle + headAngle);
 
+  // Shorten line to stop at arrowhead base so the stroke doesn't poke through
+  const baseOffset = headSize * Math.cos(headAngle);
+  const showLine = length > baseOffset;
+  const lineEndX = x2 - baseOffset * Math.cos(angle);
+  const lineEndY = y2 - baseOffset * Math.sin(angle);
+
+  const lineLength = showLine ? length - baseOffset : 0;
+  const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, lineLength);
+
   const finalOpacity = baseOpacity * anim.opacity;
   const dasharray = anim.strokeDasharray ?? userDasharray;
 
   const el = (
     <g data-testid="elucim-arrow" opacity={finalOpacity}>
-      <line
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-        strokeDasharray={dasharray}
-        strokeDashoffset={anim.strokeDashoffset}
-      />
+      {showLine && (
+        <line
+          x1={x1}
+          y1={y1}
+          x2={lineEndX}
+          y2={lineEndY}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+          strokeDasharray={dasharray}
+          strokeDashoffset={anim.strokeDashoffset}
+        />
+      )}
       <polygon
         points={`${x2},${y2} ${p1x},${p1y} ${p2x},${p2y}`}
         fill={stroke}
