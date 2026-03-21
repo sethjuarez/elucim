@@ -57,7 +57,9 @@ function originBasedBounds(el: AnyEl): { x: number; y: number; width: number; he
   const [ox, oy] = el.origin as [number, number];
   const s = (typeof el.scale === 'number' ? el.scale : 40);
   const domain = Array.isArray(el.domain) ? el.domain as [number, number] : [-5, 5];
-  const range = Array.isArray(el.range) ? el.range as [number, number] : domain;
+  const range = Array.isArray(el.yClamp) ? el.yClamp as [number, number]
+    : Array.isArray(el.range) ? el.range as [number, number]
+    : domain;
   const w = (domain[1] - domain[0]) * s;
   const h = (range[1] - range[0]) * s;
   return { x: ox - w / 2, y: oy - h / 2, width: w, height: h };

@@ -80,6 +80,33 @@ function measureElement(
       }
     }
 
+    // If the element uses a clipPath, getBBox() returns the full unclipped
+    // geometry (which can be huge for steep functions like tan(x)).
+    // Use the clip rect as the authoritative bounds instead.
+    const clipRectEl = target.querySelector('clipPath > rect');
+    if (clipRectEl) {
+      const cx = parseFloat(clipRectEl.getAttribute('x') ?? '0');
+      const cy = parseFloat(clipRectEl.getAttribute('y') ?? '0');
+      const cw = parseFloat(clipRectEl.getAttribute('width') ?? '0');
+      const ch = parseFloat(clipRectEl.getAttribute('height') ?? '0');
+      if (cw > 0 && ch > 0) {
+        let x = cx;
+        let y = cy;
+        // Account for translate transform applied by withTransform
+        if (Array.isArray(el.translate)) {
+          x += el.translate[0];
+          y += el.translate[1];
+        }
+        const result: BoundingBox = { x, y, width: cw, height: ch };
+        const rotation = el.rotation as number | undefined;
+        if (rotation) {
+          result.rotation = rotation;
+          result.rotationCenter = getRotationCenter(el, { x, y, width: cw, height: ch } as DOMRect);
+        }
+        return result;
+      }
+    }
+
     const bbox = target.getBBox();
     if (bbox.width === 0 && bbox.height === 0) return null;
 
