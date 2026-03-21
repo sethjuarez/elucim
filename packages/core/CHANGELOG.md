@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.14.1](https://github.com/sethjuarez/elucim/compare/core-v0.14.0...core-v0.14.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* reduce FunctionPlot soft limit from 5x to 3x yClamp range ([b23ebdb](https://github.com/sethjuarez/elucim/commit/b23ebdb024c9ef932bf84896b73577db1afd80bf))
+
 ## [0.14.0](https://github.com/sethjuarez/elucim/compare/core-v0.13.1...core-v0.14.0) (2026-03-20)
 
 

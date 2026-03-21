@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.14.1](https://github.com/sethjuarez/elucim/compare/editor-v0.14.0...editor-v0.14.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* **editor:** use clipPath bounds for selection instead of unclipped getBBox ([16c38ed](https://github.com/sethjuarez/elucim/commit/16c38ed3dad23854ba569a94b1373ec4e2dd6ae8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.14.1
+    * @elucim/dsl bumped to 0.14.1
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.14.1
+    * @elucim/dsl bumped from >=0.8.0 to >=0.14.1
+
 ## [0.14.0](https://github.com/sethjuarez/elucim/compare/editor-v0.13.1...editor-v0.14.0) (2026-03-20)
 
 
