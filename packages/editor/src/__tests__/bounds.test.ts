@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getElementBounds, mergeBounds, isPointInBounds } from '../utils/bounds';
-import type { CircleNode, RectNode, LineNode, PolygonNode, TextNode } from '@elucim/dsl';
+import type { CircleNode, RectNode, LineNode, PolygonNode, TextNode, FunctionPlotNode } from '@elucim/dsl';
 
 describe('getElementBounds', () => {
   it('computes rect bounds', () => {
@@ -38,6 +38,70 @@ describe('getElementBounds', () => {
   it('returns null for animation wrappers', () => {
     expect(getElementBounds({ type: 'fadeIn', children: [] })).toBeNull();
     expect(getElementBounds({ type: 'stagger', children: [] })).toBeNull();
+  });
+
+  it('computes functionPlot bounds using yClamp for height', () => {
+    const fp: FunctionPlotNode = {
+      type: 'functionPlot',
+      fn: 'sin(x)',
+      origin: [400, 300],
+      scale: 40,
+      domain: [-5, 5],
+      yClamp: [-10, 10],
+    };
+    const bounds = getElementBounds(fp);
+    expect(bounds).not.toBeNull();
+    // width = (5 - (-5)) * 40 = 400, height = (10 - (-10)) * 40 = 800
+    expect(bounds!.width).toBe(400);
+    expect(bounds!.height).toBe(800);
+    expect(bounds!.x).toBe(200);  // ox - w/2 = 400 - 200
+    expect(bounds!.y).toBe(-100); // oy - h/2 = 300 - 400
+  });
+
+  it('functionPlot with narrow yClamp gives shorter bounds', () => {
+    const fp: FunctionPlotNode = {
+      type: 'functionPlot',
+      fn: 'x',
+      origin: [400, 300],
+      scale: 40,
+      domain: [-5, 5],
+      yClamp: [-3, 3],
+    };
+    const bounds = getElementBounds(fp);
+    expect(bounds).not.toBeNull();
+    expect(bounds!.width).toBe(400);
+    // height = (3 - (-3)) * 40 = 240 (NOT 400 from domain fallback)
+    expect(bounds!.height).toBe(240);
+  });
+
+  it('functionPlot without yClamp falls back to domain for height', () => {
+    const fp = {
+      type: 'functionPlot',
+      fn: 'sin(x)',
+      origin: [400, 300],
+      scale: 40,
+      domain: [-5, 5],
+    } as FunctionPlotNode;
+    const bounds = getElementBounds(fp);
+    expect(bounds).not.toBeNull();
+    // No yClamp, no range → falls back to domain: height = (5-(-5))*40 = 400
+    expect(bounds!.width).toBe(400);
+    expect(bounds!.height).toBe(400);
+  });
+
+  it('functionPlot uses origin as rotation center', () => {
+    const fp = {
+      type: 'functionPlot',
+      fn: 'sin(x)',
+      origin: [400, 300],
+      scale: 40,
+      domain: [-5, 5],
+      yClamp: [-10, 10],
+      rotation: 45,
+    } as any;
+    const bounds = getElementBounds(fp);
+    expect(bounds!.rotation).toBe(45);
+    expect(bounds!.rotationCenter).toEqual([400, 300]);
   });
 });
 
