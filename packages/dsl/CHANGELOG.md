@@ -1,5 +1,21 @@
 # @elucim/dsl
 
+## [0.14.1](https://github.com/sethjuarez/elucim/compare/dsl-v0.14.0...dsl-v0.14.1) (2026-03-21)
+
+
+### Miscellaneous
+
+* **dsl:** Synchronize elucim versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.14.1
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.14.1
+
 ## [0.14.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.13.1...dsl-v0.14.0) (2026-03-20)
 
 
