@@ -57,7 +57,7 @@ export function FunctionPlot({
   // clipPath handles the precise visual clipping at yClamp boundaries.
   const softLimit = useMemo(() => {
     const range = yClamp[1] - yClamp[0];
-    return [yClamp[0] - range * 2, yClamp[1] + range * 2] as [number, number];
+    return [yClamp[0] - range, yClamp[1] + range] as [number, number];
   }, [yClamp]);
 
   const pathData = useMemo(() => {
