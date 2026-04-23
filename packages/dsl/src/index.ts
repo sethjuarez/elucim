@@ -93,3 +93,6 @@ export {
 } from './builders/PresentationBuilder';
 export { SlideBuilder } from './builders/SlideBuilder';
 export { darkTheme, lightTheme, type BuilderTheme, type Theme } from './builders/themes';
+
+// YAML parser
+export { fromYaml, ElucimYamlError } from './yaml/fromYaml';
