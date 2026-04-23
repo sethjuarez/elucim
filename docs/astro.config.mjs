@@ -106,7 +106,7 @@ export default defineConfig({
           ],
         },
         {
-          label: 'DSL (JSON & Builder)',
+          label: 'DSL (JSON, YAML & Builder)',
           items: [
             { slug: 'dsl/overview' },
             { slug: 'dsl/renderer' },
