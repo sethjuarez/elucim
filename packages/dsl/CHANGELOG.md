@@ -1,5 +1,21 @@
 # @elucim/dsl
 
+## [0.15.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.14.1...dsl-v0.15.0) (2026-04-23)
+
+
+### Features
+
+* **dsl:** add fromYaml() for YAML DSL parsing ([0fd202d](https://github.com/sethjuarez/elucim/commit/0fd202d04aa446ef1e74ae86cb224d8dbe4eb1f8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.15.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.15.0
+
 ## [0.14.1](https://github.com/sethjuarez/elucim/compare/dsl-v0.14.0...dsl-v0.14.1) (2026-03-21)
 
 
