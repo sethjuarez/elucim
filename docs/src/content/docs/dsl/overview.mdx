@@ -1,9 +1,9 @@
 ---
-title: JSON DSL Overview
-description: Describe Elucim scenes and presentations as JSON documents with the @elucim/dsl package.
+title: DSL Overview
+description: Describe Elucim scenes and presentations as JSON or YAML documents with the @elucim/dsl package.
 ---
 
-The `@elucim/dsl` package lets you describe Elucim scenes and presentations as **JSON documents** instead of JSX. This is ideal for AI-generated content, server-side authoring, and storing animations in databases or files.
+The `@elucim/dsl` package lets you describe Elucim scenes and presentations as **JSON or YAML documents** instead of JSX. This is ideal for AI-generated content, server-side authoring, and storing animations in databases or files.
 
 ## ElucimDocument
 
@@ -20,6 +20,8 @@ interface ElucimDocument {
 The `root` can be a **scene**, **player**, or **presentation** node. Presentations contain **slide** children, and each slide typically wraps a **player** node.
 
 ## Minimal Example
+
+### JSON
 
 ```json
 {
@@ -50,6 +52,42 @@ The `root` can be a **scene**, **player**, or **presentation** node. Presentatio
   }
 }
 ```
+
+### YAML
+
+The same document in YAML — parsed with `fromYaml()`:
+
+```yaml
+version: "1.0"
+root:
+  type: player
+  width: 800
+  height: 600
+  fps: 30
+  durationInFrames: 90
+  background: "#0a0a1e"
+  children:
+    - type: fadeIn
+      duration: 30
+      children:
+        - type: circle
+          cx: 400
+          cy: 300
+          r: 60
+          stroke: "#4fc3f7"
+          strokeWidth: 3
+```
+
+```ts
+import { fromYaml } from '@elucim/dsl';
+
+const doc = fromYaml(yamlString);
+// doc is a validated ElucimDocument
+```
+
+:::note
+`fromYaml` uses a JSON-compatible YAML schema, so values like `on`, `yes`, and `NO` stay as strings instead of being coerced to booleans. This matches the behavior you'd get from JSON.
+:::
 
 ## Node Types
 

@@ -268,7 +268,7 @@ The editor wraps its entire component tree in an error boundary. If a rendering 
 ## Related
 
 - **[@elucim/core](https://www.npmjs.com/package/@elucim/core)** — The React rendering engine (peer dependency)
-- **[@elucim/dsl](https://www.npmjs.com/package/@elucim/dsl)** — JSON DSL for declaring animations (peer dependency)
+- **[@elucim/dsl](https://www.npmjs.com/package/@elucim/dsl)** — JSON/YAML DSL for declaring animations (peer dependency)
 - **[Elucim Docs](https://elucim.com)** — Full documentation with live interactive examples
 
 ## License

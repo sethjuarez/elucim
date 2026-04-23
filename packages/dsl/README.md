@@ -1,11 +1,11 @@
 # @elucim/dsl
 
-> Declarative JSON DSL for animated visualizations — perfect for AI agents.
+> Declarative JSON/YAML DSL for animated visualizations — perfect for AI agents.
 
 [![npm version](https://img.shields.io/npm/v/@elucim/dsl)](https://www.npmjs.com/package/@elucim/dsl)
 [![license](https://img.shields.io/npm/l/@elucim/dsl)](https://github.com/sethjuarez/elucim/blob/main/LICENSE)
 
-`@elucim/dsl` lets you describe animated diagrams as JSON documents. An AI agent (or any code) produces a JSON object conforming to the schema, and the `<DslRenderer>` component renders it as a fully interactive [Elucim](https://www.npmjs.com/package/@elucim/core) visualization — no React knowledge required.
+`@elucim/dsl` lets you describe animated diagrams as JSON or YAML documents. An AI agent (or any code) produces a document conforming to the schema, and the `<DslRenderer>` component renders it as a fully interactive [Elucim](https://www.npmjs.com/package/@elucim/core) visualization — no React knowledge required.
 
 ## Install
 
@@ -16,6 +16,8 @@ pnpm add @elucim/dsl @elucim/core react react-dom
 ```
 
 ## Quick Start
+
+### From JSON
 
 ```tsx
 import { DslRenderer } from '@elucim/dsl';
@@ -43,6 +45,37 @@ const myDiagram: ElucimDocument = {
     ],
   },
 };
+
+function App() {
+  return <DslRenderer dsl={myDiagram} />;
+}
+```
+
+### From YAML
+
+```tsx
+import { DslRenderer, fromYaml } from '@elucim/dsl';
+
+const yaml = `
+version: "1.0"
+root:
+  type: player
+  width: 800
+  height: 600
+  fps: 30
+  durationInFrames: 90
+  background: "#0d0d1a"
+  children:
+    - type: circle
+      cx: 400
+      cy: 300
+      r: 100
+      stroke: "#3b82f6"
+      strokeWidth: 3
+      draw: 60
+`;
+
+const myDiagram = fromYaml(yaml);
 
 function App() {
   return <DslRenderer dsl={myDiagram} />;
@@ -78,6 +111,27 @@ if (!result.valid) {
   // [{ path: 'root.children[0].cx', message: 'Required numeric field "cx"...', severity: 'error' }]
 }
 ```
+
+### `fromYaml(input: string): ElucimDocument`
+
+Parse a YAML string into a validated `ElucimDocument`. Uses JSON-compatible schema to avoid YAML-specific type coercions (e.g., `on` stays as a string instead of becoming `true`).
+
+```ts
+import { fromYaml, ElucimYamlError } from '@elucim/dsl';
+
+try {
+  const doc = fromYaml(yamlString);
+  // doc is a validated ElucimDocument, ready for <DslRenderer>
+} catch (e) {
+  if (e instanceof ElucimYamlError) {
+    console.error(e.message);
+    // Structured validation errors (empty for parse failures)
+    console.error(e.validationErrors);
+  }
+}
+```
+
+Throws `ElucimYamlError` if YAML parsing fails or the document is invalid. The error includes a `validationErrors` array with structured error details for validation failures.
 
 ### `renderToSvgString(doc, frame, options?)`
 
@@ -233,7 +287,7 @@ Used in `functionPlot.fn` and `vectorField.fn`. Safe evaluation — no `eval()`.
 
 ## Semantic Color Tokens
 
-Use `$token` syntax in your DSL JSON to create theme-adaptive visualizations:
+Use `$token` syntax in your DSL documents to create theme-adaptive visualizations:
 
 ```json
 {
@@ -244,6 +298,24 @@ Use `$token` syntax in your DSL JSON to create theme-adaptive visualizations:
     { "type": "circle", "cx": 200, "cy": 200, "r": 50, "stroke": "$accent" }
   ]
 }
+```
+
+Or equivalently in YAML:
+
+```yaml
+type: player
+background: "$background"
+children:
+  - type: text
+    x: 400
+    y: 300
+    content: Hello
+    fill: "$foreground"
+  - type: circle
+    cx: 200
+    cy: 200
+    r: 50
+    stroke: "$accent"
 ```
 
 **Available tokens:**

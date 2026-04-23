@@ -84,7 +84,7 @@ console.log(result.errors);
 
 Validation is useful for:
 
-- **CI pipelines** — validate JSON files before deployment
+- **CI pipelines** — validate JSON or YAML files before deployment
 - **AI agents** — check generated documents before rendering
 - **Editors** — show inline errors as the user types
 
@@ -102,6 +102,27 @@ if (!valid) {
 }
 ```
 
+For YAML files, use `fromYaml()` which validates automatically:
+
+```ts
+import { fromYaml, ElucimYamlError } from '@elucim/dsl';
+import fs from 'fs';
+
+try {
+  const doc = fromYaml(fs.readFileSync('animation.yaml', 'utf-8'));
+  console.log('YAML document is valid!');
+} catch (e) {
+  if (e instanceof ElucimYamlError) {
+    console.error('Validation failed:', e.message);
+    e.validationErrors.forEach(err =>
+      console.error(`  ${err.path}: ${err.message}`)
+    );
+    process.exit(1);
+  }
+  throw e;
+}
+```
+
 :::note
-`DslRenderer` calls `validate` automatically and displays errors inline. You only need to call `validate` directly if you want to check documents outside of a React render.
+`DslRenderer` calls `validate` automatically and displays errors inline. The `fromYaml()` function also validates automatically and throws `ElucimYamlError` on failure. You only need to call `validate` directly if you want to check JSON documents outside of a React render.
 :::

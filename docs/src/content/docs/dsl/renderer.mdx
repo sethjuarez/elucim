@@ -3,7 +3,7 @@ title: DslRenderer Component
 description: Render an ElucimDocument JSON object as a live React component.
 ---
 
-The `<DslRenderer>` component takes an `ElucimDocument` and renders it as a fully interactive Elucim scene or presentation — no JSX authoring required.
+The `<DslRenderer>` component takes an `ElucimDocument` and renders it as a fully interactive Elucim scene or presentation — no JSX authoring required. Documents can be authored as JSON objects or parsed from YAML with [`fromYaml()`](/dsl/overview/#yaml).
 
 ## Props
 
@@ -136,6 +136,31 @@ import doc from './my-animation.json';
 export default function Page() {
   return <DslRenderer dsl={doc} />;
 }
+```
+
+## Loading from a YAML File
+
+YAML files need to be read as text and parsed with `fromYaml()`:
+
+```tsx
+import { DslRenderer, fromYaml } from '@elucim/dsl';
+
+// Read YAML text from a file, API response, or any string source
+const yamlText = await fetch('/my-animation.yaml').then(r => r.text());
+const doc = fromYaml(yamlText);
+
+export default function Page() {
+  return <DslRenderer dsl={doc} />;
+}
+```
+
+For Node.js / build scripts:
+
+```ts
+import { fromYaml } from '@elucim/dsl';
+import fs from 'fs';
+
+const doc = fromYaml(fs.readFileSync('my-animation.yaml', 'utf-8'));
 ```
 
 ## Automatic Validation

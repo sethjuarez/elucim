@@ -195,7 +195,7 @@ Full docs with live interactive examples: [elucim.com](https://elucim.com)
 
 ## Related
 
-- **[@elucim/dsl](https://www.npmjs.com/package/@elucim/dsl)** — JSON DSL for declaring animations without React
+- **[@elucim/dsl](https://www.npmjs.com/package/@elucim/dsl)** — JSON/YAML DSL for declaring animations without React
 - **[@elucim/editor](https://www.npmjs.com/package/@elucim/editor)** — Visual canvas editor for Elucim animations
 
 ## License

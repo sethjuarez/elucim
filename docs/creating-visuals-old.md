@@ -817,9 +817,11 @@ function SlideContent() {
 
 ---
 
-## JSON DSL & Renderer
+## JSON/YAML DSL & Renderer
 
-The `@elucim/dsl` package lets you define visuals as JSON documents instead of writing JSX. This is ideal for AI agents, code generation, and data-driven content.
+The `@elucim/dsl` package lets you define visuals as JSON or YAML documents instead of writing JSX. This is ideal for AI agents, code generation, and data-driven content.
+
+> **Note:** Some examples in this section use older API signatures. For current usage, see the [DSL Overview](https://elucim.com/dsl/overview/) docs.
 
 ### Installation
 
@@ -871,6 +873,28 @@ function MyDslScene() {
   return <DslRenderer document={myDoc} />;
 }
 ```
+
+### YAML Support
+
+You can also author DSL documents in YAML using `fromYaml()`:
+
+```ts
+import { fromYaml, ElucimYamlError } from '@elucim/dsl';
+import fs from 'fs';
+
+const yaml = fs.readFileSync('my-animation.yaml', 'utf-8');
+
+try {
+  const doc = fromYaml(yaml);
+  // doc is a validated ElucimDocument
+} catch (e) {
+  if (e instanceof ElucimYamlError) {
+    console.error(e.message);
+  }
+}
+```
+
+`fromYaml` uses a JSON-compatible schema, so YAML-specific type coercions are avoided — `on` stays the string `"on"` instead of becoming `true`.
 
 ### Supported Node Types
 

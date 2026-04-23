@@ -1,11 +1,11 @@
 # Elucim
 
-> Elucim is a React library for creating animated math and concept visualizations — 3Blue1Brown-style, built for the web. It provides SVG primitives, animation components, a frame-driven Player, slide Presentations, and a JSON DSL for AI-generated content.
+> Elucim is a React library for creating animated math and concept visualizations — 3Blue1Brown-style, built for the web. It provides SVG primitives, animation components, a frame-driven Player, slide Presentations, and a JSON/YAML DSL for AI-generated content.
 
 ## Packages
 
 - `@elucim/core`: React components for animated visualizations — primitives, animations, Player, Presentation, hooks, easing, export
-- `@elucim/dsl`: JSON DSL schema, DslRenderer component, validator, fluent Builder API, and themes for declarative/AI-generated content
+- `@elucim/dsl`: JSON/YAML DSL schema, DslRenderer component, validator, fluent Builder API, and themes for declarative/AI-generated content
 
 ## Core Concepts
 
@@ -66,7 +66,7 @@ Generators: `spring({ stiffness, damping, mass })`, `cubicBezier(x1, y1, x2, y2)
 
 ## DSL
 
-The JSON DSL allows declarative animation definitions:
+The DSL allows declarative animation definitions in JSON or YAML:
 
 ```json
 {
@@ -81,7 +81,7 @@ The JSON DSL allows declarative animation definitions:
 }
 ```
 
-Render with `<DslRenderer dsl={doc} />`. Validate with `validate(doc)`. Math expressions in `functionPlot.fn` use safe evaluation (sin, cos, sqrt, etc.).
+Render with `<DslRenderer dsl={doc} />`. Validate with `validate(doc)`. Parse YAML with `fromYaml(yamlString)`. Math expressions in `functionPlot.fn` use safe evaluation (sin, cos, sqrt, etc.).
 
 ### Builder API
 
