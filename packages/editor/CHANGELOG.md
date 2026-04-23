@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.15.0](https://github.com/sethjuarez/elucim/compare/editor-v0.14.1...editor-v0.15.0) (2026-04-23)
+
+
+### Miscellaneous
+
+* **editor:** Synchronize elucim versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.15.0
+    * @elucim/dsl bumped to 0.15.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.15.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.15.0
+
 ## [0.14.1](https://github.com/sethjuarez/elucim/compare/editor-v0.14.0...editor-v0.14.1) (2026-03-21)
 
 
