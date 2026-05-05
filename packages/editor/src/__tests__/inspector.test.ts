@@ -3,17 +3,26 @@
  */
 import { describe, it, expect } from 'vitest';
 import React, { useEffect } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { editorReducer, findElementById } from '../state/reducer';
 import { createInitialState } from '../state/types';
 import { EditorProvider, useEditorState } from '../state/EditorProvider';
 import { Inspector } from '../inspector/Inspector';
-import type { BarChartNode, CircleNode, RectNode, TextNode, LaTeXNode } from '@elucim/dsl';
+import type { BarChartNode, CircleNode, GroupNode, RectNode, TextNode, LaTeXNode } from '@elucim/dsl';
 
 const circle: CircleNode = { type: 'circle', id: 'c1', cx: 100, cy: 200, r: 50, fill: '#ff0000', stroke: '#00ff00', strokeWidth: 2, opacity: 0.8 };
 const rect: RectNode = { type: 'rect', id: 'r1', x: 50, y: 50, width: 100, height: 80, fill: '#0000ff' };
 const text: TextNode = { type: 'text', id: 't1', x: 200, y: 100, content: 'Hello', fontSize: 24, fill: '#fff' };
 const latex: LaTeXNode = { type: 'latex', id: 'lx1', x: 300, y: 300, expression: '\\frac{a}{b}', fontSize: 20 };
+const heroGroup: GroupNode = {
+  type: 'group',
+  id: 'hero1',
+  children: [
+    { type: 'rect', id: 'hero-bg', x: 100, y: 100, width: 320, height: 160, fill: '$surface', stroke: '$accent' },
+    { type: 'text', id: 'hero-title', x: 260, y: 170, content: 'Talk hook', fill: '$title', fontSize: 36 },
+    { type: 'text', id: 'hero-subtitle', x: 260, y: 210, content: 'Make it memorable', fill: '$subtitle', fontSize: 18 },
+  ],
+};
 const barChart: BarChartNode = {
   type: 'barChart',
   id: 'b1',
@@ -176,6 +185,123 @@ describe('inspector style updates', () => {
 
     fireEvent.change(hexPicker, { target: { value: '#654321' } });
     expect(hexValue.value).toBe('#654321');
+  });
+});
+
+describe('inspector group editing', () => {
+  it('selects group children and shows a parent breadcrumb', async () => {
+    let latestSelectedIds: string[] = [];
+
+    function SelectAndCapture() {
+      const { state, dispatch } = useEditorState();
+      latestSelectedIds = state.selectedIds;
+      useEffect(() => {
+        dispatch({ type: 'SELECT', ids: ['hero1'] });
+      }, [dispatch]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [heroGroup] },
+          },
+        },
+        React.createElement(SelectAndCapture),
+        React.createElement(Inspector),
+      ),
+    );
+
+    const titleButton = await screen.findByLabelText(/Select Text "Talk hook"/);
+    fireEvent.click(titleButton);
+
+    await waitFor(() => expect(latestSelectedIds).toEqual(['hero-title']));
+    const selectionPath = screen.getByLabelText('Selection path').textContent ?? '';
+    expect(selectionPath).toContain('Group');
+    expect(selectionPath).toContain('hero1');
+    expect(selectionPath).toContain('hero-title');
+
+    fireEvent.click(screen.getByTitle(/Select parent Group/));
+    await waitFor(() => expect(latestSelectedIds).toEqual(['hero1']));
+  });
+
+  it('selects anonymous children by generated path id', async () => {
+    let latestSelectedIds: string[] = [];
+    const anonymousGroup: GroupNode = {
+      type: 'group',
+      id: 'anonGroup',
+      children: [
+        { type: 'rect', x: 100, y: 100, width: 80, height: 40, fill: '$surface' },
+        { type: 'text', x: 140, y: 124, content: 'No id', fill: '$title' },
+      ],
+    };
+
+    function SelectAndCapture() {
+      const { state, dispatch } = useEditorState();
+      latestSelectedIds = state.selectedIds;
+      useEffect(() => {
+        dispatch({ type: 'SELECT', ids: ['anonGroup'] });
+      }, [dispatch]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [anonymousGroup] },
+          },
+        },
+        React.createElement(SelectAndCapture),
+        React.createElement(Inspector),
+      ),
+    );
+
+    fireEvent.click(await screen.findByLabelText('Select Rect'));
+    await waitFor(() => expect(latestSelectedIds).toEqual(['anonGroup.rect[0]']));
+  });
+
+  it('shows child selection for animation wrappers', async () => {
+    let latestSelectedIds: string[] = [];
+    const wrappedGroup: GroupNode = { ...heroGroup, id: 'wrappedGroup' };
+    const wrapper = {
+      type: 'fadeIn',
+      id: 'wrap1',
+      duration: 12,
+      children: [wrappedGroup],
+    } as any;
+
+    function SelectAndCapture() {
+      const { state, dispatch } = useEditorState();
+      latestSelectedIds = state.selectedIds;
+      useEffect(() => {
+        dispatch({ type: 'SELECT', ids: ['wrap1'] });
+      }, [dispatch]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [wrapper] },
+          },
+        },
+        React.createElement(SelectAndCapture),
+        React.createElement(Inspector),
+      ),
+    );
+
+    expect(await screen.findByRole('list', { name: 'FadeIn — wrap1 children' })).toBeTruthy();
+    fireEvent.click(screen.getByLabelText('Select Group — wrappedGroup'));
+    await waitFor(() => expect(latestSelectedIds).toEqual(['wrappedGroup']));
   });
 });
 

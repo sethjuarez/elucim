@@ -92,6 +92,19 @@ describe('ELEMENT_TEMPLATES', () => {
     expect(hero.children[1].fill).toBe('$title');
   });
 
+  it('creates presentation groups with descriptive child ids', () => {
+    const groupTemplates = ELEMENT_TEMPLATES.filter(t => t.category === 'presentation' && t.type === 'group');
+    expect(groupTemplates.length).toBeGreaterThan(0);
+
+    for (const template of groupTemplates) {
+      const group = template.create(480, 270) as any;
+      expect(group.type).toBe('group');
+      for (const child of group.children) {
+        expect(child.id, `${template.id} child id`).toMatch(/^(hero|metric|callout)-/);
+      }
+    }
+  });
+
   it('uses semantic token colors in default templates', () => {
     const colorFields = ['fill', 'stroke', 'color', 'axisColor', 'gridColor', 'labelColor', 'barColor', 'nodeColor', 'edgeColor'];
     for (const template of ELEMENT_TEMPLATES) {

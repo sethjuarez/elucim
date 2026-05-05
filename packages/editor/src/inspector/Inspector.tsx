@@ -36,6 +36,9 @@ export function Inspector({ className, style }: InspectorProps) {
   const elementId = (!isCanvasSelected && selectedIds.length === 1) ? selectedIds[0] : null;
   const loc = elementId ? findElementById(document.root, elementId) : null;
   const element = loc?.element ?? null;
+  const parentLoc = loc?.parentPath && loc.parentPath !== 'root' ? findElementById(document.root, loc.parentPath) : null;
+  const parentElement = parentLoc?.element ?? null;
+  const parentId = parentLoc?.id ?? null;
 
   const handleChange = useCallback((field: string, value: any) => {
     if (!elementId) return;
@@ -111,10 +114,7 @@ export function Inspector({ className, style }: InspectorProps) {
     >
       {/* Element type header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: v('--elucim-editor-accent') }}>
-          {element.type.charAt(0).toUpperCase() + element.type.slice(1)}
-          {'id' in element && element.id ? ` — ${element.id}` : ''}
-        </div>
+        <ElementHeader element={element} parentElement={parentElement} parentId={parentId} dispatch={dispatch} />
         {element.type === 'group' && elementId && (
           <InspectorActionButton
             icon={icons.Ungroup({ size: 14 })}
@@ -145,10 +145,138 @@ export function Inspector({ className, style }: InspectorProps) {
         <TransformFields element={element} onChange={handleChange} />
       </InspectorSection>
 
+      {elementId && getElementChildren(element).length > 0 && (
+        <InspectorSection title={element.type === 'group' ? 'Group Children' : 'Children'}>
+          <GroupChildrenField container={element} containerId={elementId} dispatch={dispatch} />
+        </InspectorSection>
+      )}
+
       {/* Element-specific section */}
       <ElementSpecificFields element={element} onChange={handleChange} />
     </div>
   );
+}
+
+function ElementHeader({ element, parentElement, parentId, dispatch }: {
+  element: ElementNode;
+  parentElement: ElementNode | null;
+  parentId: string | null;
+  dispatch: ReturnType<typeof useEditorState>['dispatch'];
+}) {
+  const elementTitle = getElementDisplayName(element);
+  if (!parentElement || !parentId) {
+    return (
+      <div style={{ fontSize: 13, fontWeight: 600, color: v('--elucim-editor-accent') }}>
+        {elementTitle}
+      </div>
+    );
+  }
+
+  return (
+    <div aria-label="Selection path" style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <button
+        type="button"
+        onClick={() => dispatch({ type: 'SELECT', ids: [parentId] })}
+        aria-label={`Select parent ${getElementDisplayName(parentElement)}`}
+        title={`Select parent ${getElementDisplayName(parentElement)}`}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: v('--elucim-editor-text-muted'),
+          cursor: 'pointer',
+          fontSize: 10,
+          padding: 0,
+          textAlign: 'left',
+        }}
+      >
+        {getElementDisplayName(parentElement)}
+      </button>
+      <div style={{ fontSize: 13, fontWeight: 600, color: v('--elucim-editor-accent') }}>
+        ↳ {elementTitle}
+      </div>
+      <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10 }}>
+        Editing child inside {parentElement.type}
+      </div>
+    </div>
+  );
+}
+
+function GroupChildrenField({ container, containerId, dispatch }: {
+  container: ElementNode;
+  containerId: string;
+  dispatch: ReturnType<typeof useEditorState>['dispatch'];
+}) {
+  const children = getElementChildren(container);
+  if (children.length === 0) {
+    return <div style={{ color: v('--elucim-editor-text-muted'), fontSize: v('--elucim-editor-font-xs') }}>No children</div>;
+  }
+
+  return (
+    <div
+      role="list"
+      aria-label={`${getElementDisplayName(container)} children`}
+      style={{ display: 'flex', flexDirection: 'column', gap: 4 }}
+    >
+      {children.map((child, index) => {
+        const childId = getElementEditorId(child, index, containerId);
+        return (
+          <div key={childId} role="listitem">
+            <button
+              type="button"
+              onClick={() => dispatch({ type: 'SELECT', ids: [childId] })}
+              aria-label={`Select ${getElementDisplayName(child, { includeContent: true })}`}
+              title={`Select ${getElementDisplayName(child, { includeContent: true })}`}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 8,
+                width: '100%',
+                padding: '4px 6px',
+                border: `1px solid ${v('--elucim-editor-border')}`,
+                borderRadius: v('--elucim-editor-radius-sm'),
+                background: v('--elucim-editor-input-bg'),
+                color: v('--elucim-editor-fg'),
+                cursor: 'pointer',
+                fontSize: v('--elucim-editor-font-xs'),
+                textAlign: 'left',
+              }}
+            >
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {getElementDisplayName(child, { includeContent: true })}
+              </span>
+              <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 10 }}>
+                Select
+              </span>
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function getElementChildren(element: ElementNode): ElementNode[] {
+  return 'children' in element && Array.isArray((element as any).children)
+    ? (element as any).children
+    : [];
+}
+
+function getElementEditorId(element: ElementNode, index: number, parentPath: string): string {
+  return 'id' in element && element.id ? element.id : `${parentPath}.${element.type}[${index}]`;
+}
+
+function getElementDisplayName(element: ElementNode, options?: { includeContent?: boolean }): string {
+  const id = 'id' in element ? element.id : undefined;
+  const content = options?.includeContent && 'content' in element && typeof (element as any).content === 'string'
+    ? ` "${truncateLabel((element as any).content)}"`
+    : '';
+  const typeLabel = element.type.charAt(0).toUpperCase() + element.type.slice(1);
+  return `${typeLabel}${content}${id ? ` — ${id}` : ''}`;
+}
+
+function truncateLabel(value: string): string {
+  return value.length > 28 ? `${value.slice(0, 25)}...` : value;
 }
 
 // ─── Action button (group/ungroup) ─────────────────────────────────────────
