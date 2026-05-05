@@ -1,6 +1,13 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { describe, it, expect } from 'vitest';
+import React, { useEffect } from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { editorReducer, findElementById } from '../state/reducer';
 import { createInitialState } from '../state/types';
+import { EditorProvider, useEditorState } from '../state/EditorProvider';
+import { Inspector } from '../inspector/Inspector';
 import type { CircleNode, RectNode, TextNode, LaTeXNode } from '@elucim/dsl';
 
 const circle: CircleNode = { type: 'circle', id: 'c1', cx: 100, cy: 200, r: 50, fill: '#ff0000', stroke: '#00ff00', strokeWidth: 2, opacity: 0.8 };
@@ -66,6 +73,49 @@ describe('inspector style updates', () => {
     state = editorReducer(state, { type: 'UPDATE_ELEMENT', id: 't1', changes: { fontSize: 36 } as any });
     const el = findElementById(state.document.root, 't1')!.element as TextNode;
     expect(el.fontSize).toBe(36);
+  });
+
+  it('preserves semantic tokens when previewing color fields', async () => {
+    const tokenizedText: TextNode = { ...text, fill: '$title' };
+
+    function SelectElement() {
+      const { dispatch } = useEditorState();
+      useEffect(() => {
+        dispatch({ type: 'SELECT', ids: ['t1'] });
+      }, [dispatch]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [tokenizedText] },
+          },
+        },
+        React.createElement(SelectElement),
+        React.createElement(Inspector),
+      ),
+    );
+
+    const fillValue = await screen.findByLabelText('Fill value') as HTMLInputElement;
+    const fillPicker = screen.getByLabelText('Fill color picker') as HTMLInputElement;
+
+    expect(fillValue.value).toBe('$title');
+    expect(fillPicker.value).toBe('#e0e7ff');
+    expect(fillPicker.disabled).toBe(true);
+
+    fireEvent.change(fillPicker, { target: { value: '#ff0000' } });
+    expect(fillValue.value).toBe('$title');
+
+    fireEvent.change(fillValue, { target: { value: '#123456' } });
+    expect(fillValue.value).toBe('#123456');
+    expect(fillPicker.disabled).toBe(false);
+
+    fireEvent.change(fillPicker, { target: { value: '#654321' } });
+    expect(fillValue.value).toBe('#654321');
   });
 });
 

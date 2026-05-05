@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ElementNode } from '@elucim/dsl';
-import { SEMANTIC_TOKENS } from '@elucim/core';
+import { SEMANTIC_TOKENS, TOKEN_NAMES } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
 import { CANVAS_ID, type AnimationWrapperType } from '../state/types';
@@ -262,6 +262,8 @@ function NumberField({ label, value, onChange, step = 1 }: {
 function ColorField({ label, value, onChange }: {
   label: string; value: string | undefined; onChange: (v: string) => void;
 }) {
+  const tokenListId = React.useId();
+  const isSemanticToken = value?.startsWith('$') ?? false;
   // Resolve $token to its fallback hex for the color swatch preview
   const swatchColor = (() => {
     if (!value) return '#ffffff';
@@ -279,16 +281,29 @@ function ColorField({ label, value, onChange }: {
         <input
           type="color"
           value={swatchColor}
-          onChange={e => onChange(e.target.value)}
-          aria-label={label}
-          style={{ width: 20, height: v('--elucim-editor-input-height'), padding: 0, border: 'none', cursor: 'pointer' }}
+          disabled={isSemanticToken}
+          onChange={e => {
+            if (!isSemanticToken) onChange(e.target.value);
+          }}
+          aria-label={`${label} color picker`}
+          title={isSemanticToken ? `${value} is a semantic token; edit the text value to use a literal color.` : `Choose ${label.toLowerCase()} color`}
+          style={{
+            width: 20,
+            height: v('--elucim-editor-input-height'),
+            padding: 0,
+            border: 'none',
+            cursor: isSemanticToken ? 'not-allowed' : 'pointer',
+            opacity: isSemanticToken ? 0.65 : 1,
+          }}
         />
         <input
           type="text"
           value={value ?? ''}
+          list={tokenListId}
+          aria-label={`${label} value`}
           onChange={e => onChange(e.target.value)}
           style={{
-            width: 60,
+            width: 96,
             background: v('--elucim-editor-input-bg'),
             border: `1px solid ${v('--elucim-editor-border')}`,
             borderRadius: v('--elucim-editor-radius-sm'),
@@ -299,6 +314,9 @@ function ColorField({ label, value, onChange }: {
             boxSizing: 'border-box',
           }}
         />
+        <datalist id={tokenListId}>
+          {TOKEN_NAMES.map(token => <option key={token} value={`$${token}`} />)}
+        </datalist>
       </div>
     </label>
   );
