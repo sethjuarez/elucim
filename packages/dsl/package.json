@@ -34,6 +34,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./builders": {
+      "import": "./dist/builders.js",
+      "types": "./dist/builders.d.ts"
     }
   },
   "files": [

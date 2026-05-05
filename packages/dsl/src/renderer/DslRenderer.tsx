@@ -102,6 +102,15 @@ function usePrefersDark(): boolean {
   return useSyncExternalStore(subscribeColorScheme, getColorSchemeSnapshot, getColorSchemeServerSnapshot);
 }
 
+function themeWithCompatibilityAliases(theme?: ElucimTheme): ElucimTheme | undefined {
+  if (!theme) return undefined;
+  return {
+    ...theme,
+    accent: theme.accent ?? theme.primary,
+    primary: theme.primary ?? theme.accent,
+  };
+}
+
 // ─── Error boundary ─────────────────────────────────────────────────────────
 
 interface DslErrorBoundaryProps {
@@ -214,7 +223,11 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
       ? (prefersDark ? 'dark' : 'light')
       : colorScheme) as 'light' | 'dark'
     : undefined;
-  const themeVarsCss = themeToVars(normalizeTheme(theme, resolvedColorScheme ?? 'dark')) as React.CSSProperties;
+  const themeVarsCss = themeToVars(
+    colorScheme
+      ? normalizeTheme(theme, resolvedColorScheme ?? 'dark')
+      : themeWithCompatibilityAliases(theme),
+  ) as React.CSSProperties;
 
   const posterOverrides = poster !== undefined ? resolvePoster(poster, dsl) : undefined;
 

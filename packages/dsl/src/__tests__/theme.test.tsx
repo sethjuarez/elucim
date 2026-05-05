@@ -47,6 +47,24 @@ describe('DslRenderer theme prop', () => {
     expect(root.style.getPropertyValue('--elucim-accent')).toBe('#ff0000');
   });
 
+  it('does not override inherited CSS variables when no theme or colorScheme is provided', () => {
+    const { container } = render(
+      <DslRenderer dsl={validDsl as any} />,
+    );
+    const root = container.querySelector('[data-testid="dsl-root"]') as HTMLElement;
+    expect(root.style.getPropertyValue('--elucim-accent')).toBe('');
+    expect(root.style.getPropertyValue('--elucim-background')).toBe('');
+  });
+
+  it('does not fill partial themes with default tokens unless colorScheme is provided', () => {
+    const { container } = render(
+      <DslRenderer dsl={validDsl as any} theme={{ accent: 'var(--cutready-accent)' }} />,
+    );
+    const root = container.querySelector('[data-testid="dsl-root"]') as HTMLElement;
+    expect(root.style.getPropertyValue('--elucim-accent')).toBe('var(--cutready-accent)');
+    expect(root.style.getPropertyValue('--elucim-background')).toBe('');
+  });
+
   it('renders without error when no theme is provided', () => {
     const { getAllByTestId } = render(
       <DslRenderer dsl={validDsl as any} />,
