@@ -9,6 +9,9 @@ screenshots/
 *.png
 !docs/public/images/**/*.png
 *.local
+.env
+.env.*
+!.env.example
 .DS_Store
 docs/.astro/
 docs/dist/
