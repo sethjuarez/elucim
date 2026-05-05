@@ -12,6 +12,7 @@ beforeEach(() => {
 describe('ELEMENT_TEMPLATES', () => {
   it('contains templates for all categories', () => {
     const categories = new Set(ELEMENT_TEMPLATES.map(t => t.category));
+    expect(categories).toContain('presentation');
     expect(categories).toContain('shape');
     expect(categories).toContain('line');
     expect(categories).toContain('text');
@@ -22,7 +23,9 @@ describe('ELEMENT_TEMPLATES', () => {
   it('each template creates a valid element with an id', () => {
     for (const template of ELEMENT_TEMPLATES) {
       const el = template.create(400, 300);
-      expect(el.type).toBe(template.type);
+      if (template.category !== 'presentation') {
+        expect(el.type).toBe(template.type);
+      }
       if ('id' in el) {
         expect(typeof (el as any).id).toBe('string');
       }
@@ -45,6 +48,8 @@ describe('ELEMENT_TEMPLATES', () => {
     expect(el.y).toBe(260); // 300 - 40
     expect(el.width).toBe(120);
     expect(el.height).toBe(80);
+    expect(el.fill).toBe('$surface');
+    expect(el.stroke).toBe('$accent');
   });
 
   it('creates circle at center', () => {
@@ -66,6 +71,40 @@ describe('ELEMENT_TEMPLATES', () => {
     const el = template.create(400, 300) as any;
     expect(el.bars).toHaveLength(3);
     expect(el.width).toBe(200);
+    expect(el.barColor).toBe('$accent');
+    expect(el.labelColor).toBe('$foreground');
+  });
+
+  it('creates presentation templates with semantic tokens', () => {
+    const title = ELEMENT_TEMPLATES.find(t => t.type === 'slideTitle')!.create(480, 80) as any;
+    expect(title.type).toBe('text');
+    expect(title.fill).toBe('$title');
+    expect(title.fontSize).toBeGreaterThanOrEqual(36);
+
+    const hero = ELEMENT_TEMPLATES.find(t => t.type === 'heroCard')!.create(480, 270) as any;
+    expect(hero.type).toBe('group');
+    expect(hero.children).toHaveLength(3);
+    expect(hero.children[0].fill).toBe('$surface');
+    expect(hero.children[0].stroke).toBe('$accent');
+    expect(hero.children[1].fill).toBe('$title');
+  });
+
+  it('uses semantic token colors in default templates', () => {
+    const colorFields = ['fill', 'stroke', 'color', 'axisColor', 'gridColor', 'labelColor', 'barColor', 'nodeColor', 'edgeColor'];
+    for (const template of ELEMENT_TEMPLATES) {
+      const el = template.create(400, 300) as any;
+      const stack = [el];
+      while (stack.length > 0) {
+        const node = stack.pop();
+        for (const field of colorFields) {
+          const value = node[field];
+          if (typeof value === 'string' && value !== 'none') {
+            expect(value, `${template.type}.${field}`).toMatch(/^\$/);
+          }
+        }
+        if (Array.isArray(node.children)) stack.push(...node.children);
+      }
+    }
   });
 });
 
