@@ -8,12 +8,24 @@ import { editorReducer, findElementById } from '../state/reducer';
 import { createInitialState } from '../state/types';
 import { EditorProvider, useEditorState } from '../state/EditorProvider';
 import { Inspector } from '../inspector/Inspector';
-import type { CircleNode, RectNode, TextNode, LaTeXNode } from '@elucim/dsl';
+import type { BarChartNode, CircleNode, RectNode, TextNode, LaTeXNode } from '@elucim/dsl';
 
 const circle: CircleNode = { type: 'circle', id: 'c1', cx: 100, cy: 200, r: 50, fill: '#ff0000', stroke: '#00ff00', strokeWidth: 2, opacity: 0.8 };
 const rect: RectNode = { type: 'rect', id: 'r1', x: 50, y: 50, width: 100, height: 80, fill: '#0000ff' };
 const text: TextNode = { type: 'text', id: 't1', x: 200, y: 100, content: 'Hello', fontSize: 24, fill: '#fff' };
 const latex: LaTeXNode = { type: 'latex', id: 'lx1', x: 300, y: 300, expression: '\\frac{a}{b}', fontSize: 20 };
+const barChart: BarChartNode = {
+  type: 'barChart',
+  id: 'b1',
+  x: 100,
+  y: 100,
+  width: 320,
+  height: 180,
+  bars: [
+    { label: 'A', value: 40, color: '$accent' },
+    { label: 'B', value: 60, color: '#123456' },
+  ],
+};
 
 function stateWith(...elements: any[]) {
   return createInitialState({
@@ -116,6 +128,54 @@ describe('inspector style updates', () => {
 
     fireEvent.change(fillPicker, { target: { value: '#654321' } });
     expect(fillValue.value).toBe('#654321');
+
+    fireEvent.change(fillValue, { target: { value: 'rgb(255, 0, 0)' } });
+    expect(fillPicker.disabled).toBe(true);
+    fireEvent.change(fillPicker, { target: { value: '#abcdef' } });
+    expect(fillValue.value).toBe('rgb(255, 0, 0)');
+  });
+
+  it('preserves semantic tokens in array color cells', async () => {
+    function SelectElement() {
+      const { dispatch } = useEditorState();
+      useEffect(() => {
+        dispatch({ type: 'SELECT', ids: ['b1'] });
+      }, [dispatch]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [barChart] },
+          },
+        },
+        React.createElement(SelectElement),
+        React.createElement(Inspector),
+      ),
+    );
+
+    const tokenValue = await screen.findByLabelText('Color 0 value') as HTMLInputElement;
+    const tokenPicker = screen.getByLabelText('Color 0 color picker') as HTMLInputElement;
+
+    expect(tokenValue.value).toBe('$accent');
+    expect(tokenPicker.value).toBe('#4fc3f7');
+    expect(tokenPicker.disabled).toBe(true);
+
+    fireEvent.change(tokenPicker, { target: { value: '#ff0000' } });
+    expect(tokenValue.value).toBe('$accent');
+
+    const hexValue = screen.getByLabelText('Color 1 value') as HTMLInputElement;
+    const hexPicker = screen.getByLabelText('Color 1 color picker') as HTMLInputElement;
+
+    expect(hexValue.value).toBe('#123456');
+    expect(hexPicker.disabled).toBe(false);
+
+    fireEvent.change(hexPicker, { target: { value: '#654321' } });
+    expect(hexValue.value).toBe('#654321');
   });
 });
 

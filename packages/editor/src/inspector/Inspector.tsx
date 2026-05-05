@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ElementNode } from '@elucim/dsl';
-import { SEMANTIC_TOKENS, TOKEN_NAMES } from '@elucim/core';
+import { TOKEN_NAMES } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
 import { CANVAS_ID, type AnimationWrapperType } from '../state/types';
@@ -9,6 +9,7 @@ import { useEditorIcons } from '../theme/icons';
 import { useImagePicker } from '../image/ImagePickerProvider';
 import { v } from '../theme/tokens';
 import { ArrayEditor, MatrixEditor, type ColumnDef } from './ArrayEditor';
+import { colorPreview, isLiteralHexColor } from './colorUtils';
 
 export interface InspectorProps {
   className?: string;
@@ -263,16 +264,11 @@ function ColorField({ label, value, onChange }: {
   label: string; value: string | undefined; onChange: (v: string) => void;
 }) {
   const tokenListId = React.useId();
-  const isSemanticToken = value?.startsWith('$') ?? false;
-  // Resolve $token to its fallback hex for the color swatch preview
-  const swatchColor = (() => {
-    if (!value) return '#ffffff';
-    if (value.startsWith('$')) {
-      const token = value.slice(1);
-      return SEMANTIC_TOKENS[token]?.fallback ?? '#ffffff';
-    }
-    return value.startsWith('#') ? value : '#ffffff';
-  })();
+  const canUsePicker = isLiteralHexColor(value);
+  const swatchColor = colorPreview(value);
+  const pickerTitle = canUsePicker
+    ? `Choose ${label.toLowerCase()} color`
+    : `${value || 'Unset value'} is text-controlled; enter a #rrggbb color to use the picker.`;
 
   return (
     <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: v('--elucim-editor-space-sm') }}>
@@ -281,19 +277,19 @@ function ColorField({ label, value, onChange }: {
         <input
           type="color"
           value={swatchColor}
-          disabled={isSemanticToken}
+          disabled={!canUsePicker}
           onChange={e => {
-            if (!isSemanticToken) onChange(e.target.value);
+            if (canUsePicker) onChange(e.target.value);
           }}
           aria-label={`${label} color picker`}
-          title={isSemanticToken ? `${value} is a semantic token; edit the text value to use a literal color.` : `Choose ${label.toLowerCase()} color`}
+          title={pickerTitle}
           style={{
             width: 20,
             height: v('--elucim-editor-input-height'),
             padding: 0,
             border: 'none',
-            cursor: isSemanticToken ? 'not-allowed' : 'pointer',
-            opacity: isSemanticToken ? 0.65 : 1,
+            cursor: canUsePicker ? 'pointer' : 'not-allowed',
+            opacity: canUsePicker ? 1 : 0.65,
           }}
         />
         <input
@@ -974,7 +970,7 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
     const barColumns: ColumnDef[] = [
       { key: 'label', label: 'Label', type: 'string' },
       { key: 'value', label: 'Value', type: 'number', width: 48 },
-      { key: 'color', label: 'Color', type: 'color', width: 32 },
+      { key: 'color', label: 'Color', type: 'color', width: 104 },
     ];
     sections.push(
       <InspectorSection key="barchart" title="Bar Chart">

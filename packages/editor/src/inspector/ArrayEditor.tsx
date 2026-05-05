@@ -1,5 +1,7 @@
 import React, { useCallback } from 'react';
+import { TOKEN_NAMES } from '@elucim/core';
 import { v } from '../theme/tokens';
+import { colorPreview, isLiteralHexColor } from './colorUtils';
 
 export interface ColumnDef {
   key: string;
@@ -81,11 +83,11 @@ export function ArrayEditor({ columns, rows, onChange, maxRows = 20, newRowTempl
           {columns.map(col => (
             <div key={col.key} style={{ flex: col.width ? `0 0 ${col.width}px` : 1 }}>
               {col.type === 'color' ? (
-                <input
-                  type="color"
-                  value={row[col.key] ?? '#000000'}
-                  onChange={e => handleCellChange(rowIdx, col.key, e.target.value)}
-                  style={{ width: '100%', height: 18, padding: 0, border: 'none', cursor: 'pointer' }}
+                <ColorCell
+                  label={col.label}
+                  rowIndex={rowIdx}
+                  value={typeof row[col.key] === 'string' ? row[col.key] : undefined}
+                  onChange={value => handleCellChange(rowIdx, col.key, value)}
                 />
               ) : (
                 <input
@@ -149,6 +151,67 @@ export function ArrayEditor({ columns, rows, onChange, maxRows = 20, newRowTempl
           + Add Row
         </button>
       )}
+    </div>
+  );
+}
+
+function ColorCell({ label, rowIndex, value, onChange }: {
+  label: string;
+  rowIndex: number;
+  value: string | undefined;
+  onChange: (value: string) => void;
+}) {
+  const tokenListId = React.useId();
+  const canUsePicker = isLiteralHexColor(value);
+  const swatchColor = colorPreview(value, '#000000');
+  const pickerTitle = canUsePicker
+    ? `Choose ${label.toLowerCase()} color`
+    : `${value || 'Unset value'} is text-controlled; enter a #rrggbb color to use the picker.`;
+
+  return (
+    <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+      <input
+        type="color"
+        value={swatchColor}
+        disabled={!canUsePicker}
+        onChange={e => {
+          if (canUsePicker) onChange(e.target.value);
+        }}
+        aria-label={`${label} ${rowIndex} color picker`}
+        title={pickerTitle}
+        style={{
+          width: 18,
+          height: 18,
+          flex: '0 0 18px',
+          padding: 0,
+          border: 'none',
+          cursor: canUsePicker ? 'pointer' : 'not-allowed',
+          opacity: canUsePicker ? 1 : 0.65,
+        }}
+      />
+      <input
+        type="text"
+        value={value ?? ''}
+        list={tokenListId}
+        onChange={e => onChange(e.target.value)}
+        aria-label={`${label} ${rowIndex} value`}
+        style={{
+          width: '100%',
+          minWidth: 64,
+          height: 18,
+          fontSize: 10,
+          padding: '1px 3px',
+          border: `1px solid ${v('--elucim-editor-border-subtle')}`,
+          borderRadius: 2,
+          background: v('--elucim-editor-input-bg'),
+          color: v('--elucim-editor-fg'),
+          outline: 'none',
+          boxSizing: 'border-box',
+        }}
+      />
+      <datalist id={tokenListId}>
+        {TOKEN_NAMES.map(token => <option key={token} value={`$${token}`} />)}
+      </datalist>
     </div>
   );
 }
