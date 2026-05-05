@@ -23,13 +23,16 @@ describe('ELEMENT_TEMPLATES', () => {
   it('each template creates a valid element with an id', () => {
     for (const template of ELEMENT_TEMPLATES) {
       const el = template.create(400, 300);
-      if (template.category !== 'presentation') {
-        expect(el.type).toBe(template.type);
-      }
+      expect(el.type).toBe(template.type);
       if ('id' in el) {
         expect(typeof (el as any).id).toBe('string');
       }
     }
+  });
+
+  it('has stable unique template ids', () => {
+    const ids = ELEMENT_TEMPLATES.map(t => t.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('generates unique ids', () => {
@@ -76,12 +79,12 @@ describe('ELEMENT_TEMPLATES', () => {
   });
 
   it('creates presentation templates with semantic tokens', () => {
-    const title = ELEMENT_TEMPLATES.find(t => t.type === 'slideTitle')!.create(480, 80) as any;
+    const title = ELEMENT_TEMPLATES.find(t => t.id === 'slideTitle')!.create(480, 80) as any;
     expect(title.type).toBe('text');
     expect(title.fill).toBe('$title');
     expect(title.fontSize).toBeGreaterThanOrEqual(36);
 
-    const hero = ELEMENT_TEMPLATES.find(t => t.type === 'heroCard')!.create(480, 270) as any;
+    const hero = ELEMENT_TEMPLATES.find(t => t.id === 'heroCard')!.create(480, 270) as any;
     expect(hero.type).toBe('group');
     expect(hero.children).toHaveLength(3);
     expect(hero.children[0].fill).toBe('$surface');

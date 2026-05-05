@@ -4,7 +4,7 @@ import { useEditorState } from '../state/EditorProvider';
 import { getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from './templates';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { ElucimDocument, ElementNode } from '@elucim/dsl';
 
 // ─── Built-in scene themes ─────────────────────────────────────────────────
 // Each theme covers both the scene content AND the editor chrome tokens.
@@ -79,6 +79,33 @@ const SCENE_THEMES: Record<string, { colorScheme: 'dark' | 'light'; scene: Recor
     },
   },
 };
+
+function isSemanticToken(value: unknown): value is string {
+  return typeof value === 'string' && value.startsWith('$');
+}
+
+function collectThemeUpdates(elements: ElementNode[], theme: typeof SCENE_THEMES[string], updates: Array<{ id: string; changes: Record<string, any> }>) {
+  for (const el of elements) {
+    const id = ('id' in el && el.id) ? el.id : undefined;
+    const changes: Record<string, any> = {};
+    const currentStroke = 'stroke' in el ? (el as any).stroke : undefined;
+    const currentFill = 'fill' in el ? (el as any).fill : undefined;
+    const currentColor = 'color' in el ? (el as any).color : undefined;
+
+    if (currentStroke && !isSemanticToken(currentStroke)) changes.stroke = theme.scene.accent;
+    if (currentFill && currentFill !== 'none' && !isSemanticToken(currentFill)) changes.fill = theme.scene.accent;
+    if (currentColor && !isSemanticToken(currentColor)) changes.color = theme.scene.foreground;
+
+    if (id && Object.keys(changes).length > 0) {
+      updates.push({ id, changes });
+    }
+
+    const children = 'children' in el && Array.isArray((el as any).children) ? (el as any).children as ElementNode[] : null;
+    if (children) {
+      collectThemeUpdates(children, theme, updates);
+    }
+  }
+}
 
 export interface ToolbarProps {
   className?: string;
@@ -163,16 +190,10 @@ export function Toolbar({ className, style }: ToolbarProps) {
     dispatch({ type: 'UPDATE_CANVAS', changes: { background: theme.scene.background } });
     const root = state.document.root;
     const children = ('children' in root && Array.isArray(root.children)) ? root.children : [];
-    for (const el of children) {
-      const id = ('id' in el && el.id) ? el.id : undefined;
-      if (!id) continue;
-      const updates: Record<string, any> = {};
-      if ('stroke' in el && (el as any).stroke) updates.stroke = theme.scene.accent;
-      if ('fill' in el && (el as any).fill && (el as any).fill !== 'none') updates.fill = theme.scene.accent;
-      if ('color' in el) updates.color = theme.scene.foreground;
-      if (Object.keys(updates).length > 0) {
-        dispatch({ type: 'UPDATE_ELEMENT', id, changes: updates as any });
-      }
+    const updates: Array<{ id: string; changes: Record<string, any> }> = [];
+    collectThemeUpdates(children, theme, updates);
+    for (const update of updates) {
+      dispatch({ type: 'UPDATE_ELEMENT', id: update.id, changes: update.changes as any });
     }
     // Apply editor chrome theme
     dispatch({ type: 'SET_EDITOR_THEME', overrides: theme.chrome });
@@ -226,7 +247,7 @@ export function Toolbar({ className, style }: ToolbarProps) {
         <ToolbarSection key={cat} label={CATEGORY_LABELS[cat] ?? cat}>
           {templates.map((t) => (
             <ToolbarButton
-              key={t.type}
+              key={t.id}
               icon={t.icon}
               label={t.label}
               onClick={() => handleAddElement(t)}

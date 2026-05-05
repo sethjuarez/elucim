@@ -10,7 +10,10 @@ import {
 } from '../theme/icons';
 
 export interface ElementTemplate {
-  type: string;
+  /** Stable palette/template identifier, unique within ELEMENT_TEMPLATES. */
+  id: string;
+  /** DSL node type emitted by create(). */
+  type: ElementNode['type'];
   label: string;
   category: 'presentation' | 'shape' | 'line' | 'text' | 'math' | 'data';
   icon: React.ReactNode;
@@ -30,7 +33,8 @@ export function resetIdCounter(seed = 1): void {
 export const ELEMENT_TEMPLATES: ElementTemplate[] = [
   // ─── Presentation ─────────────────────────────────────────────────
   {
-    type: 'slideTitle',
+    id: 'slideTitle',
+    type: 'text',
     label: 'Title',
     category: 'presentation',
     icon: <IconText />,
@@ -47,7 +51,8 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies TextNode),
   },
   {
-    type: 'slideSubtitle',
+    id: 'slideSubtitle',
+    type: 'text',
     label: 'Subtitle',
     category: 'presentation',
     icon: <IconText />,
@@ -64,7 +69,8 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies TextNode),
   },
   {
-    type: 'heroCard',
+    id: 'heroCard',
+    type: 'group',
     label: 'Hero Card',
     category: 'presentation',
     icon: <IconGroup />,
@@ -110,7 +116,8 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies GroupNode),
   },
   {
-    type: 'metricCard',
+    id: 'metricCard',
+    type: 'group',
     label: 'Metric',
     category: 'presentation',
     icon: <IconBarChart />,
@@ -156,7 +163,8 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies GroupNode),
   },
   {
-    type: 'callout',
+    id: 'callout',
+    type: 'group',
     label: 'Callout',
     category: 'presentation',
     icon: <IconRect />,
@@ -193,6 +201,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
 
   // ─── Shapes ────────────────────────────────────────────────────
   {
+    id: 'rect',
     type: 'rect',
     label: 'Rectangle',
     category: 'shape',
@@ -211,6 +220,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies RectNode),
   },
   {
+    id: 'circle',
     type: 'circle',
     label: 'Circle',
     category: 'shape',
@@ -227,6 +237,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies CircleNode),
   },
   {
+    id: 'polygon',
     type: 'polygon',
     label: 'Polygon',
     category: 'shape',
@@ -248,6 +259,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies PolygonNode),
   },
   {
+    id: 'image',
     type: 'image',
     label: 'Image',
     category: 'shape',
@@ -265,6 +277,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
 
   // ─── Lines ─────────────────────────────────────────────────────
   {
+    id: 'line',
     type: 'line',
     label: 'Line',
     category: 'line',
@@ -281,6 +294,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies LineNode),
   },
   {
+    id: 'arrow',
     type: 'arrow',
     label: 'Arrow',
     category: 'line',
@@ -298,6 +312,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies ArrowNode),
   },
   {
+    id: 'bezierCurve',
     type: 'bezierCurve',
     label: 'Bézier Curve',
     category: 'line',
@@ -320,6 +335,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
 
   // ─── Text ──────────────────────────────────────────────────────
   {
+    id: 'text',
     type: 'text',
     label: 'Text',
     category: 'text',
@@ -336,6 +352,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies TextNode),
   },
   {
+    id: 'latex',
     type: 'latex',
     label: 'LaTeX',
     category: 'text',
@@ -353,6 +370,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
 
   // ─── Math ──────────────────────────────────────────────────────
   {
+    id: 'axes',
     type: 'axes',
     label: 'Axes',
     category: 'math',
@@ -371,6 +389,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies AxesNode),
   },
   {
+    id: 'functionPlot',
     type: 'functionPlot',
     label: 'Function',
     category: 'math',
@@ -386,6 +405,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies FunctionPlotNode),
   },
   {
+    id: 'vector',
     type: 'vector',
     label: 'Vector',
     category: 'math',
@@ -401,6 +421,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies VectorNode),
   },
   {
+    id: 'vectorField',
     type: 'vectorField',
     label: 'Vector Field',
     category: 'math',
@@ -419,6 +440,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies VectorFieldNode),
   },
   {
+    id: 'matrix',
     type: 'matrix',
     label: 'Matrix',
     category: 'math',
@@ -435,6 +457,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
 
   // ─── Data ──────────────────────────────────────────────────────
   {
+    id: 'barChart',
     type: 'barChart',
     label: 'Bar Chart',
     category: 'data',
@@ -457,6 +480,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
     } satisfies BarChartNode),
   },
   {
+    id: 'graph',
     type: 'graph',
     label: 'Graph',
     category: 'data',
