@@ -38,6 +38,15 @@ describe('DslRenderer theme prop', () => {
     expect(root.style.getPropertyValue('--elucim-accent')).toBe('#ff0000');
   });
 
+  it('normalizes legacy primary-only themes for $accent resolution', () => {
+    const { container } = render(
+      <DslRenderer dsl={validDsl as any} theme={{ primary: '#ff0000' }} />,
+    );
+    const root = container.querySelector('[data-testid="dsl-root"]') as HTMLElement;
+    expect(root.style.getPropertyValue('--elucim-primary')).toBe('#ff0000');
+    expect(root.style.getPropertyValue('--elucim-accent')).toBe('#ff0000');
+  });
+
   it('renders without error when no theme is provided', () => {
     const { getAllByTestId } = render(
       <DslRenderer dsl={validDsl as any} />,

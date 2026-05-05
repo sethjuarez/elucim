@@ -8,7 +8,7 @@ The Builder API provides a chainable TypeScript interface for constructing prese
 ## Getting Started
 
 ```ts
-import { presentation, darkTheme } from '@elucim/dsl';
+import { presentation, darkTheme, deckDarkTheme } from '@elucim/dsl';
 
 const doc = presentation('My Talk', darkTheme)
   .slide('Introduction', s => {
@@ -24,6 +24,19 @@ const doc = presentation('My Talk', darkTheme)
 ```
 
 Call `.build()` to get an `ElucimDocument`, or `.toJSON()` to get a JSON string.
+
+For slide-like generated visuals, use `deckDarkTheme` or `deckLightTheme` with
+the deck helper methods:
+
+```ts
+const deck = presentation('CutReady Visual', deckDarkTheme, { width: 960, height: 540 })
+  .slide('Pipeline', s => {
+    s.hero('From raw footage to ready clips');
+    s.process(['Upload', 'Analyze', 'Export']);
+    s.callout('One Elucim visual can become one full-screen slide.');
+  })
+  .build();
+```
 
 ## presentation()
 
@@ -87,6 +100,20 @@ The `build` callback for each slide receives a `SlideBuilder` with methods for a
 | `subtitle(content, opts?)` | Add a centered subtitle. Options: `y`, `fontSize`, `color` |
 | `text(content, opts)` | Add text at `x`, `y`. Options: `fontSize`, `color`, `anchor`, `fontWeight`, `fontFamily`, `fadeIn`, `advance` |
 | `latex(expression, opts?)` | Add a LaTeX expression. Options: `x`, `y`, `fontSize`, `color`, `fadeIn`, `advance` |
+
+### Deck Helpers
+
+Deck helpers generate regular DSL nodes with polished defaults for presentation
+slides and CutReady-style fullscreen visuals.
+
+| Method | Description |
+|--------|-------------|
+| `hero(title, subtitle?, opts?)` | Add a large presentation title block with subtle background accents |
+| `card(content, opts?)` | Add a polished card/panel. Options include `title`, `x`, `y`, `width`, `height`, `accent`, `fill`, `stroke`, `fontSize` |
+| `callout(content, opts?)` | Add an emphasized takeaway panel near the bottom of the slide |
+| `metric(value, label, opts?)` | Add a large metric/value card |
+| `process(steps, opts?)` | Add a horizontal connected process layout |
+| `compare(left, right, opts?)` | Add two comparison cards. `left`/`right` are `{ title, body }` |
 
 ### Shapes
 

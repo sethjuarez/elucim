@@ -8,6 +8,8 @@ import {
   LIGHT_THEME,
   DARK_THEME_VARS,
   LIGHT_THEME_VARS,
+  normalizeTheme,
+  getThemeDefaults,
 } from '../theme';
 import type { ElucimTheme } from '../theme';
 
@@ -91,6 +93,32 @@ describe('theme', () => {
     it('supports CSS var() references as values', () => {
       const vars = themeToVars({ accent: 'var(--my-accent)' });
       expect(vars['--elucim-accent']).toBe('var(--my-accent)');
+    });
+  });
+
+  describe('normalizeTheme', () => {
+    it('fills missing tokens from scheme defaults', () => {
+      const normalized = normalizeTheme({ accent: '#ff00ff' }, 'light');
+      expect(normalized.background).toBe(LIGHT_THEME.background);
+      expect(normalized.foreground).toBe(LIGHT_THEME.foreground);
+      expect(normalized.accent).toBe('#ff00ff');
+    });
+
+    it('treats primary as a compatibility alias for accent', () => {
+      const normalized = normalizeTheme({ primary: '#123456' }, 'dark');
+      expect(normalized.primary).toBe('#123456');
+      expect(normalized.accent).toBe('#123456');
+    });
+
+    it('keeps explicit accent and primary values when both are set', () => {
+      const normalized = normalizeTheme({ primary: '#111111', accent: '#222222' }, 'dark');
+      expect(normalized.primary).toBe('#111111');
+      expect(normalized.accent).toBe('#222222');
+    });
+
+    it('returns defaults for a color scheme', () => {
+      expect(getThemeDefaults('dark')).toBe(DARK_THEME);
+      expect(getThemeDefaults('light')).toBe(LIGHT_THEME);
     });
   });
 

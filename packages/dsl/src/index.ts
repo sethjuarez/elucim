@@ -79,8 +79,8 @@ export { resolveEasing } from './renderer/resolveEasing';
 export { resolveColor, SEMANTIC_TOKENS, TOKEN_NAMES } from '@elucim/core';
 
 // Theme (canonical source: @elucim/core)
-export type { ElucimTheme } from '@elucim/core';
-export { DARK_THEME, LIGHT_THEME, themeToVars, DARK_THEME_VARS, LIGHT_THEME_VARS } from '@elucim/core';
+export type { ElucimTheme, ThemeColorScheme, NormalizedElucimTheme } from '@elucim/core';
+export { DARK_THEME, LIGHT_THEME, themeToVars, getThemeDefaults, normalizeTheme, DARK_THEME_VARS, LIGHT_THEME_VARS } from '@elucim/core';
 
 // Image resolver (canonical source: @elucim/core)
 export { ImageResolverProvider, useImageResolver, type ImageResolverFn } from '@elucim/core';
@@ -92,7 +92,7 @@ export {
   type PresentationOptions,
 } from './builders/PresentationBuilder';
 export { SlideBuilder } from './builders/SlideBuilder';
-export { darkTheme, lightTheme, type BuilderTheme, type Theme } from './builders/themes';
+export { darkTheme, lightTheme, deckDarkTheme, deckLightTheme, type BuilderTheme, type Theme } from './builders/themes';
 
 // YAML parser
 export { fromYaml, ElucimYamlError } from './yaml/fromYaml';

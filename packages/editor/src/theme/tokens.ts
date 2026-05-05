@@ -9,7 +9,7 @@
  * are automatically derived from the content colors via `deriveEditorTheme()`.
  */
 
-import type { ElucimTheme } from '@elucim/core';
+import { normalizeTheme, type ElucimTheme } from '@elucim/core';
 
 /** Default values for every editor CSS custom property (dark mode). */
 export const EDITOR_TOKENS: Record<string, string> = {
@@ -107,41 +107,22 @@ export function deriveEditorTheme(
   colorScheme: 'light' | 'dark',
 ): Record<string, string> {
   const derived: Record<string, string> = {};
+  const theme = normalizeTheme(contentTheme, colorScheme);
 
-  if (contentTheme.primary || contentTheme.accent) {
-    derived['accent'] = (contentTheme.accent ?? contentTheme.primary)!;
-  }
-  if (contentTheme.background) {
-    derived['bg'] = contentTheme.background;
-  }
-  if (contentTheme.surface) {
-    const s = contentTheme.surface;
-    derived['surface'] = s;
-    // Use color-mix() so derivation works with both hex values and var() references
-    derived['panel'] = `color-mix(in srgb, ${s} 95%, transparent)`;
-    derived['chrome'] = `color-mix(in srgb, ${s} 85%, transparent)`;
-    derived['input-bg'] = colorScheme === 'light'
-      ? `color-mix(in srgb, ${s}, white)`
-      : `color-mix(in srgb, ${s} 70%, black)`;
-  }
-  if (contentTheme.foreground) {
-    derived['fg'] = contentTheme.foreground;
-  }
-  if (contentTheme.muted) {
-    derived['text-muted'] = contentTheme.muted;
-  }
-  if (contentTheme.subtitle) {
-    derived['text-secondary'] = contentTheme.subtitle;
-  }
-  if (contentTheme.border) {
-    derived['border'] = contentTheme.border;
-  }
-  if (contentTheme.success) {
-    derived['success'] = contentTheme.success;
-  }
-  if (contentTheme.error) {
-    derived['error'] = contentTheme.error;
-  }
+  derived['accent'] = theme.accent;
+  derived['bg'] = theme.background;
+  derived['surface'] = theme.surface;
+  derived['panel'] = `color-mix(in srgb, ${theme.surface} 95%, transparent)`;
+  derived['chrome'] = `color-mix(in srgb, ${theme.surface} 85%, transparent)`;
+  derived['input-bg'] = colorScheme === 'light'
+    ? `color-mix(in srgb, ${theme.surface}, white)`
+    : `color-mix(in srgb, ${theme.surface} 70%, black)`;
+  derived['fg'] = theme.foreground;
+  derived['text-muted'] = theme.muted;
+  derived['text-secondary'] = theme.subtitle;
+  derived['border'] = theme.border;
+  derived['success'] = theme.success;
+  derived['error'] = theme.error;
 
   derived['color-scheme'] = colorScheme;
   return derived;

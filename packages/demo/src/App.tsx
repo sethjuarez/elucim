@@ -34,7 +34,7 @@ import {
   easeOutElastic,
   spring,
 } from '@elucim/core';
-import { DslRenderer } from '@elucim/dsl';
+import { DslRenderer, deckDarkTheme, presentation } from '@elucim/dsl';
 import type { ElucimDocument, DslRendererRef } from '@elucim/dsl';
 import calculusExplained from '../../dsl/examples/calculus-explained.json';
 import agenticLoop from '../../dsl/examples/agentic-loop.json';
@@ -881,6 +881,19 @@ const helloCircleDsl: ElucimDocument = {
   },
 };
 
+const deckPolishDsl = presentation('Deck Polish', deckDarkTheme, {
+  width: 960,
+  height: 540,
+  showHud: false,
+  showNotes: false,
+})
+  .slide('Deck polish', s => {
+    s.hero('Visuals that present themselves', 'Slide-grade defaults for generated diagrams');
+    s.process(['Generate', 'Polish', 'Present'], { y: 260 });
+    s.callout('Optimized for CutReady: one Elucim visual becomes one full-screen slide.');
+  })
+  .build();
+
 const mathDemoDsl: ElucimDocument = {
   version: '1.0',
   root: {
@@ -1285,6 +1298,16 @@ export function App() {
           12-slide animated presentation covering tokenization, embeddings, attention, transformers, autoregressive generation, tool calling, and the agentic loop — built using the Elucim DSL Builder API.
         </p>
         <DslRenderer dsl={agenticLoop as ElucimDocument} />
+      </section>
+
+      <section id="dsl-deck-polish" style={{ marginTop: 32 }}>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>✨ Deck Polish Helpers</h3>
+        <p style={{ color: '#666', fontSize: 14, marginBottom: 12 }}>
+          Premium builder defaults for CutReady-style visuals where each diagram acts as a full slide.
+        </p>
+        <div data-testid="deck-polish-demo">
+          <DslRenderer dsl={deckPolishDsl as ElucimDocument} poster="last" />
+        </div>
       </section>
 
       <hr style={{ borderColor: '#333', margin: '32px 0' }} />

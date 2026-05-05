@@ -46,10 +46,10 @@ export { buildTransform, withTransform, sortByZIndex, type SpatialProps, type Ba
 
 // Theme
 export {
-  type ElucimTheme,
+  type ElucimTheme, type ThemeColorScheme, type NormalizedElucimTheme,
   SEMANTIC_TOKENS, TOKEN_NAMES,
   resolveColor,
-  themeToVars,
+  themeToVars, getThemeDefaults, normalizeTheme,
   DARK_THEME, LIGHT_THEME,
   DARK_THEME_VARS, LIGHT_THEME_VARS,
 } from './theme';

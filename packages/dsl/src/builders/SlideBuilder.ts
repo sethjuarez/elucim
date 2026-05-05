@@ -1,6 +1,18 @@
 import type { ElementNode, EasingSpec } from '../schema/types';
 import type { Theme } from './themes';
 
+interface DeckTextOptions {
+  x?: number; y?: number; width?: number; fontSize?: number; color?: string; align?: 'start' | 'middle' | 'end';
+  fadeIn?: number; advance?: number;
+}
+
+interface DeckCardOptions {
+  x?: number; y?: number; width?: number; height?: number;
+  title?: string; accent?: string; fill?: string; stroke?: string;
+  textColor?: string; titleColor?: string; fadeIn?: number; advance?: number;
+  fontSize?: number;
+}
+
 /**
  * SlideBuilder — fluent API for composing slide content.
  *
@@ -72,6 +84,211 @@ export class SlideBuilder {
         textAnchor: 'middle',
       }],
     }, 10);
+  }
+
+  /** Presentation-grade hero title block with subtle background accents. */
+  hero(title: string, subtitle?: string, opts?: DeckTextOptions): this {
+    const y = opts?.y ?? this.cy - 40;
+    const duration = opts?.fadeIn ?? 18;
+    const children: ElementNode[] = [
+      {
+        type: 'circle',
+        cx: this._width - 110,
+        cy: 95,
+        r: 160,
+        fill: this.theme.backgroundAccent ?? this.theme.boxFill,
+        opacity: 0.75,
+      },
+      {
+        type: 'circle',
+        cx: 80,
+        cy: this._height - 90,
+        r: 105,
+        fill: this.theme.backgroundAccent ?? this.theme.boxFill,
+        opacity: 0.42,
+      },
+      {
+        type: 'rect',
+        x: this.cx - 36,
+        y: y - 72,
+        width: 72,
+        height: 4,
+        rx: 2,
+        fill: opts?.color ?? this.theme.accent ?? this.theme.primary,
+      },
+      {
+        type: 'text',
+        x: opts?.x ?? this.cx,
+        y,
+        content: title,
+        fontSize: opts?.fontSize ?? 52,
+        fill: opts?.color ?? this.theme.title,
+        textAnchor: opts?.align ?? 'middle',
+        fontWeight: 800,
+        fontFamily: this.theme.titleFontFamily ?? this.theme.fontFamily,
+      },
+    ];
+
+    if (subtitle) {
+      children.push({
+        type: 'text',
+        x: opts?.x ?? this.cx,
+        y: y + 44,
+        content: subtitle,
+        fontSize: 20,
+        fill: this.theme.subtitle,
+        textAnchor: opts?.align ?? 'middle',
+        fontFamily: this.theme.fontFamily,
+      });
+    }
+
+    return this.addAtCursor({ type: 'fadeIn', duration, children: [{ type: 'group', children }] }, opts?.advance ?? 18);
+  }
+
+  /** Polished slide card/panel helper. */
+  card(content: string, opts?: DeckCardOptions): this {
+    const w = opts?.width ?? 300;
+    const h = opts?.height ?? 150;
+    const x = opts?.x ?? this.cx - w / 2;
+    const y = opts?.y ?? this.cy - h / 2;
+    const accent = opts?.accent ?? this.theme.accent ?? this.theme.primary ?? this.theme.boxStroke;
+    const children = this.cardChildren(x, y, w, h, content, opts?.title, {
+      accent,
+      fill: opts?.fill,
+      stroke: opts?.stroke,
+      textColor: opts?.textColor,
+      titleColor: opts?.titleColor,
+    });
+    return this.addAtCursor({ type: 'fadeIn', duration: opts?.fadeIn ?? 14, children: [{ type: 'group', children }] }, opts?.advance ?? 8);
+  }
+
+  /** Emphasized message panel for key takeaways. */
+  callout(content: string, opts?: DeckCardOptions): this {
+    const w = opts?.width ?? Math.min(760, this._width - 120);
+    const h = opts?.height ?? 86;
+    const x = opts?.x ?? this.cx - w / 2;
+    const y = opts?.y ?? this._height - h - 74;
+    const accent = opts?.accent ?? this.theme.warning ?? this.theme.accent ?? this.theme.boxStroke;
+    const children = this.cardChildren(x, y, w, h, content, opts?.title, {
+      accent,
+      fill: opts?.fill ?? this.theme.cardFill,
+      stroke: opts?.stroke ?? accent,
+      textColor: opts?.textColor,
+      titleColor: opts?.titleColor,
+      fontSize: opts?.fontSize ?? 14,
+    });
+    return this.addAtCursor({ type: 'fadeIn', duration: opts?.fadeIn ?? 12, children: [{ type: 'group', children }] }, opts?.advance ?? 8);
+  }
+
+  /** Large metric/value treatment for executive-summary slides. */
+  metric(value: string, label: string, opts?: DeckCardOptions): this {
+    const w = opts?.width ?? 240;
+    const h = opts?.height ?? 138;
+    const x = opts?.x ?? this.cx - w / 2;
+    const y = opts?.y ?? this.cy - h / 2;
+    const accent = opts?.accent ?? this.theme.accent ?? this.theme.primary ?? this.theme.boxStroke;
+    const children: ElementNode[] = [
+      ...this.panelChrome(x, y, w, h, accent, opts?.fill, opts?.stroke),
+      {
+        type: 'text',
+        x: x + w / 2,
+        y: y + 58,
+        content: value,
+        fontSize: 42,
+        fill: accent,
+        textAnchor: 'middle',
+        fontWeight: 800,
+        fontFamily: this.theme.titleFontFamily ?? this.theme.fontFamily,
+      },
+      {
+        type: 'text',
+        x: x + w / 2,
+        y: y + 94,
+        content: label,
+        fontSize: 15,
+        fill: opts?.textColor ?? this.theme.subtitle,
+        textAnchor: 'middle',
+        fontFamily: this.theme.fontFamily,
+      },
+    ];
+    return this.addAtCursor({ type: 'fadeIn', duration: opts?.fadeIn ?? 14, children: [{ type: 'group', children }] }, opts?.advance ?? 8);
+  }
+
+  /** Horizontal step/process layout with connected cards. */
+  process(steps: string[], opts?: { y?: number; width?: number; height?: number; gap?: number; fadeIn?: number; advance?: number }): this {
+    const count = Math.max(steps.length, 1);
+    const gap = opts?.gap ?? 18;
+    const h = opts?.height ?? 84;
+    const w = opts?.width ?? Math.min(170, (this._width - 140 - gap * (count - 1)) / count);
+    const total = count * w + (count - 1) * gap;
+    const startX = this.cx - total / 2;
+    const y = opts?.y ?? this.cy - h / 2;
+    const children: ElementNode[] = [];
+
+    steps.forEach((step, i) => {
+      const x = startX + i * (w + gap);
+      const accent = this.theme.palette[i % this.theme.palette.length];
+      children.push(...this.panelChrome(x, y, w, h, accent));
+      children.push({
+        type: 'circle',
+        cx: x + 24,
+        cy: y + 26,
+        r: 13,
+        fill: accent,
+        opacity: 0.92,
+      });
+      children.push({
+        type: 'text',
+        x: x + 24,
+        y: y + 31,
+        content: String(i + 1),
+        fontSize: 12,
+        fill: this.theme.background,
+        textAnchor: 'middle',
+        fontWeight: 800,
+        fontFamily: this.theme.fontFamily,
+      });
+      children.push({
+        type: 'text',
+        x: x + w / 2,
+        y: y + h - 30,
+        content: step,
+        fontSize: 15,
+        fill: this.theme.foreground,
+        textAnchor: 'middle',
+        fontWeight: 650,
+        fontFamily: this.theme.fontFamily,
+      });
+      if (i < steps.length - 1) {
+        children.push({
+          type: 'arrow',
+          x1: x + w + 4,
+          y1: y + h / 2,
+          x2: x + w + gap - 6,
+          y2: y + h / 2,
+          stroke: this.theme.muted,
+          strokeWidth: 1.6,
+          headSize: 6,
+        });
+      }
+    });
+
+    return this.addAtCursor({ type: 'stagger', staggerDelay: 3, children }, opts?.advance ?? 12 + steps.length * 2);
+  }
+
+  /** Two-column comparison cards. */
+  compare(left: { title: string; body: string }, right: { title: string; body: string }, opts?: DeckCardOptions): this {
+    const gap = 28;
+    const w = opts?.width ?? Math.min(330, (this._width - 180 - gap) / 2);
+    const h = opts?.height ?? 170;
+    const y = opts?.y ?? this.cy - h / 2;
+    const leftX = opts?.x ?? this.cx - gap / 2 - w;
+    const rightX = leftX + w + gap;
+    const children: ElementNode[] = [
+      ...this.cardChildren(leftX, y, w, h, left.body, left.title, { accent: this.theme.primary ?? this.theme.boxStroke }),
+      ...this.cardChildren(rightX, y, w, h, right.body, right.title, { accent: this.theme.secondary ?? this.theme.boxStroke }),
+    ];
+    return this.addAtCursor({ type: 'fadeIn', duration: opts?.fadeIn ?? 14, children: [{ type: 'group', children }] }, opts?.advance ?? 10);
   }
 
   /** Add a LaTeX expression */
@@ -437,6 +654,79 @@ export class SlideBuilder {
     });
     this.cursor += advanceFrames;
     return this;
+  }
+
+  private panelChrome(x: number, y: number, w: number, h: number, accent: string, fill?: string, stroke?: string): ElementNode[] {
+    return [
+      {
+        type: 'rect',
+        x: x + 8,
+        y: y + 10,
+        width: w,
+        height: h,
+        rx: 18,
+        fill: this.theme.shadowColor ?? 'rgba(0,0,0,0.16)',
+        opacity: 0.6,
+      },
+      {
+        type: 'rect',
+        x,
+        y,
+        width: w,
+        height: h,
+        rx: 18,
+        fill: fill ?? this.theme.cardFill ?? this.theme.surface,
+        stroke: stroke ?? this.theme.cardStroke ?? this.theme.border,
+        strokeWidth: 1.2,
+      },
+      {
+        type: 'rect',
+        x,
+        y,
+        width: 5,
+        height: h,
+        rx: 2.5,
+        fill: accent,
+        opacity: 0.9,
+      },
+    ] satisfies ElementNode[];
+  }
+
+  private cardChildren(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    content: string,
+    title: string | undefined,
+    opts: { accent: string; fill?: string; stroke?: string; textColor?: string; titleColor?: string; fontSize?: number },
+  ): ElementNode[] {
+    const children = this.panelChrome(x, y, w, h, opts.accent, opts.fill, opts.stroke);
+    if (title) {
+      children.push({
+        type: 'text',
+        x: x + 26,
+        y: y + 36,
+        content: title,
+        fontSize: 17,
+        fill: opts.titleColor ?? this.theme.title,
+        textAnchor: 'start',
+        fontWeight: 750,
+        fontFamily: this.theme.titleFontFamily ?? this.theme.fontFamily,
+      });
+    }
+    children.push({
+      type: 'text',
+      x: x + 26,
+      y: y + (title ? 72 : h / 2 + 5),
+      content,
+      fontSize: opts.fontSize ?? (title ? 14 : 18),
+      fill: opts.textColor ?? this.theme.foreground,
+      textAnchor: 'start',
+      fontWeight: title ? 500 : 650,
+      fontFamily: this.theme.fontFamily,
+    });
+    return children;
   }
 
   /** Build the slide's player node with all timed elements */

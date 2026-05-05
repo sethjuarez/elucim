@@ -3,16 +3,27 @@ title: Themes
 description: Pre-built color themes and custom theme creation for the Builder API.
 ---
 
-Themes provide a consistent color palette for presentations built with the [Builder API](/dsl/builder-api/). Two themes ship with `@elucim/dsl` — `darkTheme` and `lightTheme`.
+Themes provide a consistent color palette for presentations built with the [Builder API](/dsl/builder-api/). Four themes ship with `@elucim/dsl`:
+
+- `darkTheme` and `lightTheme` for general diagrams.
+- `deckDarkTheme` and `deckLightTheme` for polished, slide-like visuals.
 
 ## Usage
 
 ```ts
-import { presentation, darkTheme, lightTheme } from '@elucim/dsl';
+import { presentation, darkTheme, lightTheme, deckDarkTheme } from '@elucim/dsl';
 
 const doc = presentation('My Talk', darkTheme).slide('Intro', s => {
   s.title('Hello');
 }).build();
+
+const deck = presentation('Executive Summary', deckDarkTheme, { width: 960, height: 540 })
+  .slide('Overview', s => {
+    s.hero('Ready to present', 'Deck-grade defaults for generated visuals');
+    s.process(['Generate', 'Polish', 'Present']);
+    s.callout('Each visual can stand alone as a full-screen slide.');
+  })
+  .build();
 ```
 
 The theme is passed to the `SlideBuilder`, which uses it for default colors on titles, subtitles, boxes, arrows, and other elements.
@@ -35,6 +46,12 @@ The theme is passed to the `SlideBuilder`, which uses it for default colors on t
 | `warning` | `string` | Warning / highlight color |
 | `error` | `string` | Error / negative color |
 | `palette` | `string[]` | 8-color sequential palette for data vis and accents |
+| `fontFamily` | `string` | Body font family used by deck helpers |
+| `titleFontFamily` | `string` | Display font family used by deck helper titles |
+| `cardFill` | `string` | Fill color for polished deck cards and callouts |
+| `cardStroke` | `string` | Border color for polished deck cards and callouts |
+| `shadowColor` | `string` | Soft shadow color used by deck helper panels |
+| `backgroundAccent` | `string` | Decorative background accent color |
 
 ## Color Values
 

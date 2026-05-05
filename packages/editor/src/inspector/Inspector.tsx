@@ -4,7 +4,7 @@ import type { ElementNode } from '@elucim/dsl';
 import { SEMANTIC_TOKENS } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
-import { CANVAS_ID } from '../state/types';
+import { CANVAS_ID, type AnimationWrapperType } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
 import { useImagePicker } from '../image/ImagePickerProvider';
 import { v } from '../theme/tokens';
@@ -136,7 +136,7 @@ export function Inspector({ className, style }: InspectorProps) {
 
       {/* Animation section */}
       <InspectorSection title="Animation">
-        <AnimationFields element={element} onChange={handleChange} />
+        <AnimationFields element={element} elementId={elementId} onChange={handleChange} />
       </InspectorSection>
 
       {/* Transform section */}
@@ -567,8 +567,24 @@ const EASING_OPTIONS = [
   'easeInBack', 'easeOutBack',
 ];
 
-function AnimationFields({ element, onChange }: { element: ElementNode; onChange: (field: string, value: any) => void }) {
+const ANIMATION_WRAPPER_OPTIONS: { label: string; value: AnimationWrapperType }[] = [
+  { label: 'Fade In', value: 'fadeIn' },
+  { label: 'Fade Out', value: 'fadeOut' },
+  { label: 'Draw', value: 'draw' },
+  { label: 'Write', value: 'write' },
+  { label: 'Transform', value: 'transform' },
+  { label: 'Morph', value: 'morph' },
+  { label: 'Stagger', value: 'stagger' },
+  { label: 'Parallel', value: 'parallel' },
+];
+
+function isAnimationWrapperElement(element: ElementNode): boolean {
+  return ANIMATION_WRAPPER_OPTIONS.some(option => option.value === element.type);
+}
+
+function AnimationFields({ element, elementId, onChange }: { element: ElementNode; elementId: string | null; onChange: (field: string, value: any) => void }) {
   const el = element as any;
+  const { dispatch } = useEditorState();
   const [extras, setExtras] = useState<Set<string>>(new Set());
 
   const hasFadeIn = el.fadeIn !== undefined && el.fadeIn > 0;
@@ -603,6 +619,29 @@ function AnimationFields({ element, onChange }: { element: ElementNode; onChange
       )}
       {addable.length > 0 && (
         <AddFieldButton options={addable} onAdd={addField} />
+      )}
+      {elementId && (
+        <div style={{ marginTop: 6 }}>
+          <SelectField
+            label="Wrap In"
+            value=""
+            options={['', ...ANIMATION_WRAPPER_OPTIONS.map(option => option.label)]}
+            onChange={label => {
+              const option = ANIMATION_WRAPPER_OPTIONS.find(item => item.label === label);
+              if (option) dispatch({ type: 'WRAP_IN_ANIMATION', id: elementId, wrapper: option.value });
+            }}
+          />
+          {isAnimationWrapperElement(element) && (
+            <div style={{ marginTop: 4 }}>
+              <InspectorActionButton
+                icon={null}
+                label="Unwrap animation"
+                title="Remove this animation wrapper"
+                onClick={() => dispatch({ type: 'UNWRAP_ANIMATION', id: elementId })}
+              />
+            </div>
+          )}
+        </div>
       )}
     </>
   );

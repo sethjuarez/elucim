@@ -60,9 +60,19 @@ function originBasedBounds(el: AnyEl): { x: number; y: number; width: number; he
   const range = Array.isArray(el.yClamp) ? el.yClamp as [number, number]
     : Array.isArray(el.range) ? el.range as [number, number]
     : domain;
-  const w = (domain[1] - domain[0]) * s;
-  const h = (range[1] - range[0]) * s;
-  return { x: ox - w / 2, y: oy - h / 2, width: w, height: h };
+  const x1 = ox + domain[0] * s;
+  const x2 = ox + domain[1] * s;
+  const y1 = oy - range[1] * s;
+  const y2 = oy - range[0] * s;
+  const pad = el.type === 'vectorField'
+    ? ((el.maxLength as number | undefined) ?? 1.5) * s * ((el.arrowScale as number | undefined) ?? 0.8) + ((el.headSize as number | undefined) ?? 4)
+    : 0;
+  const includeOriginAxes = el.type === 'axes';
+  const minX = Math.min(x1, x2, includeOriginAxes ? ox : x1) - pad;
+  const minY = Math.min(y1, y2, includeOriginAxes ? oy : y1) - pad;
+  const maxX = Math.max(x1, x2, includeOriginAxes ? ox : x1) + pad;
+  const maxY = Math.max(y1, y2, includeOriginAxes ? oy : y1) + pad;
+  return { x: minX, y: minY, width: maxX - minX || 1, height: maxY - minY || 1 };
 }
 
 function matrixBounds(el: AnyEl): { x: number; y: number; width: number; height: number } {

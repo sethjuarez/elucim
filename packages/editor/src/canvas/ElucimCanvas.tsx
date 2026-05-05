@@ -2,7 +2,7 @@ import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react'
 import { Scene } from '@elucim/core';
 import { renderElement } from '@elucim/dsl';
 import type { ElementNode } from '@elucim/dsl';
-import { resolveColor, DARK_THEME, LIGHT_THEME, themeToVars, type ElucimTheme } from '@elucim/core';
+import { resolveColor, DARK_THEME, LIGHT_THEME, normalizeTheme, themeToVars, type ElucimTheme } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
 import { SelectionOverlay } from './SelectionOverlay';
@@ -73,14 +73,14 @@ export function ElucimCanvas({ className, style, editorColorScheme, contentTheme
   // When editorColorScheme is explicitly light/dark, use it directly — this avoids
   // luminance detection failures with var() or $token backgrounds.
   const sceneThemeVars = useMemo(() => {
+    const resolvedScheme = editorColorScheme === 'light' || editorColorScheme === 'dark'
+      ? editorColorScheme
+      : isDarkBackground(background) ? 'dark' : 'light';
     if (contentTheme) {
-      return themeToVars(contentTheme) as React.CSSProperties;
-    }
-    if (editorColorScheme === 'light' || editorColorScheme === 'dark') {
-      return contentThemeVars(editorColorScheme === 'light' ? LIGHT_THEME : DARK_THEME);
+      return themeToVars(normalizeTheme(contentTheme, resolvedScheme)) as React.CSSProperties;
     }
     // No explicit scheme — fall back to luminance detection from background hex
-    return contentThemeVars(isDarkBackground(background) ? DARK_THEME : LIGHT_THEME);
+    return contentThemeVars(resolvedScheme === 'dark' ? DARK_THEME : LIGHT_THEME);
   }, [background, editorColorScheme, contentTheme]);
 
   // Get children from root

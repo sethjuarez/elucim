@@ -57,6 +57,7 @@ export type EditorTool =
 
 export type AlignDirection = 'left' | 'right' | 'top' | 'bottom' | 'center-h' | 'center-v';
 export type DistributeDirection = 'horizontal' | 'vertical';
+export type AnimationWrapperType = 'fadeIn' | 'fadeOut' | 'draw' | 'write' | 'transform' | 'morph' | 'stagger' | 'parallel';
 
 export type EditorAction =
   | { type: 'SELECT'; ids: string[] }
@@ -75,6 +76,8 @@ export type EditorAction =
   | { type: 'ROTATE_ELEMENT'; id: string; angleDeg: number }
   | { type: 'GROUP_ELEMENTS'; ids: string[] }
   | { type: 'UNGROUP'; id: string }
+  | { type: 'WRAP_IN_ANIMATION'; id: string; wrapper: AnimationWrapperType }
+  | { type: 'UNWRAP_ANIMATION'; id: string }
   | { type: 'RENAME_ELEMENT'; id: string; newId: string }
   | { type: 'REORDER_ELEMENT'; id: string; newIndex: number }
   | { type: 'BRING_FORWARD'; ids: string[] }
@@ -167,6 +170,10 @@ export function isUndoableAction(action: EditorAction): boolean {
     case 'RESIZE_ELEMENT':
     case 'ROTATE_ELEMENT':
     case 'SET_DOCUMENT':
+    case 'GROUP_ELEMENTS':
+    case 'UNGROUP':
+    case 'WRAP_IN_ANIMATION':
+    case 'UNWRAP_ANIMATION':
     case 'BRING_FORWARD':
     case 'SEND_BACKWARD':
     case 'BRING_TO_FRONT':

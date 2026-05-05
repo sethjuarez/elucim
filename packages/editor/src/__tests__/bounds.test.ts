@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getElementBounds, mergeBounds, isPointInBounds } from '../utils/bounds';
-import type { CircleNode, RectNode, LineNode, PolygonNode, TextNode, FunctionPlotNode } from '@elucim/dsl';
+import type { AxesNode, CircleNode, RectNode, LineNode, PolygonNode, TextNode, FunctionPlotNode, VectorFieldNode } from '@elucim/dsl';
 
 describe('getElementBounds', () => {
   it('computes rect bounds', () => {
@@ -87,6 +87,75 @@ describe('getElementBounds', () => {
     // No yClamp, no range → falls back to domain: height = (5-(-5))*40 = 400
     expect(bounds!.width).toBe(400);
     expect(bounds!.height).toBe(400);
+  });
+
+  it('computes asymmetric functionPlot bounds from math coordinates', () => {
+    const fp: FunctionPlotNode = {
+      type: 'functionPlot',
+      fn: 'x',
+      origin: [100, 300],
+      scale: 20,
+      domain: [0, 10],
+      yClamp: [-2, 6],
+    };
+    expect(getElementBounds(fp)).toMatchObject({
+      x: 100,
+      y: 180,
+      width: 200,
+      height: 160,
+    });
+  });
+
+  it('computes axes bounds from domain and range around origin', () => {
+    const axes: AxesNode = {
+      type: 'axes',
+      origin: [320, 240],
+      scale: 30,
+      domain: [-2, 8],
+      range: [-1, 5],
+    };
+    expect(getElementBounds(axes)).toMatchObject({
+      x: 260,
+      y: 90,
+      width: 300,
+      height: 180,
+    });
+  });
+
+  it('includes visible origin axes when domain and range exclude zero', () => {
+    const axes: AxesNode = {
+      type: 'axes',
+      origin: [100, 100],
+      scale: 10,
+      domain: [1, 5],
+      range: [1, 5],
+    };
+    expect(getElementBounds(axes)).toMatchObject({
+      x: 100,
+      y: 50,
+      width: 50,
+      height: 50,
+    });
+  });
+
+  it('pads vectorField bounds for arrow extents', () => {
+    const vf: VectorFieldNode = {
+      type: 'vectorField',
+      fn: '[-y, x]',
+      origin: [100, 100],
+      scale: 10,
+      domain: [0, 2],
+      range: [0, 2],
+      maxLength: 1,
+      arrowScale: 0.5,
+      headSize: 2,
+    };
+    expect(getElementBounds(vf)).toMatchObject({
+      x: 93,
+      y: 73,
+      width: 34,
+      height: 34,
+    });
   });
 
   it('functionPlot uses origin as rotation center', () => {

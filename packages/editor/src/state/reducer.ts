@@ -1,6 +1,6 @@
 import type { ElucimDocument, ElementNode } from '@elucim/dsl';
-import type { EditorState, EditorAction, AlignDirection, DistributeDirection } from './types';
-import { isUndoableAction } from './types';
+import type { EditorState, EditorAction, AlignDirection, DistributeDirection, AnimationWrapperType } from './types';
+import { getElementId, isUndoableAction } from './types';
 
 const MAX_HISTORY = 50;
 
@@ -16,6 +16,8 @@ interface ElementLocation {
   parent: ElementNode[] | undefined;
   index: number;
   element: ElementNode;
+  id: string;
+  parentPath: string;
 }
 
 function getChildren(node: unknown): ElementNode[] | undefined {
@@ -34,7 +36,7 @@ export function findElementById(root: ElucimDocument['root'], id: string, parent
     const child = children[i];
     const childId = ('id' in child && child.id) ? child.id : `${parentPath}.${child.type}[${i}]`;
     if (childId === id) {
-      return { parent: children, index: i, element: child };
+      return { parent: children, index: i, element: child, id: childId, parentPath };
     }
     // Recurse into containers
     const childChildren = getChildren(child);
@@ -51,7 +53,7 @@ function findElementInArray(arr: ElementNode[], id: string, parentPath: string):
     const child = arr[i];
     const childId = ('id' in child && child.id) ? child.id : `${parentPath}.${child.type}[${i}]`;
     if (childId === id) {
-      return { parent: arr, index: i, element: child };
+      return { parent: arr, index: i, element: child, id: childId, parentPath };
     }
     const childChildren = getChildren(child);
     if (childChildren) {
@@ -257,6 +259,32 @@ function cloneElement(element: ElementNode, offset: { dx: number; dy: number }):
   const clone = JSON.parse(JSON.stringify(element));
   if ('id' in clone) clone.id = `${clone.id}-copy-${Date.now().toString(36).slice(-4)}`;
   return applyMove(clone, offset.dx, offset.dy);
+}
+
+function isAnimationWrapper(element: ElementNode): boolean {
+  return ['fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel'].includes(element.type);
+}
+
+function createAnimationWrapper(wrapper: AnimationWrapperType, child: ElementNode): ElementNode {
+  const children = [child];
+  switch (wrapper) {
+    case 'fadeIn':
+      return { type: 'fadeIn', duration: 15, children };
+    case 'fadeOut':
+      return { type: 'fadeOut', duration: 15, children };
+    case 'draw':
+      return { type: 'draw', duration: 30, children };
+    case 'write':
+      return { type: 'write', duration: 30, children };
+    case 'transform':
+      return { type: 'transform', duration: 30, translate: { from: [0, 12], to: [0, 0] }, opacity: { from: 0, to: 1 }, children };
+    case 'morph':
+      return { type: 'morph', duration: 30, fromOpacity: 0.6, toOpacity: 1, fromScale: 0.95, toScale: 1, children };
+    case 'stagger':
+      return { type: 'stagger', staggerDelay: 4, children };
+    case 'parallel':
+      return { type: 'parallel', children };
+  }
 }
 
 // ─── Bounding box helper for alignment ──────────────────────────────────────
@@ -475,6 +503,28 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         .map((c: any) => c.id)
         .filter((id: string | undefined): id is string => !!id);
       return { ...state, document: doc, selectedIds: childIds };
+    }
+
+    case 'WRAP_IN_ANIMATION': {
+      const doc = cloneDoc(state.document);
+      const loc = findElementById(doc.root, action.id);
+      if (!loc?.parent) return state;
+      const wrapper = createAnimationWrapper(action.wrapper, loc.element);
+      loc.parent[loc.index] = wrapper;
+      const selectedId = `${loc.parentPath}.${wrapper.type}[${loc.index}]`;
+      return { ...state, document: doc, selectedIds: [selectedId] };
+    }
+
+    case 'UNWRAP_ANIMATION': {
+      const doc = cloneDoc(state.document);
+      const loc = findElementById(doc.root, action.id);
+      if (!loc?.parent || !isAnimationWrapper(loc.element)) return state;
+      const children = getChildren(loc.element);
+      if (!children || children.length === 0) return state;
+      loc.parent.splice(loc.index, 1, ...children);
+      const selectedIds = children
+        .map((child, childIndex) => getElementId(child, loc.index + childIndex, loc.parentPath));
+      return { ...state, document: doc, selectedIds };
     }
 
     case 'RENAME_ELEMENT': {

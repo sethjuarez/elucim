@@ -331,6 +331,47 @@ describe('constrained resize', () => {
   });
 });
 
+// ─── Animation wrappers ─────────────────────────────────────────────────────
+
+describe('animation wrapper actions', () => {
+  it('wraps a selected element in an animation wrapper', () => {
+    let state = stateWithElements(rect1);
+    state = editorReducer(state, { type: 'WRAP_IN_ANIMATION', id: 'r1', wrapper: 'fadeIn' });
+    const root = state.document.root as any;
+    expect(root.children[0].type).toBe('fadeIn');
+    expect(root.children[0].id).toBeUndefined();
+    expect(root.children[0].duration).toBe(15);
+    expect(root.children[0].children[0].id).toBe('r1');
+    expect(state.selectedIds).toEqual(['root.fadeIn[0]']);
+  });
+
+  it('unwraps an animation wrapper and restores its child', () => {
+    let state = stateWithElements(rect1);
+    state = editorReducer(state, { type: 'WRAP_IN_ANIMATION', id: 'r1', wrapper: 'transform' });
+    const wrapperId = state.selectedIds[0];
+    state = editorReducer(state, { type: 'UNWRAP_ANIMATION', id: wrapperId });
+    const root = state.document.root as any;
+    expect(root.children[0].type).toBe('rect');
+    expect(root.children[0].id).toBe('r1');
+    expect(state.selectedIds).toEqual(['r1']);
+  });
+
+  it('selects generated child path after unwrapping an anonymous element', () => {
+    let state = stateWithElements({ type: 'rect', x: 50, y: 50, width: 100, height: 80 });
+    state = editorReducer(state, { type: 'WRAP_IN_ANIMATION', id: 'root.rect[0]', wrapper: 'fadeIn' });
+    state = editorReducer(state, { type: 'UNWRAP_ANIMATION', id: 'root.fadeIn[0]' });
+    expect(state.selectedIds).toEqual(['root.rect[0]']);
+  });
+
+  it('supports undo after wrapping', () => {
+    let state = stateWithElements(rect1);
+    state = editorReducer(state, { type: 'WRAP_IN_ANIMATION', id: 'r1', wrapper: 'fadeIn' });
+    expect((state.document.root as any).children[0].type).toBe('fadeIn');
+    state = editorReducer(state, { type: 'UNDO' });
+    expect((state.document.root as any).children[0].type).toBe('rect');
+  });
+});
+
 // ─── Undo / Redo ───────────────────────────────────────────────────────────
 
 describe('undo/redo', () => {

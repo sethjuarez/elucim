@@ -7,6 +7,7 @@ import {
   type ImageResolverFn,
   ImageResolverProvider,
   DARK_THEME_VARS, LIGHT_THEME_VARS,
+  normalizeTheme,
   themeToVars,
 } from '@elucim/core';
 
@@ -201,8 +202,6 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
     );
   }
 
-  const themeVarsCss = themeToVars(theme) as React.CSSProperties;
-
   // Resolve colorScheme → CSS variables for semantic tokens
   let schemeVars: React.CSSProperties = {};
   if (colorScheme) {
@@ -210,13 +209,14 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
     schemeVars = (isDark ? DARK_THEME_VARS : LIGHT_THEME_VARS) as React.CSSProperties;
   }
 
-  const posterOverrides = poster !== undefined ? resolvePoster(poster, dsl) : undefined;
-
   const resolvedColorScheme = colorScheme
     ? (colorScheme === 'auto'
       ? (prefersDark ? 'dark' : 'light')
       : colorScheme) as 'light' | 'dark'
     : undefined;
+  const themeVarsCss = themeToVars(normalizeTheme(theme, resolvedColorScheme ?? 'dark')) as React.CSSProperties;
+
+  const posterOverrides = poster !== undefined ? resolvePoster(poster, dsl) : undefined;
 
   const content = renderRoot(dsl.root, {
     frame: posterOverrides?.frame,

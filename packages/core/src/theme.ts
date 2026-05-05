@@ -49,6 +49,13 @@ export interface ElucimTheme {
   error?: string;
 }
 
+export type ThemeColorScheme = 'light' | 'dark';
+
+export type NormalizedElucimTheme = Required<Pick<ElucimTheme,
+  'foreground' | 'background' | 'title' | 'subtitle' | 'primary' | 'secondary' |
+  'tertiary' | 'muted' | 'surface' | 'border' | 'accent' | 'success' | 'warning' | 'error'
+>>;
+
 // ─── Semantic token registry ────────────────────────────────────────────────
 
 /** Standard semantic color tokens with their CSS variable and dark-mode fallback. */
@@ -110,13 +117,40 @@ export function themeToVars(theme?: ElucimTheme | Record<string, string | undefi
   return vars;
 }
 
+/** Return the built-in semantic defaults for the requested color scheme. */
+export function getThemeDefaults(colorScheme: ThemeColorScheme = 'dark'): NormalizedElucimTheme {
+  return colorScheme === 'light' ? LIGHT_THEME : DARK_THEME;
+}
+
+/**
+ * Normalize a partial theme into the canonical semantic theme shape.
+ *
+ * This is the compatibility layer for the `primary`/`accent` overlap: new code
+ * should read `accent` for semantic highlights, while existing `primary`-only
+ * themes still drive accent styling.
+ */
+export function normalizeTheme(
+  theme?: ElucimTheme,
+  colorScheme: ThemeColorScheme = 'dark',
+): NormalizedElucimTheme {
+  const base = getThemeDefaults(colorScheme);
+  if (!theme) return { ...base };
+
+  const accent = theme.accent ?? theme.primary ?? base.accent;
+  const primary = theme.primary ?? theme.accent ?? base.primary;
+
+  return {
+    ...base,
+    ...theme,
+    accent,
+    primary,
+  };
+}
+
 // ─── Built-in theme presets ─────────────────────────────────────────────────
 
 /** Dark theme preset — the default Elucim content theme. */
-export const DARK_THEME: Required<Pick<ElucimTheme,
-  'foreground' | 'background' | 'title' | 'subtitle' | 'primary' | 'secondary' |
-  'tertiary' | 'muted' | 'surface' | 'border' | 'accent' | 'success' | 'warning' | 'error'
->> = {
+export const DARK_THEME: NormalizedElucimTheme = {
   foreground: '#c8d6e5',
   background: '#0a0a1e',
   title:      '#e0e7ff',
@@ -134,10 +168,7 @@ export const DARK_THEME: Required<Pick<ElucimTheme,
 };
 
 /** Light theme preset. */
-export const LIGHT_THEME: Required<Pick<ElucimTheme,
-  'foreground' | 'background' | 'title' | 'subtitle' | 'primary' | 'secondary' |
-  'tertiary' | 'muted' | 'surface' | 'border' | 'accent' | 'success' | 'warning' | 'error'
->> = {
+export const LIGHT_THEME: NormalizedElucimTheme = {
   foreground: '#334155',
   background: '#f8fafc',
   title:      '#1e293b',
