@@ -112,4 +112,14 @@ test.describe('DSL Renderer', () => {
       await expect(error).toHaveCount(0);
     }
   });
+
+  test('deck polish starter renders as a slide-ready presentation poster', async ({ page }) => {
+    const section = page.locator('#dsl-deck-polish');
+    await section.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+
+    await expect(section.locator('[data-testid="dsl-root"]')).toBeVisible();
+    await expect(section).toContainText('NDC Talk Starter');
+    await expect(section.locator('[data-testid="dsl-error"]')).toHaveCount(0);
+  });
 });

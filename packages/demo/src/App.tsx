@@ -881,17 +881,48 @@ const helloCircleDsl: ElucimDocument = {
   },
 };
 
-const deckPolishDsl = presentation('Deck Polish', deckDarkTheme, {
+const deckPolishDsl = presentation('NDC Talk Starter', deckDarkTheme, {
   width: 960,
   height: 540,
-  showHud: false,
+  transition: 'fade',
+  transitionDuration: 10,
+  showHud: true,
   showNotes: false,
 })
-  .slide('Deck polish', s => {
-    s.hero('Visuals that present themselves', 'Slide-grade defaults for generated diagrams');
-    s.process(['Generate', 'Polish', 'Present'], { y: 260 });
-    s.callout('Optimized for CutReady: one Elucim visual becomes one full-screen slide.');
-  })
+  .slide('Opening', s => {
+    s.hero('From demo to deck', 'Elucim visuals as full-screen talk slides', { y: 210 });
+    s.callout('One generated visual = one slide-ready story beat.', { y: 398, width: 680 });
+  }, { notes: 'Open with the thesis: generated visuals should already feel presentation-ready.' })
+  .slide('Talk arc', s => {
+    s.title('Shape the talk as a sequence', { y: 82, fontSize: 34 });
+    s.subtitle('A simple structure keeps generated slides coherent', { y: 122 });
+    s.process(['Problem', 'Mental model', 'Demo', 'Takeaway'], { y: 230, width: 150, gap: 20 });
+    s.callout('Each slide does one job: anchor, explain, compare, or decide.', { y: 404, width: 720 });
+  }, { notes: 'Use the sketch rows to keep every visual tied to a single narrative beat.' })
+  .slide('Visual grammar', s => {
+    s.title('Use a small visual grammar', { y: 80, fontSize: 34 });
+    s.compare(
+      { title: 'Before', body: 'Dense diagrams, tiny labels, repeated token strips' },
+      { title: 'After', body: 'One hero metaphor, semantic color, clear hierarchy' },
+      { y: 155, height: 178 },
+    );
+    s.metric('3-4', 'ideas per slide max', { x: 242, y: 370, width: 210, height: 110 });
+    s.metric('1', 'hero object', { x: 486, y: 370, width: 210, height: 110, accent: deckDarkTheme.secondary });
+    s.metric('0', 'decorative clutter', { x: 730, y: 370, width: 210, height: 110, accent: deckDarkTheme.tertiary });
+  }, { notes: 'This is the style bar for CutReady generation: less worksheet, more slide.' })
+  .slide('CutReady loop', s => {
+    s.title('Converge faster with evals', { y: 82, fontSize: 34 });
+    s.subtitle('Generate candidates, score the visuals, fold the winners back into prompts', { y: 122 });
+    s.process(['Sketch row', 'Prompt', 'Elucim JSON', 'Score', 'Revise'], { y: 250, width: 128, gap: 14 });
+    s.callout('Keep the feedback loop outside the talk; keep the winning visual inside the slide.', { y: 402, width: 760 });
+  }, { notes: 'The eval loop accelerates prompt convergence so talk prep is less manual.' })
+  .slide('Ready for NDC', s => {
+    s.hero('Ready for NDC', 'Generate, refine, present', { y: 190 });
+    s.metric('45 min', 'talk-ready flow', { x: 240, y: 330, width: 210, height: 120 });
+    s.metric('slides', 'from sketch rows', { x: 486, y: 330, width: 210, height: 120, accent: deckDarkTheme.secondary });
+    s.metric('ship', 'with confidence', { x: 730, y: 330, width: 210, height: 120, accent: deckDarkTheme.tertiary });
+    s.callout('Next: fill this deck shape with your real CutReady NDC sketch rows.', { y: 470, width: 760 });
+  }, { notes: 'Close with the workflow: CutReady sketches become polished Elucim slides.' })
   .build();
 
 const mathDemoDsl: ElucimDocument = {
@@ -1301,9 +1332,9 @@ export function App() {
       </section>
 
       <section id="dsl-deck-polish" style={{ marginTop: 32 }}>
-        <h3 style={{ color: '#aaa', marginBottom: 8 }}>✨ Deck Polish Helpers</h3>
+        <h3 style={{ color: '#aaa', marginBottom: 8 }}>✨ NDC Talk Starter — Deck Polish Helpers</h3>
         <p style={{ color: '#666', fontSize: 14, marginBottom: 12 }}>
-          Premium builder defaults for CutReady-style visuals where each diagram acts as a full slide.
+          A five-slide starter deck that uses premium builder defaults for CutReady-style visuals where each diagram acts as a full slide.
         </p>
         <div data-testid="deck-polish-demo">
           <DslRenderer dsl={deckPolishDsl as ElucimDocument} poster="last" />

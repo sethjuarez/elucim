@@ -138,6 +138,41 @@ function App() {
 }
 ```
 
+## 5. Presentation-Grade Talk Starter
+
+Use the premium deck theme and high-level helpers when one generated visual should become one full-screen slide.
+
+```tsx
+import { DslRenderer, deckDarkTheme, presentation } from '@elucim/dsl';
+
+const doc = presentation('NDC Talk Starter', deckDarkTheme, {
+  width: 960,
+  height: 540,
+  transition: 'fade',
+  showHud: true,
+})
+  .slide('Opening', s => {
+    s.hero('From demo to deck', 'Elucim visuals as full-screen talk slides');
+    s.callout('One generated visual = one slide-ready story beat.');
+  })
+  .slide('Talk arc', s => {
+    s.title('Shape the talk as a sequence');
+    s.process(['Problem', 'Mental model', 'Demo', 'Takeaway']);
+  })
+  .slide('Visual grammar', s => {
+    s.compare(
+      { title: 'Before', body: 'Dense diagrams, tiny labels, repeated token strips' },
+      { title: 'After', body: 'One hero metaphor, semantic color, clear hierarchy' },
+    );
+    s.metric('1', 'hero object');
+  })
+  .build();
+
+function TalkPreview() {
+  return <DslRenderer dsl={doc} poster="last" />;
+}
+```
+
 :::tip
 These recipes are starting points — combine them freely. Wrap any recipe in `<Stagger>` or `<Timeline>` for more complex sequencing, or embed them in `<Slide>` components for presentations.
 :::
