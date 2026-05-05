@@ -886,7 +886,7 @@ const deckPolishDsl = presentation('NDC Talk Starter', deckDarkTheme, {
   height: 540,
   transition: 'fade',
   transitionDuration: 10,
-  showHud: true,
+  showHud: false,
   showNotes: false,
 })
   .slide('Opening', s => {
@@ -902,15 +902,15 @@ const deckPolishDsl = presentation('NDC Talk Starter', deckDarkTheme, {
   .slide('Visual grammar', s => {
     s.title('Use a small visual grammar', { y: 80, fontSize: 34 });
     s.compare(
-      { title: 'Before', body: 'Dense diagrams, tiny labels, repeated token strips' },
-      { title: 'After', body: 'One hero metaphor, semantic color, clear hierarchy' },
+      { title: 'Before', body: 'Dense + tiny + repeated' },
+      { title: 'After', body: 'Hero + semantic + clear' },
       { y: 155, height: 178 },
     );
     s.metric('3-4', 'ideas per slide max', { x: 242, y: 370, width: 210, height: 110 });
     s.metric('1', 'hero object', { x: 486, y: 370, width: 210, height: 110, accent: deckDarkTheme.secondary });
     s.metric('0', 'decorative clutter', { x: 730, y: 370, width: 210, height: 110, accent: deckDarkTheme.tertiary });
   }, { notes: 'This is the style bar for CutReady generation: less worksheet, more slide.' })
-  .slide('CutReady loop', s => {
+  .slide('Iteration loop', s => {
     s.title('Converge faster with evals', { y: 82, fontSize: 34 });
     s.subtitle('Generate candidates, score the visuals, fold the winners back into prompts', { y: 122 });
     s.process(['Sketch row', 'Prompt', 'Elucim JSON', 'Score', 'Revise'], { y: 250, width: 128, gap: 14 });
@@ -919,8 +919,8 @@ const deckPolishDsl = presentation('NDC Talk Starter', deckDarkTheme, {
   .slide('Ready for NDC', s => {
     s.hero('Ready for NDC', 'Generate, refine, present', { y: 190 });
     s.metric('45 min', 'talk-ready flow', { x: 240, y: 330, width: 210, height: 120 });
-    s.metric('slides', 'from sketch rows', { x: 486, y: 330, width: 210, height: 120, accent: deckDarkTheme.secondary });
-    s.metric('ship', 'with confidence', { x: 730, y: 330, width: 210, height: 120, accent: deckDarkTheme.tertiary });
+    s.metric('5 slides', 'starter arc', { x: 486, y: 330, width: 210, height: 120, accent: deckDarkTheme.secondary });
+    s.metric('1 path', 'sketch to stage', { x: 730, y: 330, width: 210, height: 120, accent: deckDarkTheme.tertiary });
     s.callout('Next: fill this deck shape with your real CutReady NDC sketch rows.', { y: 470, width: 760 });
   }, { notes: 'Close with the workflow: CutReady sketches become polished Elucim slides.' })
   .build();

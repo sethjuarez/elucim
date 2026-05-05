@@ -149,7 +149,7 @@ const doc = presentation('NDC Talk Starter', deckDarkTheme, {
   width: 960,
   height: 540,
   transition: 'fade',
-  showHud: true,
+  showHud: false,
 })
   .slide('Opening', s => {
     s.hero('From demo to deck', 'Elucim visuals as full-screen talk slides');
@@ -161,8 +161,8 @@ const doc = presentation('NDC Talk Starter', deckDarkTheme, {
   })
   .slide('Visual grammar', s => {
     s.compare(
-      { title: 'Before', body: 'Dense diagrams, tiny labels, repeated token strips' },
-      { title: 'After', body: 'One hero metaphor, semantic color, clear hierarchy' },
+      { title: 'Before', body: 'Dense + tiny + repeated' },
+      { title: 'After', body: 'Hero + semantic + clear' },
     );
     s.metric('1', 'hero object');
   })
@@ -172,6 +172,8 @@ function TalkPreview() {
   return <DslRenderer dsl={doc} poster="last" />;
 }
 ```
+
+Use `showHud: true` for an interactive preview deck. Keep it `false` for exported or poster-style frames that should drop cleanly into a talk without presentation chrome.
 
 :::tip
 These recipes are starting points — combine them freely. Wrap any recipe in `<Stagger>` or `<Timeline>` for more complex sequencing, or embed them in `<Slide>` components for presentations.

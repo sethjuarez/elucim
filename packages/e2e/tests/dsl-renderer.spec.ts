@@ -120,6 +120,9 @@ test.describe('DSL Renderer', () => {
 
     await expect(section.locator('[data-testid="dsl-root"]')).toBeVisible();
     await expect(section).toContainText('NDC Talk Starter');
+    await expect(section).toContainText('From demo to deck');
+    await expect(section).toContainText('One generated visual = one slide-ready story beat.');
+    await expect(section.locator('[data-testid="elucim-presentation-hud"]')).toHaveCount(0);
     await expect(section.locator('[data-testid="dsl-error"]')).toHaveCount(0);
   });
 });
