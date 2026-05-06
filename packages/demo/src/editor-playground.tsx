@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ElucimEditor } from '@elucim/editor';
-import type { ElucimDocument } from '@elucim/dsl';
+import { migrateV1ToV2 } from '@elucim/dsl';
+import type { ElucimDocument, ElucimV2Document } from '@elucim/dsl';
 
 /**
  * Pre-populated document with several elements for visual testing.
@@ -133,11 +134,8 @@ const DEMO_DOCUMENT: ElucimDocument = {
   },
 };
 
-function App() {
-  const params = new URLSearchParams(window.location.search);
-  const isLight = params.get('theme') === 'light';
-
-  const doc: ElucimDocument = {
+function createDemoDocument(isLight: boolean): ElucimDocument {
+  return {
     ...DEMO_DOCUMENT,
     root: {
       ...DEMO_DOCUMENT.root,
@@ -150,15 +148,130 @@ function App() {
       }),
     } as any,
   };
+}
 
-  const lastFrame = (doc.root as any).durationInFrames! - 1;
+function createV2DemoDocument(doc: ElucimDocument): ElucimV2Document {
+  const v2 = migrateV1ToV2(doc);
+  return {
+    ...v2,
+    metadata: {
+      title: 'Editor v2 authoring sample',
+      intent: 'Demonstrate native timeline and state-machine editing in the Elucim editor.',
+      polishLevel: 'draft',
+      notes: [
+        'Use the timeline footer to add/edit v2 timelines, tracks, and keyframes.',
+        'Use the States tab to add/edit state-machine states and transitions.',
+      ],
+    },
+    timelines: {
+      intro: {
+        id: 'intro',
+        duration: 30,
+        tracks: [
+          { target: 'rect-1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'circle-1', property: 'scale', keyframes: [{ frame: 0, value: 0.8 }, { frame: 30, value: 1, easing: 'easeOutCubic' }] },
+        ],
+      },
+      focus: {
+        id: 'focus',
+        duration: 40,
+        tracks: [
+          { target: 'text-1', property: 'opacity', keyframes: [{ frame: 0, value: 0.35 }, { frame: 20, value: 1 }] },
+        ],
+      },
+    },
+    stateMachines: {
+      walkthrough: {
+        id: 'walkthrough',
+        initial: 'idle',
+        states: {
+          idle: { timeline: 'intro', on: { start: { target: 'focus', timeline: 'focus' } } },
+          focus: { timeline: 'focus', on: { reset: { target: 'idle', timeline: 'intro' } } },
+        },
+      },
+    },
+  };
+}
+
+function App() {
+  const params = new URLSearchParams(window.location.search);
+  const isLight = params.get('theme') === 'light';
+  const mode = params.get('mode') ?? 'v2';
+  const initialDoc = React.useMemo(() => {
+    const doc = createDemoDocument(isLight);
+    return mode === 'v1' ? doc : createV2DemoDocument(doc);
+  }, [isLight, mode]);
+  const [doc, setDoc] = React.useState<ElucimDocument | ElucimV2Document>(initialDoc);
+
+  React.useEffect(() => {
+    setDoc(initialDoc);
+  }, [initialDoc]);
+
+  const lastFrame = doc.version === '2.0'
+    ? doc.scene.durationInFrames - 1
+    : (doc.root as any).durationInFrames! - 1;
   return (
-    <ElucimEditor
-      initialDocument={doc}
-      initialFrame={lastFrame}
-      editorTheme={isLight ? { 'color-scheme': 'light' } : undefined}
-      style={{ width: '100%', height: '100vh' }}
-    />
+    <>
+      {mode !== 'v1' && <V2AuthoringGuide />}
+      <ElucimEditor
+        initialDocument={doc}
+        initialFrame={lastFrame}
+        onV2DocumentChange={setDoc}
+        editorTheme={isLight ? { 'color-scheme': 'light' } : undefined}
+        style={{ width: '100%', height: '100vh' }}
+      />
+    </>
+  );
+}
+
+function V2AuthoringGuide() {
+  const [collapsed, setCollapsed] = React.useState(true);
+  return (
+    <aside
+      aria-label="V2 authoring guide"
+      style={{
+        position: 'fixed',
+        right: 14,
+        top: 48,
+        zIndex: 20000,
+        width: collapsed ? 140 : 360,
+        padding: collapsed ? '8px 10px' : 12,
+        border: '1px solid rgba(148, 163, 184, 0.35)',
+        borderRadius: 8,
+        background: 'rgba(15, 23, 42, 0.94)',
+        color: '#e2e8f0',
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: 12,
+        boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <strong>{collapsed ? 'V2 guide' : 'V2 authoring sample'}</strong>
+        <button
+          type="button"
+          onClick={() => setCollapsed(value => !value)}
+          style={{
+            border: '1px solid rgba(148, 163, 184, 0.35)',
+            borderRadius: 4,
+            background: 'transparent',
+            color: '#cbd5e1',
+            cursor: 'pointer',
+            fontSize: 11,
+            padding: '2px 6px',
+          }}
+        >
+          {collapsed ? 'Show' : 'Hide'}
+        </button>
+      </div>
+      {!collapsed && (
+        <ol style={{ margin: '8px 0 0', paddingLeft: 18, lineHeight: 1.45 }}>
+          <li><strong>Bottom timeline:</strong> use “Add timeline”, “Add intro clip”, “Add track”, “+ key”, and target/property dropdowns.</li>
+          <li><strong>Left panel → States:</strong> edit the `walkthrough` state machine, add states, and add named transitions.</li>
+          <li><strong>Left panel → Hierarchy:</strong> select an object first if you want new timelines to target that object.</li>
+          <li>Open <a href="?mode=v1" style={{ color: '#7dd3fc' }}>v1 mode</a> for the old simpler playground.</li>
+        </ol>
+      )}
+    </aside>
   );
 }
 

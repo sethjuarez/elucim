@@ -274,6 +274,20 @@ export interface ElucimEditorLayoutProps {
   onV2DocumentChange?: (document: ElucimV2Document) => void;
 }
 
+type EditorWorkspace = 'design' | 'animate' | 'states' | 'polish';
+
+const DEFAULT_LEFT_WIDTH = 252;
+const DEFAULT_RIGHT_WIDTH = 286;
+const DEFAULT_TIMELINE_HEIGHT = 220;
+const MIN_SIDE_WIDTH = 180;
+const MAX_SIDE_WIDTH = 560;
+const MIN_TIMELINE_HEIGHT = 120;
+const MAX_TIMELINE_HEIGHT = 480;
+
+function clampPanelSize(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 /**
  * The internal layout component used by ElucimEditor.
  * Must be rendered inside an EditorProvider. Useful for consumers who need
@@ -282,6 +296,13 @@ export interface ElucimEditorLayoutProps {
  */
 export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Document, onV2DocumentChange }: ElucimEditorLayoutProps) {
   const { state } = useEditorState();
+  const [workspace, setWorkspace] = useState<EditorWorkspace>('design');
+  const [leftVisible, setLeftVisible] = useState(true);
+  const [rightVisible, setRightVisible] = useState(true);
+  const [timelineVisible, setTimelineVisible] = useState(true);
+  const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT_WIDTH);
+  const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT_WIDTH);
+  const [timelineHeight, setTimelineHeight] = useState(DEFAULT_TIMELINE_HEIGHT);
 
   // Derive editor chrome from content theme, then layer explicit overrides
   const colorSchemeHint = editorTheme?.['color-scheme'] ?? editorTheme?.['--elucim-editor-color-scheme'] ?? 'dark';
@@ -294,6 +315,63 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
   }
   const themeVars = buildThemeVars(merged);
   const colorScheme = merged['--elucim-editor-color-scheme'] || merged['color-scheme'] || colorSchemeHint;
+  const preferredLeftTab = workspace === 'states' || workspace === 'polish' ? 'states' : workspace === 'design' ? 'objects' : undefined;
+  const selectWorkspace = (nextWorkspace: EditorWorkspace) => {
+    setWorkspace(nextWorkspace);
+    if (nextWorkspace === 'design') {
+      setLeftVisible(true);
+      setRightVisible(true);
+      setTimelineVisible(false);
+    } else if (nextWorkspace === 'animate') {
+      setLeftVisible(true);
+      setRightVisible(false);
+      setTimelineVisible(true);
+      setTimelineHeight(Math.max(timelineHeight, 280));
+    } else if (nextWorkspace === 'states') {
+      setLeftVisible(true);
+      setRightVisible(false);
+      setTimelineVisible(false);
+      setLeftWidth(Math.max(leftWidth, 360));
+    } else {
+      setLeftVisible(true);
+      setRightVisible(false);
+      setTimelineVisible(false);
+      setLeftWidth(Math.max(leftWidth, 360));
+    }
+  };
+  const startSideResize = (side: 'left' | 'right') => (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const startX = event.clientX;
+    const startWidth = side === 'left' ? leftWidth : rightWidth;
+    const onMove = (moveEvent: PointerEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const nextWidth = side === 'left' ? startWidth + delta : startWidth - delta;
+      if (side === 'left') setLeftWidth(clampPanelSize(nextWidth, MIN_SIDE_WIDTH, MAX_SIDE_WIDTH));
+      else setRightWidth(clampPanelSize(nextWidth, MIN_SIDE_WIDTH, MAX_SIDE_WIDTH));
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+  const startTimelineResize = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const startY = event.clientY;
+    const startHeight = timelineHeight;
+    const onMove = (moveEvent: PointerEvent) => {
+      setTimelineHeight(clampPanelSize(startHeight - (moveEvent.clientY - startY), MIN_TIMELINE_HEIGHT, MAX_TIMELINE_HEIGHT));
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
 
   return (
     <div
@@ -360,9 +438,20 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10 }}>
             Scene editor
           </div>
+          <div role="tablist" aria-label="Editor workspace" style={{ display: 'flex', gap: 4, marginLeft: 12 }}>
+            <WorkspaceTab label="Design" selected={workspace === 'design'} onClick={() => selectWorkspace('design')} />
+            <WorkspaceTab label="Animate" selected={workspace === 'animate'} onClick={() => selectWorkspace('animate')} />
+            <WorkspaceTab label="States" selected={workspace === 'states'} onClick={() => selectWorkspace('states')} />
+            <WorkspaceTab label="Polish" selected={workspace === 'polish'} onClick={() => selectWorkspace('polish')} />
+          </div>
         </div>
-        <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, fontVariantNumeric: 'tabular-nums' }}>
-          {state.selectedIds.length === 0 ? 'No selection' : `${state.selectedIds.length} selected`}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <PanelToggle label="Left panel" active={leftVisible} onClick={() => setLeftVisible(value => !value)} />
+          <PanelToggle label="Inspector" active={rightVisible} onClick={() => setRightVisible(value => !value)} />
+          <PanelToggle label="Timeline" active={timelineVisible} onClick={() => setTimelineVisible(value => !value)} />
+          <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, fontVariantNumeric: 'tabular-nums', minWidth: 76, textAlign: 'right' }}>
+            {state.selectedIds.length === 0 ? 'No selection' : `${state.selectedIds.length} selected`}
+          </div>
         </div>
       </div>
 
@@ -371,27 +460,40 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
           flex: 1,
           minHeight: 0,
           display: 'grid',
-          gridTemplateColumns: '252px minmax(420px, 1fr) 286px',
+          gridTemplateColumns: `${leftVisible ? `${leftWidth}px` : '0px'} minmax(260px, 1fr) ${rightVisible ? `${rightWidth}px` : '0px'}`,
           background: v('--elucim-editor-bg'),
         }}
       >
         <aside
+          aria-hidden={!leftVisible}
           style={{
             display: 'flex',
             flexDirection: 'column',
             minHeight: 0,
             borderRight: `1px solid ${v('--elucim-editor-border')}`,
             background: v('--elucim-editor-surface'),
+            overflow: 'hidden',
+            position: 'relative',
           }}
         >
-          <LeftDock v2Document={v2Document} onV2DocumentChange={onV2DocumentChange} />
+          {leftVisible && <LeftDock v2Document={v2Document} onV2DocumentChange={onV2DocumentChange} preferredTab={preferredLeftTab} />}
+          {leftVisible && <PanelResizeHandle side="right" label="Resize left panel" onPointerDown={startSideResize('left')} />}
         </aside>
 
         <main style={{ position: 'relative', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
+          <CollapsedPanelRail
+            leftVisible={leftVisible}
+            rightVisible={rightVisible}
+            timelineVisible={timelineVisible}
+            onShowLeft={() => setLeftVisible(true)}
+            onShowRight={() => setRightVisible(true)}
+            onShowTimeline={() => setTimelineVisible(true)}
+          />
           <ElucimCanvas editorColorScheme={colorScheme} contentTheme={theme} />
         </main>
 
         <aside
+          aria-hidden={!rightVisible}
           style={{
             minWidth: 0,
             minHeight: 0,
@@ -399,34 +501,167 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
             background: v('--elucim-editor-surface'),
             display: 'flex',
             flexDirection: 'column',
+            overflow: 'hidden',
+            position: 'relative',
           }}
         >
-          <PanelShell title="Inspector">
-            <Inspector />
-          </PanelShell>
+          {rightVisible && <PanelResizeHandle side="left" label="Resize inspector" onPointerDown={startSideResize('right')} />}
+          {rightVisible && (
+            <PanelShell title="Inspector">
+              <Inspector />
+            </PanelShell>
+          )}
         </aside>
       </div>
 
-      <div
-        style={{
-          height: 220,
-          flexShrink: 0,
-          borderTop: `1px solid ${v('--elucim-editor-border')}`,
-          background: v('--elucim-editor-surface'),
-        }}
-      >
-        <Timeline
-          style={{ height: '100%', borderTop: 'none' }}
-          v2Timelines={v2Document?.timelines}
-          onV2TimelinesChange={v2Document && onV2DocumentChange ? timelines => onV2DocumentChange({ ...v2Document, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
-        />
-      </div>
+      {timelineVisible && (
+        <div
+          style={{
+            height: timelineHeight,
+            flexShrink: 0,
+            borderTop: `1px solid ${v('--elucim-editor-border')}`,
+            background: v('--elucim-editor-surface'),
+            position: 'relative',
+          }}
+        >
+          <PanelResizeHandle side="top" label="Resize timeline" onPointerDown={startTimelineResize} />
+          <Timeline
+            style={{ height: '100%', borderTop: 'none' }}
+            v2Timelines={v2Document?.timelines}
+            onV2TimelinesChange={v2Document && onV2DocumentChange ? timelines => onV2DocumentChange({ ...v2Document, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
-function LeftDock({ v2Document, onV2DocumentChange }: { v2Document?: ElucimV2Document; onV2DocumentChange?: (document: ElucimV2Document) => void }) {
+function WorkspaceTab({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-label={`${label} workspace`}
+      aria-selected={selected}
+      onClick={onClick}
+      style={{
+        height: 22,
+        border: `1px solid ${selected ? v('--elucim-editor-accent') : v('--elucim-editor-border')}`,
+        borderRadius: 999,
+        background: selected ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 16%, transparent)` : 'transparent',
+        color: selected ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
+        cursor: 'pointer',
+        fontSize: 10,
+        fontWeight: 700,
+        padding: '0 9px',
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function PanelToggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      style={{
+        height: 22,
+        border: `1px solid ${active ? v('--elucim-editor-border') : v('--elucim-editor-border-subtle')}`,
+        borderRadius: 4,
+        background: active ? 'transparent' : v('--elucim-editor-input-bg'),
+        color: active ? v('--elucim-editor-text-secondary') : v('--elucim-editor-text-muted'),
+        cursor: 'pointer',
+        fontSize: 10,
+        padding: '0 7px',
+      }}
+    >
+      {active ? `Hide ${label}` : `Show ${label}`}
+    </button>
+  );
+}
+
+function PanelResizeHandle({
+  side,
+  label,
+  onPointerDown,
+}: {
+  side: 'left' | 'right' | 'top';
+  label: string;
+  onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
+}) {
+  const horizontal = side === 'top';
+  return (
+    <div
+      role="separator"
+      aria-label={label}
+      onPointerDown={onPointerDown}
+      style={{
+        position: 'absolute',
+        ...(side === 'left' ? { left: -3, top: 0, bottom: 0, width: 6 } : {}),
+        ...(side === 'right' ? { right: -3, top: 0, bottom: 0, width: 6 } : {}),
+        ...(side === 'top' ? { left: 0, right: 0, top: -3, height: 6 } : {}),
+        zIndex: 5,
+        cursor: horizontal ? 'ns-resize' : 'ew-resize',
+        background: 'transparent',
+      }}
+    />
+  );
+}
+
+function CollapsedPanelRail({
+  leftVisible,
+  rightVisible,
+  timelineVisible,
+  onShowLeft,
+  onShowRight,
+  onShowTimeline,
+}: {
+  leftVisible: boolean;
+  rightVisible: boolean;
+  timelineVisible: boolean;
+  onShowLeft: () => void;
+  onShowRight: () => void;
+  onShowTimeline: () => void;
+}) {
+  if (leftVisible && rightVisible && timelineVisible) return null;
+  return (
+    <div style={{ position: 'absolute', left: 10, top: 10, zIndex: 20, display: 'flex', gap: 6 }}>
+      {!leftVisible && <RailButton label="Show left panel" onClick={onShowLeft} />}
+      {!rightVisible && <RailButton label="Show inspector" onClick={onShowRight} />}
+      {!timelineVisible && <RailButton label="Show timeline" onClick={onShowTimeline} />}
+    </div>
+  );
+}
+
+function RailButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        border: `1px solid ${v('--elucim-editor-border')}`,
+        borderRadius: 999,
+        background: `color-mix(in srgb, ${v('--elucim-editor-surface')} 92%, transparent)`,
+        color: v('--elucim-editor-fg'),
+        cursor: 'pointer',
+        fontSize: 10,
+        padding: '4px 8px',
+        boxShadow: v('--elucim-editor-shadow-dropdown'),
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function LeftDock({ v2Document, onV2DocumentChange, preferredTab }: { v2Document?: ElucimV2Document; onV2DocumentChange?: (document: ElucimV2Document) => void; preferredTab?: 'objects' | 'create' | 'states' }) {
   const [tab, setTab] = useState<'objects' | 'create' | 'states'>('objects');
+  useEffect(() => {
+    if (preferredTab) setTab(preferredTab);
+  }, [preferredTab]);
   return (
     <section style={{ minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div

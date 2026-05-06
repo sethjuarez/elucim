@@ -61,6 +61,8 @@ When `initialDocument` is v2, the editor uses a v1 canvas adapter for existing v
 
 The editor also exposes v2-native controls: document metadata and selected element intent fields in the States panel, reviewable polish nudges from `suggestDocumentNudges()`, accept/dismiss controls for suggested nudges with command summaries and previewed command results, timeline creation with editable tracks/keyframes, and state-machine creation with state and transition authoring.
 
+The editor shell uses progressive-disclosure workspaces (`Design`, `Animate`, `States`, and `Polish`) plus collapsible/resizable left, inspector, and timeline regions. Use the workspace tabs to switch between canvas-first layout presets, then show or hide individual panels as needed.
+
 ```tsx
 <ElucimEditor
   initialDocument={v2Doc}
