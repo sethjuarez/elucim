@@ -125,7 +125,11 @@ export function HierarchyPanel({ className, style, v2Document }: HierarchyPanelP
               role="treeitem"
               aria-selected={selected}
               aria-expanded={row.hasChildren ? !collapsed : undefined}
-              onClick={() => dispatch({ type: 'SELECT', ids: [row.id] })}
+              tabIndex={-1}
+              onClick={event => {
+                event.currentTarget.focus({ preventScroll: true });
+                dispatch({ type: 'SELECT', ids: [row.id] });
+              }}
               onDoubleClick={() => beginRename(row.id, row.label)}
               style={{
                 display: 'flex',

@@ -39,6 +39,11 @@ function groupableIds(root: ElucimDocument['root'], ids: string[]): string[] {
   return realIds;
 }
 
+function shouldPreservePointerFocus(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest('input, textarea, select, button, [contenteditable="true"]'));
+}
+
 function resolveSelectionBounds(
   root: ElucimDocument['root'],
   measuredBounds: Map<string, BoundingBox>,
@@ -632,18 +637,28 @@ export function ElucimCanvas({ className, style, editorColorScheme, contentTheme
     }
   }, [beginInlineEdit]);
 
+  const handleContainerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!shouldPreservePointerFocus(e.target)) {
+      e.currentTarget.focus({ preventScroll: true });
+    }
+    handlePanStart(e);
+    handleMarqueeStart(e);
+  }, [handleMarqueeStart, handlePanStart]);
+
   return (
     <div
       ref={containerRef}
       className={`elucim-editor-canvas ${className ?? ''}`}
+      tabIndex={-1}
       style={{
         position: 'absolute',
         inset: 0,
         overflow: 'hidden',
+        outline: 'none',
         cursor,
         ...style,
       }}
-      onPointerDown={(e) => { handlePanStart(e); handleMarqueeStart(e); }}
+      onPointerDown={handleContainerPointerDown}
       onPointerMove={(e) => { handlePanMove(e); handleMarqueeMove(e); }}
       onPointerUp={(e) => { handlePanEnd(e); handleMarqueeEnd(e); }}
       onPointerEnter={() => setIsCanvasHovered(true)}
