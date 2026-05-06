@@ -45,6 +45,22 @@ describe('DslRenderer player override props', () => {
     render(<DslRenderer ref={ref} dsl={playerDsl as any} autoPlay />);
     expect(ref.current!.isPlaying()).toBe(true);
   });
+
+  it('renders v2 documents through the official v1 bridge', () => {
+    const { container } = render(
+      <DslRenderer
+        dsl={{
+          version: '2.0',
+          scene: { type: 'player', durationInFrames: 60, children: ['dot'] },
+          elements: {
+            dot: { id: 'dot', type: 'circle', props: { type: 'circle', cx: 100, cy: 100, r: 20 } },
+          },
+        }}
+      />,
+    );
+    expect(container.querySelector('[data-testid="dsl-root"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="dsl-error"]')).toBeNull();
+  });
 });
 
 // ─── onPlayStateChange ──────────────────────────────────────────────────────

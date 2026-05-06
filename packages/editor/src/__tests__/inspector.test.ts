@@ -8,7 +8,7 @@ import { editorReducer, findElementById } from '../state/reducer';
 import { createInitialState } from '../state/types';
 import { EditorProvider, useEditorState } from '../state/EditorProvider';
 import { Inspector } from '../inspector/Inspector';
-import type { BarChartNode, CircleNode, GroupNode, RectNode, TextNode, LaTeXNode } from '@elucim/dsl';
+import type { BarChartNode, CircleNode, FunctionPlotNode, GroupNode, RectNode, TextNode, LaTeXNode } from '@elucim/dsl';
 
 const circle: CircleNode = { type: 'circle', id: 'c1', cx: 100, cy: 200, r: 50, fill: '#ff0000', stroke: '#00ff00', strokeWidth: 2, opacity: 0.8 };
 const rect: RectNode = { type: 'rect', id: 'r1', x: 50, y: 50, width: 100, height: 80, fill: '#0000ff' };
@@ -34,6 +34,14 @@ const barChart: BarChartNode = {
     { label: 'A', value: 40, color: '$accent' },
     { label: 'B', value: 60, color: '#123456' },
   ],
+};
+const functionPlot: FunctionPlotNode = {
+  type: 'functionPlot',
+  id: 'f1',
+  fn: 'sin(x)',
+  origin: [400, 300],
+  scale: 40,
+  domain: [-5, 5],
 };
 
 function stateWith(...elements: any[]) {
@@ -61,6 +69,46 @@ describe('inspector position updates', () => {
     expect(el.width).toBe(200);
     expect(el.height).toBe(150);
     expect(el.x).toBe(50);
+  });
+});
+
+describe('inspector function fields', () => {
+  it('shows editable range controls for function plot yClamp defaults', async () => {
+    let latestFunction: FunctionPlotNode | null = null;
+
+    function SelectAndCapture() {
+      const { state, dispatch } = useEditorState();
+      useEffect(() => {
+        dispatch({ type: 'SELECT', ids: ['f1'] });
+      }, [dispatch]);
+      useEffect(() => {
+        latestFunction = findElementById(state.document.root, 'f1')?.element as FunctionPlotNode;
+      }, [state.document]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [functionPlot] },
+          },
+        },
+        React.createElement(SelectAndCapture),
+        React.createElement(Inspector),
+      ),
+    );
+
+    const rangeMin = await screen.findByLabelText('Range Min') as HTMLInputElement;
+    const rangeMax = screen.getByLabelText('Range Max') as HTMLInputElement;
+
+    expect(rangeMin.value).toBe('-10');
+    expect(rangeMax.value).toBe('10');
+
+    fireEvent.change(rangeMax, { target: { value: '4' } });
+    await waitFor(() => expect(latestFunction?.yClamp).toEqual([-10, 4]));
   });
 });
 
@@ -191,10 +239,12 @@ describe('inspector style updates', () => {
 describe('inspector group editing', () => {
   it('selects group children and shows a parent breadcrumb', async () => {
     let latestSelectedIds: string[] = [];
+    let latestTitle: TextNode | null = null;
 
     function SelectAndCapture() {
       const { state, dispatch } = useEditorState();
       latestSelectedIds = state.selectedIds;
+      latestTitle = findElementById(state.document.root, 'hero-title')?.element as TextNode | null;
       useEffect(() => {
         dispatch({ type: 'SELECT', ids: ['hero1'] });
       }, [dispatch]);
@@ -215,6 +265,10 @@ describe('inspector group editing', () => {
       ),
     );
 
+    await screen.findByLabelText(/Select Text "Talk hook"/);
+    const positionButtons = screen.getAllByRole('button', { name: /Position/ });
+    fireEvent.click(positionButtons[positionButtons.length - 1]);
+
     const titleButton = await screen.findByLabelText(/Select Text "Talk hook"/);
     fireEvent.click(titleButton);
 
@@ -223,6 +277,16 @@ describe('inspector group editing', () => {
     expect(selectionPath).toContain('Group');
     expect(selectionPath).toContain('hero1');
     expect(selectionPath).toContain('hero-title');
+    const textField = screen.getAllByLabelText('Text')
+      .find((input): input is HTMLInputElement => (input as HTMLInputElement).value === 'Talk hook');
+    expect(textField).toBeDefined();
+    if (!textField) throw new Error('Expected selected child text field');
+    expect(textField.value).toBe('Talk hook');
+    const contentButtons = screen.getAllByRole('button', { name: /Content/ });
+    expect(contentButtons[contentButtons.length - 1].getAttribute('aria-expanded')).toBe('true');
+
+    fireEvent.change(textField, { target: { value: 'Updated hook' } });
+    await waitFor(() => expect(latestTitle?.content).toBe('Updated hook'));
 
     fireEvent.click(screen.getByTitle(/Select parent Group/));
     await waitFor(() => expect(latestSelectedIds).toEqual(['hero1']));
@@ -321,6 +385,36 @@ describe('inspector animation updates', () => {
     const el = findElementById(state.document.root, 'r1')!.element as any;
     expect(el.fadeOut).toBe(15);
   });
+
+  it('adds animation property fields from the dropdown menu', async () => {
+    function SelectElement() {
+      const { dispatch } = useEditorState();
+      useEffect(() => {
+        dispatch({ type: 'SELECT', ids: ['r1'] });
+      }, [dispatch]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [rect] },
+          },
+        },
+        React.createElement(SelectElement),
+        React.createElement(Inspector),
+      ),
+    );
+
+    const addButtons = await screen.findAllByRole('button', { name: /\+ Add property/ });
+    fireEvent.click(addButtons[0]);
+    fireEvent.pointerDown(await screen.findByRole('menuitem', { name: 'Fade In' }));
+
+    expect(await screen.findByLabelText('Fade In')).toBeTruthy();
+  });
 });
 
 // ─── Transform field updates ───────────────────────────────────────────────
@@ -338,6 +432,36 @@ describe('inspector transform updates', () => {
     state = editorReducer(state, { type: 'UPDATE_ELEMENT', id: 'r1', changes: { zIndex: 5 } as any });
     const el = findElementById(state.document.root, 'r1')!.element as any;
     expect(el.zIndex).toBe(5);
+  });
+
+  it('adds transform property fields from the dropdown menu', async () => {
+    function SelectElement() {
+      const { dispatch } = useEditorState();
+      useEffect(() => {
+        dispatch({ type: 'SELECT', ids: ['r1'] });
+      }, [dispatch]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [rect] },
+          },
+        },
+        React.createElement(SelectElement),
+        React.createElement(Inspector),
+      ),
+    );
+
+    const addButtons = await screen.findAllByRole('button', { name: /\+ Add property/ });
+    fireEvent.click(addButtons[1]);
+    fireEvent.pointerDown(await screen.findByRole('menuitem', { name: 'Rotation' }));
+
+    expect(await screen.findByLabelText('Rotation')).toBeTruthy();
   });
 });
 

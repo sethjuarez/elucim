@@ -48,6 +48,9 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight, selectedIds
   const activeDragType = useRef<'move' | 'resize' | 'rotate' | null>(null);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    // Right-click should open the context menu without changing selection.
+    if (e.button !== 0) return;
+
     const target = e.target as SVGElement;
     const svg = svgRef.current;
     if (!svg) return;

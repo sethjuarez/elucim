@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { buildTransform, sortByZIndex } from '../primitives/transform';
+import { Graph } from '../primitives/Graph';
+import { Scene } from '../components/Scene';
 
 describe('buildTransform', () => {
   it('returns undefined when no props set', () => {
@@ -35,6 +38,12 @@ describe('buildTransform', () => {
 
   it('with scale array', () => {
     expect(buildTransform({ scale: [2, 3] })).toBe('scale(2, 3)');
+  });
+
+  it('anchors scale to defaultScaleOrigin when provided', () => {
+    expect(buildTransform({ scale: 2 }, undefined, [100, 200])).toBe(
+      'translate(100, 200) scale(2) translate(-100, -200)'
+    );
   });
 
   it('with scale=1 returns undefined (no-op)', () => {
@@ -117,5 +126,30 @@ describe('sortByZIndex', () => {
     const sorted = sortByZIndex(children);
     expect((sorted[0] as React.ReactElement).type).toBe('rect');
     expect((sorted[1] as React.ReactElement).type).toBe('circle');
+  });
+});
+
+describe('primitive transform origins', () => {
+  it('anchors graph scale to visual bounds including node radius', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(
+        Scene,
+        {
+          durationInFrames: 1,
+          frame: 0,
+          children: React.createElement(Graph, {
+            nodes: [
+              { id: 'a', x: 100, y: 100, radius: 10 },
+              { id: 'b', x: 200, y: 160 },
+            ],
+            edges: [{ from: 'a', to: 'b' }],
+            nodeRadius: 8,
+            scale: 2,
+          }),
+        }
+      )
+    );
+
+    expect(html).toContain('translate(90, 90) scale(2) translate(-90, -90)');
   });
 });

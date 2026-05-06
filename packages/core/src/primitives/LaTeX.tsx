@@ -18,6 +18,15 @@ export interface LaTeXProps extends AnimationProps, SpatialProps, BaseElementPro
   align?: 'left' | 'center' | 'right';
 }
 
+function estimateLaTeXWidth(expression: string, fontSize: number): number {
+  const normalized = expression
+    .replace(/\\[a-zA-Z]+/g, 'xx')
+    .replace(/[{}]/g, '')
+    .replace(/[_^]/g, '')
+    .trim();
+  return Math.max(normalized.length * fontSize * 0.42, fontSize * 1.5);
+}
+
 /**
  * Renders a LaTeX expression using KaTeX, embedded in SVG via foreignObject.
  */
@@ -51,9 +60,8 @@ export function LaTeX({
     }
   }, [expression]);
 
-  // Use generous sizing — foreignObject overflow is visible so exact size isn't critical
-  const estimatedWidth = Math.max(expression.length * fontSize * 0.55, fontSize * 8);
-  const foWidth = estimatedWidth + fontSize * 2;
+  const estimatedWidth = estimateLaTeXWidth(expression, fontSize);
+  const foWidth = estimatedWidth + fontSize;
   const height = fontSize * 4;
   const offsetX =
     align === 'center' ? -foWidth / 2
@@ -86,5 +94,5 @@ export function LaTeX({
     </foreignObject>
   );
 
-  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x, y]);
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x, y], [x, y]);
 }

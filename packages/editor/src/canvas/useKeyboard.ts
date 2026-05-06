@@ -12,6 +12,10 @@ interface UseKeyboardOptions {
   document: ElucimDocument;
   /** Current viewport zoom level */
   zoom: number;
+  /** Whether the timeline is currently playing */
+  isPlaying: boolean;
+  /** Whether the pointer is over the canvas workspace */
+  isCanvasHovered: boolean;
   /** Callback to get the current document as JSON string */
   getDocumentJson: () => string;
   /** Callback to import a document from JSON string */
@@ -29,7 +33,7 @@ let elementClipboard: string | null = null;
  * - Ctrl+Y / Ctrl+Shift+Z: Redo
  * - Arrow keys: Nudge selected elements by 1px (Shift = 10px)
  * - Escape: Deselect all
- * - Space (hold): Pan mode
+ * - Space: Toggle playback, or hold for pan mode when the pointer is over the canvas
  * - Ctrl+0: Fit to view
  * - Ctrl+1: Zoom to 100%
  * - Ctrl+= / Ctrl+-: Zoom in/out
@@ -39,7 +43,7 @@ let elementClipboard: string | null = null;
  * - Ctrl+] / Ctrl+[: Bring forward / send backward
  * - Ctrl+Shift+] / Ctrl+Shift+[: Bring to front / send to back
  */
-export function useKeyboardShortcuts({ dispatch, selectedIds, document, zoom, getDocumentJson, importDocument }: UseKeyboardOptions) {
+export function useKeyboardShortcuts({ dispatch, selectedIds, document, zoom, isPlaying, isCanvasHovered, getDocumentJson, importDocument }: UseKeyboardOptions) {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     // Don't intercept if user is typing in an input
     const tag = (e.target as HTMLElement).tagName;
@@ -110,7 +114,13 @@ export function useKeyboardShortcuts({ dispatch, selectedIds, document, zoom, ge
 
       case ' ':
         e.preventDefault();
-        dispatch({ type: 'SET_PANNING', panning: true });
+        if (e.repeat) break;
+        if (isCanvasHovered) {
+          dispatch({ type: 'SET_PANNING', panning: true });
+          break;
+        }
+        dispatch({ type: 'SET_PLAYING', playing: !isPlaying });
+        dispatch({ type: 'SET_PANNING', panning: false });
         break;
 
       case 'a':
@@ -192,7 +202,7 @@ export function useKeyboardShortcuts({ dispatch, selectedIds, document, zoom, ge
         }
         break;
     }
-  }, [dispatch, selectedIds, document, zoom, getDocumentJson, importDocument]);
+  }, [dispatch, selectedIds, document, zoom, isPlaying, isCanvasHovered, getDocumentJson, importDocument]);
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
     if (e.key === ' ') {

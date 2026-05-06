@@ -1,10 +1,12 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { Scene } from '@elucim/core';
 import { renderElement } from '@elucim/dsl';
-import type { ElementNode } from '@elucim/dsl';
+import type { ElucimDocument, ElementNode } from '@elucim/dsl';
 import { resolveColor, DARK_THEME, LIGHT_THEME, normalizeTheme, themeToVars, type ElucimTheme } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
-import { getElementId } from '../state/types';
+import { CANVAS_ID, getElementId } from '../state/types';
+import { findElementById } from '../state/reducer';
+import { getElementBounds, type BoundingBox } from '../utils/bounds';
 import { SelectionOverlay } from './SelectionOverlay';
 import { v, ROTATE_CURSOR } from '../theme/tokens';
 import { useDrag } from './useDrag';
@@ -26,6 +28,206 @@ export interface ElucimCanvasProps {
   editorColorScheme?: string;
   /** Explicit content theme — when provided, used for scene CSS vars instead of built-in presets. */
   contentTheme?: ElucimTheme;
+}
+
+function groupableIds(root: ElucimDocument['root'], ids: string[]): string[] {
+  const realIds = ids.filter(id => id !== CANVAS_ID);
+  const locations = realIds.map(id => findElementById(root as any, id)).filter(Boolean);
+  if (locations.length < 2) return [];
+  const parent = locations[0]?.parent;
+  if (!parent || locations.some(loc => loc?.parent !== parent)) return [];
+  return realIds;
+}
+
+function resolveSelectionBounds(
+  root: ElucimDocument['root'],
+  measuredBounds: Map<string, BoundingBox>,
+  sceneSvg: SVGSVGElement | null,
+  id: string,
+): BoundingBox | null {
+  const measured = measuredBounds.get(id);
+  if (measured) return measured;
+  const loc = findElementById(root, id);
+  if (!loc) return null;
+  const domBounds = measureNestedElementBounds(sceneSvg, root, loc.element, loc.parentPath);
+  if (domBounds) return domBounds;
+  const bounds = getElementBounds(loc.element);
+  if (!bounds) return null;
+  return applyAncestorTransforms(root, loc.parentPath, bounds);
+}
+
+function measureNestedElementBounds(
+  sceneSvg: SVGSVGElement | null,
+  root: ElucimDocument['root'],
+  element: ElementNode,
+  parentPath: string,
+): BoundingBox | null {
+  if (!sceneSvg || parentPath === 'root') return null;
+  const topLevelId = getTopLevelAncestorId(root, parentPath);
+  if (!topLevelId) return null;
+  const topWrapper = sceneSvg.querySelector(`[data-measure-id="${CSS.escape(topLevelId)}"]`);
+  if (!topWrapper) return null;
+
+  const target = findRenderedElement(topWrapper, element);
+  return target ? measureGraphicsElementInScene(target, sceneSvg) : null;
+}
+
+function getTopLevelAncestorId(root: ElucimDocument['root'], parentPath: string): string | null {
+  let currentPath = parentPath;
+  let topId: string | null = null;
+
+  while (currentPath !== 'root') {
+    const loc = findElementById(root, currentPath);
+    if (!loc) break;
+    topId = loc.id;
+    currentPath = loc.parentPath;
+  }
+
+  return topId;
+}
+
+function findRenderedElement(wrapper: Element, element: ElementNode): SVGGraphicsElement | null {
+  const el = element as Record<string, any>;
+
+  if (el.type === 'text' && typeof el.content === 'string') {
+    const candidates = Array.from(wrapper.querySelectorAll<SVGTextElement>('text[data-testid="elucim-text"], text'));
+    return candidates.find(candidate => {
+      const textMatches = (candidate.textContent ?? '') === el.content;
+      const xMatches = typeof el.x !== 'number' || Math.abs(parseFloat(candidate.getAttribute('x') ?? 'NaN') - el.x) < 0.1;
+      const yMatches = typeof el.y !== 'number' || Math.abs(parseFloat(candidate.getAttribute('y') ?? 'NaN') - el.y) < 0.1;
+      return textMatches && xMatches && yMatches;
+    }) ?? null;
+  }
+
+  if (el.type === 'latex' && typeof el.expression === 'string') {
+    const candidates = Array.from(wrapper.querySelectorAll<SVGForeignObjectElement>('foreignObject[data-testid="elucim-latex"]'));
+    if (candidates.length === 1) return candidates[0] as unknown as SVGGraphicsElement;
+    const match = candidates.find(candidate => {
+      const xMatches = typeof el.x !== 'number' || Math.abs(parseFloat(candidate.getAttribute('x') ?? 'NaN') - el.x) < Math.max(1, ((el.fontSize as number | undefined) ?? 24) * 8);
+      const yMatches = typeof el.y !== 'number' || Math.abs(parseFloat(candidate.getAttribute('y') ?? 'NaN') - (el.y - ((el.fontSize as number | undefined) ?? 24) * 1.5)) < 0.1;
+      return xMatches && yMatches;
+    });
+    return match ? match as unknown as SVGGraphicsElement : null;
+  }
+
+  if (el.type === 'graph' && Array.isArray(el.nodes)) {
+    const graphs = Array.from(wrapper.querySelectorAll<SVGGElement>('[data-testid="elucim-graph"]'));
+    if (graphs.length === 1) return graphs[0];
+    return graphs.find(graph => el.nodes.every((node: any) => (
+      typeof node.id === 'string' && graph.querySelector(`[data-graph-node-id="${CSS.escape(node.id)}"]`)
+    ))) ?? null;
+  }
+
+  return null;
+}
+
+function measureGraphicsElementInScene(target: SVGGraphicsElement, sceneSvg: SVGSVGElement): BoundingBox | null {
+  try {
+    const bbox = target.getBBox();
+    if (bbox.width === 0 && bbox.height === 0) return null;
+    const targetCtm = target.getScreenCTM();
+    const sceneCtm = sceneSvg.getScreenCTM();
+    if (!targetCtm || !sceneCtm) return { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
+    const matrix = sceneCtm.inverse().multiply(targetCtm);
+    const corners = [
+      new DOMPoint(bbox.x, bbox.y),
+      new DOMPoint(bbox.x + bbox.width, bbox.y),
+      new DOMPoint(bbox.x, bbox.y + bbox.height),
+      new DOMPoint(bbox.x + bbox.width, bbox.y + bbox.height),
+    ].map(point => point.matrixTransform(matrix));
+
+    const xs = corners.map(point => point.x);
+    const ys = corners.map(point => point.y);
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    const maxX = Math.max(...xs);
+    const maxY = Math.max(...ys);
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+  } catch {
+    return null;
+  }
+}
+
+function applyAncestorTransforms(
+  root: ElucimDocument['root'],
+  parentPath: string,
+  bounds: BoundingBox,
+): BoundingBox {
+  const ancestors: ElementNode[] = [];
+  let currentPath = parentPath;
+
+  while (currentPath !== 'root') {
+    const loc = findElementById(root, currentPath);
+    if (!loc) break;
+    ancestors.unshift(loc.element);
+    currentPath = loc.parentPath;
+  }
+
+  return ancestors.reduce((currentBounds, ancestor) => transformBoundsByElement(currentBounds, ancestor), bounds);
+}
+
+function transformBoundsByElement(bounds: BoundingBox, element: ElementNode): BoundingBox {
+  const el = element as Record<string, any>;
+  if (
+    !Array.isArray(el.translate) &&
+    el.scale === undefined &&
+    !el.rotation
+  ) {
+    return bounds;
+  }
+
+  const corners: [number, number][] = [
+    [bounds.x, bounds.y],
+    [bounds.x + bounds.width, bounds.y],
+    [bounds.x, bounds.y + bounds.height],
+    [bounds.x + bounds.width, bounds.y + bounds.height],
+  ].map(([x, y]) => transformPointByElement(x, y, el));
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const [x, y] of corners) {
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+function transformPointByElement(x: number, y: number, el: Record<string, any>): [number, number] {
+  let nextX = x;
+  let nextY = y;
+
+  const scale = el.scale;
+  if (scale !== undefined && scale !== 1) {
+    const sx = Array.isArray(scale) ? scale[0] : scale;
+    const sy = Array.isArray(scale) ? scale[1] : scale;
+    if (typeof sx === 'number' && typeof sy === 'number') {
+      nextX *= sx;
+      nextY *= sy;
+    }
+  }
+
+  const rotation = typeof el.rotation === 'number' ? el.rotation : 0;
+  if (rotation) {
+    const [ox, oy] = Array.isArray(el.rotationOrigin) ? el.rotationOrigin : [0, 0];
+    const rad = (rotation * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const dx = nextX - ox;
+    const dy = nextY - oy;
+    nextX = ox + dx * cos - dy * sin;
+    nextY = oy + dx * sin + dy * cos;
+  }
+
+  if (Array.isArray(el.translate)) {
+    nextX += el.translate[0];
+    nextY += el.translate[1];
+  }
+
+  return [nextX, nextY];
 }
 
 /**
@@ -59,11 +261,19 @@ export function ElucimCanvas({ className, style, editorColorScheme, contentTheme
   const overlaySvgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneSvgRef = useRef<SVGSVGElement>(null);
-  const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
+  const [containerSize, setContainerSize] = useState({ width: 1920, height: 1080 });
+  const [inlineEdit, setInlineEdit] = useState<{
+    id: string;
+    field: 'content' | 'expression';
+    value: string;
+    bounds: BoundingBox;
+  } | null>(null);
+  const inlineEditRef = useRef<HTMLTextAreaElement>(null);
+  const [isCanvasHovered, setIsCanvasHovered] = useState(false);
 
   // Resolve scene dimensions
-  const width = ('width' in root ? root.width : undefined) ?? 800;
-  const height = ('height' in root ? root.height : undefined) ?? 600;
+  const width = ('width' in root ? root.width : undefined) ?? 1920;
+  const height = ('height' in root ? root.height : undefined) ?? 1080;
   const fps = ('fps' in root ? root.fps : undefined) ?? 60;
   const durationInFrames = ('durationInFrames' in root ? root.durationInFrames : undefined) ?? 120;
   const rawBackground = ('background' in root ? root.background : undefined) as string | undefined;
@@ -152,6 +362,8 @@ export function ElucimCanvas({ className, style, editorColorScheme, contentTheme
     selectedIds,
     document: state.document,
     zoom: state.viewport.zoom,
+    isPlaying: state.isPlaying,
+    isCanvasHovered,
     getDocumentJson,
     importDocument: handleImport,
   });
@@ -177,10 +389,56 @@ export function ElucimCanvas({ className, style, editorColorScheme, contentTheme
   // Collect selected element bounds for the overlay
   const selectedBounds = selectedIds
     .map(id => {
-      const bounds = measuredBounds.get(id);
+      const bounds = resolveSelectionBounds(root, measuredBounds, sceneSvgRef.current, id);
       return bounds ? { id, bounds } : null;
     })
     .filter((b): b is NonNullable<typeof b> => b !== null);
+
+  const beginInlineEdit = useCallback((id: string) => {
+    const loc = findElementById(root, id);
+    if (!loc) return false;
+    const element = loc.element as Record<string, any>;
+    const field: 'content' | 'expression' | null =
+      element.type === 'text' && typeof element.content === 'string' ? 'content'
+      : element.type === 'latex' && typeof element.expression === 'string' ? 'expression'
+      : null;
+    if (!field) return false;
+
+    const bounds = resolveSelectionBounds(root, measuredBounds, sceneSvgRef.current, id);
+    if (!bounds) return false;
+    setInlineEdit({ id, field, value: element[field] ?? '', bounds });
+    dispatch({ type: 'SELECT', ids: [id] });
+    return true;
+  }, [dispatch, measuredBounds, root]);
+
+  const commitInlineEdit = useCallback(() => {
+    if (!inlineEdit) return;
+    dispatch({ type: 'UPDATE_ELEMENT', id: inlineEdit.id, changes: { [inlineEdit.field]: inlineEdit.value } as any });
+    setInlineEdit(null);
+  }, [dispatch, inlineEdit]);
+
+  const cancelInlineEdit = useCallback(() => {
+    setInlineEdit(null);
+  }, []);
+
+  useEffect(() => {
+    if (!inlineEdit) return;
+    inlineEditRef.current?.focus();
+    inlineEditRef.current?.select();
+  }, [inlineEdit?.id]);
+
+  useEffect(() => {
+    if (inlineEdit || selectedIds.length !== 1) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'Enter' && beginInlineEdit(selectedIds[0])) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [beginInlineEdit, inlineEdit, selectedIds]);
 
   // Build hit-test targets for all elements
   const hitTargets = elementIds
@@ -211,7 +469,9 @@ export function ElucimCanvas({ className, style, editorColorScheme, contentTheme
     }
 
     const ids = editorId && !selectedIds.includes(editorId) ? [editorId] : [...selectedIds];
-    const hasSelection = ids.length > 0;
+    const realIds = ids.filter(id => id !== CANVAS_ID);
+    const idsToGroup = groupableIds(root, ids);
+    const hasSelection = realIds.length > 0;
     const singleEl = hasSelection ? children.find((c, i) => elementIds[i] === ids[0]) : undefined;
     const isGroup = singleEl?.type === 'group';
 
@@ -219,8 +479,8 @@ export function ElucimCanvas({ className, style, editorColorScheme, contentTheme
       {
         label: 'Group',
         shortcut: 'Ctrl+G',
-        disabled: ids.length < 2,
-        onClick: () => dispatch({ type: 'GROUP_ELEMENTS', ids }),
+        disabled: idsToGroup.length < 2,
+        onClick: () => dispatch({ type: 'GROUP_ELEMENTS', ids: idsToGroup }),
         separator: false,
       },
       {
@@ -362,23 +622,32 @@ export function ElucimCanvas({ className, style, editorColorScheme, contentTheme
     setContextMenu({ x: e.clientX, y: e.clientY, items });
   }, [selectedIds, children, elementIds, dispatch]);
 
+  const handleOverlayDoubleClick = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    const target = e.target as SVGElement;
+    const editorId = target.getAttribute?.('data-editor-id') ??
+      (target as Element).closest?.('[data-editor-id]')?.getAttribute('data-editor-id');
+    if (editorId && beginInlineEdit(editorId)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, [beginInlineEdit]);
+
   return (
     <div
       ref={containerRef}
       className={`elucim-editor-canvas ${className ?? ''}`}
       style={{
         position: 'absolute',
-        inset: 15,
+        inset: 0,
         overflow: 'hidden',
         cursor,
-        borderRadius: 6,
-        border: `1px solid ${v('--elucim-editor-border')}`,
-        boxShadow: `inset 0 0 0 0 transparent, 0 2px 8px rgba(0,0,0,0.25)`,
         ...style,
       }}
       onPointerDown={(e) => { handlePanStart(e); handleMarqueeStart(e); }}
       onPointerMove={(e) => { handlePanMove(e); handleMarqueeMove(e); }}
       onPointerUp={(e) => { handlePanEnd(e); handleMarqueeEnd(e); }}
+      onPointerEnter={() => setIsCanvasHovered(true)}
+      onPointerLeave={() => setIsCanvasHovered(false)}
       onContextMenu={handleContextMenu}
     >
       {/* Dot grid background */}
@@ -432,6 +701,7 @@ export function ElucimCanvas({ className, style, editorColorScheme, contentTheme
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onDoubleClick={handleOverlayDoubleClick}
         >
           {hitTargets.map(({ id, bounds }) => {
             const { rotation, rotationCenter } = bounds;
@@ -469,6 +739,42 @@ export function ElucimCanvas({ className, style, editorColorScheme, contentTheme
             />
           )}
         </svg>
+        {inlineEdit && (
+          <textarea
+            ref={inlineEditRef}
+            aria-label={inlineEdit.field === 'content' ? 'Edit text on canvas' : 'Edit LaTeX on canvas'}
+            value={inlineEdit.value}
+            onChange={e => setInlineEdit(current => current ? { ...current, value: e.target.value } : current)}
+            onBlur={commitInlineEdit}
+            onKeyDown={e => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                cancelInlineEdit();
+              } else if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                commitInlineEdit();
+              }
+            }}
+            style={{
+              position: 'absolute',
+              left: inlineEdit.bounds.x,
+              top: inlineEdit.bounds.y,
+              width: Math.max(inlineEdit.bounds.width, 120),
+              minHeight: Math.max(inlineEdit.bounds.height, 28),
+              resize: 'none',
+              boxSizing: 'border-box',
+              padding: '4px 6px',
+              border: `1px solid ${v('--elucim-editor-accent')}`,
+              borderRadius: 4,
+              outline: 'none',
+              background: `color-mix(in srgb, ${v('--elucim-editor-input-bg')} 92%, transparent)`,
+              color: v('--elucim-editor-fg'),
+              font: inlineEdit.field === 'expression' ? '14px monospace' : '14px sans-serif',
+              boxShadow: v('--elucim-editor-shadow-dropdown'),
+              zIndex: 5,
+            }}
+          />
+        )}
       </div>
 
       {/* Minimap */}

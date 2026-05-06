@@ -40,8 +40,8 @@ describe('DSL Validator', () => {
       expect(result.errors.some(e => e.path === 'version')).toBe(true);
     });
 
-    it('rejects wrong version', () => {
-      const result = validate({ version: '2.0', root: { type: 'scene', durationInFrames: 60, children: [] } });
+    it('rejects unsupported version', () => {
+      const result = validate({ version: '3.0', root: { type: 'scene', durationInFrames: 60, children: [] } });
       expect(result.valid).toBe(false);
     });
 

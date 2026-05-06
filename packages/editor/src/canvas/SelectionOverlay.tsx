@@ -33,6 +33,7 @@ export function SelectionOverlay({ selections }: SelectionOverlayProps) {
           <g key={`sel-${id}`} data-selection-id={id} transform={transform}>
             {/* Selection rectangle */}
             <rect
+              data-editor-id={id}
               x={bounds.x}
               y={bounds.y}
               width={bounds.width}
@@ -41,7 +42,7 @@ export function SelectionOverlay({ selections }: SelectionOverlayProps) {
               stroke={v('--elucim-editor-accent')}
               strokeWidth={1.5}
               strokeDasharray="4 2"
-              style={{ pointerEvents: 'none' }}
+              style={{ pointerEvents: 'all', cursor: 'default' }}
             />
 
             {/* Corner handles */}

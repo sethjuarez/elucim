@@ -113,6 +113,7 @@ export default defineConfig({
             { slug: 'dsl/validation' },
             { slug: 'dsl/builder-api' },
             { slug: 'dsl/themes' },
+            { slug: 'dsl/v2-agents' },
           ],
         },
         {

@@ -126,5 +126,5 @@ export function BarChart({
     </g>
   );
 
-  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x + width / 2, y + height / 2]);
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x + width / 2, y + height / 2], [x, y]);
 }

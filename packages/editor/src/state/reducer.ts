@@ -1,6 +1,8 @@
 import type { ElucimDocument, ElementNode } from '@elucim/dsl';
 import type { EditorState, EditorAction, AlignDirection, DistributeDirection, AnimationWrapperType } from './types';
+import { CANVAS_ID } from './types';
 import { getElementId, isUndoableAction } from './types';
+import { getElementBounds as getMeasuredElementBounds, type BoundingBox } from '../utils/bounds';
 
 const MAX_HISTORY = 50;
 
@@ -158,22 +160,124 @@ function applyMove(element: ElementNode, dx: number, dy: number): ElementNode {
 
 // ─── Resize helpers (property-based) ────────────────────────────────────────
 
-/** Scale a single element's position and size by a factor (used for group resize). */
-function scaleElement(element: ElementNode, factor: number): ElementNode {
-  const s = { ...element } as any;
-  if (typeof s.x === 'number') s.x = Math.round(s.x * factor);
-  if (typeof s.y === 'number') s.y = Math.round(s.y * factor);
-  if (typeof s.cx === 'number') s.cx = Math.round(s.cx * factor);
-  if (typeof s.cy === 'number') s.cy = Math.round(s.cy * factor);
-  if (typeof s.r === 'number') s.r = Math.max(1, Math.round(s.r * factor));
-  if (typeof s.width === 'number') s.width = Math.max(1, Math.round(s.width * factor));
-  if (typeof s.height === 'number') s.height = Math.max(1, Math.round(s.height * factor));
-  if (typeof s.x1 === 'number') { s.x1 = Math.round(s.x1 * factor); s.y1 = Math.round(s.y1 * factor); s.x2 = Math.round(s.x2 * factor); s.y2 = Math.round(s.y2 * factor); }
-  if (typeof s.fontSize === 'number') s.fontSize = Math.max(4, Math.round(s.fontSize * factor * 10) / 10);
-  if (Array.isArray(s.origin)) s.origin = s.origin.map((v: number) => Math.round(v * factor));
-  if (Array.isArray(s.points)) s.points = s.points.map(([px, py]: [number, number]) => [Math.round(px * factor), Math.round(py * factor)]);
-  if (s.type === 'group' && Array.isArray(s.children)) s.children = s.children.map((c: ElementNode) => scaleElement(c, factor));
-  return s as ElementNode;
+function roundCoord(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function scaleScalar(value: number, scale: number, min = 1): number {
+  return Math.max(min, roundCoord(value * scale));
+}
+
+function transformPoint(
+  x: number,
+  y: number,
+  oldBounds: BoundingBox,
+  newBounds: BoundingBox,
+): [number, number] {
+  const scaleX = oldBounds.width === 0 ? 1 : newBounds.width / oldBounds.width;
+  const scaleY = oldBounds.height === 0 ? 1 : newBounds.height / oldBounds.height;
+  return [
+    roundCoord(newBounds.x + (x - oldBounds.x) * scaleX),
+    roundCoord(newBounds.y + (y - oldBounds.y) * scaleY),
+  ];
+}
+
+function resizeBounds(bounds: BoundingBox, handle: string, dx: number, dy: number): BoundingBox | null {
+  let left = bounds.x;
+  let right = bounds.x + bounds.width;
+  let top = bounds.y;
+  let bottom = bounds.y + bounds.height;
+
+  if (handle.includes('w')) left += dx;
+  if (handle.includes('e')) right += dx;
+  if (handle.includes('n')) top += dy;
+  if (handle.includes('s')) bottom += dy;
+
+  if (right - left < 1 || bottom - top < 1) return null;
+  return { x: left, y: top, width: right - left, height: bottom - top };
+}
+
+function getSpatialScale(element: ElementNode): [number, number] {
+  const scale = (element as any).scale;
+  // Origin-based math primitives use `scale` as coordinate scale, not SpatialProps scale.
+  if (Array.isArray((element as any).origin)) return [1, 1];
+  if (typeof scale === 'number') return [scale || 1, scale || 1];
+  if (Array.isArray(scale)) return [scale[0] || 1, scale[1] || 1];
+  return [1, 1];
+}
+
+function withoutSpatialScale(element: ElementNode): ElementNode {
+  if (!('scale' in element) || Array.isArray((element as any).origin)) return element;
+  const clone = { ...(element as any) };
+  delete clone.scale;
+  return clone as ElementNode;
+}
+
+function transformElementForGroupResize(
+  element: ElementNode,
+  oldBounds: BoundingBox,
+  newBounds: BoundingBox,
+): ElementNode {
+  const resized = { ...element } as any;
+  const scaleX = oldBounds.width === 0 ? 1 : newBounds.width / oldBounds.width;
+  const scaleY = oldBounds.height === 0 ? 1 : newBounds.height / oldBounds.height;
+  const uniformScale = Math.max(0.1, (Math.abs(scaleX) + Math.abs(scaleY)) / 2);
+
+  if (typeof resized.x === 'number' && typeof resized.y === 'number') {
+    [resized.x, resized.y] = transformPoint(resized.x, resized.y, oldBounds, newBounds);
+  }
+  if (typeof resized.cx === 'number' && typeof resized.cy === 'number') {
+    [resized.cx, resized.cy] = transformPoint(resized.cx, resized.cy, oldBounds, newBounds);
+  }
+  if (typeof resized.x1 === 'number' && typeof resized.y1 === 'number') {
+    [resized.x1, resized.y1] = transformPoint(resized.x1, resized.y1, oldBounds, newBounds);
+  }
+  if (typeof resized.x2 === 'number' && typeof resized.y2 === 'number') {
+    [resized.x2, resized.y2] = transformPoint(resized.x2, resized.y2, oldBounds, newBounds);
+  }
+  if (typeof resized.cx1 === 'number' && typeof resized.cy1 === 'number') {
+    [resized.cx1, resized.cy1] = transformPoint(resized.cx1, resized.cy1, oldBounds, newBounds);
+  }
+  if (typeof resized.cx2 === 'number' && typeof resized.cy2 === 'number') {
+    [resized.cx2, resized.cy2] = transformPoint(resized.cx2, resized.cy2, oldBounds, newBounds);
+  }
+
+  if (typeof resized.width === 'number') resized.width = scaleScalar(resized.width, Math.abs(scaleX));
+  if (typeof resized.height === 'number') resized.height = scaleScalar(resized.height, Math.abs(scaleY));
+  if (typeof resized.r === 'number') resized.r = scaleScalar(resized.r, uniformScale);
+  if (typeof resized.nodeRadius === 'number') resized.nodeRadius = scaleScalar(resized.nodeRadius, uniformScale);
+  if (typeof resized.edgeWidth === 'number') resized.edgeWidth = scaleScalar(resized.edgeWidth, uniformScale, 0.5);
+  if (typeof resized.labelFontSize === 'number') resized.labelFontSize = scaleScalar(resized.labelFontSize, uniformScale, 4);
+  if (typeof resized.fontSize === 'number') resized.fontSize = scaleScalar(resized.fontSize, uniformScale, 4);
+  if (typeof resized.cellSize === 'number') resized.cellSize = scaleScalar(resized.cellSize, uniformScale, 10);
+  if (typeof resized.scale === 'number' && Array.isArray(resized.origin)) resized.scale = scaleScalar(resized.scale, uniformScale, 5);
+  if (typeof resized.rx === 'number') resized.rx = scaleScalar(resized.rx, uniformScale);
+  if (typeof resized.ry === 'number') resized.ry = scaleScalar(resized.ry, uniformScale);
+  if (typeof resized.strokeWidth === 'number') resized.strokeWidth = scaleScalar(resized.strokeWidth, uniformScale, 0.5);
+
+  if (Array.isArray(resized.origin) && resized.origin.length >= 2) {
+    resized.origin = transformPoint(resized.origin[0], resized.origin[1], oldBounds, newBounds);
+  }
+  if (Array.isArray(resized.points)) {
+    resized.points = resized.points.map(([px, py]: [number, number]) => transformPoint(px, py, oldBounds, newBounds));
+  }
+  if (Array.isArray(resized.nodes)) {
+    resized.nodes = resized.nodes.map((node: any) => {
+      if (typeof node.x !== 'number' || typeof node.y !== 'number') return node;
+      const [x, y] = transformPoint(node.x, node.y, oldBounds, newBounds);
+      const next = { ...node, x, y };
+      if (typeof next.radius === 'number') next.radius = scaleScalar(next.radius, uniformScale);
+      return next;
+    });
+  }
+  if (Array.isArray(resized.rotationOrigin) && resized.rotationOrigin.length >= 2) {
+    resized.rotationOrigin = transformPoint(resized.rotationOrigin[0], resized.rotationOrigin[1], oldBounds, newBounds);
+  }
+  if (resized.type === 'group' && Array.isArray(resized.children)) {
+    resized.children = resized.children.map((child: ElementNode) => transformElementForGroupResize(child, oldBounds, newBounds));
+  }
+
+  return resized as ElementNode;
 }
 
 function applyResize(element: ElementNode, handle: string, dx: number, dy: number): ElementNode {
@@ -183,18 +287,27 @@ function applyResize(element: ElementNode, handle: string, dx: number, dy: numbe
 
   // Groups — scale all children relative to group bounds
   if (resized.type === 'group' && Array.isArray(resized.children)) {
-    const affectsLeft = handle.includes('w');
-    const affectsRight = handle.includes('e');
-    const affectsTop = handle.includes('n');
-    const affectsBottom = handle.includes('s');
-    const signedDelta =
-      dx * (affectsRight ? 1 : affectsLeft ? -1 : 0) +
-      dy * (affectsBottom ? 1 : affectsTop ? -1 : 0);
-    const scaleFactor = 1 + signedDelta / 200;
-    if (scaleFactor > 0.1) {
-      resized.children = (resized.children as ElementNode[]).map(c => scaleElement(c, scaleFactor));
-    }
+    const bounds = getMeasuredElementBounds(element);
+    const nextBounds = bounds ? resizeBounds(bounds, handle, dx, dy) : null;
+    if (!bounds || !nextBounds) return resized as ElementNode;
+    resized.children = (resized.children as ElementNode[]).map(child => transformElementForGroupResize(child, bounds, nextBounds));
     return resized as ElementNode;
+  }
+
+  if (
+    resized.type === 'graph' ||
+    resized.type === 'matrix' ||
+    resized.type === 'text' ||
+    resized.type === 'latex'
+  ) {
+    const boundsElement = withoutSpatialScale(element);
+    const bounds = getMeasuredElementBounds(boundsElement);
+    const [scaleX, scaleY] = getSpatialScale(element);
+    const localDx = dx / scaleX;
+    const localDy = dy / scaleY;
+    const nextBounds = bounds ? resizeBounds(bounds, handle, localDx, localDy) : null;
+    if (!bounds || !nextBounds) return resized as ElementNode;
+    return transformElementForGroupResize(element, bounds, nextBounds);
   }
 
   const affectsLeft = handle.includes('w');
@@ -330,14 +443,15 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'SELECT_ADD':
       if (state.selectedIds.includes(action.id)) return state;
-      return { ...state, selectedIds: [...state.selectedIds, action.id] };
+      return { ...state, selectedIds: [...state.selectedIds.filter(id => id !== CANVAS_ID), action.id] };
 
     case 'SELECT_TOGGLE': {
       const idx = state.selectedIds.indexOf(action.id);
       if (idx >= 0) {
-        return { ...state, selectedIds: state.selectedIds.filter((_, i) => i !== idx) };
+        const selectedIds = state.selectedIds.filter((_, i) => i !== idx);
+        return { ...state, selectedIds };
       }
-      return { ...state, selectedIds: [...state.selectedIds, action.id] };
+      return { ...state, selectedIds: [...state.selectedIds.filter(id => id !== CANVAS_ID), action.id] };
     }
 
     case 'DESELECT_ALL':
@@ -462,24 +576,23 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     }
 
     case 'GROUP_ELEMENTS': {
-      if (action.ids.length < 2) return state;
       const doc = cloneDoc(state.document);
-      const rootChildren = getChildren(doc.root);
-      if (!rootChildren) return state;
-      // Collect elements to group (only from root level)
-      const indices: number[] = [];
-      const elements: ElementNode[] = [];
-      for (let i = 0; i < rootChildren.length; i++) {
-        const cId = (rootChildren[i] as { id?: string }).id;
-        if (cId && action.ids.includes(cId)) {
-          indices.push(i);
-          elements.push(rootChildren[i]);
-        }
-      }
-      if (elements.length < 2) return state;
+      const locations = action.ids
+        .filter(id => id !== CANVAS_ID)
+        .map(id => findElementById(doc.root, id))
+        .filter((loc): loc is ElementLocation => !!loc?.parent);
+
+      if (locations.length < 2) return state;
+      const parent = locations[0].parent;
+      if (!parent || locations.some(loc => loc.parent !== parent)) return state;
+
+      const sorted = [...locations].sort((a, b) => a.index - b.index);
+      const indices = sorted.map(loc => loc.index);
+      const elements = sorted.map(loc => loc.element);
+
       // Remove grouped elements (reverse order to preserve indices)
       for (let i = indices.length - 1; i >= 0; i--) {
-        rootChildren.splice(indices[i], 1);
+        parent.splice(indices[i], 1);
       }
       // Insert group at the position of the first element
       const groupNode: any = {
@@ -487,7 +600,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         id: `group-${Date.now().toString(36).slice(-6)}`,
         children: elements,
       };
-      rootChildren.splice(indices[0], 0, groupNode as ElementNode);
+      parent.splice(indices[0], 0, groupNode as ElementNode);
       return { ...state, document: doc, selectedIds: [groupNode.id] };
     }
 

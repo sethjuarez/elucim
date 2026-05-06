@@ -4,6 +4,7 @@ import type {
 } from '../schema/types';
 import { validateExpression } from '../math/evaluator';
 import { VALID_EASING_NAMES } from '../renderer/resolveEasing';
+import { validateV2 } from '../v2/validateV2';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,10 @@ export function validate(doc: unknown): ValidationResult {
   }
 
   const d = doc as Record<string, unknown>;
+
+  if (d.version === '2.0') {
+    return validateV2(doc);
+  }
 
   // version
   if (d.version !== '1.0') {

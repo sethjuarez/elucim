@@ -1,7 +1,14 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { describe, it, expect } from 'vitest';
+import React, { useEffect } from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { editorReducer } from '../state/reducer';
 import { createInitialState } from '../state/types';
 import type { CircleNode, RectNode } from '@elucim/dsl';
+import { EditorProvider, useEditorState } from '../state/EditorProvider';
+import { Timeline } from '../timeline/Timeline';
 
 const circle: CircleNode = { type: 'circle', id: 'c1', cx: 100, cy: 100, r: 50, fadeIn: 20, fadeOut: 10, draw: 40 };
 const rect: RectNode = { type: 'rect', id: 'r1', x: 50, y: 50, width: 100, height: 80 };
@@ -92,5 +99,89 @@ describe('selection via timeline track', () => {
     expect(state.selectedIds).toEqual(['c1']);
     state = editorReducer(state, { type: 'SELECT', ids: ['r1'] });
     expect(state.selectedIds).toEqual(['r1']);
+  });
+
+  it('expands animation wrapper tracks and selects child rows', async () => {
+    let latestSelectedIds: string[] = [];
+    const wrapped = {
+      type: 'fadeIn',
+      id: 'wrap1',
+      duration: 15,
+      children: [{ ...rect, id: 'wrapped-rect' }],
+    } as any;
+
+    function CaptureSelection() {
+      const { state } = useEditorState();
+      useEffect(() => {
+        latestSelectedIds = state.selectedIds;
+      }, [state.selectedIds]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [wrapped] },
+          },
+        },
+        React.createElement(CaptureSelection),
+        React.createElement(Timeline),
+      ),
+    );
+
+    expect(screen.queryByText('wrapped-rect')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand wrap1' }));
+    expect(await screen.findByText('wrapped-rect')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('wrapped-rect'));
+    await waitFor(() => expect(latestSelectedIds).toEqual(['wrapped-rect']));
+  });
+});
+
+describe('v2 timeline clip rows', () => {
+  it('renders v2 clip tracks and lets keyframes scrub the playhead', async () => {
+    let latestFrame = 0;
+
+    function CaptureFrame() {
+      const { state } = useEditorState();
+      useEffect(() => {
+        latestFrame = state.currentFrame;
+      }, [state.currentFrame]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(CaptureFrame),
+        React.createElement(Timeline, {
+          v2Timelines: {
+            intro: {
+              id: 'intro',
+              duration: 30,
+              tracks: [
+                { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+              ],
+            },
+          },
+        }),
+      ),
+    );
+
+    expect(screen.getByText(/intro - 30f - 1 track/)).toBeTruthy();
+    expect(screen.getByText('r1.opacity')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go to intro r1.opacity keyframe 30' }));
+    await waitFor(() => expect(latestFrame).toBe(30));
   });
 });

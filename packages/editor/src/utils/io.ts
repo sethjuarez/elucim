@@ -1,5 +1,5 @@
-import type { ElucimDocument } from '@elucim/dsl';
-import { validate } from '@elucim/dsl';
+import type { ElucimDocument, ElucimV2Document } from '@elucim/dsl';
+import { migrateV2ToV1, validate } from '@elucim/dsl';
 
 export interface ExportOptions {
   pretty?: boolean;
@@ -30,8 +30,18 @@ export function importFromJson(json: string): ImportResult {
     if (!parsed || typeof parsed !== 'object') {
       return { document: null, errors: ['JSON must be an object'] };
     }
+    if (parsed.version === '2.0') {
+      const result = validate(parsed);
+      if (!result.valid) {
+        return {
+          document: null,
+          errors: result.errors.map(e => `${e.path}: ${e.message}`),
+        };
+      }
+      return { document: migrateV2ToV1(parsed as ElucimV2Document), errors: [] };
+    }
     if (parsed.version !== '1.0') {
-      return { document: null, errors: [`Unknown version: ${parsed.version}. Expected "1.0"`] };
+      return { document: null, errors: [`Unknown version: ${parsed.version}. Expected "1.0" or "2.0"`] };
     }
     if (!parsed.root) {
       return { document: null, errors: ['Missing "root" property'] };

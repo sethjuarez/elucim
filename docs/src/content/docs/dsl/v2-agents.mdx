@@ -1,0 +1,117 @@
+---
+title: V2 agent documents
+description: Use normalized Elucim v2 documents, commands, timelines, state machines, and nudges from host apps such as CutReady.
+---
+
+Elucim v2 is the agent-friendly document layer for host apps that want generated diagrams to be easy to patch, refine, and preview. The current renderer/editor still support v1 documents, while v2 adds a normalized structure and compatibility helpers so hosts can adopt it incrementally.
+
+## Document shape
+
+V2 documents are normalized by stable element ID:
+
+```ts
+import type { ElucimV2Document } from '@elucim/dsl';
+
+const doc: ElucimV2Document = {
+  version: '2.0',
+  scene: {
+    type: 'player',
+    width: 1920,
+    height: 1080,
+    durationInFrames: 120,
+    children: ['headline', 'metric'],
+  },
+  elements: {
+    headline: {
+      id: 'headline',
+      type: 'text',
+      layout: { x: 120, y: 120 },
+      props: { type: 'text', content: 'CutReady impact' },
+    },
+    metric: {
+      id: 'metric',
+      type: 'text',
+      layout: { x: 120, y: 260 },
+      props: { type: 'text', content: '42% faster' },
+    },
+  },
+};
+```
+
+Agents should make stable IDs part of their output contract. That lets a host app ask for precise edits like “update `metric`” instead of regenerating the whole slide.
+
+## Compatibility path
+
+Use migration helpers to bridge v1 and v2:
+
+```ts
+import { migrateV1ToV2, migrateV2ToV1, validate } from '@elucim/dsl';
+
+const v2 = migrateV1ToV2(existingV1Doc);
+const result = validate(v2);
+if (!result.valid) throw new Error(result.errors.map(e => `${e.path}: ${e.message}`).join('\n'));
+
+const editorDoc = migrateV2ToV1(v2);
+```
+
+The visual editor can open v2 initial documents and JSON imports by converting them to the current v1 editor model. V2 timelines and state machines are previewed in the timeline and States panels where possible.
+
+## Command surface
+
+Host apps and agents should use `applyCommand()` for deterministic edits:
+
+```ts
+import { applyCommand } from '@elucim/dsl';
+
+const updated = applyCommand(doc, {
+  op: 'updateElement',
+  id: 'metric',
+  patch: {
+    props: { content: '51% faster' },
+    layout: { x: 160, y: 280 },
+  },
+});
+```
+
+Commands are pure: the input document is not mutated. Current commands cover adding, updating, deleting, moving, reparenting elements, animation presets, timeline upserts/previews, and metadata updates.
+
+## Agent services
+
+Use the document services to give agents compact context and repairable feedback:
+
+```ts
+import { diffDocuments, summarizeDocument, validateForAgent } from '@elucim/dsl';
+
+const summary = summarizeDocument(doc);
+const validation = validateForAgent(doc);
+const patch = diffDocuments(before, after);
+```
+
+`validateForAgent()` returns structured validation errors plus repair hints. `diffDocuments()` returns JSON-patch-shaped operations that are useful for review, logging, and host approval flows.
+
+## Timelines and state machines
+
+V2 timelines are keyframe clips over a small safe property set: `opacity`, `translate`, `scale`, `rotate`, `fill`, and `stroke`.
+
+```ts
+import { applyTimelineFrame, transitionStateMachine } from '@elucim/dsl';
+
+const previewDoc = applyTimelineFrame(doc, 'intro', 18);
+const nextState = transitionStateMachine(doc, 'deck', 'idle', 'start');
+```
+
+State machines are intentionally small: states point at timelines, events transition to other states, and `onComplete` advances after a timeline finishes. This keeps the DSL serializable and easy for agents to reason about.
+
+## Deterministic nudges
+
+Elucim does not call an LLM. Host apps such as CutReady can ask Elucim for deterministic nudges, show them to an agent or human, and apply the exact command list:
+
+```ts
+import { applyNudge, suggestDocumentNudges } from '@elucim/dsl';
+
+const nudges = suggestDocumentNudges(doc);
+const polished = applyNudge(doc, nudges[0]).document;
+```
+
+Initial nudges cover safe metadata polish, predictable root layer ordering, and a reviewable staggered intro clip. This gives agents a simple workflow: generate the 80% layout, ask Elucim for refinements, then apply or explain the chosen command-backed nudges.
+

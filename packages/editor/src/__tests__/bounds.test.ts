@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getElementBounds, mergeBounds, isPointInBounds } from '../utils/bounds';
-import type { AxesNode, CircleNode, RectNode, LineNode, PolygonNode, TextNode, FunctionPlotNode, VectorFieldNode } from '@elucim/dsl';
+import type { AxesNode, CircleNode, LaTeXNode, RectNode, LineNode, PolygonNode, TextNode, FunctionPlotNode, VectorFieldNode } from '@elucim/dsl';
 
 describe('getElementBounds', () => {
   it('computes rect bounds', () => {
@@ -11,6 +11,30 @@ describe('getElementBounds', () => {
   it('computes circle bounds', () => {
     const circle: CircleNode = { type: 'circle', cx: 100, cy: 200, r: 50 };
     expect(getElementBounds(circle)).toEqual({ x: 50, y: 150, width: 100, height: 100 });
+  });
+
+  it('includes top-left anchored scale in rect bounds', () => {
+    const rect: RectNode = { type: 'rect', x: 10, y: 20, width: 100, height: 80, scale: 2 };
+    expect(getElementBounds(rect)).toEqual({ x: 10, y: 20, width: 200, height: 160 });
+  });
+
+  it('includes top-left anchored scale in matrix bounds', () => {
+    const matrix = { type: 'matrix', x: 100, y: 120, cellSize: 48, values: [[1, 2], [3, 4]], scale: 1.5 } as any;
+    expect(getElementBounds(matrix)).toEqual({ x: 100, y: 114, width: 180, height: 156 });
+  });
+
+  it('includes top-left anchored scale in graph bounds', () => {
+    const graph = {
+      type: 'graph',
+      nodes: [
+        { id: 'a', x: 100, y: 100, radius: 10 },
+        { id: 'b', x: 200, y: 160 },
+      ],
+      edges: [{ from: 'a', to: 'b' }],
+      nodeRadius: 8,
+      scale: 2,
+    } as any;
+    expect(getElementBounds(graph)).toEqual({ x: 90, y: 90, width: 236, height: 156 });
   });
 
   it('computes line bounds', () => {
@@ -35,12 +59,21 @@ describe('getElementBounds', () => {
     expect(bounds!.height).toBeGreaterThan(0);
   });
 
+  it('computes tighter LaTeX bounds from foreignObject sizing', () => {
+    const latex: LaTeXNode = { type: 'latex', x: 200, y: 120, expression: 'x^2', fontSize: 24 };
+    const bounds = getElementBounds(latex);
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeCloseTo(170, 1);
+    expect(bounds!.width).toBeCloseTo(60, 1);
+    expect(bounds!.height).toBe(96);
+  });
+
   it('returns null for animation wrappers', () => {
     expect(getElementBounds({ type: 'fadeIn', children: [] })).toBeNull();
     expect(getElementBounds({ type: 'stagger', children: [] })).toBeNull();
   });
 
-  it('computes functionPlot bounds using yClamp for height', () => {
+  it('computes functionPlot bounds from the visible sin(x) curve', () => {
     const fp: FunctionPlotNode = {
       type: 'functionPlot',
       fn: 'sin(x)',
@@ -48,17 +81,17 @@ describe('getElementBounds', () => {
       scale: 40,
       domain: [-5, 5],
       yClamp: [-10, 10],
+      strokeWidth: 2,
     };
     const bounds = getElementBounds(fp);
     expect(bounds).not.toBeNull();
-    // width = (5 - (-5)) * 40 = 400, height = (10 - (-10)) * 40 = 800
-    expect(bounds!.width).toBe(400);
-    expect(bounds!.height).toBe(800);
-    expect(bounds!.x).toBe(200);  // ox - w/2 = 400 - 200
-    expect(bounds!.y).toBe(-100); // oy - h/2 = 300 - 400
+    expect(bounds!.x).toBe(199);
+    expect(bounds!.width).toBe(402);
+    expect(bounds!.y).toBeCloseTo(259, 0);
+    expect(bounds!.height).toBeCloseTo(82, 0);
   });
 
-  it('functionPlot with narrow yClamp gives shorter bounds', () => {
+  it('functionPlot with narrow yClamp uses the visible clipped curve', () => {
     const fp: FunctionPlotNode = {
       type: 'functionPlot',
       fn: 'x',
@@ -66,27 +99,46 @@ describe('getElementBounds', () => {
       scale: 40,
       domain: [-5, 5],
       yClamp: [-3, 3],
+      strokeWidth: 2,
     };
     const bounds = getElementBounds(fp);
     expect(bounds).not.toBeNull();
-    expect(bounds!.width).toBe(400);
-    // height = (3 - (-3)) * 40 = 240 (NOT 400 from domain fallback)
-    expect(bounds!.height).toBe(240);
+    expect(bounds!.x).toBe(279);
+    expect(bounds!.width).toBe(242);
+    expect(bounds!.height).toBe(242);
   });
 
-  it('functionPlot without yClamp falls back to domain for height', () => {
+  it('functionPlot without yClamp uses the default visible y clamp', () => {
     const fp = {
       type: 'functionPlot',
       fn: 'sin(x)',
       origin: [400, 300],
       scale: 40,
       domain: [-5, 5],
+      strokeWidth: 2,
     } as FunctionPlotNode;
     const bounds = getElementBounds(fp);
     expect(bounds).not.toBeNull();
-    // No yClamp, no range → falls back to domain: height = (5-(-5))*40 = 400
-    expect(bounds!.width).toBe(400);
-    expect(bounds!.height).toBe(400);
+    expect(bounds!.width).toBe(402);
+    expect(bounds!.height).toBeCloseTo(82, 0);
+  });
+
+  it('functionPlot x^2 bounds only include the visible parabola segment', () => {
+    const fp = {
+      type: 'functionPlot',
+      fn: 'x^2',
+      origin: [400, 300],
+      scale: 40,
+      domain: [-5, 5],
+      yClamp: [-10, 10],
+      strokeWidth: 2,
+    } as FunctionPlotNode;
+    const bounds = getElementBounds(fp);
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeCloseTo(272.5, 0);
+    expect(bounds!.width).toBeCloseTo(255, 0);
+    expect(bounds!.y).toBe(-101);
+    expect(bounds!.height).toBe(402);
   });
 
   it('computes asymmetric functionPlot bounds from math coordinates', () => {
@@ -99,10 +151,10 @@ describe('getElementBounds', () => {
       yClamp: [-2, 6],
     };
     expect(getElementBounds(fp)).toMatchObject({
-      x: 100,
-      y: 180,
-      width: 200,
-      height: 160,
+      x: 99,
+      y: 179,
+      width: 122,
+      height: 122,
     });
   });
 

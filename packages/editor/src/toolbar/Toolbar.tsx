@@ -5,6 +5,7 @@ import { getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from '.
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 import type { ElucimDocument, ElementNode } from '@elucim/dsl';
+import { importFromJson } from '../utils/io';
 
 // ─── Built-in scene themes ─────────────────────────────────────────────────
 // Each theme covers both the scene content AND the editor chrome tokens.
@@ -125,8 +126,8 @@ export function Toolbar({ className, style }: ToolbarProps) {
 
   const handleAddElement = useCallback((template: ElementTemplate) => {
     const root = state.document.root as any;
-    const cx = (root.width ?? 800) / 2;
-    const cy = (root.height ?? 600) / 2;
+    const cx = (root.width ?? 1920) / 2;
+    const cy = (root.height ?? 1080) / 2;
     const element = template.create(cx, cy);
     dispatch({ type: 'ADD_ELEMENT', element });
     dispatch({ type: 'SET_TOOL', tool: 'select' });
@@ -158,11 +159,9 @@ export function Toolbar({ className, style }: ToolbarProps) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      try {
-        const doc = JSON.parse(reader.result as string) as ElucimDocument;
-        dispatch({ type: 'SET_DOCUMENT', document: doc });
-      } catch {
-        // Silent fail — invalid JSON
+      const result = importFromJson(reader.result as string);
+      if (result.document) {
+        dispatch({ type: 'SET_DOCUMENT', document: result.document });
       }
     };
     reader.readAsText(file);

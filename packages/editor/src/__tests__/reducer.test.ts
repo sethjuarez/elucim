@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { editorReducer, findElementById, collectAllIds } from '../state/reducer';
-import { createInitialState, createDefaultDocument } from '../state/types';
+import { CANVAS_ID, createInitialState, createDefaultDocument } from '../state/types';
 import type { EditorState } from '../state/types';
-import type { ElucimDocument, CircleNode, RectNode, LineNode } from '@elucim/dsl';
+import type { ElucimDocument, CircleNode, GraphNode, MatrixNode, RectNode, LineNode, TextNode } from '@elucim/dsl';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -39,6 +39,8 @@ describe('createInitialState', () => {
     expect(state.isPlaying).toBe(false);
     expect(state.activeTool).toBe('select');
     expect(state.document.version).toBe('1.0');
+    expect((state.document.root as any).width).toBe(1920);
+    expect((state.document.root as any).height).toBe(1080);
   });
 
   it('accepts initialFrame', () => {
@@ -72,6 +74,11 @@ describe('selection actions', () => {
     expect(state.selectedIds).toEqual(['c1', 'r1']);
   });
 
+  it('SELECT_ADD replaces the canvas sentinel with the first real element', () => {
+    const state = editorReducer(stateWithElements(circle1), { type: 'SELECT_ADD', id: 'c1' });
+    expect(state.selectedIds).toEqual(['c1']);
+  });
+
   it('SELECT_ADD does not duplicate', () => {
     let state = stateWithElements(circle1);
     state = editorReducer(state, { type: 'SELECT', ids: ['c1'] });
@@ -83,7 +90,7 @@ describe('selection actions', () => {
     let state = stateWithElements(circle1, rect1);
     // starts with ['__canvas__'] — toggle c1 on
     state = editorReducer(state, { type: 'SELECT_TOGGLE', id: 'c1' });
-    expect(state.selectedIds).toContain('c1');
+    expect(state.selectedIds).toEqual(['c1']);
     // toggle c1 off
     state = editorReducer(state, { type: 'SELECT_TOGGLE', id: 'c1' });
     expect(state.selectedIds).not.toContain('c1');
@@ -136,6 +143,159 @@ describe('document mutation actions', () => {
     const root = next.document.root as any;
     expect(root.children[0].r).toBe(75);
     expect(root.children[0].fill).toBe('#ff0000');
+  });
+
+  it('GROUP_ELEMENTS groups selected root siblings with generated path IDs', () => {
+    const anonymousRect: RectNode = { type: 'rect', x: 50, y: 50, width: 100, height: 80 };
+    const anonymousCircle: CircleNode = { type: 'circle', cx: 300, cy: 200, r: 30 };
+    const state = stateWithElements(anonymousRect, anonymousCircle);
+
+    const next = editorReducer(state, {
+      type: 'GROUP_ELEMENTS',
+      ids: [CANVAS_ID, 'root.rect[0]', 'root.circle[1]'],
+    });
+
+    const root = next.document.root as any;
+    expect(root.children).toHaveLength(1);
+    expect(root.children[0].type).toBe('group');
+    expect(root.children[0].children).toEqual([anonymousRect, anonymousCircle]);
+    expect(next.selectedIds).toEqual([root.children[0].id]);
+  });
+
+  it('GROUP_ELEMENTS groups selected siblings inside the same parent', () => {
+    const group = {
+      type: 'group',
+      id: 'parent',
+      children: [
+        { type: 'rect', x: 10, y: 10, width: 20, height: 20 },
+        { type: 'circle', cx: 80, cy: 80, r: 12 },
+      ],
+    } as any;
+    const state = stateWithElements(group, rect1);
+
+    const next = editorReducer(state, {
+      type: 'GROUP_ELEMENTS',
+      ids: ['parent.rect[0]', 'parent.circle[1]'],
+    });
+
+    const parent = findElementById(next.document.root, 'parent')!.element as any;
+    expect(parent.children).toHaveLength(1);
+    expect(parent.children[0].type).toBe('group');
+    expect(parent.children[0].children.map((child: any) => child.type)).toEqual(['rect', 'circle']);
+    expect(next.selectedIds).toEqual([parent.children[0].id]);
+  });
+
+  it('RESIZE_ELEMENT resizes group children relative to group bounds', () => {
+    const hero = {
+      type: 'group',
+      id: 'hero',
+      children: [
+        { type: 'rect', id: 'hero-bg', x: 220, y: 224, width: 360, height: 152, rx: 22 },
+        { type: 'text', id: 'hero-title', x: 400, y: 284, content: 'Key idea', fontSize: 32, textAnchor: 'middle' },
+      ],
+    } as any;
+    const state = stateWithElements(hero);
+
+    const next = editorReducer(state, { type: 'RESIZE_ELEMENT', id: 'hero', handle: 'e', dx: 40, dy: 0 });
+
+    const resizedHero = findElementById(next.document.root, 'hero')!.element as any;
+    expect(resizedHero.children[0].x).toBe(220);
+    expect(resizedHero.children[0].width).toBe(400);
+    expect(resizedHero.children[1].x).toBe(420);
+    expect(resizedHero.children[1].y).toBe(284);
+  });
+
+  it('RESIZE_ELEMENT keeps west-edge group resizing anchored to the east edge', () => {
+    const hero = {
+      type: 'group',
+      id: 'hero',
+      children: [
+        { type: 'rect', id: 'hero-bg', x: 220, y: 224, width: 360, height: 152, rx: 22 },
+        { type: 'text', id: 'hero-title', x: 400, y: 284, content: 'Key idea', fontSize: 32, textAnchor: 'middle' },
+      ],
+    } as any;
+    const state = stateWithElements(hero);
+
+    const next = editorReducer(state, { type: 'RESIZE_ELEMENT', id: 'hero', handle: 'w', dx: -40, dy: 0 });
+
+    const resizedHero = findElementById(next.document.root, 'hero')!.element as any;
+    expect(resizedHero.children[0].x).toBe(180);
+    expect(resizedHero.children[0].width).toBe(400);
+    expect(resizedHero.children[1].x).toBe(380);
+    expect(resizedHero.children[1].y).toBe(284);
+  });
+
+  it('RESIZE_ELEMENT scales graph node positions and visual sizing from bounds', () => {
+    const graph: GraphNode = {
+      type: 'graph',
+      id: 'graph',
+      nodes: [
+        { id: 'a', x: 100, y: 100, radius: 10 },
+        { id: 'b', x: 200, y: 100 },
+        { id: 'c', x: 150, y: 200 },
+      ],
+      edges: [{ from: 'a', to: 'b' }],
+      nodeRadius: 8,
+      edgeWidth: 2,
+      labelFontSize: 14,
+      scale: 2,
+    };
+    const state = stateWithElements(graph);
+
+    const next = editorReducer(state, { type: 'RESIZE_ELEMENT', id: 'graph', handle: 'e', dx: 50, dy: 0 });
+
+    const resizedGraph = findElementById(next.document.root, 'graph')!.element as GraphNode;
+    expect(resizedGraph.nodes[0].x).toBeCloseTo(102.1, 1);
+    expect(resizedGraph.nodes[1].x).toBeCloseTo(223.3, 1);
+    expect(resizedGraph.nodes[2].x).toBeCloseTo(162.7, 1);
+    expect(resizedGraph.nodes.map(node => node.y)).toEqual([100, 100, 200]);
+    expect(resizedGraph.nodeRadius).toBeCloseTo(8.8, 1);
+    expect(resizedGraph.edgeWidth).toBeCloseTo(2.2, 1);
+    expect(resizedGraph.labelFontSize).toBeCloseTo(15.5, 1);
+    expect(resizedGraph.nodes[0].radius).toBeCloseTo(11.1, 1);
+    expect(resizedGraph.scale).toBe(2);
+  });
+
+  it('RESIZE_ELEMENT scales matrix position and cell size from bounds', () => {
+    const matrix: MatrixNode = {
+      type: 'matrix',
+      id: 'matrix',
+      x: 100,
+      y: 120,
+      cellSize: 48,
+      values: [
+        [1, 2],
+        [3, 4],
+      ],
+    };
+    const state = stateWithElements(matrix);
+
+    const next = editorReducer(state, { type: 'RESIZE_ELEMENT', id: 'matrix', handle: 'e', dx: 48, dy: 0 });
+
+    const resizedMatrix = findElementById(next.document.root, 'matrix')!.element as MatrixNode;
+    expect(resizedMatrix.x).toBe(100);
+    expect(resizedMatrix.y).toBe(120);
+    expect(resizedMatrix.cellSize).toBeCloseTo(57.6, 1);
+  });
+
+  it('RESIZE_ELEMENT scales text around its measured anchor bounds', () => {
+    const label: TextNode = {
+      type: 'text',
+      id: 'label',
+      x: 400,
+      y: 300,
+      content: 'Slide title',
+      fontSize: 40,
+      textAnchor: 'middle',
+    };
+    const state = stateWithElements(label);
+
+    const next = editorReducer(state, { type: 'RESIZE_ELEMENT', id: 'label', handle: 'e', dx: 120, dy: 0 });
+
+    const resizedLabel = findElementById(next.document.root, 'label')!.element as TextNode;
+    expect(resizedLabel.x).toBe(460);
+    expect(resizedLabel.y).toBe(300);
+    expect(resizedLabel.fontSize).toBeCloseTo(49.1, 1);
   });
 
   it('MOVE_ELEMENT moves circle (cx/cy)', () => {

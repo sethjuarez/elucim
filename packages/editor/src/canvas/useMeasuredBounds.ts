@@ -33,6 +33,17 @@ export function useMeasuredBounds(
       const id = elementIds[i];
       const el = elements[i] as Record<string, any>;
 
+      // FunctionPlot's SVG uses a clipPath. Browser getBBox() reports either
+      // unclipped path geometry or the clip viewport, neither of which matches
+      // the visible curve users expect to select/resize.
+      if (el.type === 'functionPlot') {
+        const functionBounds = getElementBounds(elements[i]);
+        if (functionBounds) {
+          newMap.set(id, functionBounds);
+          continue;
+        }
+      }
+
       // Try DOM measurement first
       if (svg) {
         const wrapper = svg.querySelector(`[data-measure-id="${CSS.escape(id)}"]`);
@@ -116,19 +127,60 @@ function measureElement(
       width: bbox.width,
       height: bbox.height,
     };
+    const scaledResult = applyScaleToBounds(el, result);
 
     // Attach rotation info from element props
     const rotation = el.rotation as number | undefined;
     if (rotation) {
-      result.rotation = rotation;
-      result.rotationCenter = getRotationCenter(el, bbox);
+      scaledResult.rotation = rotation;
+      scaledResult.rotationCenter = getRotationCenter(el, bbox);
     }
 
-    return result;
+    return scaledResult;
   } catch {
     // getBBox can throw if element is not rendered (display:none, etc.)
     return null;
   }
+}
+
+function applyScaleToBounds(el: Record<string, any>, bounds: BoundingBox): BoundingBox {
+  if (Array.isArray(el.origin)) return bounds;
+
+  const scale = el.scale;
+  if (scale === undefined || scale === 1) return bounds;
+  const sx = Array.isArray(scale) ? scale[0] : scale;
+  const sy = Array.isArray(scale) ? scale[1] : scale;
+  if (typeof sx !== 'number' || typeof sy !== 'number') return bounds;
+
+  const [ox, oy] = getScaleOrigin(el, bounds);
+  const corners: [number, number][] = [
+    [bounds.x, bounds.y],
+    [bounds.x + bounds.width, bounds.y],
+    [bounds.x, bounds.y + bounds.height],
+    [bounds.x + bounds.width, bounds.y + bounds.height],
+  ].map(([x, y]) => [ox + (x - ox) * sx, oy + (y - oy) * sy]);
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const [x, y] of corners) {
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+  }
+  return { ...bounds, x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+function getScaleOrigin(el: Record<string, any>, bounds: BoundingBox): [number, number] {
+  if (typeof el.cx === 'number' && typeof el.cy === 'number' && typeof el.r === 'number') {
+    return [el.cx - el.r, el.cy - el.r];
+  }
+  if (typeof el.x === 'number' && typeof el.y === 'number') {
+    return [el.x, el.y];
+  }
+  return [bounds.x, bounds.y];
 }
 
 /** Derive rotation center from element properties (matches core's withTransform defaults). */

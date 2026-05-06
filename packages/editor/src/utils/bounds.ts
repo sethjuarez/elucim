@@ -1,4 +1,4 @@
-import type { ElementNode } from '@elucim/dsl';
+import { compileExpression, type ElementNode } from '@elucim/dsl';
 
 export interface BoundingBox {
   x: number;
@@ -53,6 +53,22 @@ function estimateTextBounds(el: AnyEl): { x: number; y: number; width: number; h
   return { x: bx, y: by, width: estWidth, height: estHeight };
 }
 
+function estimateLaTeXBounds(el: AnyEl): { x: number; y: number; width: number; height: number } {
+  const fontSize = (el.fontSize as number) ?? 24;
+  const expression = typeof el.expression === 'string' ? el.expression : '';
+  const normalized = expression
+    .replace(/\\[a-zA-Z]+/g, 'xx')
+    .replace(/[{}]/g, '')
+    .replace(/[_^]/g, '')
+    .trim();
+  const estimatedWidth = Math.max(normalized.length * fontSize * 0.42, fontSize * 1.5);
+  const width = estimatedWidth + fontSize;
+  const height = fontSize * 4;
+  const align = (el.align as string) ?? 'center';
+  const offsetX = align === 'center' ? -width / 2 : align === 'right' ? -width : 0;
+  return { x: el.x + offsetX, y: el.y - fontSize * 1.5, width, height };
+}
+
 function originBasedBounds(el: AnyEl): { x: number; y: number; width: number; height: number } {
   const [ox, oy] = el.origin as [number, number];
   const s = (typeof el.scale === 'number' ? el.scale : 40);
@@ -73,6 +89,81 @@ function originBasedBounds(el: AnyEl): { x: number; y: number; width: number; he
   const maxX = Math.max(x1, x2, includeOriginAxes ? ox : x1) + pad;
   const maxY = Math.max(y1, y2, includeOriginAxes ? oy : y1) + pad;
   return { x: minX, y: minY, width: maxX - minX || 1, height: maxY - minY || 1 };
+}
+
+function addFunctionPoint(
+  points: [number, number][],
+  x: number,
+  y: number,
+  origin: [number, number],
+  scale: number,
+): void {
+  points.push([origin[0] + x * scale, origin[1] - y * scale]);
+}
+
+function addClampCrossings(
+  points: [number, number][],
+  prev: { x: number; y: number },
+  current: { x: number; y: number },
+  yClamp: [number, number],
+  origin: [number, number],
+  scale: number,
+): void {
+  for (const boundary of yClamp) {
+    const prevSide = prev.y - boundary;
+    const currentSide = current.y - boundary;
+    if (prevSide === 0 || currentSide === 0 || prevSide * currentSide > 0) continue;
+    const t = (boundary - prev.y) / (current.y - prev.y);
+    if (t < 0 || t > 1) continue;
+    addFunctionPoint(points, prev.x + (current.x - prev.x) * t, boundary, origin, scale);
+  }
+}
+
+function functionPlotBounds(el: AnyEl): { x: number; y: number; width: number; height: number } | null {
+  if (typeof el.fn !== 'string') return originBasedBounds(el);
+
+  let fn: (vars: Record<string, number>) => number;
+  try {
+    fn = compileExpression(el.fn);
+  } catch {
+    return originBasedBounds(el);
+  }
+
+  const origin: [number, number] = Array.isArray(el.origin) ? [el.origin[0], el.origin[1]] : [400, 300];
+  const scale = typeof el.scale === 'number' ? el.scale : 40;
+  const domain = Array.isArray(el.domain) ? el.domain as [number, number] : [-5, 5];
+  const yClamp: [number, number] = Array.isArray(el.yClamp) ? [el.yClamp[0], el.yClamp[1]] : [-10, 10];
+  const samples = typeof el.samples === 'number' && el.samples > 0 ? el.samples : 200;
+  const range = yClamp[1] - yClamp[0];
+  const softLimit: [number, number] = [yClamp[0] - range, yClamp[1] + range];
+  const points: [number, number][] = [];
+  let prev: { x: number; y: number } | null = null;
+
+  for (let i = 0; i <= samples; i++) {
+    const x = domain[0] + ((domain[1] - domain[0]) * i) / samples;
+    const y = fn({ x });
+    const valid = Number.isFinite(y) && y >= softLimit[0] && y <= softLimit[1];
+
+    if (!valid) {
+      prev = null;
+      continue;
+    }
+
+    if (prev) addClampCrossings(points, prev, { x, y }, yClamp, origin, scale);
+    if (y >= yClamp[0] && y <= yClamp[1]) addFunctionPoint(points, x, y, origin, scale);
+    prev = { x, y };
+  }
+
+  const bounds = boundsFromPoints(points);
+  if (!bounds) return originBasedBounds(el);
+
+  const strokePad = Math.max(0, (typeof el.strokeWidth === 'number' ? el.strokeWidth : 2) / 2);
+  return {
+    x: bounds.x - strokePad,
+    y: bounds.y - strokePad,
+    width: bounds.width + strokePad * 2,
+    height: bounds.height + strokePad * 2,
+  };
 }
 
 function matrixBounds(el: AnyEl): { x: number; y: number; width: number; height: number } {
@@ -118,6 +209,43 @@ function getRotationInfo(
   return { rotation, rotationCenter: [aabb.x + aabb.width / 2, aabb.y + aabb.height / 2] };
 }
 
+function getScaleOrigin(
+  el: AnyEl,
+  aabb: { x: number; y: number; width: number; height: number },
+): [number, number] {
+  if (hasNum(el, 'cx', 'cy', 'r')) return [el.cx - el.r, el.cy - el.r];
+  if (hasNum(el, 'x', 'y')) return [el.x, el.y];
+  if (hasNum(el, 'x1', 'y1', 'x2', 'y2')) return [aabb.x, aabb.y];
+  if (Array.isArray(el.points)) return [aabb.x, aabb.y];
+  if (Array.isArray(el.nodes)) return [aabb.x, aabb.y];
+  return [aabb.x, aabb.y];
+}
+
+function applyScaleToBounds(
+  el: AnyEl,
+  aabb: { x: number; y: number; width: number; height: number },
+): { x: number; y: number; width: number; height: number } {
+  // Origin-based math primitives use `scale` as their coordinate scale, not as
+  // the SpatialProps transform scale applied by core's withTransform helper.
+  if (Array.isArray(el.origin)) return aabb;
+
+  const scale = el.scale;
+  if (scale === undefined || scale === 1) return aabb;
+  const sx = Array.isArray(scale) ? scale[0] : scale;
+  const sy = Array.isArray(scale) ? scale[1] : scale;
+  if (typeof sx !== 'number' || typeof sy !== 'number') return aabb;
+
+  const [ox, oy] = getScaleOrigin(el, aabb);
+  const corners: [number, number][] = [
+    [aabb.x, aabb.y],
+    [aabb.x + aabb.width, aabb.y],
+    [aabb.x, aabb.y + aabb.height],
+    [aabb.x + aabb.width, aabb.y + aabb.height],
+  ].map(([x, y]) => [ox + (x - ox) * sx, oy + (y - oy) * sy]);
+
+  return boundsFromPoints(corners) ?? aabb;
+}
+
 // ─── Main bounds computation (property-based) ──────────────────────────────
 
 /**
@@ -149,31 +277,52 @@ export function getElementBounds(element: ElementNode): BoundingBox | null {
     aabb = boundsFromPoints(el.points);
   }
   // 5. Text/LaTeX at x,y (estimate from content + fontSize)
-  else if (hasNum(el, 'x', 'y') && ('content' in el || 'expression' in el)) {
+  else if (hasNum(el, 'x', 'y') && 'content' in el) {
     aabb = estimateTextBounds(el);
+  }
+  else if (hasNum(el, 'x', 'y') && 'expression' in el) {
+    aabb = estimateLaTeXBounds(el);
   }
   // 6. Graph nodes → derive bounds from vertex positions
   else if (Array.isArray(el.nodes) && el.nodes.length > 0) {
-    const pts = (el.nodes as any[])
-      .filter((n: any) => typeof n.x === 'number' && typeof n.y === 'number')
-      .map((n: any) => [n.x, n.y] as [number, number]);
-    const r = (el.nodeRadius as number) ?? 8;
+    const defaultRadius = (el.nodeRadius as number) ?? 8;
+    const labelFontSize = (el.labelFontSize as number) ?? 14;
+    const pts = (el.nodes as any[]).flatMap((n: any) => {
+      if (typeof n.x !== 'number' || typeof n.y !== 'number') return [];
+      const r = typeof n.radius === 'number' ? n.radius : defaultRadius;
+      const nodePts: [number, number][] = [
+        [n.x - r, n.y - r],
+        [n.x + r, n.y + r],
+      ];
+      if (typeof n.label === 'string' && n.label.length > 0) {
+        const labelWidth = Math.max(n.label.length * labelFontSize * 0.6, labelFontSize);
+        const labelHeight = labelFontSize * 1.2;
+        nodePts.push(
+          [n.x - labelWidth / 2, n.y - labelHeight / 2],
+          [n.x + labelWidth / 2, n.y + labelHeight / 2],
+        );
+      }
+      return nodePts;
+    });
     aabb = boundsFromPoints(pts);
-    if (aabb) { aabb.x -= r; aabb.y -= r; aabb.width += r * 2; aabb.height += r * 2; }
   }
   // 7. Matrix (values array + optional x/y/cellSize)
   else if (Array.isArray(el.values)) {
     aabb = matrixBounds(el);
   }
-  // 8. Origin-based math elements (axes, functionPlot, vector, vectorField)
+  // 8. Function plots — select the visible curve, not the whole math viewport.
+  else if (el.type === 'functionPlot' && Array.isArray(el.origin)) {
+    aabb = functionPlotBounds(el);
+  }
+  // 9. Origin-based math elements (axes, vector, vectorField)
   else if (Array.isArray(el.origin)) {
     aabb = originBasedBounds(el);
   }
-  // 9. Positioned with x/y only (fallback)
+  // 10. Positioned with x/y only (fallback)
   else if (hasNum(el, 'x', 'y')) {
     aabb = { x: el.x, y: el.y, width: 40, height: 40 };
   }
-  // 10. Group — union of children bounds
+  // 11. Group — union of children bounds
   else if (el.type === 'group' && Array.isArray(el.children) && el.children.length > 0) {
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const child of el.children) {
@@ -188,6 +337,7 @@ export function getElementBounds(element: ElementNode): BoundingBox | null {
   }
 
   if (!aabb) return null;
+  aabb = applyScaleToBounds(el, aabb);
   return { ...aabb, ...getRotationInfo(el, aabb) };
 }
 

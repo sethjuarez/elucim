@@ -19,17 +19,33 @@ interface ContextMenuProps {
 
 export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const activateItem = (item: ContextMenuItem) => {
+    if (item.disabled) return;
+    item.onClick();
+    onClose();
+  };
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const handler = (e: MouseEvent | PointerEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     };
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('mousedown', handler);
+    const close = () => onClose();
+    document.addEventListener('pointerdown', handler, true);
+    document.addEventListener('mousedown', handler, true);
+    document.addEventListener('contextmenu', handler, true);
     document.addEventListener('keydown', esc);
+    window.addEventListener('blur', close);
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', close, true);
     return () => {
-      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('pointerdown', handler, true);
+      document.removeEventListener('mousedown', handler, true);
+      document.removeEventListener('contextmenu', handler, true);
       document.removeEventListener('keydown', esc);
+      window.removeEventListener('blur', close);
+      window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', close, true);
     };
   }, [onClose]);
 
@@ -59,7 +75,13 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
           <button
             key={i}
             disabled={item.disabled}
-            onClick={() => { item.onClick(); onClose(); }}
+            onPointerDown={(e) => {
+              if (item.disabled) return;
+              e.preventDefault();
+              e.stopPropagation();
+              activateItem(item);
+            }}
+            onClick={() => activateItem(item)}
             style={{
               display: 'flex',
               justifyContent: 'space-between',

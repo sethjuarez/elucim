@@ -4,24 +4,28 @@ const EDITOR_URL = '/editor.html';
 const SCREENSHOT_DIR = 'screenshots/editor';
 
 /**
- * Comprehensive visual validation for @elucim/editor (v2 — full-bleed canvas UX).
+ * Comprehensive visual validation for @elucim/editor.
  *
  * Tests cover:
- *   1. Initial render — canvas, floating toolbar, dot grid, minimap, zoom controls
- *   2. Selection — rect, circle, line, arrow, text (floating inspector)
- *   3. Toolbar — add each element type
+ *   1. Initial render — docked hierarchy/create/states panels, canvas, timeline
+ *   2. Selection — rect, circle, line, arrow, text (right inspector)
+ *   3. Create tab — add each element type
  *   4. Inspector — editing property values
  *   5. Timeline — playback controls, seek
  *   6. Undo / Redo
  *   7. Keyboard shortcuts — delete, arrow nudge, escape
  *   8. Viewport — zoom controls, fit-to-view
- *   9. Floating panels — toolbar collapse, inspector pin
+ *   9. Persistent docks — hierarchy/create/states tabs
  */
 
 /** Helper: select an element by clicking its timeline track label */
 async function selectViaTimeline(page: Page, name: string) {
-  await page.getByText(name, { exact: true }).click();
+  await page.locator('.elucim-editor-timeline').getByText(name, { exact: true }).click();
   await page.waitForTimeout(300);
+}
+
+function timelineText(page: Page, name: string) {
+  return page.locator('.elucim-editor-timeline').getByText(name, { exact: true });
 }
 
 /** Helper: click on element's hit area on the canvas */
@@ -33,25 +37,35 @@ async function selectOnCanvas(page: Page, editorId: string) {
   await page.waitForTimeout(300);
 }
 
+async function openCreateTab(page: Page) {
+  await page.getByRole('tab', { name: 'Create' }).click();
+  await expect(page.getByText('Shapes')).toBeVisible();
+}
+
 test.describe('Editor — Initial Render', () => {
   test('full editor loads with canvas, toolbar, and timeline', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
 
-    // Floating toolbar with categories
+    await expect(page.getByRole('tab', { name: 'Hierarchy', selected: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Create' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'States' })).toBeVisible();
+
+    // Create tab with categories
+    await openCreateTab(page);
     await expect(page.getByText('Shapes')).toBeVisible();
     await expect(page.getByText('Lines')).toBeVisible();
     await expect(page.getByText('Math')).toBeVisible();
     await expect(page.getByText('Data')).toBeVisible();
 
     // All 5 elements in timeline
-    await expect(page.getByText('rect-1')).toBeVisible();
-    await expect(page.getByText('circle-1')).toBeVisible();
-    await expect(page.getByText('line-1')).toBeVisible();
-    await expect(page.getByText('arrow-1')).toBeVisible();
-    await expect(page.getByText('text-1')).toBeVisible();
+    await expect(timelineText(page, 'rect-1')).toBeVisible();
+    await expect(timelineText(page, 'circle-1')).toBeVisible();
+    await expect(timelineText(page, 'line-1')).toBeVisible();
+    await expect(timelineText(page, 'arrow-1')).toBeVisible();
+    await expect(timelineText(page, 'text-1')).toBeVisible();
 
-    // Inspector visible by default (canvas selected, inspector pinned)
+    // Inspector visible by default (canvas selected)
     await expect(page.getByText('Inspector')).toBeVisible();
 
     // Zoom controls visible
@@ -142,6 +156,7 @@ test.describe('Editor — Add Elements from Toolbar', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
   });
 
   test('add rectangle', async ({ page }) => {
@@ -207,6 +222,7 @@ test.describe('Editor — Inspector Editing', () => {
   test('edit rect position via inspector', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     await selectViaTimeline(page, 'rect-1');
 
@@ -224,6 +240,7 @@ test.describe('Editor — Inspector Editing', () => {
   test('edit circle radius via inspector', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     await selectViaTimeline(page, 'circle-1');
 
@@ -299,8 +316,9 @@ test.describe('Editor — Undo/Redo', () => {
   test('undo after adding element', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
-    await expect(page.getByText('text-1')).toBeVisible();
+    await expect(timelineText(page, 'text-1')).toBeVisible();
 
     await page.getByRole('button', { name: 'Rectangle' }).click();
     await page.waitForTimeout(200);
@@ -336,9 +354,9 @@ test.describe('Editor — Keyboard Shortcuts', () => {
     await page.waitForTimeout(200);
 
     // rect-1 should be gone from timeline
-    await expect(page.getByText('rect-1')).not.toBeVisible();
-    // Inspector should disappear (no selection)
-    await expect(page.getByText('Inspector')).not.toBeVisible();
+    await expect(timelineText(page, 'rect-1')).not.toBeVisible();
+    // Inspector dock remains visible, but the deleted element is no longer selected.
+    await expect(page.getByText('Rect — rect-1')).not.toBeVisible();
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/25-after-delete.png` });
   });
@@ -346,6 +364,7 @@ test.describe('Editor — Keyboard Shortcuts', () => {
   test('Ctrl+Z undoes', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     await page.getByRole('button', { name: 'Circle' }).click();
     await page.waitForTimeout(200);
@@ -389,8 +408,8 @@ test.describe('Editor — Keyboard Shortcuts', () => {
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
 
-    // Inspector should disappear
-    await expect(page.getByText('Inspector')).not.toBeVisible();
+    // Inspector dock remains visible after deselect, with no selected rect content.
+    await expect(page.getByText('Rect — rect-1')).not.toBeVisible();
     await page.screenshot({ path: `${SCREENSHOT_DIR}/28-escape-deselect.png` });
   });
 });
@@ -399,9 +418,6 @@ test.describe('Editor — Viewport Controls', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
-    // Collapse toolbar so it doesn't cover zoom controls
-    await page.getByTitle('Collapse panel').click();
-    await page.waitForTimeout(200);
   });
 
   test('zoom in via button', async ({ page }) => {
@@ -452,45 +468,23 @@ test.describe('Editor — Viewport Controls', () => {
   });
 });
 
-test.describe('Editor — Floating Panels', () => {
+test.describe('Editor — Persistent Docks', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
   });
 
-  test('toolbar collapse toggle', async ({ page }) => {
-    // Toolbar should be visible with categories
+  test('left dock switches between hierarchy, create, and states tabs', async ({ page }) => {
+    await expect(page.getByRole('tab', { name: 'Hierarchy', selected: true })).toBeVisible();
+    await expect(page.locator('.elucim-editor-hierarchy').getByText('rect-1')).toBeVisible();
+
+    await page.getByRole('tab', { name: 'Create' }).click();
     await expect(page.getByText('Shapes')).toBeVisible();
 
-    // Click collapse button on the toolbar panel
-    await page.getByTitle('Collapse panel').click();
-    await page.waitForTimeout(200);
+    await page.getByRole('tab', { name: 'States' }).click();
+    await expect(page.getByText('State presets are the quick v1 bridge')).toBeVisible();
 
-    // Categories should be hidden
-    await expect(page.getByText('Shapes')).not.toBeVisible();
-
-    await page.screenshot({ path: `${SCREENSHOT_DIR}/34-toolbar-collapsed.png` });
-
-    // Expand again
-    await page.getByTitle('Expand panel').click();
-    await page.waitForTimeout(200);
-
-    await expect(page.getByText('Shapes')).toBeVisible();
-    await page.screenshot({ path: `${SCREENSHOT_DIR}/35-toolbar-expanded.png` });
-  });
-
-  test('inspector pin button toggles', async ({ page }) => {
-    await selectViaTimeline(page, 'rect-1');
-
-    // Inspector should appear
-    await expect(page.getByText('Inspector')).toBeVisible();
-
-    // Click pin button
-    const pinBtn = page.getByRole('button', { name: 'Pin inspector' });
-    await pinBtn.click();
-    await page.waitForTimeout(200);
-
-    await page.screenshot({ path: `${SCREENSHOT_DIR}/36-inspector-pinned.png` });
+    await page.screenshot({ path: `${SCREENSHOT_DIR}/34-docked-tabs.png` });
   });
 });
 
@@ -498,6 +492,7 @@ test.describe('Editor — Multiple Elements Added', () => {
   test('add all element types and screenshot', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     const buttons = [
       'Rectangle', 'Circle', 'Line', 'Arrow',
@@ -583,6 +578,7 @@ test.describe('Editor — Menu Bar (Phase 4)', () => {
   test('menu bar shows Save, Open, Copy, Theme buttons', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Open' })).toBeVisible();
@@ -595,6 +591,7 @@ test.describe('Editor — Menu Bar (Phase 4)', () => {
   test('theme picker opens with built-in themes', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     await page.getByRole('button', { name: 'Theme' }).click();
     await page.waitForTimeout(300);
@@ -610,6 +607,7 @@ test.describe('Editor — Menu Bar (Phase 4)', () => {
   test('apply light theme changes canvas background', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     await page.getByRole('button', { name: 'Theme' }).click();
     await page.waitForTimeout(300);
@@ -624,6 +622,7 @@ test.describe('Editor — New Primitives (Phase 2)', () => {
   test('toolbar shows Polygon, Bézier Curve, Vector Field', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     // New primitives in toolbar
     await expect(page.getByRole('button', { name: 'Polygon' })).toBeVisible();
@@ -636,6 +635,7 @@ test.describe('Editor — New Primitives (Phase 2)', () => {
   test('add polygon via toolbar', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     await page.getByRole('button', { name: 'Polygon' }).click();
     await page.waitForTimeout(500);
@@ -650,6 +650,7 @@ test.describe('Editor — New Primitives (Phase 2)', () => {
   test('add bezier curve via toolbar', async ({ page }) => {
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     await page.getByRole('button', { name: 'Bézier Curve' }).click();
     await page.waitForTimeout(500);
@@ -729,7 +730,7 @@ test.describe('Editor — Timeline Editing (Phase 3)', () => {
     await page.waitForTimeout(500);
 
     // Double-click on rect-1 label to rename
-    const label = page.getByText('rect-1', { exact: true });
+    const label = timelineText(page, 'rect-1');
     await label.dblclick();
     await page.waitForTimeout(300);
 
@@ -745,15 +746,15 @@ test.describe('Editor — Timeline Editing (Phase 3)', () => {
     await page.waitForTimeout(500);
 
     // Should show all element tracks
-    await expect(page.getByText('rect-1')).toBeVisible();
-    await expect(page.getByText('circle-1')).toBeVisible();
-    await expect(page.getByText('line-1')).toBeVisible();
-    await expect(page.getByText('arrow-1')).toBeVisible();
-    await expect(page.getByText('text-1')).toBeVisible();
-    await expect(page.getByText('matrix-1')).toBeVisible();
-    await expect(page.getByText('barchart-1')).toBeVisible();
-    await expect(page.getByText('graph-1')).toBeVisible();
-    await expect(page.getByText('polygon-1')).toBeVisible();
+    await expect(timelineText(page, 'rect-1')).toBeVisible();
+    await expect(timelineText(page, 'circle-1')).toBeVisible();
+    await expect(timelineText(page, 'line-1')).toBeVisible();
+    await expect(timelineText(page, 'arrow-1')).toBeVisible();
+    await expect(timelineText(page, 'text-1')).toBeVisible();
+    await expect(timelineText(page, 'matrix-1')).toBeVisible();
+    await expect(timelineText(page, 'barchart-1')).toBeVisible();
+    await expect(timelineText(page, 'graph-1')).toBeVisible();
+    await expect(timelineText(page, 'polygon-1')).toBeVisible();
 
     await page.screenshot({ path: `${SCREENSHOT_DIR}/51-all-tracks.png` });
   });
@@ -829,6 +830,7 @@ test.describe('Editor — Full Feature Overview', () => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.goto(EDITOR_URL);
     await page.waitForTimeout(500);
+    await openCreateTab(page);
 
     await page.getByRole('button', { name: 'Copy' }).click();
     await page.waitForTimeout(300);

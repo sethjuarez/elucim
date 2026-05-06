@@ -32,7 +32,8 @@ export interface BaseElementProps {
  */
 export function buildTransform(
   props: SpatialProps,
-  defaultOrigin?: [number, number]
+  defaultOrigin?: [number, number],
+  defaultScaleOrigin?: [number, number]
 ): string | undefined {
   const parts: string[] = [];
   const { rotation, rotationOrigin, scale, translate } = props;
@@ -47,10 +48,17 @@ export function buildTransform(
   }
 
   if (scale !== undefined && scale !== 1) {
+    const scaleOrigin = defaultScaleOrigin;
+    if (scaleOrigin) {
+      parts.push(`translate(${scaleOrigin[0]}, ${scaleOrigin[1]})`);
+    }
     if (Array.isArray(scale)) {
       parts.push(`scale(${scale[0]}, ${scale[1]})`);
     } else {
       parts.push(`scale(${scale})`);
+    }
+    if (scaleOrigin) {
+      parts.push(`translate(${-scaleOrigin[0]}, ${-scaleOrigin[1]})`);
     }
   }
 
@@ -64,9 +72,10 @@ export function buildTransform(
 export function withTransform(
   content: React.ReactElement,
   props: SpatialProps,
-  defaultOrigin?: [number, number]
+  defaultOrigin?: [number, number],
+  defaultScaleOrigin?: [number, number]
 ): React.ReactElement {
-  const transform = buildTransform(props, defaultOrigin);
+  const transform = buildTransform(props, defaultOrigin, defaultScaleOrigin);
   if (!transform) return content;
   return <g transform={transform}>{content}</g>;
 }

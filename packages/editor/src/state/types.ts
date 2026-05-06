@@ -121,8 +121,8 @@ export function createDefaultDocument(): ElucimDocument {
     version: '1.0',
     root: {
       type: 'player',
-      width: 800,
-      height: 600,
+      width: 1920,
+      height: 1080,
       durationInFrames: 120,
       fps: 60,
       background: '#0f172a',

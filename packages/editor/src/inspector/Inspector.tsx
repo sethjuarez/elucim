@@ -24,6 +24,7 @@ export function Inspector({ className, style }: InspectorProps) {
   const { state, dispatch } = useEditorState();
   const icons = useEditorIcons();
   const { selectedIds, document } = state;
+  const inspectorRef = useRef<HTMLDivElement>(null);
 
   const isCanvasSelected = selectedIds.length === 1 && selectedIds[0] === CANVAS_ID;
 
@@ -45,11 +46,16 @@ export function Inspector({ className, style }: InspectorProps) {
     dispatch({ type: 'UPDATE_ELEMENT', id: elementId, changes: { [field]: value } as any });
   }, [dispatch, elementId]);
 
+  useEffect(() => {
+    if (inspectorRef.current) inspectorRef.current.scrollTop = 0;
+  }, [elementId, isCanvasSelected]);
+
   // Canvas inspector
   if (isCanvasSelected) {
     const root = document.root as any;
     return (
       <div
+        ref={inspectorRef}
         className={`elucim-editor-inspector ${className ?? ''}`}
         style={{ padding: 12, overflowY: 'auto', fontSize: 12, minWidth: 200, ...style }}
       >
@@ -58,8 +64,8 @@ export function Inspector({ className, style }: InspectorProps) {
         </div>
 
         <InspectorSection title="Dimensions">
-          <NumberField label="Width" value={root.width ?? 800} onChange={val => handleCanvasChange('width', val)} />
-          <NumberField label="Height" value={root.height ?? 600} onChange={val => handleCanvasChange('height', val)} />
+          <NumberField label="Width" value={root.width ?? 1920} onChange={val => handleCanvasChange('width', val)} />
+          <NumberField label="Height" value={root.height ?? 1080} onChange={val => handleCanvasChange('height', val)} />
         </InspectorSection>
 
         <InspectorSection title="Appearance">
@@ -78,6 +84,7 @@ export function Inspector({ className, style }: InspectorProps) {
     const multiSelected = selectedIds.length >= 2;
     return (
       <div
+        ref={inspectorRef}
         className={`elucim-editor-inspector ${className ?? ''}`}
         style={{
           padding: 12,
@@ -103,6 +110,7 @@ export function Inspector({ className, style }: InspectorProps) {
 
   return (
     <div
+      ref={inspectorRef}
       className={`elucim-editor-inspector ${className ?? ''}`}
       style={{
         padding: 12,
@@ -124,6 +132,9 @@ export function Inspector({ className, style }: InspectorProps) {
           />
         )}
       </div>
+
+      {/* Element-specific fields are shown first so nested child edits are easy to find. */}
+      <ElementSpecificFields element={element} onChange={handleChange} />
 
       {/* Position section */}
       <InspectorSection title="Position">
@@ -151,8 +162,6 @@ export function Inspector({ className, style }: InspectorProps) {
         </InspectorSection>
       )}
 
-      {/* Element-specific section */}
-      <ElementSpecificFields element={element} onChange={handleChange} />
     </div>
   );
 }
@@ -312,6 +321,11 @@ function InspectorActionButton({ icon, label, title, onClick }: {
 function InspectorSection({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   const icons = useEditorIcons();
+
+  useEffect(() => {
+    setOpen(true);
+  }, [title]);
+
   return (
     <div style={{ marginBottom: 8 }}>
       <button
@@ -531,8 +545,11 @@ function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: 
   // Close on outside click
   useEffect(() => {
     if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (btnRef.current && !btnRef.current.parentElement?.contains(e.target as Node)) {
+    const handler = (e: PointerEvent) => {
+      const target = e.target as Node;
+      const isButtonClick = btnRef.current?.contains(target) ?? false;
+      const isMenuClick = menuRef.current?.contains(target) ?? false;
+      if (!isButtonClick && !isMenuClick) {
         setOpen(false);
       }
     };
@@ -572,6 +589,11 @@ function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: 
         break;
       }
     }
+  };
+
+  const selectOption = (label: string) => {
+    onAdd(label);
+    setOpen(false);
   };
 
   return (
@@ -618,7 +640,12 @@ function AddFieldButton({ options, onAdd }: { options: string[]; onAdd: (label: 
               key={opt}
               role="menuitem"
               tabIndex={0}
-              onClick={() => { onAdd(opt); setOpen(false); }}
+              onPointerDown={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                selectOption(opt);
+              }}
+              onClick={() => selectOption(opt)}
               style={{
                 padding: '3px 6px',
                 fontSize: v('--elucim-editor-font-xs'),
@@ -765,7 +792,7 @@ function AnimationFields({ element, elementId, onChange }: { element: ElementNod
       {elementId && (
         <div style={{ marginTop: 6 }}>
           <SelectField
-            label="Wrap In"
+            label="Animate With"
             value=""
             options={['', ...ANIMATION_WRAPPER_OPTIONS.map(option => option.label)]}
             onChange={label => {
@@ -773,6 +800,9 @@ function AnimationFields({ element, elementId, onChange }: { element: ElementNod
               if (option) dispatch({ type: 'WRAP_IN_ANIMATION', id: elementId, wrapper: option.value });
             }}
           />
+          <div style={{ marginTop: 4, color: v('--elucim-editor-muted'), lineHeight: 1.35 }}>
+            Adds an animation wrapper around this element. Expand the wrapper in the timeline to select its child.
+          </div>
           {isAnimationWrapperElement(element) && (
             <div style={{ marginTop: 4 }}>
               <InspectorActionButton
@@ -1035,7 +1065,8 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
   }
 
   // Domain/Range (axes, functionPlot, vectorField)
-  if (Array.isArray(el.domain) || Array.isArray(el.range)) {
+  if (Array.isArray(el.domain) || Array.isArray(el.range) || el.type === 'functionPlot') {
+    const yClamp = Array.isArray(el.yClamp) ? el.yClamp : [-10, 10];
     sections.push(
       <InspectorSection key="domain" title="Domain / Range">
         {Array.isArray(el.domain) && (
@@ -1048,6 +1079,12 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
           <>
             <NumberField label="Range Min" value={el.range[0]} onChange={v => onChange('range', [v, el.range[1]])} />
             <NumberField label="Range Max" value={el.range[1]} onChange={v => onChange('range', [el.range[0], v])} />
+          </>
+        )}
+        {el.type === 'functionPlot' && (
+          <>
+            <NumberField label="Range Min" value={yClamp[0]} onChange={v => onChange('yClamp', [v, yClamp[1]])} />
+            <NumberField label="Range Max" value={yClamp[1]} onChange={v => onChange('yClamp', [yClamp[0], v])} />
           </>
         )}
       </InspectorSection>

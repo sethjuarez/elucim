@@ -112,5 +112,5 @@ export function Image({
     </g>
   );
 
-  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [cx, cy]);
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [cx, cy], [x, y]);
 }

@@ -53,5 +53,5 @@ export function Text({
     </text>
   );
 
-  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x, y]);
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x, y], [x, y]);
 }

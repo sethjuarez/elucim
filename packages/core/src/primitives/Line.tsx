@@ -53,5 +53,10 @@ export function Line({
     />
   );
 
-  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [(x1 + x2) / 2, (y1 + y2) / 2]);
+  return withTransform(
+    el,
+    { rotation, rotationOrigin, scale, translate },
+    [(x1 + x2) / 2, (y1 + y2) / 2],
+    [Math.min(x1, x2), Math.min(y1, y2)]
+  );
 }

@@ -112,6 +112,34 @@ if (!result.valid) {
 }
 ```
 
+### V2 agent documents
+
+V2 documents are a normalized, ID-addressable authoring format for agents and host apps such as CutReady. The v1 renderer/editor remains supported; v2 can be validated, migrated, patched with commands, previewed through timeline/state helpers, and converted back to v1 for the current editor/render path.
+
+```ts
+import {
+  applyCommand,
+  migrateV1ToV2,
+  migrateV2ToV1,
+  suggestDocumentNudges,
+  validateForAgent,
+} from '@elucim/dsl';
+
+const v2 = migrateV1ToV2(existingV1Doc);
+const validation = validateForAgent(v2);
+
+const changed = applyCommand(v2, {
+  op: 'updateElement',
+  id: 'headline',
+  patch: { props: { content: 'Updated headline' } },
+});
+
+const nudges = suggestDocumentNudges(changed.document);
+const editorDoc = migrateV2ToV1(changed.document);
+```
+
+The v2 surface is intentionally LLM-agnostic. Agents can generate the first 80% of a layout, then host apps can call deterministic Elucim commands, validation, summaries, diffs, timeline previews, state transitions, and nudges for controlled refinement.
+
 ### `fromYaml(input: string): ElucimDocument`
 
 Parse a YAML string into a validated `ElucimDocument`. Uses JSON-compatible schema to avoid YAML-specific type coercions (e.g., `on` stays as a string instead of becoming `true`).

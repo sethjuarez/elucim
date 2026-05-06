@@ -126,6 +126,8 @@ export function BezierCurve({
 
   const centerX = (x1 + x2) / 2;
   const centerY = (y1 + y2) / 2;
+  const controlX2 = cx2 ?? cx1;
+  const controlY2 = cy2 ?? cy1;
 
   const el = (
     <path
@@ -140,5 +142,10 @@ export function BezierCurve({
     />
   );
 
-  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [centerX, centerY]);
+  return withTransform(
+    el,
+    { rotation, rotationOrigin, scale, translate },
+    [centerX, centerY],
+    [Math.min(x1, cx1, controlX2, x2), Math.min(y1, cy1, controlY2, y2)]
+  );
 }

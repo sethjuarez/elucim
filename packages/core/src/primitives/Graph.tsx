@@ -62,8 +62,13 @@ export function Graph({
 
   const xs = nodes.map((n) => n.x);
   const ys = nodes.map((n) => n.y);
+  const lefts = nodes.map((n) => n.x - (n.radius ?? nodeRadius));
+  const tops = nodes.map((n) => n.y - (n.radius ?? nodeRadius));
   const defaultOrigin: [number, number] = nodes.length > 0
     ? [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2]
+    : [0, 0];
+  const defaultScaleOrigin: [number, number] = nodes.length > 0
+    ? [Math.min(...lefts), Math.min(...tops)]
     : [0, 0];
 
   const el = (
@@ -165,7 +170,7 @@ export function Graph({
     </g>
   );
 
-  return withTransform(el, { rotation, rotationOrigin, scale, translate }, defaultOrigin);
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, defaultOrigin, defaultScaleOrigin);
 }
 
 /** Internal arrowhead for directed edges */

@@ -58,6 +58,8 @@ export function Polygon({
   const ys = points.map(([, py]) => py);
   const centerX = (Math.min(...xs) + Math.max(...xs)) / 2;
   const centerY = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const topLeftX = Math.min(...xs);
+  const topLeftY = Math.min(...ys);
 
   const el = (
     <Element
@@ -73,5 +75,5 @@ export function Polygon({
     />
   );
 
-  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [centerX, centerY]);
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [centerX, centerY], [topLeftX, topLeftY]);
 }

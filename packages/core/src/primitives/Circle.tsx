@@ -47,5 +47,5 @@ export function Circle({
     />
   );
 
-  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [cx, cy]);
+  return withTransform(el, { rotation, rotationOrigin, scale, translate }, [cx, cy], [cx - r, cy - r]);
 }

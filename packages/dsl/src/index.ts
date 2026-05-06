@@ -44,6 +44,52 @@ export type {
   ScenePreset,
 } from './schema/types';
 
+export type {
+  ElucimV2Document,
+  ElucimV2Scene,
+  ElucimV2Element,
+  ElucimV2Metadata,
+  ElucimV2Intent,
+  ElucimV2Layout,
+  ElucimV2Timeline,
+  ElucimV2TimelineTrack,
+  ElucimV2Keyframe,
+  ElucimV2StateMachine,
+  ElucimV2State,
+  ElucimV2Transition,
+} from './v2/types';
+export { migrateV1ToV2, migrateV2ToV1, normalizeToV2, toRenderableV1, type NormalizeToV2Result } from './v2/migrate';
+export { validateV2 } from './v2/validateV2';
+export { applyCommand, type ElucimV2Command, type ElucimV2CommandResult } from './v2/commands';
+export {
+  summarizeDocument,
+  validateForAgent,
+  diffDocuments,
+  type ElucimV2DocumentSummary,
+  type ElucimV2ElementSummary,
+  type ElucimV2RepairHint,
+  type ElucimV2AgentValidationResult,
+  type JsonPatchOperation,
+} from './v2/services';
+export {
+  evaluateTimeline,
+  applyTimelineFrame,
+  type ElucimV2TimelineFrame,
+  type ElucimV2TimelinePatch,
+} from './v2/timeline';
+export {
+  getInitialStateSnapshot,
+  transitionStateMachine,
+  type ElucimV2StateSnapshot,
+  type ElucimV2StateTransitionResult,
+} from './v2/stateMachine';
+export {
+  suggestDocumentNudges,
+  applyNudge,
+  type ElucimV2Nudge,
+  type ElucimV2NudgeResult,
+} from './v2/nudges';
+
 // Math expression evaluator
 export {
   compileExpression,

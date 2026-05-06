@@ -400,6 +400,7 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
       origin: [cx, cy],
       scale: 40,
       domain: [-5, 5],
+      yClamp: [-10, 10],
       color: '$accent',
       strokeWidth: 2,
     } satisfies FunctionPlotNode),

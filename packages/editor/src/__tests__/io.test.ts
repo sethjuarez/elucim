@@ -62,6 +62,26 @@ describe('importFromJson', () => {
     expect(result.errors[0]).toContain('Missing "root"');
   });
 
+  it('imports v2 documents through the v1 editor compatibility adapter', () => {
+    const result = importFromJson(JSON.stringify({
+      version: '2.0',
+      scene: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: ['title'] },
+      elements: {
+        title: {
+          id: 'title',
+          type: 'text',
+          layout: { x: 100, y: 120 },
+          props: { type: 'text', content: 'Hello', x: 100, y: 120 },
+        },
+      },
+    }));
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.document?.version).toBe('1.0');
+    expect(result.document?.root.type).toBe('player');
+    expect((result.document?.root as any).children[0]).toMatchObject({ type: 'text', id: 'title', content: 'Hello' });
+  });
+
   it('returns error for non-object', () => {
     const result = importFromJson('"hello"');
     expect(result.errors[0]).toContain('must be an object');

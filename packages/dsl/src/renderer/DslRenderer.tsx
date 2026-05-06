@@ -1,6 +1,8 @@
 import React, { forwardRef, useRef, useImperativeHandle, useSyncExternalStore } from 'react';
 import { validate } from '../validator/validate';
 import type { ElucimDocument } from '../schema/types';
+import type { ElucimV2Document } from '../v2/types';
+import { toRenderableV1 } from '../v2/migrate';
 import { renderRoot } from './renderElements';
 import {
   type ElucimTheme,
@@ -33,7 +35,7 @@ export interface DslRendererRef {
 }
 
 export interface DslRendererProps {
-  dsl: ElucimDocument;
+  dsl: ElucimDocument | ElucimV2Document;
   className?: string;
   style?: React.CSSProperties;
   /**
@@ -229,9 +231,10 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
       : themeWithCompatibilityAliases(theme),
   ) as React.CSSProperties;
 
-  const posterOverrides = poster !== undefined ? resolvePoster(poster, dsl) : undefined;
+  const renderableDsl = toRenderableV1(dsl);
+  const posterOverrides = poster !== undefined ? resolvePoster(poster, renderableDsl) : undefined;
 
-  const content = renderRoot(dsl.root, {
+  const content = renderRoot(renderableDsl.root, {
     frame: posterOverrides?.frame,
     playerRef,
     colorScheme: resolvedColorScheme,

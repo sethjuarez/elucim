@@ -3,6 +3,7 @@ import { useEditorState } from '../state/EditorProvider';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 import type { ElucimDocument } from '@elucim/dsl';
+import { importFromJson } from '../utils/io';
 
 const SEMANTIC_TOKENS = [
   'foreground', 'background', 'title', 'subtitle', 'accent', 'muted', 'surface',
@@ -81,11 +82,9 @@ export function EditorMenuBar() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      try {
-        const doc = JSON.parse(reader.result as string) as ElucimDocument;
-        dispatch({ type: 'SET_DOCUMENT', document: doc });
-      } catch {
-        // Silent fail — invalid JSON
+      const result = importFromJson(reader.result as string);
+      if (result.document) {
+        dispatch({ type: 'SET_DOCUMENT', document: result.document });
       }
     };
     reader.readAsText(file);
