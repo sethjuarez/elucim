@@ -702,7 +702,7 @@ function TimelineClipRows({ clips, durationInFrames, onKeyframeClick, onTimeline
             ...track,
             keyframes: [
               ...track.keyframes,
-              { frame: middleFrame, value: track.keyframes.at(-1)?.value ?? 1 },
+              { frame: middleFrame, value: track.keyframes[track.keyframes.length - 1]?.value ?? 1 },
             ].sort((a, b) => a.frame - b.frame),
           }
         : track),
