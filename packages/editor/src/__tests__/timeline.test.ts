@@ -184,4 +184,61 @@ describe('v2 timeline clip rows', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Go to intro r1.opacity keyframe 30' }));
     await waitFor(() => expect(latestFrame).toBe(30));
   });
+
+  it('adds and edits simple v2 timeline clips', async () => {
+    let latestTimelines: any;
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(Timeline, {
+          v2Timelines: {},
+          onV2TimelinesChange: timelines => {
+            latestTimelines = timelines;
+          },
+        }),
+      ),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add v2 intro clip' }));
+    await waitFor(() => expect(latestTimelines?.['auto-intro']).toBeTruthy());
+
+    latestTimelines = {
+      intro: {
+        id: 'intro',
+        duration: 30,
+        tracks: [
+          { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+        ],
+      },
+    };
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(Timeline, {
+          v2Timelines: latestTimelines,
+          onV2TimelinesChange: timelines => {
+            latestTimelines = timelines;
+          },
+        }),
+      ),
+    );
+
+    fireEvent.change(screen.getByLabelText('V2 timeline intro duration'), { target: { value: '40' } });
+    await waitFor(() => expect(latestTimelines.intro.duration).toBe(40));
+    fireEvent.change(screen.getByLabelText('V2 intro r1.opacity keyframe 2 value'), { target: { value: '0.75' } });
+    await waitFor(() => expect(latestTimelines.intro.tracks[0].keyframes[1].value).toBe(0.75));
+  });
 });

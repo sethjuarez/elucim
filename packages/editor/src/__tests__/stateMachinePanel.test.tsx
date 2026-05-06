@@ -55,11 +55,11 @@ describe('StateMachinePanel', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'States' }));
 
     expect(screen.getByLabelText('State machine')).toBeTruthy();
-    expect(screen.getByText('idle')).toBeTruthy();
+    expect(screen.getAllByText('idle').length).toBeGreaterThan(0);
     expect(screen.getByText('Timeline: idle')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'start' }));
-    expect(screen.getByText('intro')).toBeTruthy();
+    expect(screen.getAllByText('intro').length).toBeGreaterThan(0);
     expect(screen.getByText('Timeline: intro')).toBeTruthy();
   });
 

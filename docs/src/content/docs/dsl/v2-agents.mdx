@@ -42,19 +42,19 @@ Agents should make stable IDs part of their output contract. That lets a host ap
 
 ## Compatibility path
 
-Use migration helpers to bridge v1 and v2:
+Use normalization and renderability helpers to bridge legacy, v1, and v2 documents:
 
 ```ts
-import { migrateV1ToV2, migrateV2ToV1, validate } from '@elucim/dsl';
+import { normalizeToV2, toRenderableV1, validateForAgent } from '@elucim/dsl';
 
-const v2 = migrateV1ToV2(existingV1Doc);
-const result = validate(v2);
-if (!result.valid) throw new Error(result.errors.map(e => `${e.path}: ${e.message}`).join('\n'));
+const normalized = normalizeToV2(inputDoc);
+const validation = validateForAgent(normalized.document);
+if (!validation.valid) throw new Error(validation.errors.map(e => `${e.path}: ${e.message}`).join('\n'));
 
-const editorDoc = migrateV2ToV1(v2);
+const renderable = toRenderableV1(normalized.document);
 ```
 
-The visual editor can open v2 initial documents and JSON imports by converting them to the current v1 editor model. V2 timelines and state machines are previewed in the timeline and States panels where possible.
+The visual editor can open v2 initial documents and JSON imports by converting them to the current v1 editor model. When initialized with v2, use `onV2DocumentChange` to persist a v2-compatible result and `onV2CompatibilityWarnings` to surface rename, deletion, or pruning warnings in the host app. The editor preserves v2 metadata, element intent, timelines, and state machines where possible, and now exposes basic v2 timeline, state-machine, metadata, intent, and nudge review controls.
 
 ## Command surface
 

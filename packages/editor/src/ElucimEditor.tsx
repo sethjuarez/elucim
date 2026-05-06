@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { ElucimDocument, ElucimV2Document, ElucimV2StateMachine, ElucimV2Timeline } from '@elucim/dsl';
-import { getInitialStateSnapshot, migrateV1ToV2, migrateV2ToV1, transitionStateMachine, validate } from '@elucim/dsl';
+import type { ElucimDocument, ElucimV2Document, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2Transition } from '@elucim/dsl';
+import { applyNudge, getInitialStateSnapshot, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, transitionStateMachine, validate, validateV2 } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider } from './state/EditorProvider';
@@ -38,6 +38,8 @@ export interface ElucimEditorProps {
   onDocumentChange?: (document: ElucimDocument) => void;
   /** Called with a v2-compatible document when the editor was initialized with v2 input. */
   onV2DocumentChange?: (document: ElucimV2Document, details: ElucimV2EditorChangeDetails) => void;
+  /** Called when the v2 compatibility bridge has warnings host apps may want to display. */
+  onV2CompatibilityWarnings?: (warnings: string[]) => void;
   /**
    * Image picker callback.  When provided, the Inspector shows a "…" browse
    * button next to image `src` fields.  Return `null` if the user cancels.
@@ -64,16 +66,19 @@ export interface ElucimV2EditorChangeDetails {
 function DocumentBridge({
   onChange,
   onV2Change,
+  onV2Warnings,
   v2Document,
 }: {
   onChange?: (doc: ElucimDocument) => void;
   onV2Change?: (doc: ElucimV2Document, details: ElucimV2EditorChangeDetails) => void;
+  onV2Warnings?: (warnings: string[]) => void;
   v2Document?: ElucimV2Document;
 }) {
   const doc = useEditorDocument();
   const cbRef = useRef(onChange);
   const v2CbRef = useRef(onV2Change);
   const previousDocRef = useRef(doc);
+  const previousWarningsRef = useRef('');
   cbRef.current = onChange;
   v2CbRef.current = onV2Change;
   const isFirst = useRef(true);
@@ -89,8 +94,13 @@ function DocumentBridge({
         changedFormat: docChanged,
         warnings: result.warnings,
       });
+      const warningKey = result.warnings.join('\n');
+      if (warningKey !== previousWarningsRef.current) {
+        previousWarningsRef.current = warningKey;
+        onV2Warnings?.(result.warnings);
+      }
     }
-  }, [doc, v2Document]);
+  }, [doc, onV2Warnings, v2Document]);
 
   return null;
 }
@@ -108,7 +118,7 @@ function normalizeInitialDocument(document: ElucimDocument | ElucimV2Document | 
  * A visual editor for creating and editing Elucim animated scenes.
  * Persistent shell with hierarchy, stage, inspector, and timeline.
  */
-export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange, onV2DocumentChange, onBrowseImage, imageResolver }: ElucimEditorProps) {
+export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange, onV2DocumentChange, onV2CompatibilityWarnings, onBrowseImage, imageResolver }: ElucimEditorProps) {
   const normalizedInitialDocument = useMemo(() => normalizeInitialDocument(initialDocument), [initialDocument]);
   const initialV2Document = initialDocument?.version === '2.0' ? initialDocument : undefined;
   const [v2Document, setV2Document] = useState<ElucimV2Document | undefined>(initialV2Document);
@@ -123,7 +133,7 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
   let inner = (
     <EditorErrorBoundary>
       <EditorProvider initialDocument={normalizedInitialDocument} initialFrame={resolvedFrame}>
-        <DocumentBridge onChange={onDocumentChange} onV2Change={onV2DocumentChange} v2Document={v2Document} />
+        <DocumentBridge onChange={onDocumentChange} onV2Change={onV2DocumentChange} onV2Warnings={onV2CompatibilityWarnings} v2Document={v2Document} />
         <ElucimEditorLayout theme={theme} editorTheme={editorTheme} className={className} style={style} v2Document={v2Document} onV2DocumentChange={setV2Document} />
       </EditorProvider>
     </EditorErrorBoundary>
@@ -141,8 +151,10 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
 
 function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document): { document: ElucimV2Document; warnings: string[] } {
   const migrated = migrateV1ToV2(doc);
+  const idMap = mapSourceIdsToMigratedIds(sourceV2, migrated);
+  const reverseIdMap = new Map([...idMap.entries()].map(([sourceId, migratedId]) => [migratedId, sourceId]));
   for (const [id, element] of Object.entries(migrated.elements)) {
-    const sourceElement = sourceV2.elements[id];
+    const sourceElement = sourceV2.elements[reverseIdMap.get(id) ?? id];
     if (sourceElement) {
       migrated.elements[id] = {
         ...element,
@@ -153,9 +165,19 @@ function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document)
   }
   const elementIds = new Set(Object.keys(migrated.elements));
   const warnings: string[] = [];
+  for (const sourceId of Object.keys(sourceV2.elements)) {
+    const mappedId = idMap.get(sourceId);
+    if (!mappedId) {
+      warnings.push(`Element "${sourceId}" is no longer present in editor output; related v2 references may be pruned.`);
+    } else if (mappedId !== sourceId) {
+      warnings.push(`Element "${sourceId}" was renamed to "${mappedId}"; v2 timeline references were updated.`);
+    }
+  }
   const timelines: Record<string, ElucimV2Timeline> = {};
   for (const [id, timeline] of Object.entries(sourceV2.timelines ?? {})) {
-    const tracks = timeline.tracks.filter(track => elementIds.has(track.target));
+    const tracks = timeline.tracks
+      .map(track => ({ ...track, target: idMap.get(track.target) ?? track.target }))
+      .filter(track => elementIds.has(track.target));
     if (tracks.length < timeline.tracks.length) {
       warnings.push(`Timeline "${id}" has ${timeline.tracks.length - tracks.length} track(s) targeting missing elements and will be omitted from v2 output.`);
     }
@@ -176,15 +198,38 @@ function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document)
       ),
     };
   }
-  return {
-    document: {
+  const document = {
     ...migrated,
     metadata: { ...migrated.metadata, ...sourceV2.metadata },
     ...(Object.keys(timelines).length > 0 ? { timelines } : {}),
     ...(Object.keys(stateMachines).length > 0 ? { stateMachines } : {}),
-    },
-    warnings,
   };
+  const validation = validateV2(document);
+  for (const error of validation.errors) {
+    warnings.push(`V2 output ${error.severity}: ${error.path}: ${error.message}`);
+  }
+  return { document, warnings };
+}
+
+function mapSourceIdsToMigratedIds(sourceV2: ElucimV2Document, migrated: ElucimV2Document): Map<string, string> {
+  const idMap = new Map<string, string>();
+  const visit = (sourceIds: string[], migratedIds: string[]) => {
+    const count = Math.min(sourceIds.length, migratedIds.length);
+    for (let index = 0; index < count; index += 1) {
+      const sourceId = sourceIds[index];
+      const migratedId = migratedIds[index];
+      const sourceElement = sourceV2.elements[sourceId];
+      const migratedElement = migrated.elements[migratedId];
+      if (!sourceElement || !migratedElement) continue;
+      idMap.set(sourceId, migratedId);
+      visit(sourceElement.children ?? [], migratedElement.children ?? []);
+    }
+  };
+  visit(sourceV2.scene.children, migrated.scene.children);
+  for (const id of Object.keys(sourceV2.elements)) {
+    if (!idMap.has(id) && migrated.elements[id]) idMap.set(id, id);
+  }
+  return idMap;
 }
 
 export interface ElucimEditorLayoutProps {
@@ -337,7 +382,11 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
           background: v('--elucim-editor-surface'),
         }}
       >
-        <Timeline style={{ height: '100%', borderTop: 'none' }} v2Timelines={v2Document?.timelines} />
+        <Timeline
+          style={{ height: '100%', borderTop: 'none' }}
+          v2Timelines={v2Document?.timelines}
+          onV2TimelinesChange={v2Document && onV2DocumentChange ? timelines => onV2DocumentChange({ ...v2Document, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
+        />
       </div>
     </div>
   );
@@ -411,16 +460,19 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
   const selectedId = state.selectedIds.length === 1 && state.selectedIds[0] !== CANVAS_ID ? state.selectedIds[0] : null;
   const selected = selectedId ? findElementById(state.document.root, selectedId)?.element : null;
   const selectedLabel = selectedId && selected ? (('id' in selected && selected.id) ? selected.id : selectedId) : null;
-  const selectedV2Element = selectedId && v2Document ? v2Document.elements[selectedId] : undefined;
   const v2Compatibility = useMemo(() => v2Document ? restoreV2FromEditorDoc(state.document, v2Document) : undefined, [state.document, v2Document]);
-  const machineIds = Object.keys(v2Document?.stateMachines ?? {});
+  const currentV2Document = v2Compatibility?.document ?? v2Document;
+  const selectedV2Element = selectedId && currentV2Document ? currentV2Document.elements[selectedId] : undefined;
+  const machineIds = Object.keys(currentV2Document?.stateMachines ?? {});
   const [activeMachineId, setActiveMachineId] = useState(machineIds[0] ?? '');
   const [activeStateId, setActiveStateId] = useState('');
-  const activeMachine = activeMachineId ? v2Document?.stateMachines?.[activeMachineId] : undefined;
-  const snapshot = v2Document && activeMachineId
+  const activeMachine = activeMachineId ? currentV2Document?.stateMachines?.[activeMachineId] : undefined;
+  const activeState = activeMachine && activeStateId ? activeMachine.states[activeStateId] : undefined;
+  const nudgeCandidates = useMemo(() => currentV2Document ? suggestDocumentNudges(currentV2Document) : [], [currentV2Document]);
+  const snapshot = currentV2Document && activeMachineId
     ? activeStateId
-      ? { ...getInitialStateSnapshot(v2Document, activeMachineId), ...transitionStateMachine(v2Document, activeMachineId, activeStateId, '__noop__') }
-      : getInitialStateSnapshot(v2Document, activeMachineId)
+      ? { ...getInitialStateSnapshot(currentV2Document, activeMachineId), ...transitionStateMachine(currentV2Document, activeMachineId, activeStateId, '__noop__') }
+      : getInitialStateSnapshot(currentV2Document, activeMachineId)
     : undefined;
 
   useEffect(() => {
@@ -437,8 +489,9 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
   };
 
   const updateV2Document = (updater: (document: ElucimV2Document) => ElucimV2Document) => {
-    if (!v2Document) return;
-    onV2DocumentChange?.(updater(v2Document));
+    const baseDocument = v2Compatibility?.document ?? v2Document;
+    if (!baseDocument) return;
+    onV2DocumentChange?.(updater(baseDocument));
   };
 
   const updateMetadata = (changes: NonNullable<ElucimV2Document['metadata']>) => {
@@ -449,17 +502,57 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
   };
 
   const updateSelectedIntent = (changes: NonNullable<NonNullable<ElucimV2Document['elements'][string]>['intent']>) => {
-    if (!selectedId || !selectedV2Element) return;
+    if (!selectedId) return;
     updateV2Document(document => ({
       ...document,
       elements: {
         ...document.elements,
         [selectedId]: {
-          ...selectedV2Element,
-          intent: { ...selectedV2Element.intent, ...changes },
+          ...document.elements[selectedId],
+          intent: { ...document.elements[selectedId]?.intent, ...changes },
         },
       },
     }));
+  };
+
+  const updateMachineState = (changes: Partial<NonNullable<typeof activeState>>) => {
+    if (!activeMachineId || !activeStateId) return;
+    updateV2Document(document => {
+      const machine = document.stateMachines?.[activeMachineId];
+      if (!machine) return document;
+      return {
+        ...document,
+        stateMachines: {
+          ...document.stateMachines,
+          [activeMachineId]: {
+            ...machine,
+            states: {
+              ...machine.states,
+              [activeStateId]: { ...machine.states[activeStateId], ...changes },
+            },
+          },
+        },
+      };
+    });
+  };
+
+  const updateTransition = (eventName: string, transition: ElucimV2Transition) => {
+    if (!activeState) return;
+    updateMachineState({ on: { ...activeState.on, [eventName]: transition } });
+  };
+
+  const deleteTransition = (eventName: string) => {
+    if (!activeState?.on) return;
+    const next = { ...activeState.on };
+    delete next[eventName];
+    updateMachineState({ on: next });
+  };
+
+  const applyEditorNudge = (nudgeId: string) => {
+    const baseDocument = v2Compatibility?.document ?? v2Document;
+    const nudge = nudgeCandidates.find(candidate => candidate.id === nudgeId);
+    if (!baseDocument || !nudge) return;
+    onV2DocumentChange?.(applyNudge(baseDocument, nudge).document);
   };
 
   return (
@@ -478,7 +571,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
             value={activeMachineId}
             onChange={event => {
               setActiveMachineId(event.target.value);
-              setActiveStateId(v2Document.stateMachines?.[event.target.value]?.initial ?? '');
+              setActiveStateId(currentV2Document?.stateMachines?.[event.target.value]?.initial ?? '');
             }}
             style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
           >
@@ -490,6 +583,71 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
               Timeline: {snapshot.timelineId ?? 'none'}{snapshot.onComplete ? `, completes -> ${snapshot.onComplete}` : ''}
             </div>
           </div>
+          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+            Initial state
+            <select
+              aria-label="V2 initial state"
+              value={activeMachine.initial}
+              onChange={event => updateV2Document(document => {
+                const machine = document.stateMachines?.[activeMachineId];
+                if (!machine) return document;
+                return { ...document, stateMachines: { ...document.stateMachines, [activeMachineId]: { ...machine, initial: event.target.value } } };
+              })}
+              style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
+            >
+              {Object.keys(activeMachine.states).map(id => <option key={id} value={id}>{id}</option>)}
+            </select>
+          </label>
+          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+            Active state timeline
+            <select
+              aria-label="V2 active state timeline"
+              value={activeState?.timeline ?? ''}
+              onChange={event => updateMachineState({ timeline: event.target.value || undefined })}
+              style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
+            >
+              <option value="">none</option>
+              {Object.keys(currentV2Document?.timelines ?? {}).map(id => <option key={id} value={id}>{id}</option>)}
+            </select>
+          </label>
+          {Object.entries(activeState?.on ?? {}).map(([eventName, transition]) => {
+            const normalized = typeof transition === 'string' ? { target: transition } : transition;
+            return (
+              <div key={eventName} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 4, alignItems: 'end' }}>
+                <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+                  {eventName} target
+                  <select
+                    aria-label={`V2 transition ${eventName} target`}
+                    value={normalized.target}
+                    onChange={event => updateTransition(eventName, { ...normalized, target: event.target.value })}
+                    style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
+                  >
+                    {Object.keys(activeMachine.states).map(id => <option key={id} value={id}>{id}</option>)}
+                  </select>
+                </label>
+                <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+                  Timeline
+                  <select
+                    aria-label={`V2 transition ${eventName} timeline`}
+                    value={normalized.timeline ?? ''}
+                    onChange={event => updateTransition(eventName, { ...normalized, timeline: event.target.value || undefined })}
+                    style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
+                  >
+                    <option value="">none</option>
+                    {Object.keys(currentV2Document?.timelines ?? {}).map(id => <option key={id} value={id}>{id}</option>)}
+                  </select>
+                </label>
+                <button type="button" aria-label={`Remove v2 transition ${eventName}`} onClick={() => deleteTransition(eventName)} style={{ height: 26, border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer' }}>Remove</button>
+              </div>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => updateTransition('next', { target: Object.keys(activeMachine.states).find(id => id !== activeStateId) ?? (activeStateId || activeMachine.initial) })}
+            style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: '4px 6px', background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', textAlign: 'left' }}
+          >
+            Add next transition
+          </button>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {snapshot.events.length === 0 ? (
               <span style={{ color: v('--elucim-editor-text-muted') }}>No outgoing events</span>
@@ -498,7 +656,8 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
                 key={event}
                 type="button"
                 onClick={() => {
-                  const next = transitionStateMachine(v2Document, activeMachineId, activeStateId || activeMachine.initial, event);
+                  if (!currentV2Document) return;
+                  const next = transitionStateMachine(currentV2Document, activeMachineId, activeStateId || activeMachine.initial, event);
                   setActiveStateId(next.stateId);
                   dispatch({ type: 'SET_FRAME', frame: 0 });
                 }}
@@ -539,6 +698,55 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
               style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
             />
           </label>
+          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+            Generated/source
+            <input
+              aria-label="V2 generated by"
+              value={v2Document.metadata?.generatedBy ?? ''}
+              onChange={event => updateMetadata({ generatedBy: event.target.value })}
+              placeholder="Designer, user, agent name"
+              style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
+            />
+          </label>
+          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+            Notes
+            <textarea
+              aria-label="V2 document notes"
+              value={(v2Document.metadata?.notes ?? []).join('\n')}
+              onChange={event => updateMetadata({ notes: event.target.value.split('\n').map(note => note.trim()).filter(Boolean) })}
+              placeholder="One note per line"
+              rows={3}
+              style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4, resize: 'vertical' }}
+            />
+          </label>
+        </div>
+      )}
+
+      {v2Document && nudgeCandidates.length > 0 && (
+        <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+            Polish suggestions
+          </div>
+          {nudgeCandidates.map(nudge => (
+            <div key={nudge.id} style={{ display: 'grid', gap: 4, padding: 6, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 5 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <strong style={{ color: v('--elucim-editor-fg') }}>{nudge.title}</strong>
+                <span style={{ color: nudge.confidence === 'safe' ? v('--elucim-editor-success') : v('--elucim-editor-warning') }}>{nudge.confidence}</span>
+              </div>
+              <div style={{ color: v('--elucim-editor-text-secondary'), lineHeight: 1.35 }}>{nudge.description}</div>
+              <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10 }}>
+                {nudge.commands.map(command => command.op).join(', ')}
+              </div>
+              <button
+                type="button"
+                aria-label={`Apply v2 nudge ${nudge.title}`}
+                onClick={() => applyEditorNudge(nudge.id)}
+                style={{ border: `1px solid ${nudge.confidence === 'safe' ? v('--elucim-editor-success') : v('--elucim-editor-warning')}`, borderRadius: 4, padding: '4px 6px', background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', textAlign: 'left' }}
+              >
+                Apply {nudge.confidence === 'safe' ? 'safe nudge' : 'review nudge'}
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -580,6 +788,27 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
               onChange={event => updateSelectedIntent({ generated: event.target.checked })}
             />
             Generated by agent
+          </label>
+          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+            Description
+            <textarea
+              aria-label="V2 selected description"
+              value={selectedV2Element.intent?.description ?? ''}
+              onChange={event => updateSelectedIntent({ description: event.target.value })}
+              rows={2}
+              style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4, resize: 'vertical' }}
+            />
+          </label>
+          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+            Hints
+            <textarea
+              aria-label="V2 selected hints"
+              value={(selectedV2Element.intent?.hints ?? []).join('\n')}
+              onChange={event => updateSelectedIntent({ hints: event.target.value.split('\n').map(hint => hint.trim()).filter(Boolean) })}
+              placeholder="One hint per line"
+              rows={3}
+              style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4, resize: 'vertical' }}
+            />
           </label>
         </div>
       )}
