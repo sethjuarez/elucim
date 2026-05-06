@@ -218,6 +218,48 @@ describe('v2 timeline clip rows', () => {
         ],
       },
     };
+    const renderEditableTimeline = () => React.createElement(
+      EditorProvider,
+      {
+        initialDocument: {
+          version: '1.0',
+          root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+        },
+      },
+      React.createElement(Timeline, {
+        v2Timelines: latestTimelines,
+        onV2TimelinesChange: timelines => {
+          latestTimelines = timelines;
+        },
+      }),
+    );
+    const { rerender } = render(renderEditableTimeline());
+
+    fireEvent.change(screen.getByLabelText('V2 timeline intro duration'), { target: { value: '40' } });
+    await waitFor(() => expect(latestTimelines.intro.duration).toBe(40));
+    rerender(renderEditableTimeline());
+    fireEvent.change(screen.getByLabelText('V2 intro r1.opacity keyframe 2 value'), { target: { value: '0.75' } });
+    await waitFor(() => expect(latestTimelines.intro.tracks[0].keyframes[1].value).toBe(0.75));
+    rerender(renderEditableTimeline());
+    fireEvent.click(screen.getByRole('button', { name: 'Add track to v2 timeline intro' }));
+    await waitFor(() => expect(latestTimelines.intro.tracks).toHaveLength(2));
+    rerender(renderEditableTimeline());
+    fireEvent.change(screen.getByLabelText('V2 intro track 2 property'), { target: { value: 'scale' } });
+    await waitFor(() => expect(latestTimelines.intro.tracks[1].property).toBe('scale'));
+    rerender(renderEditableTimeline());
+    fireEvent.click(screen.getByRole('button', { name: 'Add keyframe to v2 intro r1.scale' }));
+    await waitFor(() => expect(latestTimelines.intro.tracks[1].keyframes).toHaveLength(3));
+    rerender(renderEditableTimeline());
+    fireEvent.click(screen.getByRole('button', { name: 'Remove v2 intro r1.scale keyframe 2' }));
+    await waitFor(() => expect(latestTimelines.intro.tracks[1].keyframes).toHaveLength(2));
+    rerender(renderEditableTimeline());
+    fireEvent.click(screen.getByRole('button', { name: 'Remove v2 intro r1.scale track' }));
+    await waitFor(() => expect(latestTimelines.intro.tracks).toHaveLength(1));
+  });
+
+  it('adds a blank v2 timeline for the selected or first element', async () => {
+    let latestTimelines: any;
+
     render(
       React.createElement(
         EditorProvider,
@@ -228,7 +270,7 @@ describe('v2 timeline clip rows', () => {
           },
         },
         React.createElement(Timeline, {
-          v2Timelines: latestTimelines,
+          v2Timelines: {},
           onV2TimelinesChange: timelines => {
             latestTimelines = timelines;
           },
@@ -236,9 +278,11 @@ describe('v2 timeline clip rows', () => {
       ),
     );
 
-    fireEvent.change(screen.getByLabelText('V2 timeline intro duration'), { target: { value: '40' } });
-    await waitFor(() => expect(latestTimelines.intro.duration).toBe(40));
-    fireEvent.change(screen.getByLabelText('V2 intro r1.opacity keyframe 2 value'), { target: { value: '0.75' } });
-    await waitFor(() => expect(latestTimelines.intro.tracks[0].keyframes[1].value).toBe(0.75));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add v2 timeline' }).at(-1)!);
+    await waitFor(() => {
+      expect(latestTimelines?.timeline).toBeTruthy();
+      expect(latestTimelines.timeline.tracks[0].target).toBe('r1');
+      expect(latestTimelines.timeline.tracks[0].property).toBe('opacity');
+    });
   });
 });

@@ -16,6 +16,7 @@ const TRACK_HEIGHT = 24;
 const RULER_HEIGHT = 20;
 const LABEL_WIDTH = 80;
 const EASING_OPTIONS = ['linear', 'easeInQuad', 'easeOutQuad', 'easeInOutQuad', 'easeInCubic', 'easeOutCubic', 'easeInOutCubic', 'easeInSine', 'easeOutSine', 'easeInOutSine', 'easeOutElastic', 'easeOutBounce', 'easeInBack', 'easeOutBack'];
+const V2_ANIMATABLE_PROPERTIES = ['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke'] as const;
 const WRAPPER_TYPES = new Set(['fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
 
 interface TrackRow {
@@ -65,6 +66,13 @@ function getAnimationUpdateProp(element: ElementNode, prop: 'fadeIn' | 'fadeOut'
   return WRAPPER_TYPES.has(element.type) ? 'duration' : prop;
 }
 
+function createUniqueTimelineId(existing: Record<string, ElucimV2Timeline> | undefined, preferred: string): string {
+  if (!existing?.[preferred]) return preferred;
+  let index = 2;
+  while (existing[`${preferred}-${index}`]) index += 1;
+  return `${preferred}-${index}`;
+}
+
 /**
  * Animation timeline with playhead, per-element tracks, and playback controls.
  * Supports: editable labels, drag reorder, draggable animation bars, easing picker.
@@ -96,11 +104,12 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange }:
   const addIntroTimeline = useCallback(() => {
     const targets = rows.slice(0, 8).map(row => row.id);
     if (targets.length === 0) return;
+    const id = createUniqueTimelineId(v2Timelines, 'auto-intro');
     const stagger = 6;
     const fadeDuration = 18;
     const duration = Math.min(durationInFrames, Math.max(fadeDuration, (targets.length - 1) * stagger + fadeDuration));
     updateV2Timeline({
-      id: 'auto-intro',
+      id,
       duration,
       tracks: targets.map((target, index) => {
         const start = Math.min(index * stagger, Math.max(0, duration - fadeDuration));
@@ -114,7 +123,26 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange }:
         };
       }),
     });
-  }, [durationInFrames, rows, updateV2Timeline]);
+  }, [durationInFrames, rows, updateV2Timeline, v2Timelines]);
+  const addBlankTimeline = useCallback(() => {
+    const target = rows.find(row => selectedIds.includes(row.id))?.id ?? rows[0]?.id;
+    if (!target) return;
+    const id = createUniqueTimelineId(v2Timelines, 'timeline');
+    updateV2Timeline({
+      id,
+      duration: Math.min(durationInFrames, 30),
+      tracks: [
+        {
+          target,
+          property: 'opacity',
+          keyframes: [
+            { frame: 0, value: 1 },
+            { frame: Math.min(durationInFrames, 30), value: 1 },
+          ],
+        },
+      ],
+    });
+  }, [durationInFrames, rows, selectedIds, updateV2Timeline, v2Timelines]);
 
   // ── Rename state ──
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -306,14 +334,24 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange }:
           {currentFrame} / {durationInFrames - 1} @ {fps}fps
         </div>
         {onV2TimelinesChange && (
-          <button
-            type="button"
-            aria-label="Add v2 intro clip"
-            onClick={addIntroTimeline}
-            style={{ marginLeft: 'auto', border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 10, padding: '4px 7px' }}
-          >
-            Add intro clip
-          </button>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+            <button
+              type="button"
+              aria-label="Add v2 timeline"
+              onClick={addBlankTimeline}
+              style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 10, padding: '4px 7px' }}
+            >
+              Add timeline
+            </button>
+            <button
+              type="button"
+              aria-label="Add v2 intro clip"
+              onClick={addIntroTimeline}
+              style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 10, padding: '4px 7px' }}
+            >
+              Add intro clip
+            </button>
+          </div>
         )}
       </div>
 
@@ -388,6 +426,7 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange }:
             onKeyframeClick={frame => dispatch({ type: 'SET_FRAME', frame: Math.max(0, Math.min(frame, durationInFrames - 1)) })}
             onTimelineChange={onV2TimelinesChange ? updateV2Timeline : undefined}
             onTimelineDelete={onV2TimelinesChange ? deleteV2Timeline : undefined}
+            elementIds={rows.map(row => row.id)}
           />
         )}
 
@@ -592,12 +631,13 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange }:
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
-function TimelineClipRows({ clips, durationInFrames, onKeyframeClick, onTimelineChange, onTimelineDelete }: {
+function TimelineClipRows({ clips, durationInFrames, onKeyframeClick, onTimelineChange, onTimelineDelete, elementIds }: {
   clips: ElucimV2Timeline[];
   durationInFrames: number;
   onKeyframeClick: (frame: number) => void;
   onTimelineChange?: (timeline: ElucimV2Timeline) => void;
   onTimelineDelete?: (id: string) => void;
+  elementIds: string[];
 }) {
   const updateDuration = (clip: ElucimV2Timeline, duration: number) => {
     const nextDuration = Math.max(1, Math.round(duration));
@@ -620,6 +660,59 @@ function TimelineClipRows({ clips, durationInFrames, onKeyframeClick, onTimeline
               .map((keyframe, currentKeyframeIndex) => currentKeyframeIndex === keyframeIndex ? { ...keyframe, ...patch } : keyframe)
               .sort((a, b) => a.frame - b.frame),
           }
+        : track),
+    });
+  };
+  const updateTrack = (clip: ElucimV2Timeline, trackIndex: number, patch: Partial<ElucimV2Timeline['tracks'][number]>) => {
+    onTimelineChange?.({
+      ...clip,
+      tracks: clip.tracks.map((track, currentTrackIndex) => currentTrackIndex === trackIndex ? { ...track, ...patch } : track),
+    });
+  };
+  const addTrack = (clip: ElucimV2Timeline) => {
+    const target = elementIds[0] ?? clip.tracks[0]?.target;
+    if (!target) return;
+    onTimelineChange?.({
+      ...clip,
+      tracks: [
+        ...clip.tracks,
+        {
+          target,
+          property: 'opacity',
+          keyframes: [
+            { frame: 0, value: 1 },
+            { frame: clip.duration, value: 1 },
+          ],
+        },
+      ],
+    });
+  };
+  const deleteTrack = (clip: ElucimV2Timeline, trackIndex: number) => {
+    onTimelineChange?.({
+      ...clip,
+      tracks: clip.tracks.filter((_, currentTrackIndex) => currentTrackIndex !== trackIndex),
+    });
+  };
+  const addKeyframe = (clip: ElucimV2Timeline, trackIndex: number) => {
+    const middleFrame = Math.round(clip.duration / 2);
+    onTimelineChange?.({
+      ...clip,
+      tracks: clip.tracks.map((track, currentTrackIndex) => currentTrackIndex === trackIndex
+        ? {
+            ...track,
+            keyframes: [
+              ...track.keyframes,
+              { frame: middleFrame, value: track.keyframes.at(-1)?.value ?? 1 },
+            ].sort((a, b) => a.frame - b.frame),
+          }
+        : track),
+    });
+  };
+  const deleteKeyframe = (clip: ElucimV2Timeline, trackIndex: number, keyframeIndex: number) => {
+    onTimelineChange?.({
+      ...clip,
+      tracks: clip.tracks.map((track, currentTrackIndex) => currentTrackIndex === trackIndex
+        ? { ...track, keyframes: track.keyframes.filter((_, currentKeyframeIndex) => currentKeyframeIndex !== keyframeIndex) }
         : track),
     });
   };
@@ -665,6 +758,16 @@ function TimelineClipRows({ clips, durationInFrames, onKeyframeClick, onTimeline
                 Remove
               </button>
             )}
+            {onTimelineChange && (
+              <button
+                type="button"
+                aria-label={`Add track to v2 timeline ${clip.id}`}
+                onClick={() => addTrack(clip)}
+                style={{ marginRight: 6, border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 10, padding: '2px 6px' }}
+              >
+                Add track
+              </button>
+            )}
           </div>
           {clip.tracks.map((track, trackIndex) => (
             <div
@@ -676,20 +779,41 @@ function TimelineClipRows({ clips, durationInFrames, onKeyframeClick, onTimeline
                 borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
               }}
             >
-              <div
-                title={`${track.target}.${track.property}`}
-                style={{
-                  width: LABEL_WIDTH,
-                  padding: '0 8px',
-                  color: v('--elucim-editor-text-secondary'),
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                }}
-              >
-                {track.target}.{track.property}
-              </div>
+              {onTimelineChange ? (
+                <div style={{ width: LABEL_WIDTH, padding: '0 4px', display: 'grid', gridTemplateColumns: '1fr', gap: 2, flexShrink: 0 }}>
+                  <select
+                    aria-label={`V2 ${clip.id} track ${trackIndex + 1} target`}
+                    value={track.target}
+                    onChange={event => updateTrack(clip, trackIndex, { target: event.target.value })}
+                    style={{ minWidth: 0, background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 3, fontSize: 9 }}
+                  >
+                    {elementIds.map(id => <option key={id} value={id}>{id}</option>)}
+                  </select>
+                  <select
+                    aria-label={`V2 ${clip.id} track ${trackIndex + 1} property`}
+                    value={track.property}
+                    onChange={event => updateTrack(clip, trackIndex, { property: event.target.value as ElucimV2Timeline['tracks'][number]['property'] })}
+                    style={{ minWidth: 0, background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 3, fontSize: 9 }}
+                  >
+                    {V2_ANIMATABLE_PROPERTIES.map(property => <option key={property} value={property}>{property}</option>)}
+                  </select>
+                </div>
+              ) : (
+                <div
+                  title={`${track.target}.${track.property}`}
+                  style={{
+                    width: LABEL_WIDTH,
+                    padding: '0 8px',
+                    color: v('--elucim-editor-text-secondary'),
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  {track.target}.{track.property}
+                </div>
+              )}
               <div style={{ flex: 1, position: 'relative', height: '100%' }}>
                 <div
                   style={{
@@ -742,10 +866,38 @@ function TimelineClipRows({ clips, durationInFrames, onKeyframeClick, onTimeline
                           onChange={event => updateKeyframe(clip, trackIndex, keyframeIndex, { value: parseKeyframeValue(event.target.value) })}
                           style={{ width: 42, background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 3, padding: '1px 2px', fontSize: 9 }}
                         />
+                        <button
+                          type="button"
+                          aria-label={`Remove v2 ${clip.id} ${track.target}.${track.property} keyframe ${keyframeIndex + 1}`}
+                          onClick={() => deleteKeyframe(clip, trackIndex, keyframeIndex)}
+                          style={{ width: 18, border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 3, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer', fontSize: 9, padding: 0 }}
+                        >
+                          x
+                        </button>
                       </span>
                     )}
                   </React.Fragment>
                 ))}
+                {onTimelineChange && (
+                  <div style={{ position: 'absolute', right: 4, top: 3, display: 'flex', gap: 4 }}>
+                    <button
+                      type="button"
+                      aria-label={`Add keyframe to v2 ${clip.id} ${track.target}.${track.property}`}
+                      onClick={() => addKeyframe(clip, trackIndex)}
+                      style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 3, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 9, padding: '1px 4px' }}
+                    >
+                      + key
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Remove v2 ${clip.id} ${track.target}.${track.property} track`}
+                      onClick={() => deleteTrack(clip, trackIndex)}
+                      style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 3, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer', fontSize: 9, padding: '1px 4px' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}

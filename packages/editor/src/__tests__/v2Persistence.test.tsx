@@ -90,7 +90,8 @@ describe('v2 editor persistence', () => {
     }));
 
     fireEvent.doubleClick(screen.getAllByText('title').at(-1)!);
-    fireEvent.change(screen.getByDisplayValue('title'), { target: { value: 'hero-title' } });
+    const renameInput = screen.getAllByDisplayValue('title').find(element => element.tagName === 'INPUT')!;
+    fireEvent.change(renameInput, { target: { value: 'hero-title' } });
     fireEvent.blur(screen.getByDisplayValue('hero-title'));
 
     await waitFor(() => {

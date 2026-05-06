@@ -107,4 +107,36 @@ describe('StateMachinePanel', () => {
     expect(screen.getByText('V2 compatibility warnings')).toBeTruthy();
     expect(screen.getByText(/Timeline "ghostTimeline"/)).toBeTruthy();
   });
+
+  it('creates state machines and authors states/transitions from the panel', async () => {
+    const onV2DocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, {
+      initialDocument: { ...v2Document, stateMachines: undefined },
+      onV2DocumentChange,
+    }));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'States' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create v2 state machine' }));
+
+    await waitFor(() => expect(onV2DocumentChange.mock.calls.at(-1)?.[0].stateMachines?.deck).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('V2 new state id'), { target: { value: 'focus' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add v2 state' }));
+
+    await waitFor(() => expect(onV2DocumentChange.mock.calls.at(-1)?.[0].stateMachines.deck.states.focus).toBeTruthy());
+    fireEvent.change(screen.getByLabelText('V2 new transition event'), { target: { value: 'advance' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add v2 transition' }));
+
+    await waitFor(() => {
+      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      expect(latest.stateMachines?.deck.states.focus.on?.advance).toEqual({ target: 'idle' });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove v2 state focus' }));
+
+    await waitFor(() => {
+      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      expect(latest.stateMachines?.deck.states.focus).toBeUndefined();
+      expect(latest.stateMachines?.deck.initial).toBe('idle');
+    });
+  });
 });
