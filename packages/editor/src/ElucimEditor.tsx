@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ElucimDocument, ElucimV2Document, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2Transition } from '@elucim/dsl';
-import { applyNudge, getInitialStateSnapshot, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, transitionStateMachine, validate, validateV2 } from '@elucim/dsl';
+import { applyNudge, applyTimelineFrame, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, validate, validateV2 } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider } from './state/EditorProvider';
@@ -168,9 +168,9 @@ function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document)
   for (const sourceId of Object.keys(sourceV2.elements)) {
     const mappedId = idMap.get(sourceId);
     if (!mappedId) {
-      warnings.push(`Element "${sourceId}" is no longer present in editor output; related v2 references may be pruned.`);
+      warnings.push(`Element "${sourceId}" is no longer present in editor output; related references may be pruned.`);
     } else if (mappedId !== sourceId) {
-      warnings.push(`Element "${sourceId}" was renamed to "${mappedId}"; v2 timeline references were updated.`);
+      warnings.push(`Element "${sourceId}" was renamed to "${mappedId}"; timeline references were updated.`);
     }
   }
   const timelines: Record<string, ElucimV2Timeline> = {};
@@ -179,7 +179,7 @@ function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document)
       .map(track => ({ ...track, target: idMap.get(track.target) ?? track.target }))
       .filter(track => elementIds.has(track.target));
     if (tracks.length < timeline.tracks.length) {
-      warnings.push(`Timeline "${id}" has ${timeline.tracks.length - tracks.length} track(s) targeting missing elements and will be omitted from v2 output.`);
+      warnings.push(`Timeline "${id}" has ${timeline.tracks.length - tracks.length} track(s) targeting missing elements and will be omitted from document output.`);
     }
     if (tracks.length > 0) timelines[id] = { ...timeline, tracks };
   }
@@ -278,11 +278,11 @@ type EditorWorkspace = 'design' | 'animate' | 'states' | 'polish';
 
 const DEFAULT_LEFT_WIDTH = 252;
 const DEFAULT_RIGHT_WIDTH = 286;
-const DEFAULT_TIMELINE_HEIGHT = 220;
+const DEFAULT_TIMELINE_HEIGHT = 340;
 const MIN_SIDE_WIDTH = 180;
 const MAX_SIDE_WIDTH = 560;
-const MIN_TIMELINE_HEIGHT = 120;
-const MAX_TIMELINE_HEIGHT = 480;
+const MIN_TIMELINE_HEIGHT = 220;
+const MAX_TIMELINE_HEIGHT = 640;
 
 function clampPanelSize(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -296,9 +296,10 @@ function clampPanelSize(value: number, min: number, max: number): number {
  */
 export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Document, onV2DocumentChange }: ElucimEditorLayoutProps) {
   const { state } = useEditorState();
-  const [workspace, setWorkspace] = useState<EditorWorkspace>('design');
+  const [workspace, setWorkspace] = useState<EditorWorkspace>(() => v2Document ? 'animate' : 'design');
+  const [activeTimelineId, setActiveTimelineId] = useState<string | undefined>(undefined);
   const [leftVisible, setLeftVisible] = useState(true);
-  const [rightVisible, setRightVisible] = useState(true);
+  const [rightVisible, setRightVisible] = useState(() => !v2Document);
   const [timelineVisible, setTimelineVisible] = useState(true);
   const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT_WIDTH);
   const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT_WIDTH);
@@ -315,7 +316,11 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
   }
   const themeVars = buildThemeVars(merged);
   const colorScheme = merged['--elucim-editor-color-scheme'] || merged['color-scheme'] || colorSchemeHint;
-  const preferredLeftTab = workspace === 'states' || workspace === 'polish' ? 'states' : workspace === 'design' ? 'objects' : undefined;
+  const preferredLeftTab = workspace === 'polish' ? 'details' : workspace === 'design' ? 'objects' : undefined;
+  const previewDocument = useMemo(() => {
+    if (!v2Document || !activeTimelineId || !v2Document.timelines?.[activeTimelineId]) return undefined;
+    return migrateV2ToV1(applyTimelineFrame(v2Document, activeTimelineId, state.currentFrame));
+  }, [activeTimelineId, state.currentFrame, v2Document]);
   const selectWorkspace = (nextWorkspace: EditorWorkspace) => {
     setWorkspace(nextWorkspace);
     if (nextWorkspace === 'design') {
@@ -326,12 +331,12 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
       setLeftVisible(true);
       setRightVisible(false);
       setTimelineVisible(true);
-      setTimelineHeight(Math.max(timelineHeight, 280));
+      setTimelineHeight(Math.max(timelineHeight, 360));
     } else if (nextWorkspace === 'states') {
-      setLeftVisible(true);
+      setLeftVisible(false);
       setRightVisible(false);
-      setTimelineVisible(false);
-      setLeftWidth(Math.max(leftWidth, 360));
+      setTimelineVisible(true);
+      setTimelineHeight(Math.max(timelineHeight, 420));
     } else {
       setLeftVisible(true);
       setRightVisible(false);
@@ -441,7 +446,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
           <div role="tablist" aria-label="Editor workspace" style={{ display: 'flex', gap: 4, marginLeft: 12 }}>
             <WorkspaceTab label="Design" selected={workspace === 'design'} onClick={() => selectWorkspace('design')} />
             <WorkspaceTab label="Animate" selected={workspace === 'animate'} onClick={() => selectWorkspace('animate')} />
-            <WorkspaceTab label="States" selected={workspace === 'states'} onClick={() => selectWorkspace('states')} />
+            <WorkspaceTab label="State Machine" selected={workspace === 'states'} onClick={() => selectWorkspace('states')} />
             <WorkspaceTab label="Polish" selected={workspace === 'polish'} onClick={() => selectWorkspace('polish')} />
           </div>
         </div>
@@ -489,7 +494,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
             onShowRight={() => setRightVisible(true)}
             onShowTimeline={() => setTimelineVisible(true)}
           />
-          <ElucimCanvas editorColorScheme={colorScheme} contentTheme={theme} />
+          <ElucimCanvas previewDocument={previewDocument} editorColorScheme={colorScheme} contentTheme={theme} />
         </main>
 
         <aside
@@ -529,6 +534,15 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
             style={{ height: '100%', borderTop: 'none' }}
             v2Timelines={v2Document?.timelines}
             onV2TimelinesChange={v2Document && onV2DocumentChange ? timelines => onV2DocumentChange({ ...v2Document, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
+            v2StateMachines={v2Document?.stateMachines}
+            onV2StateMachinesChange={v2Document && onV2DocumentChange ? stateMachines => onV2DocumentChange({ ...v2Document, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) }) : undefined}
+            onV2MotionChange={v2Document && onV2DocumentChange ? (timelines, stateMachines) => onV2DocumentChange({
+              ...v2Document,
+              ...(timelines ? { timelines } : { timelines: undefined }),
+              ...(stateMachines ? { stateMachines } : { stateMachines: undefined }),
+            }) : undefined}
+            preferredMotionType={workspace === 'states' ? 'stateMachine' : 'animation'}
+            onActiveTimelineChange={setActiveTimelineId}
           />
         </div>
       )}
@@ -657,11 +671,23 @@ function RailButton({ label, onClick }: { label: string; onClick: () => void }) 
   );
 }
 
-function LeftDock({ v2Document, onV2DocumentChange, preferredTab }: { v2Document?: ElucimV2Document; onV2DocumentChange?: (document: ElucimV2Document) => void; preferredTab?: 'objects' | 'create' | 'states' }) {
-  const [tab, setTab] = useState<'objects' | 'create' | 'states'>('objects');
+function LeftDock({ v2Document, onV2DocumentChange, preferredTab }: { v2Document?: ElucimV2Document; onV2DocumentChange?: (document: ElucimV2Document) => void; preferredTab?: 'objects' | 'create' | 'details' }) {
+  const [tab, setTab] = useState<'objects' | 'create'>('objects');
   useEffect(() => {
-    if (preferredTab) setTab(preferredTab);
+    if (preferredTab === 'objects' || preferredTab === 'create') setTab(preferredTab);
   }, [preferredTab]);
+  if (preferredTab === 'details') {
+    return (
+      <section style={{ minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ height: 27, display: 'flex', alignItems: 'center', padding: '0 10px', borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-input-bg'), color: v('--elucim-editor-text-muted'), fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
+          Polish
+        </div>
+        <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+          <StateMachinePanel v2Document={v2Document} onV2DocumentChange={onV2DocumentChange} />
+        </div>
+      </section>
+    );
+  }
   return (
     <section style={{ minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div
@@ -669,7 +695,7 @@ function LeftDock({ v2Document, onV2DocumentChange, preferredTab }: { v2Document
         aria-label="Left editor panel"
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
+          gridTemplateColumns: '1fr 1fr',
           gap: 0,
           padding: '0 8px',
           borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
@@ -679,10 +705,9 @@ function LeftDock({ v2Document, onV2DocumentChange, preferredTab }: { v2Document
       >
         <DockTab label="Hierarchy" selected={tab === 'objects'} onClick={() => setTab('objects')} />
         <DockTab label="Create" selected={tab === 'create'} onClick={() => setTab('create')} />
-        <DockTab label="States" selected={tab === 'states'} onClick={() => setTab('states')} />
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-        {tab === 'create' ? <Toolbar /> : tab === 'objects' ? <HierarchyPanel v2Document={v2Document} /> : <StateMachinePanel v2Document={v2Document} onV2DocumentChange={onV2DocumentChange} />}
+        {tab === 'create' ? <Toolbar /> : <HierarchyPanel v2Document={v2Document} />}
       </div>
     </section>
   );
@@ -732,13 +757,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
   const currentV2Document = v2Compatibility?.document ?? v2Document;
   const selectedV2Element = selectedId && currentV2Document ? currentV2Document.elements[selectedId] : undefined;
   const machineIds = Object.keys(currentV2Document?.stateMachines ?? {});
-  const [activeMachineId, setActiveMachineId] = useState(machineIds[0] ?? '');
-  const [activeStateId, setActiveStateId] = useState('');
   const [dismissedNudgeIds, setDismissedNudgeIds] = useState<Set<string>>(() => new Set());
-  const [newStateId, setNewStateId] = useState('state');
-  const [newTransitionEvent, setNewTransitionEvent] = useState('next');
-  const activeMachine = activeMachineId ? currentV2Document?.stateMachines?.[activeMachineId] : undefined;
-  const activeState = activeMachine && activeStateId ? activeMachine.states[activeStateId] : undefined;
   const nudgeCandidates = useMemo(() => currentV2Document
     ? suggestDocumentNudges(currentV2Document).filter(nudge => !dismissedNudgeIds.has(nudge.id))
     : [], [currentV2Document, dismissedNudgeIds]);
@@ -753,20 +772,6 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
     });
     return new Map(entries);
   }, [currentV2Document, nudgeCandidates]);
-  const snapshot = currentV2Document && activeMachineId
-    ? activeStateId
-      ? { ...getInitialStateSnapshot(currentV2Document, activeMachineId), ...transitionStateMachine(currentV2Document, activeMachineId, activeStateId, '__noop__') }
-      : getInitialStateSnapshot(currentV2Document, activeMachineId)
-    : undefined;
-
-  useEffect(() => {
-    if (machineIds.length > 0 && (!activeMachineId || !machineIds.includes(activeMachineId))) setActiveMachineId(machineIds[0]);
-  }, [activeMachineId, machineIds]);
-
-  useEffect(() => {
-    if (activeMachine && (!activeStateId || !activeMachine.states[activeStateId])) setActiveStateId(activeMachine.initial);
-  }, [activeMachine, activeStateId]);
-
   const applyState = (changes: Record<string, unknown>) => {
     if (!selectedId) return;
     dispatch({ type: 'UPDATE_ELEMENT', id: selectedId, changes: changes as any });
@@ -799,136 +804,6 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
     }));
   };
 
-  const updateMachineState = (changes: Partial<NonNullable<typeof activeState>>) => {
-    if (!activeMachineId || !activeStateId) return;
-    updateV2Document(document => {
-      const machine = document.stateMachines?.[activeMachineId];
-      if (!machine) return document;
-      return {
-        ...document,
-        stateMachines: {
-          ...document.stateMachines,
-          [activeMachineId]: {
-            ...machine,
-            states: {
-              ...machine.states,
-              [activeStateId]: { ...machine.states[activeStateId], ...changes },
-            },
-          },
-        },
-      };
-    });
-  };
-
-  const updateTransition = (eventName: string, transition: ElucimV2Transition) => {
-    if (!activeState) return;
-    updateMachineState({ on: { ...activeState.on, [eventName]: transition } });
-  };
-
-  const createStateMachine = () => {
-    updateV2Document(document => {
-      const stateMachines = document.stateMachines ?? {};
-      const preferred = 'deck';
-      let id = preferred;
-      let index = 2;
-      while (stateMachines[id]) {
-        id = `${preferred}-${index}`;
-        index += 1;
-      }
-      setActiveMachineId(id);
-      setActiveStateId('idle');
-      return {
-        ...document,
-        stateMachines: {
-          ...stateMachines,
-          [id]: {
-            id,
-            initial: 'idle',
-            states: { idle: {} },
-          },
-        },
-      };
-    });
-  };
-
-  const addState = () => {
-    if (!activeMachine) return;
-    const base = newStateId.trim() || 'state';
-    let id = base;
-    let index = 2;
-    while (activeMachine.states[id]) {
-      id = `${base}-${index}`;
-      index += 1;
-    }
-    updateV2Document(document => {
-      const machine = document.stateMachines?.[activeMachineId];
-      if (!machine) return document;
-      return {
-        ...document,
-        stateMachines: {
-          ...document.stateMachines,
-          [activeMachineId]: {
-            ...machine,
-            states: {
-              ...machine.states,
-              [id]: {},
-            },
-          },
-        },
-      };
-    });
-    setActiveStateId(id);
-    setNewStateId('state');
-  };
-
-  const removeActiveState = () => {
-    if (!activeMachine || !activeStateId || Object.keys(activeMachine.states).length <= 1) return;
-    const remainingStateIds = Object.keys(activeMachine.states).filter(id => id !== activeStateId);
-    const fallback = remainingStateIds[0] ?? activeMachine.initial;
-    updateV2Document(document => {
-      const machine = document.stateMachines?.[activeMachineId];
-      if (!machine) return document;
-      const states = Object.fromEntries(Object.entries(machine.states)
-        .filter(([id]) => id !== activeStateId)
-        .map(([id, state]) => {
-          const on = state.on
-            ? Object.fromEntries(Object.entries(state.on).filter(([, transition]) => {
-                const normalized = typeof transition === 'string' ? { target: transition } : transition;
-                return normalized.target !== activeStateId;
-              }))
-            : undefined;
-          return [id, { ...state, ...(on && Object.keys(on).length > 0 ? { on } : { on: undefined }) }];
-        }));
-      return {
-        ...document,
-        stateMachines: {
-          ...document.stateMachines,
-          [activeMachineId]: {
-            ...machine,
-            initial: machine.initial === activeStateId ? fallback : machine.initial,
-            states,
-          },
-        },
-      };
-    });
-    setActiveStateId(fallback);
-  };
-
-  const addNamedTransition = () => {
-    if (!activeMachine || !activeStateId) return;
-    const eventName = newTransitionEvent.trim() || 'next';
-    const target = Object.keys(activeMachine.states).find(id => id !== activeStateId) ?? activeStateId;
-    updateTransition(eventName, { target });
-    setNewTransitionEvent('next');
-  };
-
-  const deleteTransition = (eventName: string) => {
-    if (!activeState?.on) return;
-    const next = { ...activeState.on };
-    delete next[eventName];
-    updateMachineState({ on: next });
-  };
-
   const applyEditorNudge = (nudgeId: string) => {
     const baseDocument = v2Compatibility?.document ?? v2Document;
     const nudge = nudgeCandidates.find(candidate => candidate.id === nudgeId);
@@ -944,169 +819,18 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
   return (
     <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 10, fontSize: 11 }}>
       <div style={{ color: v('--elucim-editor-text-secondary'), lineHeight: 1.45 }}>
-        State presets are the quick v1 bridge. V2 documents can also preview native state machines here.
+        Polish is for scene metadata, selected-element intent, suggestions, and document diagnostics. Use the State Machine workspace to author interactive state graphs.
       </div>
 
-      {v2Document && !activeMachine && (
+      {v2Document && (
         <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            State machine
+            Motion
           </div>
           <div style={{ color: v('--elucim-editor-text-secondary'), lineHeight: 1.4 }}>
-            This v2 document has no state machine yet.
-          </div>
-          <button
-            type="button"
-            aria-label="Create v2 state machine"
-            onClick={createStateMachine}
-            style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: '4px 6px', background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', textAlign: 'left' }}
-          >
-            Create state machine
-          </button>
-        </div>
-      )}
-
-      {v2Document && activeMachine && snapshot && (
-        <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            State machine
-          </div>
-          <select
-            aria-label="State machine"
-            value={activeMachineId}
-            onChange={event => {
-              setActiveMachineId(event.target.value);
-              setActiveStateId(currentV2Document?.stateMachines?.[event.target.value]?.initial ?? '');
-            }}
-            style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
-          >
-            {machineIds.map(id => <option key={id} value={id}>{id}</option>)}
-          </select>
-          <div style={{ display: 'grid', gap: 4 }}>
-            <div style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{activeStateId || activeMachine.initial}</div>
-            <div style={{ color: v('--elucim-editor-text-secondary') }}>
-              Timeline: {snapshot.timelineId ?? 'none'}{snapshot.onComplete ? `, completes -> ${snapshot.onComplete}` : ''}
-            </div>
-          </div>
-          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-            Editing state
-            <select
-              aria-label="V2 active state"
-              value={activeStateId || activeMachine.initial}
-              onChange={event => setActiveStateId(event.target.value)}
-              style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
-            >
-              {Object.keys(activeMachine.states).map(id => <option key={id} value={id}>{id}</option>)}
-            </select>
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 4, alignItems: 'end' }}>
-            <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-              New state
-              <input
-                aria-label="V2 new state id"
-                value={newStateId}
-                onChange={event => setNewStateId(event.target.value)}
-                style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
-              />
-            </label>
-            <button type="button" aria-label="Add v2 state" onClick={addState} style={{ height: 26, border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer' }}>Add</button>
-            <button type="button" aria-label={`Remove v2 state ${activeStateId || activeMachine.initial}`} disabled={Object.keys(activeMachine.states).length <= 1} onClick={removeActiveState} style={{ height: 26, border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: Object.keys(activeMachine.states).length <= 1 ? v('--elucim-editor-text-disabled') : v('--elucim-editor-text-secondary'), cursor: Object.keys(activeMachine.states).length <= 1 ? 'default' : 'pointer' }}>Remove</button>
-          </div>
-          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-            Initial state
-            <select
-              aria-label="V2 initial state"
-              value={activeMachine.initial}
-              onChange={event => updateV2Document(document => {
-                const machine = document.stateMachines?.[activeMachineId];
-                if (!machine) return document;
-                return { ...document, stateMachines: { ...document.stateMachines, [activeMachineId]: { ...machine, initial: event.target.value } } };
-              })}
-              style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
-            >
-              {Object.keys(activeMachine.states).map(id => <option key={id} value={id}>{id}</option>)}
-            </select>
-          </label>
-          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-            Active state timeline
-            <select
-              aria-label="V2 active state timeline"
-              value={activeState?.timeline ?? ''}
-              onChange={event => updateMachineState({ timeline: event.target.value || undefined })}
-              style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
-            >
-              <option value="">none</option>
-              {Object.keys(currentV2Document?.timelines ?? {}).map(id => <option key={id} value={id}>{id}</option>)}
-            </select>
-          </label>
-          {Object.entries(activeState?.on ?? {}).map(([eventName, transition]) => {
-            const normalized = typeof transition === 'string' ? { target: transition } : transition;
-            return (
-              <div key={eventName} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 4, alignItems: 'end' }}>
-                <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-                  {eventName} target
-                  <select
-                    aria-label={`V2 transition ${eventName} target`}
-                    value={normalized.target}
-                    onChange={event => updateTransition(eventName, { ...normalized, target: event.target.value })}
-                    style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
-                  >
-                    {Object.keys(activeMachine.states).map(id => <option key={id} value={id}>{id}</option>)}
-                  </select>
-                </label>
-                <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-                  Timeline
-                  <select
-                    aria-label={`V2 transition ${eventName} timeline`}
-                    value={normalized.timeline ?? ''}
-                    onChange={event => updateTransition(eventName, { ...normalized, timeline: event.target.value || undefined })}
-                    style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
-                  >
-                    <option value="">none</option>
-                    {Object.keys(currentV2Document?.timelines ?? {}).map(id => <option key={id} value={id}>{id}</option>)}
-                  </select>
-                </label>
-                <button type="button" aria-label={`Remove v2 transition ${eventName}`} onClick={() => deleteTransition(eventName)} style={{ height: 26, border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer' }}>Remove</button>
-              </div>
-            );
-          })}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 4, alignItems: 'end' }}>
-            <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-              New transition event
-              <input
-                aria-label="V2 new transition event"
-                value={newTransitionEvent}
-                onChange={event => setNewTransitionEvent(event.target.value)}
-                style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
-              />
-            </label>
-            <button
-              type="button"
-              aria-label="Add v2 transition"
-              onClick={addNamedTransition}
-              style={{ height: 26, border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: '4px 6px', background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', textAlign: 'left' }}
-            >
-              Add transition
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {snapshot.events.length === 0 ? (
-              <span style={{ color: v('--elucim-editor-text-muted') }}>No outgoing events</span>
-            ) : snapshot.events.map(event => (
-              <button
-                key={event}
-                type="button"
-                onClick={() => {
-                  if (!currentV2Document) return;
-                  const next = transitionStateMachine(currentV2Document, activeMachineId, activeStateId || activeMachine.initial, event);
-                  setActiveStateId(next.stateId);
-                  dispatch({ type: 'SET_FRAME', frame: 0 });
-                }}
-                style={{ border: `1px solid ${v('--elucim-editor-accent')}`, borderRadius: 999, padding: '3px 8px', background: 'transparent', color: v('--elucim-editor-accent'), cursor: 'pointer' }}
-              >
-                {event}
-              </button>
-            ))}
+            {machineIds.length === 0
+              ? 'No state machines yet. Open the State Machine workspace and use Add state machine to create one.'
+              : `${machineIds.length} state machine${machineIds.length === 1 ? '' : 's'} in this scene. Open the State Machine workspace to edit the graph, states, and transitions.`}
           </div>
         </div>
       )}
@@ -1114,12 +838,12 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
       {v2Document && (
         <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            V2 metadata
+            Scene metadata
           </div>
           <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
             Polish level
             <select
-              aria-label="V2 polish level"
+              aria-label="Polish level"
               value={v2Document.metadata?.polishLevel ?? 'draft'}
               onChange={event => updateMetadata({ polishLevel: event.target.value as NonNullable<ElucimV2Document['metadata']>['polishLevel'] })}
               style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
@@ -1132,7 +856,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
           <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
             Intent
             <input
-              aria-label="V2 document intent"
+              aria-label="Document intent"
               value={v2Document.metadata?.intent ?? ''}
               onChange={event => updateMetadata({ intent: event.target.value })}
               placeholder="What this visual should communicate"
@@ -1142,7 +866,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
           <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
             Generated/source
             <input
-              aria-label="V2 generated by"
+              aria-label="Generated by"
               value={v2Document.metadata?.generatedBy ?? ''}
               onChange={event => updateMetadata({ generatedBy: event.target.value })}
               placeholder="Designer, user, agent name"
@@ -1152,7 +876,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
           <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
             Notes
             <textarea
-              aria-label="V2 document notes"
+              aria-label="Document notes"
               value={(v2Document.metadata?.notes ?? []).join('\n')}
               onChange={event => updateMetadata({ notes: event.target.value.split('\n').map(note => note.trim()).filter(Boolean) })}
               placeholder="One note per line"
@@ -1191,7 +915,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
               <div style={{ display: 'flex', gap: 6 }}>
                 <button
                   type="button"
-                  aria-label={`Apply v2 nudge ${nudge.title}`}
+                  aria-label={`Apply nudge ${nudge.title}`}
                   onClick={() => applyEditorNudge(nudge.id)}
                   style={{ flex: 1, border: `1px solid ${nudge.confidence === 'safe' ? v('--elucim-editor-success') : v('--elucim-editor-warning')}`, borderRadius: 4, padding: '4px 6px', background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', textAlign: 'left' }}
                 >
@@ -1199,7 +923,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
                 </button>
                 <button
                   type="button"
-                  aria-label={`Dismiss v2 nudge ${nudge.title}`}
+                  aria-label={`Dismiss nudge ${nudge.title}`}
                   onClick={() => dismissEditorNudge(nudge.id)}
                   style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: '4px 6px', background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer' }}
                 >
@@ -1214,13 +938,13 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
       {v2Document && selectedV2Element && (
         <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            Selected v2 intent
+            Selected intent
           </div>
           <div style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{selectedId}</div>
           <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
             Role
             <input
-              aria-label="V2 selected role"
+              aria-label="Selected role"
               value={selectedV2Element.intent?.role ?? ''}
               onChange={event => updateSelectedIntent({ role: event.target.value })}
               placeholder="title, hero, stage-1, cta"
@@ -1230,7 +954,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
           <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
             Importance
             <select
-              aria-label="V2 selected importance"
+              aria-label="Selected importance"
               value={selectedV2Element.intent?.importance ?? 'supporting'}
               onChange={event => updateSelectedIntent({ importance: event.target.value as NonNullable<typeof selectedV2Element.intent>['importance'] })}
               style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
@@ -1243,7 +967,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
           </label>
           <label style={{ display: 'flex', gap: 6, alignItems: 'center', color: v('--elucim-editor-text-secondary') }}>
             <input
-              aria-label="V2 selected generated"
+                aria-label="Selected generated"
               type="checkbox"
               checked={selectedV2Element.intent?.generated ?? false}
               onChange={event => updateSelectedIntent({ generated: event.target.checked })}
@@ -1253,7 +977,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
           <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
             Description
             <textarea
-              aria-label="V2 selected description"
+              aria-label="Selected description"
               value={selectedV2Element.intent?.description ?? ''}
               onChange={event => updateSelectedIntent({ description: event.target.value })}
               rows={2}
@@ -1263,7 +987,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
           <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
             Hints
             <textarea
-              aria-label="V2 selected hints"
+              aria-label="Selected hints"
               value={(selectedV2Element.intent?.hints ?? []).join('\n')}
               onChange={event => updateSelectedIntent({ hints: event.target.value.split('\n').map(hint => hint.trim()).filter(Boolean) })}
               placeholder="One hint per line"
@@ -1276,7 +1000,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
 
       {v2Compatibility && v2Compatibility.warnings.length > 0 && (
         <div role="status" style={{ padding: 8, border: `1px solid ${v('--elucim-editor-warning')}`, borderRadius: 6, background: `color-mix(in srgb, ${v('--elucim-editor-warning')} 10%, transparent)`, color: v('--elucim-editor-warning'), lineHeight: 1.4 }}>
-          <div style={{ fontWeight: 700, marginBottom: 4 }}>V2 compatibility warnings</div>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>Document compatibility warnings</div>
           {v2Compatibility.warnings.map(warning => <div key={warning}>{warning}</div>)}
         </div>
       )}

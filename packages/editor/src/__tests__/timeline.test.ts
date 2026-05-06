@@ -181,7 +181,7 @@ describe('v2 timeline clip rows', () => {
     expect(screen.getByText(/intro - 30f - 1 track/)).toBeTruthy();
     expect(screen.getByText('r1.opacity')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Go to intro r1.opacity keyframe 30' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Go to intro r1.opacity keyframe 30' }).at(-1)!);
     await waitFor(() => expect(latestFrame).toBe(30));
   });
 
@@ -206,7 +206,7 @@ describe('v2 timeline clip rows', () => {
       ),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add v2 intro clip' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add intro animation' }));
     await waitFor(() => expect(latestTimelines?.['auto-intro']).toBeTruthy());
 
     latestTimelines = {
@@ -235,26 +235,260 @@ describe('v2 timeline clip rows', () => {
     );
     const { rerender } = render(renderEditableTimeline());
 
-    fireEvent.change(screen.getByLabelText('V2 timeline intro duration'), { target: { value: '40' } });
+    fireEvent.change(screen.getByLabelText('Animation intro duration'), { target: { value: '40' } });
     await waitFor(() => expect(latestTimelines.intro.duration).toBe(40));
     rerender(renderEditableTimeline());
-    fireEvent.change(screen.getByLabelText('V2 intro r1.opacity keyframe 2 value'), { target: { value: '0.75' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Go to intro r1.opacity keyframe 30' }).at(-1)!);
+    fireEvent.change(screen.getByLabelText('intro r1.opacity keyframe 2 value'), { target: { value: '0.75' } });
+    fireEvent.blur(screen.getByLabelText('intro r1.opacity keyframe 2 value'));
     await waitFor(() => expect(latestTimelines.intro.tracks[0].keyframes[1].value).toBe(0.75));
     rerender(renderEditableTimeline());
-    fireEvent.click(screen.getByRole('button', { name: 'Add track to v2 timeline intro' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add track to animation intro' }));
     await waitFor(() => expect(latestTimelines.intro.tracks).toHaveLength(2));
     rerender(renderEditableTimeline());
-    fireEvent.change(screen.getByLabelText('V2 intro track 2 property'), { target: { value: 'scale' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Select intro r1.opacity track' }).at(-1)!);
+    fireEvent.change(screen.getByLabelText('intro track 2 property'), { target: { value: 'scale' } });
     await waitFor(() => expect(latestTimelines.intro.tracks[1].property).toBe('scale'));
     rerender(renderEditableTimeline());
-    fireEvent.click(screen.getByRole('button', { name: 'Add keyframe to v2 intro r1.scale' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add keyframe to intro r1.scale' }));
     await waitFor(() => expect(latestTimelines.intro.tracks[1].keyframes).toHaveLength(3));
     rerender(renderEditableTimeline());
-    fireEvent.click(screen.getByRole('button', { name: 'Remove v2 intro r1.scale keyframe 2' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Go to intro r1.scale keyframe 20' }).at(-1)!);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove intro r1.scale keyframe 2' }));
     await waitFor(() => expect(latestTimelines.intro.tracks[1].keyframes).toHaveLength(2));
     rerender(renderEditableTimeline());
-    fireEvent.click(screen.getByRole('button', { name: 'Remove v2 intro r1.scale track' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove intro r1.scale track' }));
     await waitFor(() => expect(latestTimelines.intro.tracks).toHaveLength(1));
+  });
+
+  it('renames v2 timelines and updates state machine timeline references', async () => {
+    let latestTimelines: any = {
+      focus: {
+        id: 'focus',
+        duration: 20,
+        tracks: [
+          { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0.35 }, { frame: 20, value: 1 }] },
+        ],
+      },
+      intro: {
+        id: 'intro',
+        duration: 30,
+        tracks: [
+          { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+        ],
+      },
+    };
+    let latestMachines: any = {
+      walkthrough: {
+        id: 'walkthrough',
+        initial: 'idle',
+        states: {
+          idle: { timeline: 'intro', on: { start: { target: 'focused', timeline: 'focus' } } },
+          focused: { timeline: 'focus', onComplete: { target: 'idle', timeline: 'intro' } },
+        },
+      },
+    };
+
+    const renderTimeline = () => React.createElement(
+      EditorProvider,
+      {
+        initialDocument: {
+          version: '1.0',
+          root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+        },
+      },
+      React.createElement(Timeline, {
+        v2Timelines: latestTimelines,
+        v2StateMachines: latestMachines,
+        onV2TimelinesChange: timelines => {
+          latestTimelines = timelines;
+        },
+        onV2StateMachinesChange: stateMachines => {
+          latestMachines = stateMachines;
+        },
+        onV2MotionChange: (timelines, stateMachines) => {
+          latestTimelines = timelines;
+          latestMachines = stateMachines;
+        },
+      }),
+    );
+    const { rerender } = render(renderTimeline());
+
+    const renameInput = await screen.findByLabelText('Rename animation focus');
+    fireEvent.change(renameInput, { target: { value: 'Focus Text' } });
+    fireEvent.blur(renameInput);
+
+    await waitFor(() => expect(latestTimelines['focus-text']).toBeTruthy());
+    expect(latestTimelines.focus).toBeUndefined();
+    expect(latestMachines.walkthrough.states.idle.on.start.timeline).toBe('focus-text');
+    expect(latestMachines.walkthrough.states.focused.timeline).toBe('focus-text');
+
+    rerender(renderTimeline());
+    expect(screen.getByRole('button', { name: 'Select animation focus-text' })).toBeTruthy();
+  });
+
+  it('drags v2 keyframes to a new frame without crossing neighbors', async () => {
+    let latestFrame = 0;
+    let latestTimelines: any = {
+      intro: {
+        id: 'intro',
+        duration: 30,
+        tracks: [
+          { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+        ],
+      },
+    };
+
+    function CaptureFrame() {
+      const { state } = useEditorState();
+      useEffect(() => {
+        latestFrame = state.currentFrame;
+      }, [state.currentFrame]);
+      return null;
+    }
+
+    const renderTimeline = () => React.createElement(
+      EditorProvider,
+      {
+        initialDocument: {
+          version: '1.0',
+          root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+        },
+      },
+      React.createElement(CaptureFrame),
+      React.createElement(Timeline, {
+        v2Timelines: latestTimelines,
+        onV2TimelinesChange: timelines => {
+          latestTimelines = timelines;
+        },
+      }),
+    );
+    const { rerender } = render(renderTimeline());
+
+    const keyframe = screen.getAllByRole('button', { name: 'Go to intro r1.opacity keyframe 30' }).at(-1)!;
+    const lane = keyframe.parentElement!;
+    lane.getBoundingClientRect = () => ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 300,
+      bottom: 20,
+      width: 300,
+      height: 20,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerDown(keyframe, { clientX: 300 });
+    fireEvent.pointerMove(window, { clientX: 140 });
+    expect(latestTimelines.intro.tracks[0].keyframes[1].frame).toBe(30);
+    expect((screen.getByLabelText('intro r1.opacity keyframe 2 frame') as HTMLInputElement).value).toBe('30');
+    fireEvent.pointerUp(window, { clientX: 140 });
+
+    await waitFor(() => expect(latestTimelines.intro.tracks[0].keyframes[1].frame).toBe(14));
+    rerender(renderTimeline());
+    await waitFor(() => expect((screen.getByLabelText('intro r1.opacity keyframe 2 frame') as HTMLInputElement).value).toBe('14'));
+    expect(latestFrame).toBe(0);
+  });
+
+  it('clears state-machine references when deleting a v2 timeline', async () => {
+    let latestTimelines: any = {
+      focus: {
+        id: 'focus',
+        duration: 20,
+        tracks: [
+          { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0.35 }, { frame: 20, value: 1 }] },
+        ],
+      },
+      intro: {
+        id: 'intro',
+        duration: 30,
+        tracks: [
+          { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+        ],
+      },
+    };
+    let latestMachines: any = {
+      walkthrough: {
+        id: 'walkthrough',
+        initial: 'idle',
+        states: {
+          idle: { timeline: 'intro', on: { start: { target: 'focused', timeline: 'focus' } } },
+          focused: { timeline: 'focus', onComplete: { target: 'idle', timeline: 'intro' } },
+        },
+      },
+    };
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(Timeline, {
+          v2Timelines: latestTimelines,
+          v2StateMachines: latestMachines,
+          onV2TimelinesChange: timelines => {
+            latestTimelines = timelines;
+          },
+          onV2StateMachinesChange: stateMachines => {
+            latestMachines = stateMachines;
+          },
+          onV2MotionChange: (timelines, stateMachines) => {
+            latestTimelines = timelines;
+            latestMachines = stateMachines;
+          },
+        }),
+      ),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove animation focus' }));
+
+    await waitFor(() => expect(latestTimelines.focus).toBeUndefined());
+    expect(latestMachines.walkthrough.states.idle.on.start).toEqual({ target: 'focused', timeline: undefined });
+    expect(latestMachines.walkthrough.states.focused.timeline).toBeUndefined();
+    expect(latestMachines.walkthrough.states.focused.onComplete).toEqual({ target: 'idle', timeline: 'intro' });
+  });
+
+  it('renames v2 timelines from the motion list on double click', async () => {
+    let latestTimelines: any = {
+      intro: {
+        id: 'intro',
+        duration: 30,
+        tracks: [
+          { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+        ],
+      },
+    };
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(Timeline, {
+          v2Timelines: latestTimelines,
+          onV2TimelinesChange: timelines => {
+            latestTimelines = timelines;
+          },
+        }),
+      ),
+    );
+
+    fireEvent.doubleClick(screen.getAllByRole('button', { name: 'Select animation intro' }).at(-1)!);
+    const renameInput = await screen.findByLabelText('Rename animation intro inline');
+    fireEvent.change(renameInput, { target: { value: 'Intro Main' } });
+    fireEvent.blur(renameInput);
+
+    await waitFor(() => expect(latestTimelines['intro-main']).toBeTruthy());
+    expect(latestTimelines.intro).toBeUndefined();
   });
 
   it('adds a blank v2 timeline for the selected or first element', async () => {
@@ -278,7 +512,7 @@ describe('v2 timeline clip rows', () => {
       ),
     );
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add v2 timeline' }).at(-1)!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add animation' }).at(-1)!);
     await waitFor(() => {
       expect(latestTimelines?.timeline).toBeTruthy();
       expect(latestTimelines.timeline.tracks[0].target).toBe('r1');

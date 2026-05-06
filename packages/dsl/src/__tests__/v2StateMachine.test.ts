@@ -16,6 +16,7 @@ const doc: ElucimV2Document = {
     presentation: {
       id: 'presentation',
       initial: 'idle',
+      reset: 'idle',
       states: {
         idle: { timeline: 'idle', on: { start: { target: 'entering', timeline: 'intro' } } },
         entering: { timeline: 'intro', onComplete: 'visible' },
@@ -34,7 +35,7 @@ describe('v2 state machines', () => {
       machineId: 'presentation',
       stateId: 'idle',
       timelineId: 'idle',
-      events: ['start'],
+      events: ['start', 'reset'],
     });
   });
 
@@ -45,6 +46,17 @@ describe('v2 state machines', () => {
       previousStateId: 'idle',
       stateId: 'entering',
       timelineId: 'intro',
+      changed: true,
+    });
+  });
+
+  it('resolves reset events through the machine reset state', () => {
+    const next = transitionStateMachine(doc, 'presentation', 'visible', 'reset');
+
+    expect(next).toMatchObject({
+      previousStateId: 'visible',
+      stateId: 'idle',
+      timelineId: 'idle',
       changed: true,
     });
   });
@@ -73,5 +85,20 @@ describe('v2 state machines', () => {
     expect(result.valid).toBe(false);
     expect(result.errors.map(error => error.path)).toContain('stateMachines.presentation.states.idle.on.start');
     expect(result.errors.map(error => error.path)).toContain('stateMachines.presentation.states.idle.on.start.timeline');
+  });
+
+  it('validates reset state targets', () => {
+    const result = validateV2({
+      ...doc,
+      stateMachines: {
+        presentation: {
+          ...doc.stateMachines!.presentation,
+          reset: 'missing',
+        },
+      },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.map(error => error.path)).toContain('stateMachines.presentation.reset');
   });
 });

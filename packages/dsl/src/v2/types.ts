@@ -96,7 +96,18 @@ export interface ElucimV2Timeline {
 export interface ElucimV2StateMachine {
   id: string;
   initial: string;
+  reset?: string;
   states: Record<string, ElucimV2State>;
+  layout?: ElucimV2StateMachineLayout;
+}
+
+export interface ElucimV2StateMachineLayout {
+  states?: Record<string, ElucimV2GraphPosition>;
+}
+
+export interface ElucimV2GraphPosition {
+  x: number;
+  y: number;
 }
 
 export interface ElucimV2State {

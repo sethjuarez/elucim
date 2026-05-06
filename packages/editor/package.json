@@ -50,6 +50,7 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "dependencies": {
+    "@xyflow/react": "^12.10.2",
     "lucide-react": "^0.577.0"
   },
   "devDependencies": {

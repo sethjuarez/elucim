@@ -67,6 +67,7 @@ describe('v2 editor persistence', () => {
 
     render(React.createElement(ElucimEditor, { initialDocument: normalized.document, onV2DocumentChange }));
 
+    fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
     fireEvent.click(screen.getAllByText('caption')[0]);
     fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'After' } });
@@ -108,8 +109,8 @@ describe('v2 editor persistence', () => {
     const onV2DocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: v2Fixture, onV2DocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'States' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Apply v2 nudge Mark document as refined' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply nudge Mark document as refined' }));
 
     await waitFor(() => {
       const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
@@ -122,17 +123,17 @@ describe('v2 editor persistence', () => {
     const onV2DocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: v2Fixture, onV2DocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'States' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss v2 nudge Mark document as refined' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss nudge Mark document as refined' }));
 
-    expect(screen.queryByRole('button', { name: 'Apply v2 nudge Mark document as refined' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Apply nudge Mark document as refined' })).toBeNull();
     expect(onV2DocumentChange).not.toHaveBeenCalled();
   });
 
   it('shows previewed nudge command results before applying', () => {
     render(React.createElement(ElucimEditor, { initialDocument: v2Fixture }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'States' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
 
     expect(screen.getAllByText('Previewed changes').length).toBeGreaterThan(0);
     expect(screen.getByText('Updated document metadata.')).toBeTruthy();

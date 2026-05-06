@@ -155,12 +155,12 @@ function createV2DemoDocument(doc: ElucimDocument): ElucimV2Document {
   return {
     ...v2,
     metadata: {
-      title: 'Editor v2 authoring sample',
+      title: 'Editor authoring sample',
       intent: 'Demonstrate native timeline and state-machine editing in the Elucim editor.',
       polishLevel: 'draft',
       notes: [
-        'Use the timeline footer to add/edit v2 timelines, tracks, and keyframes.',
-        'Use the States tab to add/edit state-machine states and transitions.',
+        'Use the timeline footer to add/edit timelines, tracks, and keyframes.',
+        'Use the State Machine workspace to connect animation states and transitions.',
       ],
     },
     timelines: {
@@ -184,9 +184,10 @@ function createV2DemoDocument(doc: ElucimDocument): ElucimV2Document {
       walkthrough: {
         id: 'walkthrough',
         initial: 'idle',
+        reset: 'idle',
         states: {
           idle: { timeline: 'intro', on: { start: { target: 'focus', timeline: 'focus' } } },
-          focus: { timeline: 'focus', on: { reset: { target: 'idle', timeline: 'intro' } } },
+          focus: { timeline: 'focus' },
         },
       },
     },
@@ -196,11 +197,10 @@ function createV2DemoDocument(doc: ElucimDocument): ElucimV2Document {
 function App() {
   const params = new URLSearchParams(window.location.search);
   const isLight = params.get('theme') === 'light';
-  const mode = params.get('mode') ?? 'v2';
   const initialDoc = React.useMemo(() => {
     const doc = createDemoDocument(isLight);
-    return mode === 'v1' ? doc : createV2DemoDocument(doc);
-  }, [isLight, mode]);
+    return createV2DemoDocument(doc);
+  }, [isLight]);
   const [doc, setDoc] = React.useState<ElucimDocument | ElucimV2Document>(initialDoc);
 
   React.useEffect(() => {
@@ -211,67 +211,13 @@ function App() {
     ? doc.scene.durationInFrames - 1
     : (doc.root as any).durationInFrames! - 1;
   return (
-    <>
-      {mode !== 'v1' && <V2AuthoringGuide />}
-      <ElucimEditor
-        initialDocument={doc}
-        initialFrame={lastFrame}
-        onV2DocumentChange={setDoc}
-        editorTheme={isLight ? { 'color-scheme': 'light' } : undefined}
-        style={{ width: '100%', height: '100vh' }}
-      />
-    </>
-  );
-}
-
-function V2AuthoringGuide() {
-  const [collapsed, setCollapsed] = React.useState(true);
-  return (
-    <aside
-      aria-label="V2 authoring guide"
-      style={{
-        position: 'fixed',
-        right: 14,
-        top: 48,
-        zIndex: 20000,
-        width: collapsed ? 140 : 360,
-        padding: collapsed ? '8px 10px' : 12,
-        border: '1px solid rgba(148, 163, 184, 0.35)',
-        borderRadius: 8,
-        background: 'rgba(15, 23, 42, 0.94)',
-        color: '#e2e8f0',
-        fontFamily: 'system-ui, sans-serif',
-        fontSize: 12,
-        boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <strong>{collapsed ? 'V2 guide' : 'V2 authoring sample'}</strong>
-        <button
-          type="button"
-          onClick={() => setCollapsed(value => !value)}
-          style={{
-            border: '1px solid rgba(148, 163, 184, 0.35)',
-            borderRadius: 4,
-            background: 'transparent',
-            color: '#cbd5e1',
-            cursor: 'pointer',
-            fontSize: 11,
-            padding: '2px 6px',
-          }}
-        >
-          {collapsed ? 'Show' : 'Hide'}
-        </button>
-      </div>
-      {!collapsed && (
-        <ol style={{ margin: '8px 0 0', paddingLeft: 18, lineHeight: 1.45 }}>
-          <li><strong>Bottom timeline:</strong> use “Add timeline”, “Add intro clip”, “Add track”, “+ key”, and target/property dropdowns.</li>
-          <li><strong>Left panel → States:</strong> edit the `walkthrough` state machine, add states, and add named transitions.</li>
-          <li><strong>Left panel → Hierarchy:</strong> select an object first if you want new timelines to target that object.</li>
-          <li>Open <a href="?mode=v1" style={{ color: '#7dd3fc' }}>v1 mode</a> for the old simpler playground.</li>
-        </ol>
-      )}
-    </aside>
+    <ElucimEditor
+      initialDocument={doc}
+      initialFrame={lastFrame}
+      onV2DocumentChange={setDoc}
+      editorTheme={isLight ? { 'color-scheme': 'light' } : undefined}
+      style={{ width: '100%', height: '100vh' }}
+    />
   );
 }
 

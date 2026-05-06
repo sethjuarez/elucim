@@ -24,6 +24,8 @@ import type { ContextMenuItem } from './ContextMenu';
 export interface ElucimCanvasProps {
   className?: string;
   style?: React.CSSProperties;
+  /** Optional render-only document, used for timeline/state preview without mutating editor state. */
+  previewDocument?: ElucimDocument;
   /** Editor color scheme — used to pick content theme when background is a $token. */
   editorColorScheme?: string;
   /** Explicit content theme — when provided, used for scene CSS vars instead of built-in presets. */
@@ -259,9 +261,10 @@ function isDarkBackground(bg: string): boolean {
 /**
  * Full-bleed editor canvas with viewport pan/zoom, dot grid, minimap, and zoom controls.
  */
-export function ElucimCanvas({ className, style, editorColorScheme, contentTheme }: ElucimCanvasProps) {
+export function ElucimCanvas({ className, style, previewDocument, editorColorScheme, contentTheme }: ElucimCanvasProps) {
   const { state, dispatch } = useEditorState();
-  const { document, selectedIds, currentFrame, viewport, isPanning } = state;
+  const { document: editorDocument, selectedIds, currentFrame, viewport, isPanning } = state;
+  const document = previewDocument ?? editorDocument;
   const root = document.root;
   const overlaySvgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

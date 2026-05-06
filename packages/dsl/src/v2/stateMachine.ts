@@ -29,6 +29,16 @@ export function transitionStateMachine(
   const state = machine.states[currentStateId];
   if (!state) throw new Error(`State "${currentStateId}" does not exist in machine "${machineId}"`);
 
+  if (event === 'reset' && machine.reset) {
+    const next = snapshot(machine, machine.reset);
+    return {
+      ...next,
+      changed: machine.reset !== currentStateId,
+      event,
+      previousStateId: currentStateId,
+    };
+  }
+
   const transition = event === 'complete' ? state.onComplete : state.on?.[event];
   if (!transition) {
     return {
@@ -65,7 +75,7 @@ function snapshot(machine: ElucimV2StateMachine, stateId: string): ElucimV2State
     machineId: machine.id,
     stateId,
     timelineId: state.timeline,
-    events: Object.keys(state.on ?? {}),
+    events: [...new Set([...Object.keys(state.on ?? {}), ...(machine.reset ? ['reset'] : [])])],
     onComplete: transitionTarget(state.onComplete),
   };
 }

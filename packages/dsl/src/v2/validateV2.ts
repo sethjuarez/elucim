@@ -140,6 +140,9 @@ function validateStateMachines(doc: ElucimV2Document, errors: ValidationError[])
     if (!machine.states?.[machine.initial]) {
       errors.push({ path: `stateMachines.${machineId}.initial`, message: `Initial state "${machine.initial}" does not exist`, severity: 'error' });
     }
+    if (machine.reset && !machine.states?.[machine.reset]) {
+      errors.push({ path: `stateMachines.${machineId}.reset`, message: `Reset state "${machine.reset}" does not exist`, severity: 'error' });
+    }
     for (const [stateId, state] of Object.entries(machine.states ?? {})) {
       if (state.timeline && !timelineIds.has(state.timeline)) {
         errors.push({ path: `stateMachines.${machineId}.states.${stateId}.timeline`, message: `Unknown timeline "${state.timeline}"`, severity: 'error' });
