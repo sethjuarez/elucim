@@ -127,4 +127,37 @@ describe('v2 editor persistence', () => {
     expect(screen.queryByRole('button', { name: 'Apply v2 nudge Mark document as refined' })).toBeNull();
     expect(onV2DocumentChange).not.toHaveBeenCalled();
   });
+
+  it('shows previewed nudge command results before applying', () => {
+    render(React.createElement(ElucimEditor, { initialDocument: v2Fixture }));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'States' }));
+
+    expect(screen.getAllByText('Previewed changes').length).toBeGreaterThan(0);
+    expect(screen.getByText('Updated document metadata.')).toBeTruthy();
+  });
+
+  it('prunes deleted timeline references from states and transitions while keeping v2 valid', async () => {
+    const onV2DocumentChange = vi.fn();
+    const onV2CompatibilityWarnings = vi.fn();
+    render(React.createElement(ElucimEditor, {
+      initialDocument: v2Fixture,
+      onV2DocumentChange,
+      onV2CompatibilityWarnings,
+    }));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
+    fireEvent.click(screen.getAllByText('title')[0]);
+    fireEvent.keyDown(document, { key: 'Delete' });
+
+    await waitFor(() => {
+      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      expect(latest?.timelines?.intro).toBeUndefined();
+      expect(latest?.stateMachines?.deck.states.idle.on?.start).toEqual({ target: 'intro' });
+      expect(latest?.stateMachines?.deck.states.intro.timeline).toBeUndefined();
+      expect(validateV2(latest).valid).toBe(true);
+    });
+    const warnings = onV2CompatibilityWarnings.mock.calls.flat().join('\n');
+    expect(warnings).toContain('references missing timeline "intro"');
+  });
 });

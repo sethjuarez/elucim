@@ -59,7 +59,7 @@ function MyApp() {
 
 When `initialDocument` is v2, the editor uses a v1 canvas adapter for existing visual editing but keeps v2 semantics attached to the host callback. Normal edits emit a v2-compatible document through `onV2DocumentChange`; ID renames update timeline track targets where the editor can map the old and new IDs, and deleted targets produce compatibility warnings.
 
-The editor also exposes basic v2-native controls: document metadata and selected element intent fields in the States panel, reviewable polish nudges from `suggestDocumentNudges()`, accept/dismiss controls for suggested nudges with command summaries, simple timeline clip/keyframe editing, and simple state-machine transition editing.
+The editor also exposes basic v2-native controls: document metadata and selected element intent fields in the States panel, reviewable polish nudges from `suggestDocumentNudges()`, accept/dismiss controls for suggested nudges with command summaries and previewed command results, simple timeline clip/keyframe editing, and simple state-machine transition editing.
 
 ```tsx
 <ElucimEditor

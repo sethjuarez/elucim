@@ -189,12 +189,29 @@ function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document)
     stateMachines[id] = {
       ...machine,
       states: Object.fromEntries(
-        Object.entries(machine.states).map(([stateId, state]) => [
-          stateId,
-          state.timeline && !timelineIds.has(state.timeline)
-            ? (warnings.push(`State "${stateId}" in machine "${id}" references missing timeline "${state.timeline}" and will lose that timeline link.`), { ...state, timeline: undefined })
-            : state,
-        ]),
+        Object.entries(machine.states).map(([stateId, state]) => {
+          const nextState = { ...state };
+          if (nextState.timeline && !timelineIds.has(nextState.timeline)) {
+            warnings.push(`State "${stateId}" in machine "${id}" references missing timeline "${nextState.timeline}" and will lose that timeline link.`);
+            nextState.timeline = undefined;
+          }
+          if (nextState.on) {
+            nextState.on = Object.fromEntries(
+              Object.entries(nextState.on).map(([eventName, transition]) => [
+                eventName,
+                cleanTransitionTimelineReference(transition, timelineIds, warning => warnings.push(`Transition "${eventName}" in state "${stateId}" of machine "${id}" ${warning}`)),
+              ]),
+            );
+          }
+          if (nextState.onComplete) {
+            nextState.onComplete = cleanTransitionTimelineReference(
+              nextState.onComplete,
+              timelineIds,
+              warning => warnings.push(`onComplete transition in state "${stateId}" of machine "${id}" ${warning}`),
+            );
+          }
+          return [stateId, nextState];
+        }),
       ),
     };
   }
@@ -211,6 +228,19 @@ function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document)
   return { document, warnings };
 }
 
+function cleanTransitionTimelineReference(
+  transition: string | ElucimV2Transition,
+  timelineIds: Set<string>,
+  warn: (warning: string) => void,
+): string | ElucimV2Transition {
+  if (typeof transition === 'string' || !transition.timeline || timelineIds.has(transition.timeline)) {
+    return transition;
+  }
+  warn(`references missing timeline "${transition.timeline}" and will lose that timeline link.`);
+  const { timeline: _timeline, ...rest } = transition;
+  return rest;
+}
+
 function mapSourceIdsToMigratedIds(sourceV2: ElucimV2Document, migrated: ElucimV2Document): Map<string, string> {
   const idMap = new Map<string, string>();
   const visit = (sourceIds: string[], migratedIds: string[]) => {
@@ -221,6 +251,9 @@ function mapSourceIdsToMigratedIds(sourceV2: ElucimV2Document, migrated: ElucimV
       const sourceElement = sourceV2.elements[sourceId];
       const migratedElement = migrated.elements[migratedId];
       if (!sourceElement || !migratedElement) continue;
+      if (sourceId !== migratedId && sourceV2.elements[migratedId]) {
+        continue;
+      }
       idMap.set(sourceId, migratedId);
       visit(sourceElement.children ?? [], migratedElement.children ?? []);
     }
@@ -472,6 +505,17 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
   const nudgeCandidates = useMemo(() => currentV2Document
     ? suggestDocumentNudges(currentV2Document).filter(nudge => !dismissedNudgeIds.has(nudge.id))
     : [], [currentV2Document, dismissedNudgeIds]);
+  const nudgePreviews = useMemo(() => {
+    if (!currentV2Document) return new Map<string, string[]>();
+    const entries: Array<[string, string[]]> = nudgeCandidates.map(nudge => {
+      try {
+        return [nudge.id, applyNudge(currentV2Document, nudge).summaries];
+      } catch (error) {
+        return [nudge.id, [`Cannot preview nudge: ${error instanceof Error ? error.message : String(error)}`]];
+      }
+    });
+    return new Map(entries);
+  }, [currentV2Document, nudgeCandidates]);
   const snapshot = currentV2Document && activeMachineId
     ? activeStateId
       ? { ...getInitialStateSnapshot(currentV2Document, activeMachineId), ...transitionStateMachine(currentV2Document, activeMachineId, activeStateId, '__noop__') }
@@ -745,6 +789,16 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
               <ul style={{ margin: 0, paddingLeft: 16, color: v('--elucim-editor-text-muted'), fontSize: 10, lineHeight: 1.35 }}>
                 {nudge.commands.map((command, index) => <li key={index}>{summarizeNudgeCommand(command)}</li>)}
               </ul>
+              {(nudgePreviews.get(nudge.id)?.length ?? 0) > 0 && (
+                <div style={{ borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`, paddingTop: 4 }}>
+                  <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, fontWeight: 700, marginBottom: 2 }}>
+                    Previewed changes
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: 16, color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
+                    {nudgePreviews.get(nudge.id)?.map((summary, index) => <li key={index}>{summary}</li>)}
+                  </ul>
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 6 }}>
                 <button
                   type="button"
