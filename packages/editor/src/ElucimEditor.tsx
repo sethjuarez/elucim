@@ -466,9 +466,12 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
   const machineIds = Object.keys(currentV2Document?.stateMachines ?? {});
   const [activeMachineId, setActiveMachineId] = useState(machineIds[0] ?? '');
   const [activeStateId, setActiveStateId] = useState('');
+  const [dismissedNudgeIds, setDismissedNudgeIds] = useState<Set<string>>(() => new Set());
   const activeMachine = activeMachineId ? currentV2Document?.stateMachines?.[activeMachineId] : undefined;
   const activeState = activeMachine && activeStateId ? activeMachine.states[activeStateId] : undefined;
-  const nudgeCandidates = useMemo(() => currentV2Document ? suggestDocumentNudges(currentV2Document) : [], [currentV2Document]);
+  const nudgeCandidates = useMemo(() => currentV2Document
+    ? suggestDocumentNudges(currentV2Document).filter(nudge => !dismissedNudgeIds.has(nudge.id))
+    : [], [currentV2Document, dismissedNudgeIds]);
   const snapshot = currentV2Document && activeMachineId
     ? activeStateId
       ? { ...getInitialStateSnapshot(currentV2Document, activeMachineId), ...transitionStateMachine(currentV2Document, activeMachineId, activeStateId, '__noop__') }
@@ -553,6 +556,11 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
     const nudge = nudgeCandidates.find(candidate => candidate.id === nudgeId);
     if (!baseDocument || !nudge) return;
     onV2DocumentChange?.(applyNudge(baseDocument, nudge).document);
+    setDismissedNudgeIds(previous => new Set(previous).add(nudge.id));
+  };
+
+  const dismissEditorNudge = (nudgeId: string) => {
+    setDismissedNudgeIds(previous => new Set(previous).add(nudgeId));
   };
 
   return (
@@ -734,17 +742,27 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
                 <span style={{ color: nudge.confidence === 'safe' ? v('--elucim-editor-success') : v('--elucim-editor-warning') }}>{nudge.confidence}</span>
               </div>
               <div style={{ color: v('--elucim-editor-text-secondary'), lineHeight: 1.35 }}>{nudge.description}</div>
-              <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10 }}>
-                {nudge.commands.map(command => command.op).join(', ')}
+              <ul style={{ margin: 0, paddingLeft: 16, color: v('--elucim-editor-text-muted'), fontSize: 10, lineHeight: 1.35 }}>
+                {nudge.commands.map((command, index) => <li key={index}>{summarizeNudgeCommand(command)}</li>)}
+              </ul>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  type="button"
+                  aria-label={`Apply v2 nudge ${nudge.title}`}
+                  onClick={() => applyEditorNudge(nudge.id)}
+                  style={{ flex: 1, border: `1px solid ${nudge.confidence === 'safe' ? v('--elucim-editor-success') : v('--elucim-editor-warning')}`, borderRadius: 4, padding: '4px 6px', background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', textAlign: 'left' }}
+                >
+                  Apply {nudge.confidence === 'safe' ? 'safe nudge' : 'review nudge'}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Dismiss v2 nudge ${nudge.title}`}
+                  onClick={() => dismissEditorNudge(nudge.id)}
+                  style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: '4px 6px', background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer' }}
+                >
+                  Dismiss
+                </button>
               </div>
-              <button
-                type="button"
-                aria-label={`Apply v2 nudge ${nudge.title}`}
-                onClick={() => applyEditorNudge(nudge.id)}
-                style={{ border: `1px solid ${nudge.confidence === 'safe' ? v('--elucim-editor-success') : v('--elucim-editor-warning')}`, borderRadius: 4, padding: '4px 6px', background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', textAlign: 'left' }}
-              >
-                Apply {nudge.confidence === 'safe' ? 'safe nudge' : 'review nudge'}
-              </button>
             </div>
           ))}
         </div>
@@ -860,6 +878,31 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
       </div>
     </div>
   );
+}
+
+function summarizeNudgeCommand(command: ReturnType<typeof suggestDocumentNudges>[number]['commands'][number]): string {
+  switch (command.op) {
+    case 'updateMetadata':
+      return `Update metadata: ${Object.keys(command.metadata ?? {}).join(', ')}`;
+    case 'updateElement':
+      return `Update ${command.id}: ${Object.keys(command.patch).join(', ')}`;
+    case 'upsertTimeline':
+      return `Upsert timeline "${command.timeline.id}" with ${command.timeline.tracks.length} track${command.timeline.tracks.length === 1 ? '' : 's'}`;
+    case 'deleteTimeline':
+      return `Delete timeline "${command.id}"`;
+    case 'addElement':
+      return `Add element "${command.element.id}"`;
+    case 'deleteElement':
+      return `Delete element "${command.id}"`;
+    case 'moveElement':
+      return `Move element "${command.id}"`;
+    case 'reparentElement':
+      return `Reparent element "${command.id}"`;
+    case 'applyAnimationPreset':
+      return `Apply ${command.preset} preset to ${command.ids.length} element${command.ids.length === 1 ? '' : 's'}`;
+    case 'applyTimelineFrame':
+      return `Preview timeline "${command.timelineId}" at frame ${command.frame}`;
+  }
 }
 
 function StatePresetButton({

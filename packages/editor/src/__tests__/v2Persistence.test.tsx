@@ -116,4 +116,15 @@ describe('v2 editor persistence', () => {
       expect(validateV2(latest).valid).toBe(true);
     });
   });
+
+  it('lets users dismiss suggested nudges without changing the v2 document', () => {
+    const onV2DocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, { initialDocument: v2Fixture, onV2DocumentChange }));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'States' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss v2 nudge Mark document as refined' }));
+
+    expect(screen.queryByRole('button', { name: 'Apply v2 nudge Mark document as refined' })).toBeNull();
+    expect(onV2DocumentChange).not.toHaveBeenCalled();
+  });
 });
