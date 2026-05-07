@@ -1,9 +1,9 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import React, { useEffect } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { editorReducer } from '../state/reducer';
 import { createInitialState } from '../state/types';
 import type { CircleNode, RectNode } from '@elucim/dsl';
@@ -12,6 +12,8 @@ import { Timeline } from '../timeline/Timeline';
 
 const circle: CircleNode = { type: 'circle', id: 'c1', cx: 100, cy: 100, r: 50, fadeIn: 20, fadeOut: 10, draw: 40 };
 const rect: RectNode = { type: 'rect', id: 'r1', x: 50, y: 50, width: 100, height: 80 };
+
+afterEach(() => cleanup());
 
 function stateWith(...elements: any[]) {
   return createInitialState({
@@ -143,6 +145,15 @@ describe('selection via timeline track', () => {
 });
 
 describe('v2 timeline clip rows', () => {
+  beforeEach(() => {
+    globalThis.ResizeObserver = class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+    globalThis.CSS = { escape: (value: string) => value } as any;
+  });
+
   it('renders v2 clip tracks and lets keyframes scrub the playhead', async () => {
     let latestFrame = 0;
 
@@ -236,6 +247,7 @@ describe('v2 timeline clip rows', () => {
     const { rerender } = render(renderEditableTimeline());
 
     fireEvent.change(screen.getByLabelText('Animation intro duration'), { target: { value: '40' } });
+    fireEvent.blur(screen.getByLabelText('Animation intro duration'));
     await waitFor(() => expect(latestTimelines.intro.duration).toBe(40));
     rerender(renderEditableTimeline());
     fireEvent.click(screen.getAllByRole('button', { name: 'Go to intro r1.opacity keyframe 30' }).at(-1)!);
@@ -281,11 +293,17 @@ describe('v2 timeline clip rows', () => {
     let latestMachines: any = {
       walkthrough: {
         id: 'walkthrough',
-        initial: 'idle',
+        entry: 'idle',
+        inputs: { start: { type: 'trigger' } },
         states: {
-          idle: { timeline: 'intro', on: { start: { target: 'focused', timeline: 'focus' } } },
-          focused: { timeline: 'focus', onComplete: { target: 'idle', timeline: 'intro' } },
+          idle: { timeline: 'intro' },
+          focused: { timeline: 'focus' },
         },
+        transitions: [
+          { id: 'idle-start', from: 'idle', to: 'focused', trigger: 'start' },
+          { id: 'focused-complete', from: 'focused', to: 'idle', exitTime: 1 },
+          { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+        ],
       },
     };
 
@@ -320,11 +338,223 @@ describe('v2 timeline clip rows', () => {
 
     await waitFor(() => expect(latestTimelines['focus-text']).toBeTruthy());
     expect(latestTimelines.focus).toBeUndefined();
-    expect(latestMachines.walkthrough.states.idle.on.start.timeline).toBe('focus-text');
     expect(latestMachines.walkthrough.states.focused.timeline).toBe('focus-text');
 
     rerender(renderTimeline());
     expect(screen.getByRole('button', { name: 'Select animation focus-text' })).toBeTruthy();
+  });
+
+  it('plays a state machine from its entry state timeline', async () => {
+    const onActiveTimelineChange = vi.fn();
+    const latestTimelines: any = {
+      idle: {
+        id: 'idle',
+        duration: 1,
+        tracks: [{ target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 1 }] }],
+      },
+      focus: {
+        id: 'focus',
+        duration: 20,
+        tracks: [{ target: 'r1', property: 'scale', keyframes: [{ frame: 0, value: 0.8 }, { frame: 20, value: 1 }] }],
+      },
+    };
+    const latestMachines: any = {
+      walkthrough: {
+        id: 'walkthrough',
+        entry: 'idle',
+        inputs: { focus: { type: 'trigger' } },
+        states: {
+          idle: { timeline: 'idle' },
+          focused: { timeline: 'focus' },
+        },
+        transitions: [
+          { id: 'idle-focus', from: 'idle', to: 'focused', trigger: 'focus' },
+          { id: 'idle-complete', from: 'idle', to: 'focused', exitTime: 1 },
+          { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+        ],
+      },
+    };
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(Timeline, {
+          v2Timelines: latestTimelines,
+          v2StateMachines: latestMachines,
+          preferredMotionType: 'stateMachine',
+          onActiveTimelineChange,
+        }),
+      ),
+    );
+
+    expect(screen.queryByRole('button', { name: 'Play state machine walkthrough' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Preview state machine walkthrough' }));
+
+    await waitFor(() => expect(onActiveTimelineChange).toHaveBeenCalledWith('idle'));
+    expect(screen.getByText(/Previewing idle via onStart from entry \(idle\)/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Trigger focus event from idle' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Run Next transition from idle' })).toBeNull();
+    expect(screen.getByText('Next auto-runs -> focused')).toBeTruthy();
+  });
+
+  it('exposes state transition events as preview triggers', async () => {
+    const onActiveTimelineChange = vi.fn();
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(Timeline, {
+          v2Timelines: {
+            idle: {
+              id: 'idle',
+              duration: 30,
+              tracks: [{ target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 1 }] }],
+            },
+            focus: {
+              id: 'focus',
+              duration: 20,
+              tracks: [{ target: 'r1', property: 'scale', keyframes: [{ frame: 0, value: 0.8 }, { frame: 20, value: 1 }] }],
+            },
+          },
+          v2StateMachines: {
+            walkthrough: {
+              id: 'walkthrough',
+              entry: 'idle',
+              inputs: { focus: { type: 'trigger' } },
+              states: {
+                idle: { timeline: 'idle' },
+                focused: { timeline: 'focus' },
+              },
+              transitions: [
+                { id: 'idle-focus', from: 'idle', to: 'focused', trigger: 'focus' },
+                { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+              ],
+            },
+          },
+          preferredMotionType: 'stateMachine',
+          onActiveTimelineChange,
+        }),
+      ),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Preview state machine walkthrough' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Trigger focus event from idle' }));
+
+    await waitFor(() => expect(onActiveTimelineChange).toHaveBeenCalledWith('focus'));
+    expect(screen.getByText(/Previewing focused via focus from idle \(focus\)/)).toBeTruthy();
+  });
+
+  it('stops playback when switching from animations to state machines', async () => {
+    let latestPlaying = false;
+
+    function CapturePlaying() {
+      const { state } = useEditorState();
+      useEffect(() => {
+        latestPlaying = state.isPlaying;
+      }, [state.isPlaying]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(CapturePlaying),
+        React.createElement(Timeline, {
+          v2Timelines: {
+            intro: {
+              id: 'intro',
+              duration: 30,
+              tracks: [
+                { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+              ],
+            },
+          },
+          v2StateMachines: {
+            walkthrough: {
+              id: 'walkthrough',
+              entry: 'idle',
+              states: { idle: { timeline: 'intro' } },
+            },
+          },
+        }),
+      ),
+    );
+
+    fireEvent.click(screen.getByTitle('Play'));
+    await waitFor(() => expect(latestPlaying).toBe(true));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
+
+    await waitFor(() => expect(latestPlaying).toBe(false));
+  });
+
+  it('stops state machine preview when switching back to animations', async () => {
+    let latestPlaying = false;
+
+    function CapturePlaying() {
+      const { state } = useEditorState();
+      useEffect(() => {
+        latestPlaying = state.isPlaying;
+      }, [state.isPlaying]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(CapturePlaying),
+        React.createElement(Timeline, {
+          v2Timelines: {
+            intro: {
+              id: 'intro',
+              duration: 30,
+              tracks: [
+                { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+              ],
+            },
+          },
+          v2StateMachines: {
+            walkthrough: {
+              id: 'walkthrough',
+              entry: 'idle',
+              states: { idle: { timeline: 'intro' } },
+            },
+          },
+          preferredMotionType: 'stateMachine',
+        }),
+      ),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Preview state machine walkthrough' }));
+    await waitFor(() => expect(latestPlaying).toBe(true));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Animations motion tab' }));
+
+    await waitFor(() => expect(latestPlaying).toBe(false));
+    expect(screen.getByTitle('Play')).toBeTruthy();
   });
 
   it('drags v2 keyframes to a new frame without crossing neighbors', async () => {
@@ -380,15 +610,64 @@ describe('v2 timeline clip rows', () => {
     });
 
     fireEvent.pointerDown(keyframe, { clientX: 300 });
-    fireEvent.pointerMove(window, { clientX: 140 });
+    fireEvent.pointerMove(keyframe, { clientX: 140 });
     expect(latestTimelines.intro.tracks[0].keyframes[1].frame).toBe(30);
-    expect((screen.getByLabelText('intro r1.opacity keyframe 2 frame') as HTMLInputElement).value).toBe('30');
-    fireEvent.pointerUp(window, { clientX: 140 });
+    fireEvent.pointerUp(keyframe, { clientX: 140 });
 
     await waitFor(() => expect(latestTimelines.intro.tracks[0].keyframes[1].frame).toBe(14));
     rerender(renderTimeline());
     await waitFor(() => expect((screen.getByLabelText('intro r1.opacity keyframe 2 frame') as HTMLInputElement).value).toBe('14'));
     expect(latestFrame).toBe(0);
+  });
+
+  it('keeps a dragged v2 keyframe anchored to the grabbed point', async () => {
+    let latestTimelines: any = {
+      intro: {
+        id: 'intro',
+        duration: 30,
+        tracks: [
+          { target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+        ],
+      },
+    };
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(Timeline, {
+          v2Timelines: latestTimelines,
+          onV2TimelinesChange: timelines => {
+            latestTimelines = timelines;
+          },
+        }),
+      ),
+    );
+
+    const keyframe = screen.getAllByRole('button', { name: 'Go to intro r1.opacity keyframe 30' }).at(-1)!;
+    const lane = keyframe.parentElement!;
+    lane.getBoundingClientRect = () => ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 300,
+      bottom: 20,
+      width: 300,
+      height: 20,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerDown(keyframe, { clientX: 294 });
+    fireEvent.pointerMove(keyframe, { clientX: 291 });
+    fireEvent.pointerUp(keyframe, { clientX: 291 });
+
+    await waitFor(() => expect(latestTimelines.intro.tracks[0].keyframes[1].frame).toBe(30));
   });
 
   it('clears state-machine references when deleting a v2 timeline', async () => {
@@ -411,11 +690,17 @@ describe('v2 timeline clip rows', () => {
     let latestMachines: any = {
       walkthrough: {
         id: 'walkthrough',
-        initial: 'idle',
+        entry: 'idle',
+        inputs: { start: { type: 'trigger' } },
         states: {
-          idle: { timeline: 'intro', on: { start: { target: 'focused', timeline: 'focus' } } },
-          focused: { timeline: 'focus', onComplete: { target: 'idle', timeline: 'intro' } },
+          idle: { timeline: 'intro' },
+          focused: { timeline: 'focus' },
         },
+        transitions: [
+          { id: 'idle-start', from: 'idle', to: 'focused', trigger: 'start' },
+          { id: 'focused-complete', from: 'focused', to: 'idle', exitTime: 1 },
+          { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+        ],
       },
     };
 
@@ -448,9 +733,9 @@ describe('v2 timeline clip rows', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove animation focus' }));
 
     await waitFor(() => expect(latestTimelines.focus).toBeUndefined());
-    expect(latestMachines.walkthrough.states.idle.on.start).toEqual({ target: 'focused', timeline: undefined });
+    expect(latestMachines.walkthrough.transitions[0]).toMatchObject({ from: 'idle', to: 'focused', trigger: 'start' });
     expect(latestMachines.walkthrough.states.focused.timeline).toBeUndefined();
-    expect(latestMachines.walkthrough.states.focused.onComplete).toEqual({ target: 'idle', timeline: 'intro' });
+    expect(latestMachines.walkthrough.transitions[1]).toMatchObject({ from: 'focused', to: 'idle', exitTime: 1 });
   });
 
   it('renames v2 timelines from the motion list on double click', async () => {

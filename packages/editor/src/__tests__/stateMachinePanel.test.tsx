@@ -9,7 +9,7 @@ import { ElucimEditor } from '../ElucimEditor';
 
 const v2Document: ElucimV2Document = {
   version: '2.0',
-  scene: { type: 'player', width: 800, height: 600, durationInFrames: 90, children: ['title'] },
+  scene: { type: 'player', width: 800, height: 600, children: ['title'] },
   elements: {
     title: {
       id: 'title',
@@ -25,12 +25,16 @@ const v2Document: ElucimV2Document = {
   stateMachines: {
     deck: {
       id: 'deck',
-      initial: 'idle',
-      reset: 'idle',
+      entry: 'idle',
+      inputs: { start: { type: 'trigger' } },
       states: {
-        idle: { timeline: 'idle', on: { start: { target: 'intro', timeline: 'intro' } } },
+        idle: { timeline: 'idle' },
         intro: { timeline: 'intro' },
       },
+      transitions: [
+        { id: 'idle-start', from: 'idle', to: 'intro', trigger: 'start' },
+        { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+      ],
     },
   },
   metadata: { polishLevel: 'draft', intent: 'Explain the CutReady flow' },
@@ -61,8 +65,15 @@ describe('StateMachinePanel', () => {
     expect(screen.getByLabelText('State machine graph deck')).toBeTruthy();
     expect(screen.getByLabelText('State machine graph canvas deck')).toBeTruthy();
     expect(screen.queryByText('Add a transition to connect states.')).toBeNull();
-    expect(screen.getByLabelText('State machine deck reset state')).toBeTruthy();
-    expect(screen.getByText('animation: idle')).toBeTruthy();
+    expect(screen.queryByLabelText('State machine deck reset state')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Preview state machine deck' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Play state machine deck' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Preview state idle animation' })).toBeNull();
+    expect(screen.getByText('Preview starts at idle at 0.5x')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Trigger start event from idle' })).toBeNull();
+    expect(screen.getByText('Events live on transition edges. Select an edge to edit its event, then fire that event while its source state is active.')).toBeTruthy();
+    expect(screen.queryByText('Event inputs')).toBeNull();
+    expect(screen.getAllByText('idle').length).toBeGreaterThan(0);
     expect(screen.getAllByText('idle').length).toBeGreaterThan(0);
     expect(screen.getAllByText('intro').length).toBeGreaterThan(0);
   });
@@ -74,6 +85,17 @@ describe('StateMachinePanel', () => {
     expect(screen.getByRole('tab', { name: 'Animations motion tab' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByLabelText('Animation clips')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Select animation idle' })).toBeTruthy();
+  });
+
+  it('stops animation playback when leaving the animate workspace', async () => {
+    render(React.createElement(ElucimEditor, { initialDocument: v2Document }));
+
+    fireEvent.click(screen.getByTitle('Play'));
+    expect(await screen.findByTitle('Pause')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+
+    await waitFor(() => expect(screen.queryByTitle('Pause')).toBeNull());
   });
 
   it('uses the bottom motion area for the state machine workspace', () => {
@@ -100,7 +122,7 @@ describe('StateMachinePanel', () => {
         stateMachines: {
           deck: {
             ...v2Document.stateMachines!.deck,
-            layout: { states: { idle: { x: 120, y: 140 } } },
+            layout: { entry: { x: 32, y: 146 }, states: { idle: { x: 120, y: 140 } } },
           },
         },
       },
@@ -108,7 +130,9 @@ describe('StateMachinePanel', () => {
     }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    const entryNode = container.querySelector('.react-flow__node[data-id="__entry__"]');
     const node = container.querySelector('.react-flow__node[data-id="idle"]');
+    expect(entryNode).toBeTruthy();
     expect(node).toBeTruthy();
     expect(onV2DocumentChange).not.toHaveBeenCalled();
   });
@@ -180,7 +204,7 @@ describe('StateMachinePanel', () => {
     await waitFor(() => {
       const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
       expect(latest.stateMachines?.['state-machine'].states.state).toBeUndefined();
-      expect(latest.stateMachines?.['state-machine'].initial).toBe('idle');
+      expect(latest.stateMachines?.['state-machine'].entry).toBe('idle');
     });
   });
 
@@ -207,9 +231,8 @@ describe('StateMachinePanel', () => {
       const machine = latest.stateMachines?.['deck-flow'];
       expect(machine?.states.ready).toBeTruthy();
       expect(machine?.states.idle).toBeUndefined();
-      expect(machine?.initial).toBe('ready');
-      expect(machine?.reset).toBe('ready');
-      expect(machine?.states.ready.on?.start).toEqual({ target: 'intro', timeline: 'intro' });
+      expect(machine?.entry).toBe('ready');
+      expect(machine?.transitions?.[0]).toMatchObject({ from: 'ready', to: 'intro', trigger: 'start' });
     });
   });
 
@@ -230,6 +253,64 @@ describe('StateMachinePanel', () => {
     });
   });
 
+  it('keeps event inputs aligned with renamed and deleted transitions', async () => {
+    const onV2DocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onV2DocumentChange }));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByLabelText('Select graph state idle'));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Event: start transition from idle' }));
+    fireEvent.change(screen.getByLabelText('Rename transition trigger start'), { target: { value: 'begin' } });
+    fireEvent.blur(screen.getByLabelText('Rename transition trigger start'));
+
+    await waitFor(() => {
+      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      expect(latest.stateMachines?.deck.transitions?.[0].trigger).toBe('begin');
+      expect(latest.stateMachines?.deck.inputs?.begin).toEqual({ type: 'trigger' });
+      expect(latest.stateMachines?.deck.inputs?.start).toBeUndefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove transition Event: begin' }));
+
+    await waitFor(() => {
+      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      expect(latest.stateMachines?.deck.transitions).toEqual([{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }]);
+      expect(latest.stateMachines?.deck.inputs).toBeUndefined();
+    });
+  });
+
+  it('shows source target type and event-specific metadata for selected transitions', async () => {
+    const onV2DocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onV2DocumentChange }));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Event: start transition from idle' }));
+
+    expect(screen.getByLabelText('Transition idle-start source').textContent).toBe('idle');
+    expect(screen.getByLabelText('Transition idle-start type')).toBeTruthy();
+    expect(screen.getByLabelText('Transition idle-start target state')).toBeTruthy();
+    expect(screen.getByLabelText('Transition idle-start event preset')).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText('Transition idle-start event preset'), { target: { value: 'onKey' } });
+    fireEvent.change(await screen.findByLabelText('Transition idle-start key'), { target: { value: 'A' } });
+    fireEvent.blur(screen.getByLabelText('Transition idle-start key'));
+    fireEvent.change(screen.getByLabelText('Transition idle-start target state'), { target: { value: 'entry' } });
+
+    await waitFor(() => {
+      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      expect(latest.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'entry', trigger: 'onKey', key: 'A' });
+    });
+
+    fireEvent.change(screen.getByLabelText('Transition idle-start type'), { target: { value: 'next' } });
+
+    await waitFor(() => {
+      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      expect(latest.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'entry', exitTime: 1 });
+      expect(latest.stateMachines?.deck.transitions?.[0].trigger).toBeUndefined();
+      expect(latest.stateMachines?.deck.transitions?.[0].key).toBeUndefined();
+    });
+  });
+
   it('clears transitions and onComplete references when deleting a state', async () => {
     const onV2DocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, {
@@ -239,13 +320,14 @@ describe('StateMachinePanel', () => {
           deck: {
             ...v2Document.stateMachines!.deck,
             states: {
-              idle: {
-                timeline: 'idle',
-                on: { start: { target: 'intro', timeline: 'intro' } },
-                onComplete: { target: 'intro', timeline: 'intro' },
-              },
+              idle: { timeline: 'idle' },
               intro: { timeline: 'intro' },
             },
+            transitions: [
+              { id: 'idle-start', from: 'idle', to: 'intro', trigger: 'start' },
+              { id: 'idle-complete', from: 'idle', to: 'intro', exitTime: 1 },
+              { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+            ],
           },
         },
       },
@@ -258,10 +340,8 @@ describe('StateMachinePanel', () => {
 
     await waitFor(() => {
       const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
-      const idle = latest.stateMachines?.deck.states.idle;
       expect(latest.stateMachines?.deck.states.intro).toBeUndefined();
-      expect(idle?.on).toBeUndefined();
-      expect(idle?.onComplete).toBeUndefined();
+      expect(latest.stateMachines?.deck.transitions).toEqual([{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }]);
     });
   });
 });

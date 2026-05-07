@@ -1,5 +1,6 @@
 import type { ElucimDocument, ElementNode, PlayerNode, SceneNode } from '../schema/types';
 import type { ElucimV2Document, ElucimV2Element, ElucimV2Scene } from './types';
+import { getDocumentLinearDuration } from './duration';
 
 export interface NormalizeToV2Result {
   document: ElucimV2Document;
@@ -69,7 +70,6 @@ export function migrateV1ToV2(doc: ElucimDocument): ElucimV2Document {
     width: root.width,
     height: root.height,
     fps: root.fps,
-    durationInFrames: root.durationInFrames,
     background: root.background,
     children,
     ...(root.type === 'player' ? {
@@ -85,7 +85,7 @@ export function migrateV1ToV2(doc: ElucimDocument): ElucimV2Document {
     elements: state.elements,
     metadata: {
       polishLevel: 'draft',
-      notes: ['Migrated from Elucim v1 normalized tree structure.'],
+      notes: [`Migrated from Elucim v1 normalized tree structure. Legacy root duration was ${root.durationInFrames} frames; v2 derives time from timelines, state machines, and export policy.`],
     },
   };
 }
@@ -100,7 +100,7 @@ export function migrateV2ToV1(doc: ElucimV2Document): ElucimDocument {
       width: doc.scene.width,
       height: doc.scene.height,
       fps: doc.scene.fps,
-      durationInFrames: doc.scene.durationInFrames,
+      durationInFrames: getDocumentLinearDuration(doc),
       background: doc.scene.background,
       ...(doc.scene.type === 'player' ? {
         controls: doc.scene.controls,
@@ -117,6 +117,7 @@ function restoreElement(doc: ElucimV2Document, id: string): ElementNode {
   if (!element) throw new Error(`Cannot restore missing v2 element "${id}"`);
   const restored = {
     ...element.props,
+    ...element.layout,
     id: element.id,
     type: element.type,
     ...(element.children ? { children: element.children.map(childId => restoreElement(doc, childId)) } : {}),

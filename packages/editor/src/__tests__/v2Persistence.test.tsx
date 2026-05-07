@@ -10,7 +10,7 @@ import { ElucimEditor } from '../ElucimEditor';
 
 const v2Fixture: ElucimV2Document = {
   version: '2.0',
-  scene: { type: 'player', width: 800, height: 600, durationInFrames: 90, children: ['title', 'metric'] },
+  scene: { type: 'player', width: 800, height: 600, children: ['title', 'metric'] },
   elements: {
     title: {
       id: 'title',
@@ -35,11 +35,16 @@ const v2Fixture: ElucimV2Document = {
   stateMachines: {
     deck: {
       id: 'deck',
-      initial: 'idle',
+      entry: 'idle',
+      inputs: { start: { type: 'trigger' } },
       states: {
-        idle: { on: { start: { target: 'intro', timeline: 'intro' } } },
+        idle: {},
         intro: { timeline: 'intro' },
       },
+      transitions: [
+        { id: 'idle-start', from: 'idle', to: 'intro', trigger: 'start' },
+        { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+      ],
     },
   },
   metadata: { polishLevel: 'draft', intent: 'CutReady persistence fixture', generatedBy: 'test' },
@@ -105,6 +110,94 @@ describe('v2 editor persistence', () => {
     expect(onV2CompatibilityWarnings.mock.calls.flat().join('\n')).toContain('renamed to "hero-title"');
   });
 
+  it('preserves v2-only element layout fields through editor round-trips', async () => {
+    const onV2DocumentChange = vi.fn();
+    const documentWithLayout: ElucimV2Document = {
+      ...v2Fixture,
+      elements: {
+        ...v2Fixture.elements,
+        title: {
+          ...v2Fixture.elements.title,
+          layout: { x: 100, y: 120, scale: 1.15, role: 'callout' },
+          props: { type: 'text', content: 'Original title' },
+        },
+      },
+    };
+
+    render(React.createElement(ElucimEditor, { initialDocument: documentWithLayout, onV2DocumentChange }));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
+    fireEvent.click(screen.getAllByText('title')[0]);
+    fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'Updated title' } });
+
+    await waitFor(() => {
+      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      expect(latest?.elements.title.props.content).toBe('Updated title');
+      expect(latest?.elements.title.layout).toMatchObject({ x: 100, y: 120, scale: 1.15, role: 'callout' });
+      expect(validateV2(latest).valid).toBe(true);
+    });
+  });
+
+  it('keeps scene layout and legacy duration while committing dragged keyframes to the dropped frame', async () => {
+    const onV2DocumentChange = vi.fn();
+
+    function ControlledEditor() {
+      const [document, setDocument] = React.useState<ElucimV2Document>(v2Fixture);
+      return React.createElement(ElucimEditor, {
+        initialDocument: document,
+        onV2DocumentChange: nextDocument => {
+          onV2DocumentChange(nextDocument);
+          setDocument(nextDocument);
+        },
+      });
+    }
+
+    render(React.createElement(ControlledEditor));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
+    const sceneWidthInput = screen.getByLabelText('Width') as HTMLInputElement;
+    fireEvent.change(sceneWidthInput, { target: { value: '1' } });
+    expect(onV2DocumentChange).not.toHaveBeenCalled();
+    fireEvent.change(sceneWidthInput, { target: { value: '900' } });
+    expect(onV2DocumentChange).not.toHaveBeenCalled();
+    fireEvent.blur(sceneWidthInput);
+
+    await waitFor(() => {
+      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      expect(latest?.scene.width).toBe(900);
+    });
+    onV2DocumentChange.mockClear();
+
+    expect(screen.getByText('Duration is defined by timelines, state-machine preview, or export policy.')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Animate workspace' }));
+
+    const keyframe = await screen.findByRole('button', { name: 'Go to intro title.opacity keyframe 30' });
+    const lane = keyframe.parentElement!;
+    lane.getBoundingClientRect = () => ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 300,
+      bottom: 20,
+      width: 300,
+      height: 20,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerDown(keyframe, { clientX: 300 });
+    fireEvent.pointerMove(keyframe, { clientX: 140 });
+    fireEvent.pointerUp(keyframe, { clientX: 140 });
+
+    await waitFor(() => {
+      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      expect('durationInFrames' in (latest?.scene ?? {})).toBe(false);
+      expect(latest?.timelines?.intro.tracks[0].keyframes[1].frame).toBe(14);
+    });
+  });
+
   it('applies safe polish nudges through onV2DocumentChange', async () => {
     const onV2DocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: v2Fixture, onV2DocumentChange }));
@@ -155,7 +248,7 @@ describe('v2 editor persistence', () => {
     await waitFor(() => {
       const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
       expect(latest?.timelines?.intro).toBeUndefined();
-      expect(latest?.stateMachines?.deck.states.idle.on?.start).toEqual({ target: 'intro' });
+      expect(latest?.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'intro', trigger: 'start' });
       expect(latest?.stateMachines?.deck.states.intro.timeline).toBeUndefined();
       expect(validateV2(latest).valid).toBe(true);
     });

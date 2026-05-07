@@ -2,6 +2,7 @@ import { useCallback, useRef, useEffect } from 'react';
 import type { Dispatch } from 'react';
 import type { EditorAction, Viewport } from '../state/types';
 import { MIN_ZOOM, MAX_ZOOM } from '../state/types';
+import { startRafDrag } from '../interactions/rafDrag';
 
 interface UseViewportOptions {
   dispatch: Dispatch<EditorAction>;
@@ -57,7 +58,6 @@ export function useViewport({
   sceneWidth,
   sceneHeight,
 }: UseViewportOptions) {
-  const panStartRef = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
   const viewportRef = useRef(viewport);
   viewportRef.current = viewport;
 
@@ -93,31 +93,17 @@ export function useViewport({
   const handlePanStart = useCallback((e: React.PointerEvent) => {
     // Middle button or space-panning mode
     if (e.button === 1 || isPanning) {
-      e.preventDefault();
-      panStartRef.current = {
-        x: e.clientX,
-        y: e.clientY,
-        vx: viewport.x,
-        vy: viewport.y,
-      };
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      const startViewport = viewport;
+      startRafDrag({
+        event: e,
+        onFrame: point => dispatch({ type: 'SET_VIEWPORT', viewport: { x: startViewport.x + point.deltaX, y: startViewport.y + point.deltaY } }),
+      });
     }
-  }, [isPanning, viewport]);
+  }, [dispatch, isPanning, viewport]);
 
-  const handlePanMove = useCallback((e: React.PointerEvent) => {
-    const pan = panStartRef.current;
-    if (!pan) return;
-    const dx = e.clientX - pan.x;
-    const dy = e.clientY - pan.y;
-    dispatch({ type: 'SET_VIEWPORT', viewport: { x: pan.vx + dx, y: pan.vy + dy } });
-  }, [dispatch]);
+  const handlePanMove = useCallback((_e: React.PointerEvent) => {}, []);
 
-  const handlePanEnd = useCallback((e: React.PointerEvent) => {
-    if (panStartRef.current) {
-      panStartRef.current = null;
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    }
-  }, []);
+  const handlePanEnd = useCallback((_e: React.PointerEvent) => {}, []);
 
   /** Fit scene to container */
   const handleFitToView = useCallback(() => {

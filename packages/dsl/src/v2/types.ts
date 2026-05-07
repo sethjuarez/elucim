@@ -9,6 +9,7 @@ export interface ElucimV2Document {
   elements: Record<string, ElucimV2Element>;
   timelines?: Record<string, ElucimV2Timeline>;
   stateMachines?: Record<string, ElucimV2StateMachine>;
+  defaultStateMachine?: string;
   metadata?: ElucimV2Metadata;
 }
 
@@ -18,7 +19,6 @@ export interface ElucimV2Scene {
   width?: number;
   height?: number;
   fps?: number;
-  durationInFrames: number;
   background?: string;
   controls?: boolean;
   loop?: boolean;
@@ -95,14 +95,22 @@ export interface ElucimV2Timeline {
 
 export interface ElucimV2StateMachine {
   id: string;
-  initial: string;
-  reset?: string;
+  entry: string;
+  inputs?: Record<string, ElucimV2StateMachineInput>;
   states: Record<string, ElucimV2State>;
+  transitions?: ElucimV2Transition[];
   layout?: ElucimV2StateMachineLayout;
 }
 
+export type ElucimV2StateMachineInput =
+  | { type: 'trigger' }
+  | { type: 'boolean'; default?: boolean }
+  | { type: 'number'; default?: number };
+
 export interface ElucimV2StateMachineLayout {
+  entry?: ElucimV2GraphPosition;
   states?: Record<string, ElucimV2GraphPosition>;
+  viewport?: ElucimV2GraphViewport;
 }
 
 export interface ElucimV2GraphPosition {
@@ -110,13 +118,21 @@ export interface ElucimV2GraphPosition {
   y: number;
 }
 
+export interface ElucimV2GraphViewport {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
 export interface ElucimV2State {
   timeline?: string;
-  on?: Record<string, string | ElucimV2Transition>;
-  onComplete?: string | ElucimV2Transition;
 }
 
 export interface ElucimV2Transition {
-  target: string;
-  timeline?: string;
+  id: string;
+  from: string | 'entry' | 'any';
+  to: string | 'entry' | 'exit';
+  trigger?: string;
+  key?: string;
+  exitTime?: number;
 }

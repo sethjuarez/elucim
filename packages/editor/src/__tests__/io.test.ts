@@ -65,7 +65,7 @@ describe('importFromJson', () => {
   it('imports v2 documents through the v1 editor compatibility adapter', () => {
     const result = importFromJson(JSON.stringify({
       version: '2.0',
-      scene: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: ['title'] },
+      scene: { type: 'player', width: 800, height: 600, children: ['title'] },
       elements: {
         title: {
           id: 'title',

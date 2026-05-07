@@ -86,23 +86,13 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Animations',
-          items: [
-            { slug: 'animations/fade' },
-            { slug: 'animations/draw' },
-            { slug: 'animations/transform' },
-            { slug: 'animations/stagger' },
-            { slug: 'animations/easing' },
-            { slug: 'animations/timeline' },
-          ],
-        },
-        {
           label: 'Advanced',
           items: [
             { slug: 'advanced/player' },
             { slug: 'advanced/presentation' },
             { slug: 'advanced/export' },
             { slug: 'advanced/hooks' },
+            { slug: 'animations/easing' },
           ],
         },
         {

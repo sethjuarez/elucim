@@ -1,15 +1,18 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState } from 'react';
-import type { ElementNode, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2Transition } from '@elucim/dsl';
-import { BaseEdge, EdgeLabelRenderer, Handle, MarkerType, Panel, Position, ReactFlow, applyNodeChanges, getSmoothStepPath, type Edge, type EdgeProps, type Node, type NodeMouseHandler, type NodeProps, type OnConnect, type OnNodeDrag, type OnNodesChange, type ReactFlowInstance } from '@xyflow/react';
+import { DEFAULT_LINEAR_DURATION_IN_FRAMES, getMaxTimelineDuration, getStateMachineVisualFrames, type ElementNode, type ElucimV2Document, type ElucimV2StateMachine, type ElucimV2Timeline, type ElucimV2TimelineFrameSelection, type ElucimV2Transition } from '@elucim/dsl';
+import { BaseEdge, EdgeLabelRenderer, Handle, MarkerType, Position, ReactFlow, applyNodeChanges, getSmoothStepPath, type Edge, type EdgeProps, type Node, type NodeMouseHandler, type NodeProps, type OnConnect, type OnNodeDrag, type OnNodesChange, type ReactFlowInstance, type Viewport as ReactFlowViewport } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
+import { clampFrame, clientXToRatio, frameToPercent as timelineFrameToPercent, ratioToFrame } from '../interactions/coordinates';
+import { startRafDrag } from '../interactions/rafDrag';
 
 export interface TimelineProps {
   className?: string;
   style?: React.CSSProperties;
+  v2Document?: ElucimV2Document;
   v2Timelines?: Record<string, ElucimV2Timeline>;
   onV2TimelinesChange?: (timelines: Record<string, ElucimV2Timeline> | undefined) => void;
   v2StateMachines?: Record<string, ElucimV2StateMachine>;
@@ -17,6 +20,11 @@ export interface TimelineProps {
   onV2MotionChange?: (timelines: Record<string, ElucimV2Timeline> | undefined, stateMachines: Record<string, ElucimV2StateMachine> | undefined) => void;
   preferredMotionType?: 'animation' | 'stateMachine';
   onActiveTimelineChange?: (timelineId: string | undefined) => void;
+  onPreviewTimelineFramesChange?: (frames: ElucimV2TimelineFrameSelection[] | undefined) => void;
+  onStateMachinePreviewActiveChange?: (active: boolean) => void;
+  onStateMachinePreviewClickChange?: (handler: (() => boolean) | undefined) => void;
+  onStateMachinePreviewKeyDownChange?: (handler: ((key: string) => boolean) | undefined) => void;
+  onStateMachinePreviewExitChange?: (handler: (() => void) | undefined) => void;
 }
 
 const TRACK_HEIGHT = 30;
@@ -27,22 +35,133 @@ const EASING_OPTIONS = ['linear', 'easeInQuad', 'easeOutQuad', 'easeInOutQuad', 
 const V2_ANIMATABLE_PROPERTIES = ['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke'] as const;
 const WRAPPER_TYPES = new Set(['fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
 type GraphLayoutDirection = 'horizontal' | 'vertical';
+
+function displayKeyName(key: string): string | undefined {
+  if (key === 'Tab') return undefined;
+  if (key === ' ') return 'Space';
+  if (key.length === 1) return key.toUpperCase();
+  return key;
+}
+
+interface StateMachinePreviewState {
+  machineId: string;
+  stateId: string;
+  timelineId?: string;
+  event?: string;
+  previousStateId?: string;
+  activeTransitionId?: string;
+  logicalStatePath?: string[];
+  exited?: boolean;
+  finished?: boolean;
+}
 interface StateMachineGraphNodeData extends Record<string, unknown> {
+  kind: 'entry' | 'state' | 'exit';
   stateId: string;
   timeline?: string;
-  initial: boolean;
-  reset: boolean;
   selected: boolean;
   direction: GraphLayoutDirection;
-  onPreviewState?: (stateId: string) => void;
 }
+
 interface StateMachineGraphEdgeData extends Record<string, unknown> {
   label: string;
   detail?: string;
   selected: boolean;
   backEdge: boolean;
   direction: GraphLayoutDirection;
+  onSelect?: () => void;
 }
+
+const ENTRY_NODE_ID = '__entry__';
+const EXIT_NODE_ID = '__exit__';
+
+function getStateTriggerTransitions(machine: ElucimV2StateMachine, stateId: string): ElucimV2Transition[] {
+  return (machine.transitions ?? []).filter(transition => (transition.from === stateId || transition.from === 'any') && transition.trigger);
+}
+
+function getEntryTriggerTransitions(machine: ElucimV2StateMachine): ElucimV2Transition[] {
+  return (machine.transitions ?? []).filter(transition => transition.from === 'entry' && transition.trigger);
+}
+
+function getStateCompleteTransition(machine: ElucimV2StateMachine, stateId: string): ElucimV2Transition | undefined {
+  return (machine.transitions ?? []).find(transition => transition.from === stateId && transition.exitTime !== undefined);
+}
+
+function getEntryTransition(machine: ElucimV2StateMachine): ElucimV2Transition | undefined {
+  return (machine.transitions ?? []).find(transition => transition.from === 'entry');
+}
+
+function getEntryTargetStateId(machine: ElucimV2StateMachine): string | undefined {
+  const entryTarget = getEntryTransition(machine)?.to;
+  if (entryTarget && entryTarget !== 'entry' && entryTarget !== 'exit' && machine.states[entryTarget]) return entryTarget;
+  return machine.states[machine.entry] ? machine.entry : Object.keys(machine.states)[0];
+}
+
+function resolveTransitionTarget(machine: ElucimV2StateMachine, transition: ElucimV2Transition): string | 'exit' | undefined {
+  if (transition.to === 'exit') return 'exit';
+  if (transition.to === 'entry') return getEntryTargetStateId(machine);
+  return machine.states[transition.to] ? transition.to : undefined;
+}
+
+function getPreviewTransition(machine: ElucimV2StateMachine, stateId: string, eventName: string, key?: string): ElucimV2Transition | undefined {
+  if (eventName === 'complete' || eventName === 'next') return getStateCompleteTransition(machine, stateId);
+  return (machine.transitions ?? []).find(transition => {
+    if ((transition.from !== stateId && transition.from !== 'any') || transition.trigger !== eventName) return false;
+    return eventName !== 'onKey' || key === undefined || (transition.key ?? '').toLowerCase() === key.toLowerCase();
+  });
+}
+
+function previewEventLabel(transition: ElucimV2Transition): string {
+  switch (transition.trigger) {
+    case 'onClick':
+      return 'Click';
+    case 'reset':
+      return 'Reset';
+    case 'onKey':
+      return transition.key ? `Press ${transition.key}` : 'Press key';
+    default:
+      return transition.trigger ?? transition.id;
+  }
+}
+
+function createUniqueTransitionId(machine: ElucimV2StateMachine, preferred: string): string {
+  const existing = new Set((machine.transitions ?? []).map(transition => transition.id));
+  if (!existing.has(preferred)) return preferred;
+  let index = 2;
+  while (existing.has(`${preferred}-${index}`)) index += 1;
+  return `${preferred}-${index}`;
+}
+
+function pruneUnusedTriggerInputs(
+  inputs: ElucimV2StateMachine['inputs'],
+  transitions: ElucimV2Transition[] | undefined,
+): ElucimV2StateMachine['inputs'] {
+  if (!inputs) return undefined;
+  const usedTriggers = new Set((transitions ?? []).map(transition => transition.trigger).filter((trigger): trigger is string => Boolean(trigger)));
+  const nextInputs = Object.fromEntries(Object.entries(inputs).filter(([inputId, input]) => input.type !== 'trigger' || usedTriggers.has(inputId)));
+  return Object.keys(nextInputs).length > 0 ? nextInputs : undefined;
+}
+
+const RESERVED_STATE_EVENT_NAMES = new Set(['complete', 'entry', 'exit', 'next']);
+const EVENT_PRESETS = ['onClick', 'reset', 'onKey'] as const;
+const ENTRY_EVENT_PRESETS = ['onStart', 'onClick', 'onKey'] as const;
+const EVENT_PRESET_SET = new Set<string>([...EVENT_PRESETS, ...ENTRY_EVENT_PRESETS]);
+
+function isAvailableTransitionTrigger(machine: ElucimV2StateMachine, transition: ElucimV2Transition, trigger: string): boolean {
+  if (!trigger || RESERVED_STATE_EVENT_NAMES.has(trigger)) return false;
+  return !(machine.transitions ?? []).some(current => {
+    if (current.id === transition.id || current.from !== transition.from || current.exitTime !== undefined || current.trigger !== trigger) return false;
+    if (trigger === 'onKey') return (current.key ?? '').toLowerCase() === (transition.key ?? '').toLowerCase();
+    return true;
+  });
+}
+
+function transitionTriggerLabel(transition: ElucimV2Transition): string {
+  if (transition.from === 'entry') return transition.trigger ?? 'onStart';
+  if (transition.trigger === 'onKey') return transition.key ? `Key: ${transition.key}` : 'Key';
+  if (transition.trigger && EVENT_PRESET_SET.has(transition.trigger)) return transition.trigger;
+  return transition.exitTime !== undefined ? 'Next' : `Event: ${transition.trigger ?? transition.id}`;
+}
+
 const chromeTabButtonStyle = (active: boolean, disabled = false): React.CSSProperties => ({
   minHeight: 24,
   display: 'inline-flex',
@@ -160,7 +279,7 @@ function normalizeGraphId(value: string, fallback: string): string {
  * Animation timeline with playhead, per-element tracks, and playback controls.
  * Supports: editable labels, drag reorder, draggable animation bars, easing picker.
  */
-export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v2StateMachines, onV2StateMachinesChange, onV2MotionChange, preferredMotionType = 'animation', onActiveTimelineChange }: TimelineProps) {
+export function Timeline({ className, style, v2Document, v2Timelines, onV2TimelinesChange, v2StateMachines, onV2StateMachinesChange, onV2MotionChange, preferredMotionType = 'animation', onActiveTimelineChange, onPreviewTimelineFramesChange, onStateMachinePreviewActiveChange, onStateMachinePreviewClickChange, onStateMachinePreviewKeyDownChange, onStateMachinePreviewExitChange }: TimelineProps) {
   const { state, dispatch } = useEditorState();
   const icons = useEditorIcons();
   const { document, currentFrame, isPlaying, selectedIds } = state;
@@ -168,7 +287,7 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
   const animRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
 
-  const durationInFrames = ('durationInFrames' in root ? root.durationInFrames : undefined) ?? 120;
+  const durationInFrames = ('durationInFrames' in root ? root.durationInFrames : undefined) ?? DEFAULT_LINEAR_DURATION_IN_FRAMES;
   const fps = ('fps' in root ? root.fps : undefined) ?? 60;
   const children: ElementNode[] = ('children' in root && Array.isArray(root.children)) ? root.children : [];
   const elementIds = children.map((el, i) => getElementId(el, i));
@@ -176,13 +295,19 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
   const rows = useMemo(() => getRows(children, expandedIds), [children, expandedIds]);
   const timelineClips = useMemo(() => Object.values(v2Timelines ?? {}), [v2Timelines]);
   const stateMachineClips = useMemo(() => Object.values(v2StateMachines ?? {}), [v2StateMachines]);
+  const timelineDurationFallback = getMaxTimelineDuration(v2Timelines) ?? DEFAULT_LINEAR_DURATION_IN_FRAMES;
   const showLegacyElementTracks = timelineClips.length === 0 && stateMachineClips.length === 0;
   const [activeMotionType, setActiveMotionType] = useState<'animation' | 'stateMachine'>(preferredMotionType);
   const [activeTimelineId, setActiveTimelineId] = useState<string | undefined>(undefined);
   const showAnimationTimeline = showLegacyElementTracks || activeMotionType === 'animation';
-  const activeTimelineMaxFrame = activeTimelineId && v2Timelines?.[activeTimelineId]
-    ? v2Timelines[activeTimelineId].duration
-    : durationInFrames - 1;
+  const effectiveActiveTimelineId = activeTimelineId && v2Timelines?.[activeTimelineId]
+    ? activeTimelineId
+    : activeMotionType === 'animation'
+      ? timelineClips[0]?.id
+      : undefined;
+  const activeTimelineMaxFrame = effectiveActiveTimelineId && v2Timelines?.[effectiveActiveTimelineId]
+    ? v2Timelines[effectiveActiveTimelineId].duration
+    : (showLegacyElementTracks ? durationInFrames : timelineDurationFallback) - 1;
   const scopedPlayheadPercent = activeTimelineMaxFrame > 0 ? (Math.min(currentFrame, activeTimelineMaxFrame) / activeTimelineMaxFrame) * 100 : 0;
   const updateV2Timeline = useCallback((timeline: ElucimV2Timeline) => {
     onV2TimelinesChange?.({ ...(v2Timelines ?? {}), [timeline.id]: timeline });
@@ -195,19 +320,12 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
     if (normalizedId === timeline.id) return;
     const renamedTimeline = { ...timeline, id: normalizedId };
     const nextTimelines = { ...existing, [normalizedId]: renamedTimeline };
-    const renameTransitionTimeline = (transition: string | ElucimV2Transition): string | ElucimV2Transition => (
-      typeof transition === 'string'
-        ? transition
-        : { ...transition, timeline: transition.timeline === timeline.id ? normalizedId : transition.timeline }
-    );
     const nextStateMachines = v2StateMachines
       ? Object.fromEntries(Object.entries(v2StateMachines).map(([machineId, machine]) => [machineId, {
           ...machine,
           states: Object.fromEntries(Object.entries(machine.states).map(([stateId, state]) => [stateId, {
             ...state,
             timeline: state.timeline === timeline.id ? normalizedId : state.timeline,
-            on: state.on ? Object.fromEntries(Object.entries(state.on).map(([eventName, transition]) => [eventName, renameTransitionTimeline(transition)])) : undefined,
-            onComplete: state.onComplete ? renameTransitionTimeline(state.onComplete) : undefined,
           }])),
         }]))
       : undefined;
@@ -235,19 +353,12 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
     const next = { ...v2Timelines };
     delete next[id];
     const nextTimelines = Object.keys(next).length > 0 ? next : undefined;
-    const clearTransitionTimeline = (transition: string | ElucimV2Transition): string | ElucimV2Transition => (
-      typeof transition === 'string' || transition.timeline !== id
-        ? transition
-        : { ...transition, timeline: undefined }
-    );
     const nextStateMachines = v2StateMachines
       ? Object.fromEntries(Object.entries(v2StateMachines).map(([machineId, machine]) => [machineId, {
           ...machine,
           states: Object.fromEntries(Object.entries(machine.states).map(([stateId, state]) => [stateId, {
             ...state,
             timeline: state.timeline === id ? undefined : state.timeline,
-            on: state.on ? Object.fromEntries(Object.entries(state.on).map(([eventName, transition]) => [eventName, clearTransitionTimeline(transition)])) : undefined,
-            onComplete: state.onComplete ? clearTransitionTimeline(state.onComplete) : undefined,
           } satisfies ElucimV2StateMachine['states'][string]])),
         } satisfies ElucimV2StateMachine]))
       : undefined;
@@ -263,7 +374,7 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
     const id = createUniqueTimelineId(v2Timelines, 'auto-intro');
     const stagger = 6;
     const fadeDuration = 18;
-    const duration = Math.min(durationInFrames, Math.max(fadeDuration, (targets.length - 1) * stagger + fadeDuration));
+    const duration = Math.max(fadeDuration, (targets.length - 1) * stagger + fadeDuration);
     updateV2Timeline({
       id,
       duration,
@@ -279,33 +390,34 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
         };
       }),
     });
-  }, [durationInFrames, rows, updateV2Timeline, v2Timelines]);
+  }, [rows, updateV2Timeline, v2Timelines]);
   const addBlankTimeline = useCallback(() => {
     const target = rows.find(row => selectedIds.includes(row.id))?.id ?? rows[0]?.id;
     if (!target) return;
     const id = createUniqueTimelineId(v2Timelines, 'timeline');
     updateV2Timeline({
       id,
-      duration: Math.min(durationInFrames, 30),
+      duration: 30,
       tracks: [
         {
           target,
           property: 'opacity',
           keyframes: [
             { frame: 0, value: 1 },
-            { frame: Math.min(durationInFrames, 30), value: 1 },
+            { frame: 30, value: 1 },
           ],
         },
       ],
     });
-  }, [durationInFrames, rows, selectedIds, updateV2Timeline, v2Timelines]);
+  }, [rows, selectedIds, updateV2Timeline, v2Timelines]);
   const addStateMachine = useCallback(() => {
     const id = createUniqueStateMachineId(v2StateMachines, 'state-machine');
     updateV2StateMachine({
       id,
-      initial: 'idle',
-      reset: 'idle',
+      entry: 'idle',
       states: { idle: {} },
+      inputs: { onStart: { type: 'trigger' } },
+      transitions: [{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }],
     });
   }, [updateV2StateMachine, v2StateMachines]);
 
@@ -319,9 +431,103 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
 
   // ── Easing picker state ──
   const [easingPickerId, setEasingPickerId] = useState<string | null>(null);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [stateMachinePreview, setStateMachinePreview] = useState<StateMachinePreviewState | null>(null);
 
-  // ── Animation bar drag state ──
-  const barDragRef = useRef<{ elementId: string; prop: 'fadeIn' | 'fadeOut' | 'draw' | 'duration'; startX: number; startVal: number } | null>(null);
+  useEffect(() => {
+    onStateMachinePreviewActiveChange?.(Boolean(stateMachinePreview && !stateMachinePreview.finished && !stateMachinePreview.exited));
+  }, [onStateMachinePreviewActiveChange, stateMachinePreview]);
+
+  const handleActiveTimelineChange = useCallback((timelineId: string | undefined) => {
+    setActiveTimelineId(timelineId);
+    const nextMaxFrame = timelineId && v2Timelines?.[timelineId] ? v2Timelines[timelineId].duration : (showLegacyElementTracks ? durationInFrames : timelineDurationFallback) - 1;
+    if (currentFrame > nextMaxFrame) dispatch({ type: 'SET_FRAME', frame: nextMaxFrame });
+    onActiveTimelineChange?.(timelineId);
+  }, [currentFrame, dispatch, durationInFrames, onActiveTimelineChange, showLegacyElementTracks, timelineDurationFallback, v2Timelines]);
+
+  const previewStateAnimation = useCallback((machineId: string, stateId: string, details?: { event?: string; previousStateId?: string; activeTransitionId?: string }) => {
+    const timelineId = v2StateMachines?.[machineId]?.states[stateId]?.timeline;
+    handleActiveTimelineChange(timelineId);
+    setPlaybackSpeed(0.5);
+    setStateMachinePreview({ machineId, stateId, timelineId, event: details?.event ?? 'start', previousStateId: details?.previousStateId, activeTransitionId: details?.activeTransitionId, logicalStatePath: [stateId] });
+    dispatch({ type: 'SET_FRAME', frame: 0 });
+    dispatch({ type: 'SET_PLAYING', playing: Boolean(timelineId) });
+  }, [dispatch, handleActiveTimelineChange, v2StateMachines]);
+
+  const triggerStateMachinePreviewEvent = useCallback((machineId: string, stateId: string, eventName: string, key?: string): boolean => {
+    if (stateMachinePreview?.machineId === machineId && stateMachinePreview.exited) return false;
+    const machine = v2StateMachines?.[machineId];
+    const sourceIsEntry = stateId === 'entry';
+    const state = sourceIsEntry ? undefined : machine?.states[stateId];
+    if (!machine || (!sourceIsEntry && !state)) return false;
+
+    const transition = getPreviewTransition(machine, stateId, eventName, key);
+      if (!transition) {
+        if (eventName === 'complete') {
+          const hasEventsToWaitFor = stateId !== 'entry' && (machine.transitions ?? []).some(transition => transition.from === stateId && transition.trigger);
+          setStateMachinePreview(current => ({
+            machineId,
+            stateId,
+            timelineId: state?.timeline,
+            event: hasEventsToWaitFor ? current?.event ?? 'start' : 'complete',
+            previousStateId: current?.previousStateId,
+            activeTransitionId: current?.activeTransitionId,
+            logicalStatePath: current?.logicalStatePath ?? [stateId],
+            finished: !hasEventsToWaitFor,
+          }));
+          dispatch({ type: 'SET_PLAYING', playing: false });
+        }
+      return false;
+    }
+
+    const targetStateId = resolveTransitionTarget(machine, transition);
+    if (targetStateId === 'exit') {
+      setStateMachinePreview({
+        machineId,
+        stateId,
+        timelineId: state?.timeline,
+        event: eventName,
+        previousStateId: stateId,
+        activeTransitionId: transition.id,
+        exited: true,
+      });
+      dispatch({ type: 'SET_PLAYING', playing: false });
+      return true;
+    }
+    if (!targetStateId) return false;
+
+    const timelineId = machine.states[targetStateId]?.timeline;
+    handleActiveTimelineChange(timelineId);
+    setPlaybackSpeed(0.5);
+    setStateMachinePreview({
+      machineId,
+      stateId: targetStateId,
+      timelineId,
+      event: eventName,
+      previousStateId: stateId,
+      activeTransitionId: transition.id,
+      logicalStatePath: sourceIsEntry
+        ? [targetStateId]
+        : [...(stateMachinePreview?.logicalStatePath ?? [stateId]), targetStateId],
+    });
+    dispatch({ type: 'SET_FRAME', frame: 0 });
+    dispatch({ type: 'SET_PLAYING', playing: Boolean(timelineId) });
+    return true;
+  }, [dispatch, handleActiveTimelineChange, stateMachinePreview?.logicalStatePath, v2StateMachines]);
+
+  useEffect(() => {
+    if (!stateMachinePreview || stateMachinePreview.timelineId || stateMachinePreview.exited) return;
+    const machine = v2StateMachines?.[stateMachinePreview.machineId];
+    const nextTransition = machine ? getStateCompleteTransition(machine, stateMachinePreview.stateId) : undefined;
+    if (!machine || !nextTransition || stateMachinePreview.activeTransitionId === nextTransition.id) return;
+    const targetStateId = resolveTransitionTarget(machine, nextTransition);
+    if (!targetStateId || targetStateId === stateMachinePreview.stateId) return;
+    if (stateMachinePreview.logicalStatePath?.includes(targetStateId)) return;
+    const timeout = window.setTimeout(() => {
+      triggerStateMachinePreviewEvent(stateMachinePreview.machineId, stateMachinePreview.stateId, 'complete');
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [stateMachinePreview, triggerStateMachinePreviewEvent, v2StateMachines]);
 
   // Playback animation loop
   useEffect(() => {
@@ -333,11 +539,22 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
     lastTimeRef.current = performance.now();
     const tick = (now: number) => {
       const elapsed = now - lastTimeRef.current;
-      const frameDelta = (elapsed / 1000) * fps;
+      const frameDelta = (elapsed / 1000) * fps * playbackSpeed;
       if (frameDelta >= 1) {
-        const playbackDuration = Math.max(1, activeTimelineMaxFrame + 1);
-        const newFrame = (currentFrame + Math.floor(frameDelta)) % playbackDuration;
-        dispatch({ type: 'SET_FRAME', frame: newFrame });
+        const frameStep = Math.floor(frameDelta);
+        if (stateMachinePreview) {
+          const nextFrame = currentFrame + frameStep;
+          if (nextFrame > activeTimelineMaxFrame) {
+            dispatch({ type: 'SET_FRAME', frame: activeTimelineMaxFrame });
+            triggerStateMachinePreviewEvent(stateMachinePreview.machineId, stateMachinePreview.stateId, 'complete');
+          } else {
+            dispatch({ type: 'SET_FRAME', frame: nextFrame });
+          }
+        } else {
+          const playbackDuration = Math.max(1, activeTimelineMaxFrame + 1);
+          const newFrame = (currentFrame + frameStep) % playbackDuration;
+          dispatch({ type: 'SET_FRAME', frame: newFrame });
+        }
         lastTimeRef.current = now;
       }
       animRef.current = requestAnimationFrame(tick);
@@ -347,16 +564,22 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
     return () => {
       if (animRef.current != null) cancelAnimationFrame(animRef.current);
     };
-  }, [activeTimelineMaxFrame, isPlaying, currentFrame, fps, dispatch]);
+  }, [activeTimelineMaxFrame, isPlaying, currentFrame, fps, playbackSpeed, dispatch, stateMachinePreview, triggerStateMachinePreviewEvent]);
 
-  const handleActiveTimelineChange = useCallback((timelineId: string | undefined) => {
-    setActiveTimelineId(timelineId);
-    const nextMaxFrame = timelineId && v2Timelines?.[timelineId] ? v2Timelines[timelineId].duration : durationInFrames - 1;
-    if (currentFrame > nextMaxFrame) dispatch({ type: 'SET_FRAME', frame: nextMaxFrame });
-    onActiveTimelineChange?.(timelineId);
-  }, [currentFrame, dispatch, durationInFrames, onActiveTimelineChange, v2Timelines]);
+  const stopMotionPlayback = useCallback(() => {
+    setPlaybackSpeed(1);
+    setStateMachinePreview(null);
+    dispatch({ type: 'SET_PLAYING', playing: false });
+  }, [dispatch]);
+
+  useEffect(() => {
+    onStateMachinePreviewExitChange?.(stopMotionPlayback);
+    return () => onStateMachinePreviewExitChange?.(undefined);
+  }, [onStateMachinePreviewExitChange, stopMotionPlayback]);
 
   const togglePlay = useCallback(() => {
+    setPlaybackSpeed(1);
+    setStateMachinePreview(null);
     dispatch({ type: 'SET_PLAYING', playing: !isPlaying });
   }, [dispatch, isPlaying]);
 
@@ -376,31 +599,26 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
     dispatch({ type: 'SET_FRAME', frame: activeTimelineMaxFrame });
   }, [activeTimelineMaxFrame, dispatch]);
 
-  const scrubRef = useRef<boolean>(false);
   const rulerRef = useRef<HTMLDivElement>(null);
 
   const scrubFromClientX = useCallback((clientX: number) => {
     const ruler = rulerRef.current;
     if (!ruler) return;
-    const rect = ruler.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    dispatch({ type: 'SET_FRAME', frame: Math.round(ratio * activeTimelineMaxFrame) });
+    dispatch({ type: 'SET_FRAME', frame: ratioToFrame(clientXToRatio(clientX, ruler.getBoundingClientRect()), activeTimelineMaxFrame) });
   }, [activeTimelineMaxFrame, dispatch]);
 
   const handleRulerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    scrubRef.current = true;
-    scrubFromClientX(e.clientX);
+    startRafDrag({
+      event: e,
+      onStart: point => scrubFromClientX(point.clientX),
+      onFrame: point => scrubFromClientX(point.clientX),
+      onCommit: point => scrubFromClientX(point.clientX),
+    });
   }, [scrubFromClientX]);
 
-  const handleRulerPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!scrubRef.current) return;
-    scrubFromClientX(e.clientX);
-  }, [scrubFromClientX]);
+  const handleRulerPointerMove = useCallback(() => {}, []);
 
-  const handleRulerPointerUp = useCallback(() => {
-    scrubRef.current = false;
-  }, []);
+  const handleRulerPointerUp = useCallback(() => {}, []);
 
   // ── Rename handlers ──
   const handleLabelDoubleClick = useCallback((id: string, currentLabel: string) => {
@@ -444,27 +662,22 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
 
   // ── Animation bar edge drag ──
   const handleBarEdgeDown = useCallback((elementId: string, prop: 'fadeIn' | 'fadeOut' | 'draw' | 'duration', startVal: number) => (e: React.PointerEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const target = e.currentTarget as HTMLElement;
-    target.setPointerCapture(e.pointerId);
-    barDragRef.current = { elementId, prop, startX: e.clientX, startVal };
-  }, []);
-
-  const handleBarEdgeMove = useCallback((e: React.PointerEvent) => {
-    const drag = barDragRef.current;
-    if (!drag) return;
     const parent = (e.currentTarget as HTMLElement).closest('.elucim-editor-timeline');
     if (!parent) return;
     const trackArea = parent.querySelector('[data-track-area]') as HTMLElement;
     if (!trackArea) return;
-    const trackWidth = trackArea.clientWidth - LABEL_WIDTH;
-    const pixelDelta = e.clientX - drag.startX;
-    const frameDelta = Math.round((pixelDelta / trackWidth) * durationInFrames);
-    // fadeOut: drag left = grow, drag right = shrink (inverted)
-    const adjustedDelta = drag.prop === 'fadeOut' ? -frameDelta : frameDelta;
-    const newVal = Math.max(0, Math.min(durationInFrames, drag.startVal + adjustedDelta));
-    dispatch({ type: 'UPDATE_ELEMENT', id: drag.elementId, changes: { [drag.prop]: newVal } as any });
+    const trackWidth = Math.max(1, trackArea.clientWidth - LABEL_WIDTH);
+    const updateValue = (deltaX: number) => {
+      const frameDelta = Math.round((deltaX / trackWidth) * durationInFrames);
+      const adjustedDelta = prop === 'fadeOut' ? -frameDelta : frameDelta;
+      const newVal = Math.max(0, Math.min(durationInFrames, startVal + adjustedDelta));
+      dispatch({ type: 'UPDATE_ELEMENT', id: elementId, changes: { [prop]: newVal } as any });
+    };
+    startRafDrag({
+      event: e,
+      onFrame: point => updateValue(point.deltaX),
+      onCommit: point => updateValue(point.deltaX),
+    });
   }, [dispatch, durationInFrames]);
 
   const toggleExpanded = useCallback((id: string) => {
@@ -474,10 +687,6 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
       else next.add(id);
       return next;
     });
-  }, []);
-
-  const handleBarEdgeUp = useCallback(() => {
-    barDragRef.current = null;
   }, []);
 
   const playheadPercent = scopedPlayheadPercent;
@@ -495,8 +704,6 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
         flexDirection: 'column',
         ...style,
       }}
-      onPointerMove={handleBarEdgeMove}
-      onPointerUp={handleBarEdgeUp}
     >
       {showLegacyElementTracks && (
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}` }}>
@@ -581,6 +788,7 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
         {(timelineClips.length > 0 || stateMachineClips.length > 0 || onV2TimelinesChange || onV2StateMachinesChange) && (
           <TimelineClipRows
             clips={timelineClips}
+            v2Document={v2Document}
             durationInFrames={activeTimelineMaxFrame + 1}
             onKeyframeClick={frame => dispatch({ type: 'SET_FRAME', frame: Math.max(0, Math.min(frame, activeTimelineMaxFrame)) })}
             onTimelineChange={onV2TimelinesChange ? updateV2Timeline : undefined}
@@ -594,9 +802,16 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
             onStateMachineChange={onV2StateMachinesChange ? updateV2StateMachine : undefined}
             onStateMachineRename={onV2StateMachinesChange ? renameV2StateMachine : undefined}
             onAddStateMachine={onV2StateMachinesChange ? addStateMachine : undefined}
+            stateMachinePreview={stateMachinePreview}
+            isPlaying={isPlaying}
+            currentFrame={currentFrame}
+            playbackSpeed={playbackSpeed}
             preferredMotionType={preferredMotionType}
             onMotionTypeChange={setActiveMotionType}
             onActiveTimelineChange={handleActiveTimelineChange}
+            onPreviewTimelineFramesChange={onPreviewTimelineFramesChange}
+            onStateMachinePreviewClickChange={onStateMachinePreviewClickChange}
+            onStateMachinePreviewKeyDownChange={onStateMachinePreviewKeyDownChange}
             playheadPercent={playheadPercent}
             playbackControls={(
               <>
@@ -614,11 +829,9 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
             onRulerPointerDown={handleRulerPointerDown}
             onRulerPointerMove={handleRulerPointerMove}
             onRulerPointerUp={handleRulerPointerUp}
-            onStopPlayback={() => dispatch({ type: 'SET_PLAYING', playing: false })}
-            onPreviewState={() => {
-              dispatch({ type: 'SET_FRAME', frame: 0 });
-              dispatch({ type: 'SET_PLAYING', playing: true });
-            }}
+            onStopPlayback={stopMotionPlayback}
+            onPreviewState={previewStateAnimation}
+            onPreviewEvent={triggerStateMachinePreviewEvent}
           />
         )}
 
@@ -828,6 +1041,7 @@ export function Timeline({ className, style, v2Timelines, onV2TimelinesChange, v
 
 function TimelineClipRows({
   clips,
+  v2Document,
   durationInFrames,
   onKeyframeClick,
   onTimelineChange,
@@ -841,9 +1055,16 @@ function TimelineClipRows({
   onStateMachineChange,
   onStateMachineRename,
   onAddStateMachine,
+  stateMachinePreview,
+  isPlaying,
+  currentFrame,
+  playbackSpeed,
   preferredMotionType,
   onMotionTypeChange,
   onActiveTimelineChange,
+  onPreviewTimelineFramesChange,
+  onStateMachinePreviewClickChange,
+  onStateMachinePreviewKeyDownChange,
   playheadPercent,
   playbackControls,
   rulerRef,
@@ -852,8 +1073,10 @@ function TimelineClipRows({
   onRulerPointerUp,
   onStopPlayback,
   onPreviewState,
+  onPreviewEvent,
 }: {
   clips: ElucimV2Timeline[];
+  v2Document?: ElucimV2Document;
   durationInFrames: number;
   onKeyframeClick: (frame: number) => void;
   onTimelineChange?: (timeline: ElucimV2Timeline) => void;
@@ -867,9 +1090,16 @@ function TimelineClipRows({
   onStateMachineChange?: (machine: ElucimV2StateMachine) => void;
   onStateMachineRename?: (machine: ElucimV2StateMachine, nextId: string) => void;
   onAddStateMachine?: () => void;
+  stateMachinePreview: StateMachinePreviewState | null;
+  isPlaying: boolean;
+  currentFrame: number;
+  playbackSpeed: number;
   preferredMotionType: 'animation' | 'stateMachine';
   onMotionTypeChange?: (type: 'animation' | 'stateMachine') => void;
   onActiveTimelineChange?: (timelineId: string | undefined) => void;
+  onPreviewTimelineFramesChange?: (frames: ElucimV2TimelineFrameSelection[] | undefined) => void;
+  onStateMachinePreviewClickChange?: (handler: (() => boolean) | undefined) => void;
+  onStateMachinePreviewKeyDownChange?: (handler: ((key: string) => boolean) | undefined) => void;
   playheadPercent: number;
   playbackControls: React.ReactNode;
   rulerRef: React.RefObject<HTMLDivElement>;
@@ -877,7 +1107,8 @@ function TimelineClipRows({
   onRulerPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
   onRulerPointerUp: () => void;
   onStopPlayback: () => void;
-  onPreviewState: (stateId: string) => void;
+  onPreviewState: (machineId: string, stateId: string, details?: { event?: string; previousStateId?: string; activeTransitionId?: string }) => void;
+  onPreviewEvent: (machineId: string, stateId: string, eventName: string, key?: string) => boolean;
 }) {
   const icons = useEditorIcons();
   const firstAnimationItem = useMemo<SelectedV2TimelineItem | null>(() => clips[0] ? { type: 'animation', timelineId: clips[0].id } : null, [clips]);
@@ -890,10 +1121,14 @@ function TimelineClipRows({
   });
   const [activeMotionType, setActiveMotionType] = useState<'animation' | 'stateMachine'>(() => selectedItem?.type ?? preferredMotionType);
   const [renamingMotionItem, setRenamingMotionItem] = useState<SelectedMotionItem | null>(null);
-  const [keyframeDragPreview, setKeyframeDragPreview] = useState<{ timelineId: string; trackIndex: number; keyframeIndex: number; frame: number } | null>(null);
+  const [keyframeDragPreview, setKeyframeDragPreview] = useState<{ timelineId: string; trackIndex: number; keyframeIndex: number; frame: number; percent: number } | null>(null);
   const suppressKeyframeClickRef = useRef(false);
   const lastAnimationItem = useRef<SelectedV2TimelineItem | null>(firstAnimationItem);
   const lastStateMachineItem = useRef<SelectedStateMachineItem | null>(firstStateMachineItem);
+  const latestStateMachinesRef = useRef(stateMachines);
+  useEffect(() => {
+    latestStateMachinesRef.current = stateMachines;
+  }, [stateMachines]);
   const selectMotionItem = useCallback((item: SelectedMotionItem) => {
     if (item.type === 'animation') lastAnimationItem.current = item;
     else lastStateMachineItem.current = item;
@@ -901,7 +1136,18 @@ function TimelineClipRows({
     onMotionTypeChange?.(item.type);
     setSelectedItem(item);
   }, [onMotionTypeChange]);
+  const previousPreviewSelection = useRef<string | null>(null);
+  useEffect(() => {
+    if (!stateMachinePreview) return;
+    const key = `${stateMachinePreview.machineId}:${stateMachinePreview.stateId}`;
+    if (previousPreviewSelection.current === key) return;
+    previousPreviewSelection.current = key;
+    if (stateMachines.some(machine => machine.id === stateMachinePreview.machineId)) {
+      selectMotionItem({ type: 'stateMachine', machineId: stateMachinePreview.machineId, stateId: stateMachinePreview.stateId });
+    }
+  }, [selectMotionItem, stateMachinePreview, stateMachines]);
   const selectMotionType = useCallback((type: 'animation' | 'stateMachine') => {
+    if (type !== activeMotionType) onStopPlayback();
     setActiveMotionType(type);
     onMotionTypeChange?.(type);
     if (type === 'animation') {
@@ -915,7 +1161,7 @@ function TimelineClipRows({
       ? lastStateMachineItem.current
       : firstStateMachineItem;
     if (item) setSelectedItem(item);
-  }, [clips, firstAnimationItem, firstStateMachineItem, onMotionTypeChange, stateMachines]);
+  }, [activeMotionType, clips, firstAnimationItem, firstStateMachineItem, onMotionTypeChange, onStopPlayback, stateMachines]);
   const previousPreferredMotionType = useRef(preferredMotionType);
   const previousStateMachineCount = useRef(stateMachines.length);
   useEffect(() => {
@@ -947,8 +1193,31 @@ function TimelineClipRows({
   }, [clips, preferredMotionType, selectMotionItem, selectedItem, stateMachines]);
   const selectedClip = activeMotionType === 'animation' && selectedItem?.type === 'animation' ? clips.find(clip => clip.id === selectedItem.timelineId) : undefined;
   useEffect(() => {
-    onActiveTimelineChange?.(activeMotionType === 'animation' ? selectedClip?.id : undefined);
-  }, [activeMotionType, onActiveTimelineChange, selectedClip?.id]);
+    onActiveTimelineChange?.(activeMotionType === 'animation' ? selectedClip?.id : stateMachinePreview?.timelineId);
+  }, [activeMotionType, onActiveTimelineChange, selectedClip?.id, stateMachinePreview?.timelineId]);
+  useEffect(() => {
+    if (activeMotionType === 'animation') {
+      onPreviewTimelineFramesChange?.(selectedClip ? [{ timelineId: selectedClip.id, frame: currentFrame }] : undefined);
+      return;
+    }
+    if (!stateMachinePreview) {
+      onPreviewTimelineFramesChange?.(undefined);
+      return;
+    }
+    const frames = getStateMachineVisualFrames(
+      v2Document ?? { version: '2.0', scene: { type: 'scene', children: [] }, elements: {}, timelines, stateMachines: Object.fromEntries(stateMachines.map(machine => [machine.id, machine])) },
+      stateMachinePreview.machineId,
+      {
+        statePath: stateMachinePreview.logicalStatePath,
+        currentStateId: stateMachinePreview.stateId,
+        currentFrame,
+        exited: stateMachinePreview.exited,
+        finished: stateMachinePreview.finished,
+        missingTimeline: 'skip',
+      },
+    );
+    onPreviewTimelineFramesChange?.(frames.length > 0 ? frames : undefined);
+  }, [activeMotionType, currentFrame, onPreviewTimelineFramesChange, selectedClip, stateMachinePreview, stateMachines, timelines, v2Document]);
   const selectedMachine = activeMotionType === 'stateMachine' && selectedItem?.type === 'stateMachine' ? stateMachines.find(machine => machine.id === selectedItem.machineId) : undefined;
   const selectedTrack = selectedClip && selectedItem?.type === 'animation' && selectedItem.trackIndex !== undefined ? selectedClip.tracks[selectedItem.trackIndex] : undefined;
   const selectedKeyframe = selectedTrack && selectedItem?.type === 'animation' && selectedItem.keyframeIndex !== undefined ? selectedTrack.keyframes[selectedItem.keyframeIndex] : undefined;
@@ -1068,47 +1337,51 @@ function TimelineClipRows({
     const track = clip.tracks[trackIndex];
     const timelineLane = event.currentTarget.parentElement;
     if (!track || !timelineLane) return;
+    const dragTarget = event.currentTarget;
     const startX = event.clientX;
-    let didDrag = false;
-    selectMotionItem({ type: 'animation', timelineId: clip.id, trackIndex, keyframeIndex });
-    const frameFromClientX = (clientX: number) => {
-      const rect = timelineLane.getBoundingClientRect();
-      const ratio = rect.width > 0 ? (clientX - rect.left) / rect.width : 0;
-      const rawFrame = Math.round(Math.max(0, Math.min(1, ratio)) * Math.max(0, clip.duration - 1));
+    const laneRect = timelineLane.getBoundingClientRect();
+    const startFrame = track.keyframes[keyframeIndex]?.frame ?? 0;
+    const startLaneX = (framePercent(startFrame, clip.duration) / 100) * laneRect.width;
+    const positionFromClientX = (clientX: number) => {
+      const targetLaneX = startLaneX + (clientX - startX);
+      const ratio = laneRect.width > 0 ? targetLaneX / laneRect.width : 0;
       const previousFrame = track.keyframes[keyframeIndex - 1]?.frame ?? -1;
       const nextFrame = track.keyframes[keyframeIndex + 1]?.frame ?? clip.duration + 1;
-      return Math.max(previousFrame + 1, Math.min(nextFrame - 1, rawFrame));
+      const minFrame = previousFrame + 1;
+      const maxFrame = nextFrame - 1;
+      const continuousFrame = Math.max(minFrame, Math.min(maxFrame, Math.max(0, Math.min(1, ratio)) * Math.max(0, clip.duration)));
+      return {
+        frame: Math.round(continuousFrame),
+        percent: framePercent(continuousFrame, clip.duration),
+      };
     };
     const previewFrame = (clientX: number) => {
-      const frame = frameFromClientX(clientX);
-      setKeyframeDragPreview({ timelineId: clip.id, trackIndex, keyframeIndex, frame });
-      return frame;
+      const preview = positionFromClientX(clientX);
+      dragTarget.style.left = `${preview.percent}%`;
+      setKeyframeDragPreview({ timelineId: clip.id, trackIndex, keyframeIndex, ...preview });
+      return preview.frame;
     };
-    const onMove = (moveEvent: PointerEvent) => {
-      if (!didDrag && Math.abs(moveEvent.clientX - startX) < 3) return;
-      didDrag = true;
-      previewFrame(moveEvent.clientX);
-    };
-    const onUp = (upEvent: PointerEvent) => {
-      if (didDrag) {
+    startRafDrag({
+      event,
+      onFrame: point => previewFrame(point.clientX),
+      onCommit: point => {
+        if (!point.moved) {
+          setKeyframeDragPreview(null);
+          return;
+        }
         suppressKeyframeClickRef.current = true;
-        updateKeyframe(clip, trackIndex, keyframeIndex, { frame: previewFrame(upEvent.clientX) });
-      } else {
+        const frame = previewFrame(point.clientX);
+        updateKeyframe(clip, trackIndex, keyframeIndex, { frame });
+        selectMotionItem({ type: 'animation', timelineId: clip.id, trackIndex, keyframeIndex });
         setKeyframeDragPreview(null);
-      }
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+      },
+      onCancel: () => setKeyframeDragPreview(null),
+    });
   };
   const selectedStateId = selectedMachine && selectedItem?.type === 'stateMachine'
     ? selectedItem.stateId && selectedMachine.states[selectedItem.stateId] ? selectedItem.stateId : undefined
     : undefined;
   const selectedState = selectedMachine && selectedStateId ? selectedMachine.states[selectedStateId] : undefined;
-  const updateMachine = (machine: ElucimV2StateMachine, patch: Partial<ElucimV2StateMachine>) => {
-    onStateMachineChange?.({ ...machine, ...patch });
-  };
   const renameMachine = (machine: ElucimV2StateMachine, value: string) => {
     const baseId = normalizeGraphId(value, machine.id);
     const existing = Object.fromEntries(stateMachines.filter(current => current.id !== machine.id).map(current => [current.id, current]));
@@ -1135,28 +1408,19 @@ function TimelineClipRows({
       index += 1;
     }
     if (nextStateId === stateId) return;
-    const renameTransition = (transition: string | ElucimV2Transition): string | ElucimV2Transition => {
-      if (typeof transition === 'string') return transition === stateId ? nextStateId : transition;
-      return { ...transition, target: transition.target === stateId ? nextStateId : transition.target };
-    };
-    const states = Object.fromEntries(Object.entries(machine.states).map(([id, currentState]) => {
-      const nextState = {
-        ...currentState,
-        on: currentState.on
-          ? Object.fromEntries(Object.entries(currentState.on).map(([eventName, transition]) => [eventName, renameTransition(transition)]))
-          : undefined,
-        onComplete: currentState.onComplete ? renameTransition(currentState.onComplete) : undefined,
-      };
-      return [id === stateId ? nextStateId : id, nextState];
-    }));
+    const states = Object.fromEntries(Object.entries(machine.states).map(([id, currentState]) => [id === stateId ? nextStateId : id, currentState]));
     const layoutStates = machine.layout?.states
       ? Object.fromEntries(Object.entries(machine.layout.states).map(([id, position]) => [id === stateId ? nextStateId : id, position]))
       : undefined;
     onStateMachineChange?.({
       ...machine,
-      initial: machine.initial === stateId ? nextStateId : machine.initial,
-      reset: machine.reset === stateId ? nextStateId : machine.reset,
+      entry: machine.entry === stateId ? nextStateId : machine.entry,
       states,
+      transitions: machine.transitions?.map(transition => ({
+        ...transition,
+        from: transition.from === stateId ? nextStateId : transition.from,
+        to: transition.to === stateId ? nextStateId : transition.to,
+      })),
       layout: layoutStates ? { ...machine.layout, states: layoutStates } : machine.layout,
     });
     selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId: nextStateId });
@@ -1185,33 +1449,15 @@ function TimelineClipRows({
   const deleteMachineState = (machine: ElucimV2StateMachine, stateId: string) => {
     const remainingStateIds = Object.keys(machine.states).filter(id => id !== stateId);
     if (remainingStateIds.length === 0) return;
-    const fallback = remainingStateIds[0] ?? machine.initial;
+    const fallback = remainingStateIds[0] ?? machine.entry;
     const states = Object.fromEntries(Object.entries(machine.states)
       .filter(([id]) => id !== stateId)
-      .map(([id, state]) => {
-        const on = state.on
-          ? Object.fromEntries(Object.entries(state.on).filter(([, transition]) => {
-              const normalized = typeof transition === 'string' ? { target: transition } : transition;
-              return normalized.target !== stateId;
-            }))
-          : undefined;
-        const onComplete = state.onComplete
-          ? (() => {
-              const normalized = typeof state.onComplete === 'string' ? { target: state.onComplete } : state.onComplete;
-              return normalized.target === stateId ? undefined : state.onComplete;
-            })()
-          : undefined;
-        return [id, {
-          ...state,
-          ...(on && Object.keys(on).length > 0 ? { on } : { on: undefined }),
-          onComplete,
-        }];
-      }));
+      .map(([id, state]) => [id, state]));
     onStateMachineChange?.({
       ...machine,
-      initial: machine.initial === stateId ? fallback : machine.initial,
-      reset: machine.reset === stateId ? fallback : machine.reset,
+      entry: machine.entry === stateId ? fallback : machine.entry,
       states,
+      transitions: machine.transitions?.filter(transition => transition.from !== stateId && transition.to !== stateId),
       layout: {
         ...machine.layout,
         states: Object.fromEntries(Object.entries(machine.layout?.states ?? {}).filter(([id]) => id !== stateId)),
@@ -1219,48 +1465,160 @@ function TimelineClipRows({
     });
     selectMotionItem({ type: 'stateMachine', machineId: machine.id });
   };
-  const moveMachineState = (machine: ElucimV2StateMachine, stateId: string, position: { x: number; y: number }) => {
+  const normalizeGraphViewport = (viewport: ReactFlowViewport): ReactFlowViewport => ({
+    x: Math.round(viewport.x),
+    y: Math.round(viewport.y),
+    zoom: Number(viewport.zoom.toFixed(3)),
+  });
+  const moveMachineGraphNode = (machine: ElucimV2StateMachine, nodeId: string, position: { x: number; y: number }, viewport?: ReactFlowViewport) => {
+    const latestMachine = latestStateMachinesRef.current.find(current => current.id === machine.id) ?? machine;
     onStateMachineChange?.({
-      ...machine,
+      ...latestMachine,
       layout: {
-        ...machine.layout,
+        ...latestMachine.layout,
+        entry: nodeId === ENTRY_NODE_ID ? position : latestMachine.layout?.entry,
+        viewport: viewport ? normalizeGraphViewport(viewport) : latestMachine.layout?.viewport,
         states: {
-          ...machine.layout?.states,
-          [stateId]: position,
+          ...latestMachine.layout?.states,
+          ...(nodeId === ENTRY_NODE_ID ? {} : { [nodeId]: position }),
         },
+      },
+    });
+  };
+  const applyMachineGraphLayout = (machine: ElucimV2StateMachine, entryPosition: { x: number; y: number }, statePositions: Map<string, { x: number; y: number }>) => {
+    const latestMachine = latestStateMachinesRef.current.find(current => current.id === machine.id) ?? machine;
+    onStateMachineChange?.({
+      ...latestMachine,
+      layout: {
+        ...latestMachine.layout,
+        entry: entryPosition,
+        states: {
+          ...latestMachine.layout?.states,
+          ...Object.fromEntries(statePositions),
+        },
+      },
+    });
+  };
+  const moveMachineViewport = (machine: ElucimV2StateMachine, viewport: ReactFlowViewport) => {
+    const latestMachine = latestStateMachinesRef.current.find(current => current.id === machine.id) ?? machine;
+    onStateMachineChange?.({
+      ...latestMachine,
+      layout: {
+        ...latestMachine.layout,
+        viewport: normalizeGraphViewport(viewport),
       },
     });
   };
   const addMachineTransition = (machine: ElucimV2StateMachine, stateId: string, targetStateId?: string) => {
     const state = machine.states[stateId];
     if (!state) return;
-    let eventName = 'next';
+    let transitionName = 'next';
     let index = 2;
-    while (state.on?.[eventName]) {
-      eventName = `next-${index}`;
+    const existingIds = new Set((machine.transitions ?? []).map(transition => transition.id));
+    while (existingIds.has(`${stateId}-${transitionName}`)) {
+      transitionName = `next-${index}`;
       index += 1;
     }
-    const target = targetStateId && machine.states[targetStateId] ? targetStateId : Object.keys(machine.states).find(id => id !== stateId) ?? stateId;
-    updateMachineState(machine, stateId, { on: { ...state.on, [eventName]: { target } } });
-    selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId, transitionEvent: eventName });
-    return eventName;
+    const target = targetStateId === 'exit'
+      ? 'exit'
+      : targetStateId === 'entry'
+        ? 'entry'
+      : targetStateId && machine.states[targetStateId] ? targetStateId : Object.keys(machine.states).find(id => id !== stateId) ?? stateId;
+    const existingNext = machine.transitions?.find(transition => transition.from === stateId && transition.exitTime !== undefined);
+    if (existingNext) {
+      onStateMachineChange?.({
+        ...machine,
+        transitions: (machine.transitions ?? []).map(transition => transition.id === existingNext.id ? { ...transition, to: target } : transition),
+      });
+      selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId, transitionEvent: existingNext.id });
+      return existingNext.id;
+    }
+    const transitionId = createUniqueTransitionId(machine, `${stateId}-${transitionName}`);
+    onStateMachineChange?.({
+      ...machine,
+      transitions: [...(machine.transitions ?? []), { id: transitionId, from: stateId, to: target, exitTime: 1 }],
+    });
+    selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId, transitionEvent: transitionId });
+    return transitionId;
   };
-  const updateMachineTransition = (machine: ElucimV2StateMachine, stateId: string, eventName: string, transition: ElucimV2Transition) => {
-    const state = machine.states[stateId];
-    if (!state) return;
-    updateMachineState(machine, stateId, { on: { ...state.on, [eventName]: transition } });
+  const updateMachineTransition = (machine: ElucimV2StateMachine, transitionId: string, patch: Partial<ElucimV2Transition>) => {
+    onStateMachineChange?.({
+      ...machine,
+      transitions: (machine.transitions ?? []).map(transition => transition.id === transitionId ? { ...transition, ...patch } : transition),
+    });
   };
-  const deleteMachineTransition = (machine: ElucimV2StateMachine, stateId: string, eventName: string) => {
-    const state = machine.states[stateId];
-    if (!state?.on) return;
-    const next = { ...state.on };
-    delete next[eventName];
-    updateMachineState(machine, stateId, { on: Object.keys(next).length > 0 ? next : undefined });
-    selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId });
+  const renameMachineTransition = (machine: ElucimV2StateMachine, transitionId: string, nextTrigger: string) => {
+    const transition = machine.transitions?.find(current => current.id === transitionId);
+    if (!transition?.trigger) return;
+    const trigger = EVENT_PRESET_SET.has(nextTrigger) ? nextTrigger : normalizeGraphId(nextTrigger, transition.trigger);
+    if (trigger === transition.trigger) return;
+    if (transition.from !== 'entry' && !isAvailableTransitionTrigger(machine, transition, trigger)) return;
+    const transitions = machine.transitions?.map(current => {
+      if (current.id !== transitionId) return current;
+      return trigger === 'onKey' ? { ...current, trigger, key: current.key?.trim() || 'Enter' } : { ...current, trigger, key: undefined };
+    });
+    onStateMachineChange?.({
+      ...machine,
+      inputs: pruneUnusedTriggerInputs({ ...(machine.inputs ?? {}), [trigger]: { type: 'trigger' } }, transitions),
+      transitions,
+    });
   };
+  const setMachineTransitionKind = (machine: ElucimV2StateMachine, transitionId: string, kind: 'event' | 'next') => {
+    const transition = machine.transitions?.find(current => current.id === transitionId);
+    if (!transition || transition.from === 'entry') return;
+    const transitions = (machine.transitions ?? []).flatMap(current => {
+      if (current.id !== transitionId) return current;
+      if (kind === 'next') {
+        const { trigger: _trigger, key: _key, ...rest } = current;
+        return { ...rest, exitTime: current.exitTime ?? 1 };
+      }
+      const trigger = current.trigger && isAvailableTransitionTrigger(machine, current, current.trigger) ? current.trigger : 'onClick';
+      const { exitTime: _exitTime, ...rest } = current;
+      return { ...rest, trigger };
+    }).filter(current => !(kind === 'next' && current.id !== transitionId && current.from === transition.from && current.exitTime !== undefined));
+    const inputs = kind === 'event'
+      ? { ...(machine.inputs ?? {}), [(transition.trigger ?? 'onClick')]: { type: 'trigger' as const } }
+      : machine.inputs;
+    onStateMachineChange?.({
+      ...machine,
+      inputs: pruneUnusedTriggerInputs(inputs, transitions),
+      transitions,
+    });
+  };
+  const deleteMachineTransition = (machine: ElucimV2StateMachine, transitionId: string) => {
+    const transition = machine.transitions?.find(current => current.id === transitionId);
+    const transitions = machine.transitions?.filter(current => current.id !== transitionId);
+    onStateMachineChange?.({
+      ...machine,
+      inputs: pruneUnusedTriggerInputs(machine.inputs, transitions),
+      transitions,
+    });
+    selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId: transition?.from !== 'entry' && transition?.from !== 'any' ? transition?.from : undefined });
+  };
+  const playStateMachine = (machine: ElucimV2StateMachine) => {
+    const entryTransition = getEntryTransition(machine);
+    const initialStateId = getEntryTargetStateId(machine);
+    if (!initialStateId) return;
+    if (entryTransition?.trigger && entryTransition.trigger !== 'onStart') {
+      selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId: undefined, transitionEvent: entryTransition.id });
+      onPreviewState(machine.id, 'entry', { event: 'start', activeTransitionId: entryTransition.id });
+      return;
+    }
+    selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId: initialStateId });
+    onPreviewState(machine.id, initialStateId, { event: entryTransition?.trigger ?? 'onStart', previousStateId: 'entry', activeTransitionId: entryTransition?.id });
+  };
+  const resetStateMachinePreview = (machine: ElucimV2StateMachine) => {
+    const entryTransition = getEntryTransition(machine);
+    onStopPlayback();
+    onPreviewState(machine.id, 'entry', { event: 'reset', activeTransitionId: entryTransition?.id });
+    selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId: undefined, transitionEvent: entryTransition?.id });
+  };
+  const motionGridColumns = activeMotionType === 'stateMachine'
+    ? '34px 120px minmax(0, 1fr) minmax(236px, 280px)'
+    : '34px 140px minmax(0, 1fr) 300px';
   return (
     <div aria-label="Animation clips" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '34px 140px minmax(0, 1fr) 300px', flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: motionGridColumns, flex: 1, minHeight: 0 }}>
         <div role="tablist" aria-label="Motion editor type" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '6px 4px', borderRight: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-input-bg') }}>
           <button
             type="button"
@@ -1424,7 +1782,7 @@ function TimelineClipRows({
             );
           })}
         </div>
-        <div style={{ minHeight: 0, overflow: 'hidden' }}>
+        <div style={{ minHeight: 0, overflow: 'hidden', paddingRight: 10, boxSizing: 'border-box' }}>
       {activeMotionType === 'stateMachine' ? selectedMachine ? (
         <StateMachineTimelineGraph
           machine={selectedMachine}
@@ -1436,16 +1794,32 @@ function TimelineClipRows({
           }}
           onSelectTransition={(stateId, transitionEvent) => selectMotionItem({ type: 'stateMachine', machineId: selectedMachine.id, stateId, transitionEvent })}
           onSelectMachine={() => selectMotionItem({ type: 'stateMachine', machineId: selectedMachine.id })}
-          onMoveState={(stateId, position) => moveMachineState(selectedMachine, stateId, position)}
+          onMoveNode={(nodeId, position, viewport) => moveMachineGraphNode(selectedMachine, nodeId, position, viewport)}
+          onApplyLayout={(entryPosition, statePositions) => applyMachineGraphLayout(selectedMachine, entryPosition, statePositions)}
+          onMoveViewport={viewport => moveMachineViewport(selectedMachine, viewport)}
           onAddState={() => addMachineState(selectedMachine)}
-            onDeleteState={selectedStateId ? () => deleteMachineState(selectedMachine, selectedStateId) : undefined}
-            onPreviewState={stateId => {
-              const timelineId = selectedMachine.states[stateId]?.timeline;
-              onActiveTimelineChange?.(timelineId);
-              onPreviewState(stateId);
-            }}
-            onConnectStates={(sourceStateId, targetStateId) => addMachineTransition(selectedMachine, sourceStateId, targetStateId)}
-          />
+          onDeleteState={selectedStateId ? () => deleteMachineState(selectedMachine, selectedStateId) : undefined}
+          onPreviewMachine={() => playStateMachine(selectedMachine)}
+          onResetPreview={() => resetStateMachinePreview(selectedMachine)}
+          onPreviewState={stateId => onPreviewState(selectedMachine.id, stateId)}
+          onPreviewCanvasClickChange={onStateMachinePreviewClickChange}
+          onPreviewCanvasKeyDownChange={onStateMachinePreviewKeyDownChange}
+          previewStatus={stateMachinePreview?.machineId === selectedMachine.id ? {
+            stateId: stateMachinePreview.stateId,
+            timelineId: stateMachinePreview.timelineId,
+            event: stateMachinePreview.event,
+            previousStateId: stateMachinePreview.previousStateId,
+            activeTransitionId: stateMachinePreview.activeTransitionId,
+            exited: stateMachinePreview.exited,
+            finished: stateMachinePreview.finished,
+            playing: isPlaying,
+            frame: currentFrame,
+            duration: stateMachinePreview.timelineId ? timelines[stateMachinePreview.timelineId]?.duration : undefined,
+            speed: playbackSpeed,
+          } : null}
+          onTriggerEvent={(stateId, eventName, key) => onPreviewEvent(selectedMachine.id, stateId, eventName, key)}
+          onConnectStates={(sourceStateId, targetStateId) => addMachineTransition(selectedMachine, sourceStateId, targetStateId)}
+        />
       ) : (
         <div style={{ height: '100%', display: 'grid', placeItems: 'center', color: v('--elucim-editor-text-muted'), fontSize: 11 }}>
           Use the + button in the motion rail to add a state machine.
@@ -1646,7 +2020,13 @@ function TimelineClipRows({
                         && keyframeDragPreview.keyframeIndex === keyframeIndex
                         ? keyframeDragPreview.frame
                         : undefined;
+                      const previewPercent = keyframeDragPreview?.timelineId === clip.id
+                        && keyframeDragPreview.trackIndex === trackIndex
+                        && keyframeDragPreview.keyframeIndex === keyframeIndex
+                        ? keyframeDragPreview.percent
+                        : undefined;
                       const displayFrame = previewFrame ?? keyframe.frame;
+                      const displayPercent = previewPercent ?? framePercent(keyframe.frame, clip.duration);
                       const selected = selectedItem?.type === 'animation'
                         && selectedItem.timelineId === clip.id
                         && selectedItem.trackIndex === trackIndex
@@ -1669,16 +2049,18 @@ function TimelineClipRows({
                       onPointerDown={event => dragKeyframe(event, clip, trackIndex, keyframeIndex)}
                       style={{
                         position: 'absolute',
-                        left: `${framePercent(displayFrame, clip.duration)}%`,
+                        left: `${displayPercent}%`,
                         top: 9,
                         width: 12,
                         height: 12,
                         transform: 'translateX(-6px) rotate(45deg)',
                         border: `1px solid ${selected ? v('--elucim-editor-fg') : v('--elucim-editor-accent')}`,
                         background: selected ? v('--elucim-editor-accent') : v('--elucim-editor-input-bg'),
-                        boxShadow: selected ? `0 0 0 2px color-mix(in srgb, ${v('--elucim-editor-accent')} 28%, transparent)` : undefined,
                         padding: 0,
-                        cursor: 'pointer',
+                        cursor: keyframeDragPreview ? 'grabbing' : 'pointer',
+                        touchAction: 'none',
+                        willChange: keyframeDragPreview ? 'left' : undefined,
+                        zIndex: 3,
                       }}
                     />
                     {selected && (
@@ -1686,7 +2068,7 @@ function TimelineClipRows({
                         aria-hidden="true"
                         style={{
                           position: 'absolute',
-                          left: `${framePercent(displayFrame, clip.duration)}%`,
+                          left: `${displayPercent}%`,
                           top: 24,
                           transform: 'translateX(-50%)',
                           color: v('--elucim-editor-accent'),
@@ -1717,12 +2099,14 @@ function TimelineClipRows({
             selectedStateId={selectedStateId}
             selectedTransitionEvent={selectedItem?.type === 'stateMachine' ? selectedItem.transitionEvent : undefined}
             timelines={timelines}
-            onUpdateMachine={updateMachine}
             onRenameMachine={renameMachine}
             onUpdateState={updateMachineState}
             onRenameState={renameMachineState}
             onUpdateTransition={updateMachineTransition}
+            onRenameTransition={renameMachineTransition}
+            onSetTransitionKind={setMachineTransitionKind}
             onDeleteTransition={deleteMachineTransition}
+            onPreviewState={onPreviewState}
           />
         ) : onTimelineChange && (
           <V2TimelineInspector
@@ -1782,6 +2166,11 @@ function V2TimelineInspector({
     const nextValue = parseKeyframeValue(value);
     if (nextValue !== keyframe.value) onUpdateKeyframe(clip, selectedItem.trackIndex, selectedItem.keyframeIndex, { value: nextValue });
   };
+  const commitDuration = (value: string) => {
+    if (value.trim() === '') return;
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric !== clip.duration) onUpdateDuration(clip, numeric);
+  };
   return (
     <aside style={motionInspectorPanelStyle}>
       <div>
@@ -1805,11 +2194,19 @@ function V2TimelineInspector({
       <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
         Duration
         <input
+          key={`${clip.id}-${clip.duration}-duration`}
           aria-label={`Animation ${clip.id} duration`}
           type="number"
           min={1}
-          value={clip.duration}
-          onChange={event => onUpdateDuration(clip, Number(event.target.value))}
+          defaultValue={clip.duration}
+          onBlur={event => commitDuration(event.currentTarget.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') event.currentTarget.blur();
+            if (event.key === 'Escape') {
+              event.currentTarget.value = String(clip.duration);
+              event.currentTarget.blur();
+            }
+          }}
           style={inspectorInputStyle}
         />
       </label>
@@ -1896,16 +2293,16 @@ function V2TimelineInspector({
 
 function createStateMachineDagLayout(
   states: [string, ElucimV2StateMachine['states'][string]][],
-  transitions: { stateId: string; eventName: string; target: string; timeline?: string }[],
-  initialStateId: string,
+  transitions: { from: string; to: string }[],
+  entryStateId: string,
   direction: GraphLayoutDirection,
 ): Map<string, { x: number; y: number }> {
   const stateIds = states.map(([stateId]) => stateId);
   const stateSet = new Set(stateIds);
   const outgoing = new Map<string, string[]>();
   for (const transition of transitions) {
-    if (!stateSet.has(transition.stateId) || !stateSet.has(transition.target)) continue;
-    outgoing.set(transition.stateId, [...(outgoing.get(transition.stateId) ?? []), transition.target]);
+    if (!stateSet.has(transition.from) || !stateSet.has(transition.to)) continue;
+    outgoing.set(transition.from, [...(outgoing.get(transition.from) ?? []), transition.to]);
   }
 
   const ranks = new Map<string, number>();
@@ -1921,7 +2318,7 @@ function createStateMachineDagLayout(
     }
   };
 
-  visit(initialStateId, 0, new Set());
+  visit(entryStateId, 0, new Set());
   let fallbackRank = Math.max(0, ...Array.from(ranks.values())) + 1;
   for (const stateId of stateIds) {
     if (!ranks.has(stateId)) {
@@ -1937,34 +2334,109 @@ function createStateMachineDagLayout(
   }
 
   const positionByState = new Map<string, { x: number; y: number }>();
-  const majorGap = direction === 'horizontal' ? 220 : 68;
-  const minorGap = direction === 'horizontal' ? 96 : 180;
-  const offset = 48;
+  const majorGap = direction === 'horizontal' ? 210 : 112;
+  const minorGap = direction === 'horizontal' ? 98 : 178;
+  const offset = { x: direction === 'horizontal' ? 150 : 96, y: 84 };
+  const maxColumnSize = Math.max(1, ...Array.from(columns.values()).map(ids => ids.length));
   Array.from(columns.entries())
     .sort(([a], [b]) => a - b)
     .forEach(([rank, ids]) => {
+      const columnInset = ((maxColumnSize - ids.length) * minorGap) / 2;
       ids.forEach((stateId, index) => {
         positionByState.set(stateId, direction === 'horizontal'
-          ? { x: offset + rank * majorGap, y: offset + index * minorGap }
-          : { x: offset + index * minorGap, y: offset + rank * majorGap });
+          ? { x: offset.x + rank * majorGap, y: offset.y + columnInset + index * minorGap }
+          : { x: offset.x + columnInset + index * minorGap, y: offset.y + rank * majorGap });
       });
     });
 
   return positionByState;
 }
 
+function directionEntryPosition(entryTarget: { x: number; y: number }, direction: GraphLayoutDirection): { x: number; y: number } {
+  return direction === 'horizontal'
+    ? { x: Math.max(12, entryTarget.x - 116), y: entryTarget.y + 6 }
+    : { x: entryTarget.x + 24, y: Math.max(12, entryTarget.y - 74) };
+}
+
+function exitNodePosition(statePositions: Map<string, { x: number; y: number }>, direction: GraphLayoutDirection): { x: number; y: number } {
+  const positions = Array.from(statePositions.values());
+  if (positions.length === 0) return direction === 'horizontal' ? { x: 360, y: 90 } : { x: 120, y: 300 };
+  if (direction === 'horizontal') {
+    const right = Math.max(...positions.map(position => position.x));
+    const middle = positions.reduce((sum, position) => sum + position.y, 0) / positions.length;
+    return { x: right + 220, y: middle + 6 };
+  }
+  const bottom = Math.max(...positions.map(position => position.y));
+  const middle = positions.reduce((sum, position) => sum + position.x, 0) / positions.length;
+  return { x: middle + 24, y: bottom + 150 };
+}
+
 function StateMachineGraphNode({ data }: NodeProps<Node<StateMachineGraphNodeData>>) {
   const direction = data.direction;
+  if (data.kind === 'entry') {
+    return (
+      <div
+        aria-label="State machine entry"
+        style={{
+          width: 64,
+          height: 34,
+          border: `1px solid ${v('--elucim-editor-accent')}`,
+          borderRadius: 999,
+          display: 'grid',
+          placeItems: 'center',
+          background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 16%, ${v('--elucim-editor-input-bg')})`,
+          color: v('--elucim-editor-fg'),
+          fontSize: 10,
+          fontWeight: 800,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+          userSelect: 'none',
+        }}
+      >
+        Entry
+        <Handle id="source-right" type="source" position={Position.Right} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'horizontal' ? 1 : 0, pointerEvents: 'none' }} />
+        <Handle id="target-left" type="target" position={Position.Left} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'horizontal' ? 1 : 0, pointerEvents: 'none' }} />
+        <Handle id="source-bottom" type="source" position={Position.Bottom} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'vertical' ? 1 : 0, pointerEvents: 'none' }} />
+        <Handle id="target-top" type="target" position={Position.Top} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'vertical' ? 1 : 0, pointerEvents: 'none' }} />
+      </div>
+    );
+  }
+  if (data.kind === 'exit') {
+    return (
+      <div
+        aria-label="State machine exit"
+        style={{
+          width: 64,
+          height: 34,
+          border: `1px solid ${v('--elucim-editor-text-muted')}`,
+          borderRadius: 999,
+          display: 'grid',
+          placeItems: 'center',
+          background: v('--elucim-editor-input-bg'),
+          color: v('--elucim-editor-text-secondary'),
+          fontSize: 10,
+          fontWeight: 800,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+          userSelect: 'none',
+        }}
+      >
+        Exit
+        <Handle id="target-left" type="target" position={Position.Left} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-text-muted')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'horizontal' ? 1 : 0, pointerEvents: 'none' }} />
+        <Handle id="target-top" type="target" position={Position.Top} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-text-muted')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'vertical' ? 1 : 0, pointerEvents: 'none' }} />
+      </div>
+    );
+  }
   return (
     <div
       className="elucim-state-node-card"
       aria-label={`Select graph state ${data.stateId}`}
       style={{
-        width: 150,
-        minHeight: 66,
+        width: 118,
+        minHeight: 46,
         border: `1px solid ${data.selected ? v('--elucim-editor-accent') : v('--elucim-editor-border')}`,
-        borderRadius: 10,
-        padding: '10px 12px',
+        borderRadius: 8,
+        padding: '7px 9px',
         background: data.selected ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 14%, ${v('--elucim-editor-input-bg')})` : v('--elucim-editor-input-bg'),
         color: data.selected ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
         textAlign: 'left',
@@ -1999,52 +2471,10 @@ function StateMachineGraphNode({ data }: NodeProps<Node<StateMachineGraphNodeDat
       />
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
         <div style={{ fontWeight: 750, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.stateId}</div>
-        {data.initial && (
-          <span style={{ color: v('--elucim-editor-accent'), fontSize: 9, fontWeight: 800, textTransform: 'uppercase' }}>start state</span>
-        )}
-        {!data.initial && data.reset && (
-          <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 9, fontWeight: 800, textTransform: 'uppercase' }}>reset</span>
-        )}
       </div>
-      <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, marginTop: 4 }}>
-        {data.timeline ? `animation: ${data.timeline}` : data.initial ? 'initial state' : 'no animation'}
+      <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 9, marginTop: 3 }}>
+        {data.timeline ? data.timeline : 'no animation'}
       </div>
-      {data.timeline && (
-        <button
-          type="button"
-          className="nodrag nopan"
-          aria-label={`Preview state ${data.stateId} animation`}
-          title={`Play ${data.timeline}`}
-          onClick={event => {
-            event.stopPropagation();
-            data.onPreviewState?.(data.stateId);
-          }}
-          style={{
-            position: 'absolute',
-            right: 8,
-            bottom: 7,
-            width: 18,
-            height: 18,
-            display: 'grid',
-            placeItems: 'center',
-            border: `1px solid ${v('--elucim-editor-border-subtle')}`,
-            borderRadius: 999,
-            background: 'transparent',
-            color: v('--elucim-editor-text-secondary'),
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          <span aria-hidden="true" style={{
-            width: 0,
-            height: 0,
-            borderTop: '4px solid transparent',
-            borderBottom: '4px solid transparent',
-            borderLeft: `6px solid ${v('--elucim-editor-text-secondary')}`,
-            transform: 'translateX(1px)',
-          }} />
-        </button>
-      )}
     </div>
   );
 }
@@ -2082,11 +2512,21 @@ function StateMachineGraphEdge({
         }}
       />
       <EdgeLabelRenderer>
-        <div
+        <button
+          type="button"
+          aria-label={data?.onSelect ? `Edit ${String(data.label)} transition from ${String(data.stateId)}` : undefined}
+          disabled={!data?.onSelect}
+          onClick={event => {
+            event.stopPropagation();
+            data?.onSelect?.();
+          }}
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-            pointerEvents: 'none',
+            pointerEvents: data?.onSelect ? 'auto' : 'none',
+            border: selected ? `1px solid ${v('--elucim-editor-accent')}` : '1px solid transparent',
+            borderRadius: 6,
+            background: `color-mix(in srgb, ${v('--elucim-editor-input-bg')} 82%, transparent)`,
             color: selected ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
             fontSize: 11,
             fontWeight: 800,
@@ -2094,13 +2534,15 @@ function StateMachineGraphEdge({
             textAlign: 'center',
             whiteSpace: 'nowrap',
             textShadow: `0 0 3px ${v('--elucim-editor-input-bg')}, 0 0 6px ${v('--elucim-editor-input-bg')}`,
+            cursor: data?.onSelect ? 'pointer' : undefined,
+            padding: '2px 5px',
           }}
         >
           <div>{String(data?.label ?? '')}</div>
           {data?.detail && (
             <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, fontWeight: 700, marginTop: 2 }}>{data.detail}</div>
           )}
-        </div>
+        </button>
       </EdgeLabelRenderer>
     </>
   );
@@ -2113,10 +2555,18 @@ function StateMachineTimelineGraph({
   onSelectState,
   onSelectTransition,
   onSelectMachine,
-  onMoveState,
+  onMoveNode,
+  onApplyLayout,
+  onMoveViewport,
   onAddState,
   onDeleteState,
+  onPreviewMachine,
+  onResetPreview,
   onPreviewState,
+  onPreviewCanvasClickChange,
+  onPreviewCanvasKeyDownChange,
+  previewStatus,
+  onTriggerEvent,
   onConnectStates,
 }: {
   machine: ElucimV2StateMachine;
@@ -2125,26 +2575,35 @@ function StateMachineTimelineGraph({
   onSelectState: (stateId: string) => void;
   onSelectTransition: (stateId: string, transitionEvent: string) => void;
   onSelectMachine: () => void;
-  onMoveState: (stateId: string, position: { x: number; y: number }) => void;
+  onMoveNode: (nodeId: string, position: { x: number; y: number }, viewport?: ReactFlowViewport) => void;
+  onApplyLayout: (entryPosition: { x: number; y: number }, statePositions: Map<string, { x: number; y: number }>) => void;
+  onMoveViewport: (viewport: ReactFlowViewport) => void;
   onAddState: () => void;
   onDeleteState?: () => void;
+  onPreviewMachine: () => void;
+  onResetPreview: () => void;
   onPreviewState: (stateId: string) => void;
+  onPreviewCanvasClickChange?: (handler: (() => boolean) | undefined) => void;
+  onPreviewCanvasKeyDownChange?: (handler: ((key: string) => boolean) | undefined) => void;
+  previewStatus: { stateId: string; timelineId?: string; event?: string; previousStateId?: string; activeTransitionId?: string; playing: boolean; frame: number; duration?: number; speed: number; exited?: boolean; finished?: boolean } | null;
+  onTriggerEvent: (stateId: string, eventName: string, key?: string) => boolean;
   onConnectStates: (sourceStateId: string, targetStateId: string) => string | undefined;
 }) {
   const states = useMemo(() => Object.entries(machine.states), [machine.states]);
-  const transitions = useMemo(() => states.flatMap(([stateId, state]) => Object.entries(state.on ?? {}).map(([eventName, transition]) => {
-    const normalized = typeof transition === 'string' ? { target: transition } : transition;
-    return { stateId, eventName, target: normalized.target, timeline: normalized.timeline };
-  })), [states]);
-  const graphTransitions = useMemo(() => transitions.filter(transition => transition.eventName.toLowerCase() !== 'reset'), [transitions]);
+  const transitions = useMemo(() => machine.transitions ?? [], [machine.transitions]);
+  const graphTransitions = useMemo(() => transitions.filter(transition => transition.from !== 'any' && transition.from !== 'entry'), [transitions]);
+  const editableTransitionControls = useMemo(() => transitions.filter(transition => transition.from !== 'any'), [transitions]);
+  const exitTransitions = useMemo(() => graphTransitions.filter(transition => transition.to === 'exit'), [graphTransitions]);
   const [layoutDirection, setLayoutDirection] = useState<GraphLayoutDirection>('horizontal');
   const flowInstanceRef = useRef<ReactFlowInstance<Node<StateMachineGraphNodeData>, Edge<StateMachineGraphEdgeData>> | null>(null);
   const isDraggingNodeRef = useRef(false);
+  const skipNextMoveEndRef = useRef(false);
   const didInitialFitRef = useRef(false);
-  const hasSavedStatePositions = Object.keys(machine.layout?.states ?? {}).length > 0;
+  const hasSavedNodePositions = Boolean(machine.layout?.entry) || Object.keys(machine.layout?.states ?? {}).length > 0;
+  const hasSavedViewport = Boolean(machine.layout?.viewport);
   const nodeTypes = useMemo(() => ({ stateMachineState: StateMachineGraphNode }), []);
   const edgeTypes = useMemo(() => ({ stateTransition: StateMachineGraphEdge }), []);
-  const dagPositions = useMemo(() => createStateMachineDagLayout(states, graphTransitions, machine.initial, layoutDirection), [layoutDirection, machine.initial, graphTransitions, states]);
+  const dagPositions = useMemo(() => createStateMachineDagLayout(states, graphTransitions.filter(transition => transition.to !== 'exit').map(transition => ({ from: transition.from, to: transition.to })), machine.entry, layoutDirection), [layoutDirection, machine.entry, graphTransitions, states]);
   const statePositions = useMemo(() => {
     const positions = new Map(dagPositions);
     for (const [stateId, position] of Object.entries(machine.layout?.states ?? {})) {
@@ -2152,87 +2611,145 @@ function StateMachineTimelineGraph({
     }
     return positions;
   }, [dagPositions, machine.layout?.states]);
-  const [localPositions, setLocalPositions] = useState(() => new Map(statePositions));
+  const graphPositions = useMemo(() => {
+    const entryPosition = machine.layout?.entry ?? directionEntryPosition(statePositions.get(machine.entry) ?? { x: 150, y: 84 }, layoutDirection);
+    return new Map<string, { x: number; y: number }>([[ENTRY_NODE_ID, entryPosition], ...statePositions]);
+  }, [layoutDirection, machine.entry, machine.layout?.entry, statePositions]);
+  const eventSourceStateId = previewStatus?.exited || previewStatus?.finished ? undefined : previewStatus?.stateId;
+  const eventSourceState = eventSourceStateId ? machine.states[eventSourceStateId] : undefined;
+  const exposedTransitions = eventSourceStateId === 'entry'
+    ? getEntryTriggerTransitions(machine)
+    : eventSourceState && eventSourceStateId ? getStateTriggerTransitions(machine, eventSourceStateId) : [];
+  const previewClickTransition = exposedTransitions.find(transition => transition.trigger === 'onClick');
+  const exposedEvents = exposedTransitions.map(transition => previewEventLabel(transition));
+  const onCompleteTarget = eventSourceState && eventSourceStateId ? getStateCompleteTransition(machine, eventSourceStateId)?.to : undefined;
+  const statusText = previewStatus
+    ? previewStatus.exited
+      ? `Exited ${machine.id} via ${previewStatus.event ?? 'transition'} from ${previewStatus.previousStateId ?? previewStatus.stateId}`
+      : previewStatus.finished
+      ? `Finished ${previewStatus.stateId}; restart preview to run from Entry`
+      : previewStatus.stateId === 'entry'
+      ? `Waiting at Entry for ${exposedEvents.join(' or ') || 'a start event'}`
+      : `${previewStatus.playing ? 'Previewing' : 'Preview'} ${previewStatus.stateId}${previewStatus.previousStateId ? ` via ${previewStatus.event} from ${previewStatus.previousStateId}` : ''}${previewStatus.timelineId ? ` (${previewStatus.timelineId}) ${Math.round(previewStatus.frame)}/${previewStatus.duration ?? 0}` : ' has no animation'} at ${previewStatus.speed}x`
+    : `Preview starts at ${machine.entry} at 0.5x`;
+  const [localPositions, setLocalPositions] = useState(() => new Map(graphPositions));
   const previousMachineIdRef = useRef(machine.id);
   useEffect(() => {
     if (previousMachineIdRef.current !== machine.id) {
       previousMachineIdRef.current = machine.id;
-      setLocalPositions(new Map(statePositions));
+      didInitialFitRef.current = false;
+      setLocalPositions(new Map(graphPositions));
       return;
     }
     setLocalPositions(currentPositions => {
       const nextPositions = new Map(currentPositions);
       let changed = false;
-      for (const [stateId, position] of statePositions) {
-        if (!nextPositions.has(stateId)) {
-          nextPositions.set(stateId, position);
+      for (const [nodeId, position] of graphPositions) {
+        if (!nextPositions.has(nodeId)) {
+          nextPositions.set(nodeId, position);
           changed = true;
         }
       }
-      for (const stateId of nextPositions.keys()) {
-        if (!statePositions.has(stateId)) {
-          nextPositions.delete(stateId);
+      for (const nodeId of nextPositions.keys()) {
+        if (!graphPositions.has(nodeId)) {
+          nextPositions.delete(nodeId);
           changed = true;
         }
       }
       return changed ? nextPositions : currentPositions;
     });
-  }, [machine.id, statePositions]);
+  }, [graphPositions, machine.id]);
   const fitGraph = useCallback(() => {
     if (isDraggingNodeRef.current) return;
-    flowInstanceRef.current?.fitView({ padding: 0.28, includeHiddenNodes: false, duration: 0 });
+    flowInstanceRef.current?.fitView({ padding: 0.28, includeHiddenNodes: false, duration: 0, maxZoom: 1 });
   }, []);
   const applyDagLayout = (direction: GraphLayoutDirection) => {
     setLayoutDirection(direction);
-    const nextPositions = createStateMachineDagLayout(states, graphTransitions, machine.initial, direction);
-    setLocalPositions(new Map(nextPositions));
-    for (const [stateId, position] of nextPositions) {
-      onMoveState(stateId, position);
-    }
+    const nextPositions = createStateMachineDagLayout(states, graphTransitions.map(transition => ({ from: transition.from, to: transition.to })), machine.entry, direction);
+    const nextEntryPosition = directionEntryPosition(nextPositions.get(machine.entry) ?? { x: 150, y: 84 }, direction);
+    setLocalPositions(new Map([[ENTRY_NODE_ID, nextEntryPosition], ...nextPositions]));
+    onApplyLayout(nextEntryPosition, nextPositions);
   };
-  const nodes: Node<StateMachineGraphNodeData>[] = useMemo(() => states.map(([stateId, state]) => {
-    const selected = selectedStateId === stateId && !selectedTransitionEvent;
+  const nodes: Node<StateMachineGraphNodeData>[] = useMemo(() => {
+    const entryPosition = localPositions.get(ENTRY_NODE_ID) ?? graphPositions.get(ENTRY_NODE_ID) ?? directionEntryPosition(localPositions.get(machine.entry) ?? statePositions.get(machine.entry) ?? { x: 150, y: 84 }, layoutDirection);
+    const entryNode: Node<StateMachineGraphNodeData> = {
+      id: ENTRY_NODE_ID,
+      position: entryPosition,
+      type: 'stateMachineState',
+      data: { kind: 'entry', stateId: 'entry', selected: previewStatus?.stateId === 'entry', direction: layoutDirection },
+      draggable: true,
+      selectable: false,
+      style: { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0, cursor: 'grab' },
+    };
+    const stateNodes = states.map(([stateId, state]) => {
+    const selected = (selectedStateId === stateId && !selectedTransitionEvent) || previewStatus?.stateId === stateId;
     return {
       id: stateId,
       position: localPositions.get(stateId) ?? statePositions.get(stateId) ?? { x: 36, y: 42 },
       type: 'stateMachineState',
       data: {
+        kind: 'state' as const,
         stateId,
         timeline: state.timeline,
-        initial: stateId === machine.initial,
-        reset: stateId === (machine.reset ?? machine.initial),
         selected,
         direction: layoutDirection,
-        onPreviewState,
       },
       selected,
       draggable: true,
       style: { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0, cursor: 'grab' },
     };
-  }), [layoutDirection, localPositions, machine.initial, machine.reset, onPreviewState, selectedStateId, selectedTransitionEvent, statePositions, states]);
+    });
+    const exitNode: Node<StateMachineGraphNodeData> | null = exitTransitions.length > 0
+      ? {
+          id: EXIT_NODE_ID,
+          position: exitNodePosition(statePositions, layoutDirection),
+          type: 'stateMachineState',
+          data: { kind: 'exit', stateId: 'exit', selected: false, direction: layoutDirection },
+          draggable: false,
+          selectable: false,
+          style: { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 },
+        }
+      : null;
+    return exitNode ? [entryNode, ...stateNodes, exitNode] : [entryNode, ...stateNodes];
+  }, [exitTransitions.length, graphPositions, layoutDirection, localPositions, machine.entry, previewStatus?.stateId, selectedStateId, selectedTransitionEvent, statePositions, states]);
   const [flowNodes, setFlowNodes] = useState(nodes);
   useEffect(() => {
     setFlowNodes(currentNodes => nodes.map(node => {
       const existing = currentNodes.find(currentNode => currentNode.id === node.id);
-      return existing ? { ...existing, ...node, position: existing.position } : node;
+      return existing && isDraggingNodeRef.current ? { ...existing, ...node, position: existing.position } : node;
     }));
   }, [nodes]);
   const handleNodesChange: OnNodesChange = useCallback((changes) => {
     setFlowNodes(currentNodes => applyNodeChanges(changes, currentNodes) as Node<StateMachineGraphNodeData>[]);
   }, []);
-  const edges: Edge<StateMachineGraphEdgeData>[] = graphTransitions.map(transition => {
-    const selected = selectedStateId === transition.stateId && selectedTransitionEvent === transition.eventName;
-    const sourceRankPosition = dagPositions.get(transition.stateId) ?? { x: 0, y: 0 };
-    const targetRankPosition = dagPositions.get(transition.target) ?? { x: 0, y: 0 };
+  const entryTransition = getEntryTransition(machine);
+    const entryEdgeActive = previewStatus?.activeTransitionId === entryTransition?.id;
+    const entryEdge: Edge<StateMachineGraphEdgeData> = {
+    id: `${ENTRY_NODE_ID}:${machine.entry}`,
+    source: ENTRY_NODE_ID,
+    target: entryTransition?.to && entryTransition.to !== 'exit' ? entryTransition.to : machine.entry,
+    sourceHandle: layoutDirection === 'horizontal' ? 'source-right' : 'source-bottom',
+    targetHandle: layoutDirection === 'horizontal' ? 'target-left' : 'target-top',
+    type: 'stateTransition',
+     markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12, color: v('--elucim-editor-accent') },
+     data: { label: entryTransition ? transitionTriggerLabel(entryTransition) : 'onStart', selected: entryEdgeActive, backEdge: false, direction: layoutDirection, stateId: 'entry', eventName: entryTransition?.id ?? 'entry', onSelect: entryTransition ? () => onSelectTransition('entry', entryTransition.id) : undefined },
+  };
+  const edges: Edge<StateMachineGraphEdgeData>[] = [entryEdge, ...graphTransitions.map(transition => {
+     const selected = selectedTransitionEvent === transition.id || previewStatus?.activeTransitionId === transition.id;
+    const sourceRankPosition = dagPositions.get(transition.from) ?? { x: 0, y: 0 };
+    const targetRankPosition = transition.to === 'exit'
+      ? exitNodePosition(statePositions, layoutDirection)
+      : transition.to === 'entry'
+        ? graphPositions.get(ENTRY_NODE_ID) ?? { x: 0, y: 0 }
+        : dagPositions.get(transition.to) ?? { x: 0, y: 0 };
     const forward = layoutDirection === 'horizontal'
       ? targetRankPosition.x >= sourceRankPosition.x
       : targetRankPosition.y >= sourceRankPosition.y;
-    const label = `on ${transition.eventName}`;
-    const detail = transition.timeline ? `play ${transition.timeline}` : undefined;
+    const label = transitionTriggerLabel(transition);
     return {
-      id: `${transition.stateId}:${transition.eventName}`,
-      source: transition.stateId,
-      target: transition.target,
+      id: transition.id,
+      source: transition.from,
+      target: transition.to === 'exit' ? EXIT_NODE_ID : transition.to === 'entry' ? ENTRY_NODE_ID : transition.to,
       sourceHandle: layoutDirection === 'horizontal' ? 'source-right' : 'source-bottom',
       targetHandle: layoutDirection === 'horizontal' ? 'target-left' : 'target-top',
       type: 'stateTransition',
@@ -2245,41 +2762,150 @@ function StateMachineTimelineGraph({
       },
       data: {
         label,
-        detail,
         selected,
         backEdge: !forward,
         direction: layoutDirection,
-        stateId: transition.stateId,
-        eventName: transition.eventName,
+        stateId: transition.from,
+        eventName: transition.id,
+        onSelect: () => onSelectTransition(transition.from, transition.id),
       },
     };
-  });
+  })];
+  const triggerPreviewClickEvent = useCallback(() => {
+    if (!eventSourceStateId) return false;
+    if (!previewClickTransition) return false;
+    return onTriggerEvent(eventSourceStateId, 'onClick');
+  }, [eventSourceStateId, onTriggerEvent, previewClickTransition]);
+  const triggerPreviewKeyEvent = useCallback((key: string) => {
+    if (!eventSourceStateId) return false;
+    const keyName = displayKeyName(key);
+    if (!keyName) return false;
+    const keyTransition = exposedTransitions.find(transition => transition.trigger === 'onKey' && transition.key && transition.key.toLowerCase() === keyName.toLowerCase());
+    if (!keyTransition) return false;
+    return onTriggerEvent(eventSourceStateId, 'onKey', keyTransition.key);
+  }, [eventSourceStateId, exposedTransitions, onTriggerEvent]);
+  useEffect(() => {
+    if (!previewStatus) {
+      onPreviewCanvasClickChange?.(undefined);
+      onPreviewCanvasKeyDownChange?.(undefined);
+      return;
+    }
+    onPreviewCanvasClickChange?.(triggerPreviewClickEvent);
+    onPreviewCanvasKeyDownChange?.(triggerPreviewKeyEvent);
+    return () => {
+      onPreviewCanvasClickChange?.(undefined);
+      onPreviewCanvasKeyDownChange?.(undefined);
+    };
+  }, [onPreviewCanvasClickChange, onPreviewCanvasKeyDownChange, previewStatus, triggerPreviewClickEvent, triggerPreviewKeyEvent]);
   const handleNodeClick: NodeMouseHandler = (_, node) => {
+    if (triggerPreviewClickEvent()) return;
+    if (node.id === ENTRY_NODE_ID || node.id === EXIT_NODE_ID) {
+      onSelectMachine();
+      return;
+    }
     onSelectState(node.id);
   };
   const handleNodeDragStart: OnNodeDrag = () => {
     isDraggingNodeRef.current = true;
+    skipNextMoveEndRef.current = true;
   };
   const handleNodeDrag: OnNodeDrag = (_, node) => {
     setLocalPositions(currentPositions => new Map(currentPositions).set(node.id, node.position));
   };
   const handleNodeDragStop: OnNodeDrag = (_, node) => {
     isDraggingNodeRef.current = false;
-    const position = { x: Math.max(12, Math.round(node.position.x)), y: Math.max(12, Math.round(node.position.y)) };
+    skipNextMoveEndRef.current = true;
+    const position = { x: Math.round(node.position.x), y: Math.round(node.position.y) };
     setLocalPositions(currentPositions => new Map(currentPositions).set(node.id, position));
-    onMoveState(node.id, position);
+    onMoveNode(node.id, position, flowInstanceRef.current?.getViewport());
   };
+  const handleMoveEnd = useCallback((_event: MouseEvent | TouchEvent | null, viewport: ReactFlowViewport) => {
+    if (skipNextMoveEndRef.current) {
+      skipNextMoveEndRef.current = false;
+      return;
+    }
+    onMoveViewport(viewport);
+  }, [onMoveViewport]);
   const handleConnect: OnConnect = (connection) => {
     if (!connection.source || !connection.target) return;
-    const eventName = onConnectStates(connection.source, connection.target);
+    const eventName = onConnectStates(connection.source, connection.target === EXIT_NODE_ID ? 'exit' : connection.target === ENTRY_NODE_ID ? 'entry' : connection.target);
     if (eventName) onSelectTransition(connection.source, eventName);
   };
+  const handlePaneClick = () => {
+    if (!triggerPreviewClickEvent()) onSelectMachine();
+  };
+  const handlePreviewKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (triggerPreviewKeyEvent(event.key)) event.preventDefault();
+  };
   return (
-    <section aria-label={`State machine graph ${machine.id}`} style={{ height: '100%', minHeight: 180 }}>
+    <section
+      aria-label={`State machine graph ${machine.id}`}
+      tabIndex={0}
+      onKeyDown={handlePreviewKeyDown}
+      style={{ height: '100%', minHeight: 180, display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr) auto', background: v('--elucim-editor-input-bg') }}
+    >
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap', padding: '6px 8px', borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-surface') }}>
+        <button
+          type="button"
+          aria-label={`Preview state machine ${machine.id}`}
+          onClick={onPreviewMachine}
+          style={chromeTabButtonStyle(false)}
+        >
+          Preview
+        </button>
+        <button
+          type="button"
+          aria-label={`Restart state machine preview ${machine.id}`}
+          onClick={onResetPreview}
+          disabled={!previewStatus}
+          style={chromeTabButtonStyle(false)}
+        >
+          Restart preview
+        </button>
+        <span aria-live="polite" style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, fontWeight: 700, padding: '0 6px', whiteSpace: 'nowrap', flex: '1 1 220px', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {statusText}
+        </span>
+        <button
+          type="button"
+          aria-label={`Add state to ${machine.id}`}
+          onClick={onAddState}
+          style={chromeTabButtonStyle(false)}
+        >
+          + State
+        </button>
+        <button
+          type="button"
+          aria-label={selectedStateId ? `Remove state ${selectedStateId}` : 'Remove selected state'}
+          disabled={!selectedStateId || Object.keys(machine.states).length <= 1}
+          onClick={onDeleteState}
+          style={chromeTabButtonStyle(false)}
+        >
+          - State
+        </button>
+        <button
+          type="button"
+          aria-label="Use horizontal state machine layout"
+          aria-pressed={layoutDirection === 'horizontal'}
+          onClick={() => applyDagLayout('horizontal')}
+          style={chromeTabButtonStyle(layoutDirection === 'horizontal')}
+        >
+          Horizontal
+        </button>
+        <button
+          type="button"
+          aria-label="Use vertical state machine layout"
+          aria-pressed={layoutDirection === 'vertical'}
+          onClick={() => applyDagLayout('vertical')}
+          style={chromeTabButtonStyle(layoutDirection === 'vertical')}
+        >
+          Vertical
+        </button>
+      </div>
       <div
         aria-label={`State machine graph canvas ${machine.id}`}
         style={{
           height: '100%',
+          minHeight: 0,
           position: 'relative',
           overflow: 'hidden',
           background: v('--elucim-editor-input-bg'),
@@ -2294,7 +2920,7 @@ function StateMachineTimelineGraph({
           edgeTypes={edgeTypes}
           onInit={instance => {
             flowInstanceRef.current = instance;
-            if (!didInitialFitRef.current && !hasSavedStatePositions) {
+            if (!didInitialFitRef.current && !hasSavedNodePositions && !hasSavedViewport) {
               didInitialFitRef.current = true;
               fitGraph();
             }
@@ -2303,7 +2929,8 @@ function StateMachineTimelineGraph({
           onNodeDragStart={handleNodeDragStart}
           onNodeDrag={handleNodeDrag}
           onNodeDragStop={handleNodeDragStop}
-          onPaneClick={onSelectMachine}
+          onMoveEnd={handleMoveEnd}
+          onPaneClick={handlePaneClick}
           nodesDraggable
           nodesConnectable
           onConnect={handleConnect}
@@ -2319,53 +2946,72 @@ function StateMachineTimelineGraph({
             if (stateId && eventName) onSelectTransition(stateId, eventName);
           }}
           minZoom={0.2}
+          defaultViewport={machine.layout?.viewport}
           proOptions={{ hideAttribution: true }}
           style={{
             background: v('--elucim-editor-input-bg'),
             color: v('--elucim-editor-fg'),
           }}
-        >
-          <Panel position="top-left" style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        />
+        {editableTransitionControls.length > 0 && (
+          <div
+            aria-label={`Transition edge controls for ${machine.id}`}
+            style={{
+              position: 'absolute',
+              right: 8,
+              bottom: 8,
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+              gap: 4,
+              maxWidth: '65%',
+              pointerEvents: 'auto',
+            }}
+          >
+            {editableTransitionControls.map(transition => {
+              const selected = selectedTransitionEvent === transition.id;
+              return (
+                <button
+                  key={transition.id}
+                  type="button"
+                  aria-label={`Edit ${transitionTriggerLabel(transition)} transition from ${transition.from}`}
+                  aria-pressed={selected}
+                  onClick={() => onSelectTransition(transition.from, transition.id)}
+                  style={chromeTabButtonStyle(selected)}
+                >
+                  {transitionTriggerLabel(transition)}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <div style={{ display: 'grid', gap: 5, padding: '6px 8px', borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-surface') }}>
+        <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, fontWeight: 700 }}>
+          Events live on transition edges. Select an edge to edit its event, then fire that event while its source state is active.
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+          <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
+             Events for {eventSourceStateId ?? 'preview'}:
+          </span>
+          {exposedTransitions.length > 0 ? exposedTransitions.map(transition => (
             <button
+              key={transition.id}
               type="button"
-              aria-label={`Add state to ${machine.id}`}
-              onClick={onAddState}
+              aria-label={`Trigger ${transition.trigger} event from ${eventSourceStateId}`}
+              disabled={!eventSourceStateId}
+              onClick={() => eventSourceStateId && onTriggerEvent(eventSourceStateId, transition.trigger!, transition.key)}
               style={chromeTabButtonStyle(false)}
             >
-              + State
+              {previewEventLabel(transition)}
             </button>
-            <button
-              type="button"
-              aria-label={selectedStateId ? `Remove state ${selectedStateId}` : 'Remove selected state'}
-              disabled={!selectedStateId || Object.keys(machine.states).length <= 1}
-              onClick={onDeleteState}
-              style={chromeTabButtonStyle(false)}
-            >
-              - State
-            </button>
-            <button
-              type="button"
-              aria-label="Use horizontal state machine layout"
-              aria-pressed={layoutDirection === 'horizontal'}
-              onClick={() => applyDagLayout('horizontal')}
-              style={chromeTabButtonStyle(layoutDirection === 'horizontal')}
-            >
-              Horizontal
-            </button>
-            <button
-              type="button"
-              aria-label="Use vertical state machine layout"
-              aria-pressed={layoutDirection === 'vertical'}
-              onClick={() => applyDagLayout('vertical')}
-              style={chromeTabButtonStyle(layoutDirection === 'vertical')}
-            >
-              Vertical
-            </button>
-          </Panel>
-          <Panel position="bottom-left" style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, fontWeight: 700 }}>
-            Drag state cards to arrange · reset uses the selected reset state
-          </Panel>
-        </ReactFlow>
+          )) : (
+            <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11 }}>none</span>
+          )}
+          <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, whiteSpace: 'nowrap' }}>
+            {onCompleteTarget ? `Next auto-runs -> ${onCompleteTarget}` : 'no Next transition'}
+          </span>
+        </div>
       </div>
     </section>
   );
@@ -2377,67 +3023,152 @@ function StateMachineMotionInspector({
   selectedStateId,
   selectedTransitionEvent,
   timelines,
-  onUpdateMachine,
   onRenameMachine,
   onUpdateState,
   onRenameState,
   onUpdateTransition,
+  onRenameTransition,
+  onSetTransitionKind,
   onDeleteTransition,
+  onPreviewState,
 }: {
   machine: ElucimV2StateMachine;
   state?: ElucimV2StateMachine['states'][string];
   selectedStateId?: string;
   selectedTransitionEvent?: string;
   timelines: Record<string, ElucimV2Timeline>;
-  onUpdateMachine: (machine: ElucimV2StateMachine, patch: Partial<ElucimV2StateMachine>) => void;
   onRenameMachine: (machine: ElucimV2StateMachine, nextId: string) => void;
   onUpdateState: (machine: ElucimV2StateMachine, stateId: string, patch: Partial<ElucimV2StateMachine['states'][string]>) => void;
   onRenameState: (machine: ElucimV2StateMachine, stateId: string, nextId: string) => void;
-  onUpdateTransition: (machine: ElucimV2StateMachine, stateId: string, eventName: string, transition: ElucimV2Transition) => void;
-  onDeleteTransition: (machine: ElucimV2StateMachine, stateId: string, eventName: string) => void;
+  onUpdateTransition: (machine: ElucimV2StateMachine, transitionId: string, patch: Partial<ElucimV2Transition>) => void;
+  onRenameTransition: (machine: ElucimV2StateMachine, transitionId: string, nextTrigger: string) => void;
+  onSetTransitionKind: (machine: ElucimV2StateMachine, transitionId: string, kind: 'event' | 'next') => void;
+  onDeleteTransition: (machine: ElucimV2StateMachine, transitionId: string) => void;
+  onPreviewState: (machineId: string, stateId: string) => void;
 }) {
   const stateIds = Object.keys(machine.states);
   const timelineIds = Object.keys(timelines);
-  const selectedTransition = state && selectedTransitionEvent ? state.on?.[selectedTransitionEvent] : undefined;
-  const normalizedTransition = typeof selectedTransition === 'string' ? { target: selectedTransition } : selectedTransition;
-  if (selectedStateId && selectedTransitionEvent && normalizedTransition) {
+  const selectedTransition = selectedTransitionEvent ? machine.transitions?.find(transition => transition.id === selectedTransitionEvent) : undefined;
+  if (selectedTransition) {
+    const trigger = selectedTransition.trigger ?? 'next';
+    const transitionKind = selectedTransition.exitTime !== undefined ? 'next' : 'event';
+    const eventPreset = trigger && EVENT_PRESET_SET.has(trigger) ? trigger : 'custom';
+    const eventPresets = selectedTransition.from === 'entry' ? ENTRY_EVENT_PRESETS : EVENT_PRESETS;
     return (
       <aside style={motionInspectorPanelStyle}>
-        <div>
-          <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>Selected transition</div>
-          <div style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{selectedTransitionEvent}</div>
+          <div>
+            <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>Transition</div>
+            <div style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{transitionTriggerLabel(selectedTransition)}</div>
+          <div style={{ color: v('--elucim-editor-text-secondary'), fontSize: 10 }}>
+            {selectedTransition.from === 'entry'
+              ? `"${trigger}" controls how the machine leaves Entry; onStart fires automatically when preview/run starts.`
+              : transitionKind === 'next'
+                ? 'Next transitions run automatically when the source animation finishes.'
+                : `Event "${trigger}" becomes a preview button while "${selectedTransition.from}" is active.`}
+          </div>
         </div>
+        <div style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+          Source
+          <div aria-label={`Transition ${selectedTransition.id} source`} style={{ ...inspectorInputStyle, display: 'flex', alignItems: 'center' }}>
+            {selectedTransition.from}
+          </div>
+        </div>
+        {selectedTransition.from !== 'entry' && (
+          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+            Transition type
+            <select
+              aria-label={`Transition ${selectedTransition.id} type`}
+              value={transitionKind}
+              onChange={event => onSetTransitionKind(machine, selectedTransition.id, event.target.value as 'event' | 'next')}
+              style={inspectorInputStyle}
+            >
+              <option value="next">Next after animation</option>
+              <option value="event">Event trigger</option>
+            </select>
+          </label>
+        )}
+        {transitionKind === 'event' && (
+          <>
+            <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+              {selectedTransition.from === 'entry' ? 'Start event' : 'Event'}
+              <select
+                aria-label={`Transition ${selectedTransition.id} event preset`}
+                value={eventPreset}
+                onChange={event => {
+                  const nextPreset = event.target.value;
+                  onRenameTransition(machine, selectedTransition.id, nextPreset === 'custom' ? 'customEvent' : nextPreset);
+                }}
+                style={inspectorInputStyle}
+              >
+                {eventPresets.map(preset => <option key={preset} value={preset}>{preset}</option>)}
+                <option value="custom">custom</option>
+              </select>
+            </label>
+            {eventPreset === 'custom' && (
+              <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+                Custom event name
+                <input
+                  key={`${selectedTransition.id}-${trigger}`}
+                  aria-label={`Rename transition trigger ${trigger}`}
+                  defaultValue={trigger}
+                  onBlur={event => onRenameTransition(machine, selectedTransition.id, event.currentTarget.value)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') event.currentTarget.blur();
+                  }}
+                  style={inspectorInputStyle}
+                />
+              </label>
+            )}
+            {trigger === 'onKey' && (
+              <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
+                Key
+                <input
+                  key={`${selectedTransition.id}-${selectedTransition.key ?? ''}`}
+                  aria-label={`Transition ${selectedTransition.id} key`}
+                  defaultValue={selectedTransition.key ?? ''}
+                  placeholder="Press a key"
+                  title="Press a key to capture it. Tab moves focus."
+                  onBlur={event => onUpdateTransition(machine, selectedTransition.id, { key: event.currentTarget.value.trim() || undefined })}
+                  onKeyDown={event => {
+                    const keyName = displayKeyName(event.key);
+                    if (!keyName) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.currentTarget.value = keyName;
+                    onUpdateTransition(machine, selectedTransition.id, { key: keyName });
+                  }}
+                  style={inspectorInputStyle}
+                />
+                <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10 }}>
+                  Press the key to capture it, like G, Space, Enter, Escape, or ArrowLeft.
+                </div>
+              </label>
+            )}
+          </>
+        )}
         <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
           Target state
           <select
             aria-label={`Transition ${selectedTransitionEvent} target state`}
-            value={normalizedTransition.target}
-            onChange={event => onUpdateTransition(machine, selectedStateId, selectedTransitionEvent, { ...normalizedTransition, target: event.target.value })}
+            value={selectedTransition.to}
+            onChange={event => onUpdateTransition(machine, selectedTransition.id, { to: event.target.value })}
             style={inspectorInputStyle}
           >
+            {selectedTransition.from !== 'entry' && <option value="entry">Entry</option>}
+            {selectedTransition.from !== 'entry' && <option value="exit">Exit machine</option>}
             {stateIds.map(id => <option key={id} value={id}>{id}</option>)}
           </select>
         </label>
-        <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-          Transition animation
-          <select
-            aria-label={`Transition ${selectedTransitionEvent} animation`}
-            value={normalizedTransition.timeline ?? ''}
-            onChange={event => onUpdateTransition(machine, selectedStateId, selectedTransitionEvent, { ...normalizedTransition, timeline: event.target.value || undefined })}
-            style={inspectorInputStyle}
+        {selectedTransition.from !== 'entry' && (
+          <button
+            type="button"
+            aria-label={`Remove transition ${transitionTriggerLabel(selectedTransition)}`}
+            onClick={() => onDeleteTransition(machine, selectedTransition.id)}
+            style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer', padding: '4px 6px', textAlign: 'left' }}
           >
-            <option value="">none</option>
-            {timelineIds.map(id => <option key={id} value={id}>{id}</option>)}
-          </select>
-        </label>
-        <button
-          type="button"
-          aria-label={`Remove transition ${selectedTransitionEvent}`}
-          onClick={() => onDeleteTransition(machine, selectedStateId, selectedTransitionEvent)}
-          style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer', padding: '4px 6px', textAlign: 'left' }}
-        >
-          Remove transition
-        </button>
+            Remove transition
+          </button>
+        )}
       </aside>
     );
   }
@@ -2449,6 +3180,14 @@ function StateMachineMotionInspector({
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>Selected state</div>
           <div style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{selectedStateId}</div>
         </div>
+        <button
+          type="button"
+          aria-label={`Preview state ${selectedStateId}`}
+          onClick={() => onPreviewState(machine.id, selectedStateId)}
+          style={{ border: `1px solid ${v('--elucim-editor-accent')}`, borderRadius: 6, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', padding: '5px 6px', textAlign: 'left' }}
+        >
+          Preview this state
+        </button>
         <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
           State name
           <input
@@ -2485,6 +3224,10 @@ function StateMachineMotionInspector({
         <div style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{machine.id}</div>
         <div style={{ color: v('--elucim-editor-text-secondary'), fontSize: 10 }}>{stateIds.length} state{stateIds.length === 1 ? '' : 's'}</div>
       </div>
+      <div style={{ display: 'grid', gap: 4, padding: 6, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 8, background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 8%, ${v('--elucim-editor-input-bg')})`, color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
+        <strong style={{ color: v('--elucim-editor-fg'), fontSize: 11 }}>Graph model</strong>
+        <span>Entry starts here. State cards play animations. Next/Event transitions move between states. Exit stops the machine.</span>
+      </div>
       <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
         Machine name
         <input
@@ -2497,28 +3240,6 @@ function StateMachineMotionInspector({
           }}
           style={inspectorInputStyle}
         />
-      </label>
-      <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-        Initial state
-        <select
-          aria-label={`State machine ${machine.id} initial state`}
-          value={machine.initial}
-          onChange={event => onUpdateMachine(machine, { initial: event.target.value })}
-          style={inspectorInputStyle}
-        >
-          {stateIds.map(id => <option key={id} value={id}>{id}</option>)}
-        </select>
-      </label>
-      <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-        Reset state
-        <select
-          aria-label={`State machine ${machine.id} reset state`}
-          value={machine.reset ?? machine.initial}
-          onChange={event => onUpdateMachine(machine, { reset: event.target.value })}
-          style={inspectorInputStyle}
-        >
-          {stateIds.map(id => <option key={id} value={id}>{id}</option>)}
-        </select>
       </label>
     </aside>
   );
@@ -2550,7 +3271,7 @@ const motionInspectorPanelStyle: React.CSSProperties = {
 };
 
 function framePercent(frame: number, durationInFrames: number): number {
-  return durationInFrames > 1 ? (Math.max(0, Math.min(frame, durationInFrames - 1)) / (durationInFrames - 1)) * 100 : 0;
+  return durationInFrames > 0 ? (Math.max(0, Math.min(frame, durationInFrames)) / durationInFrames) * 100 : 0;
 }
 
 function AnimationBar({ left, width, color, title, onEdgeDrag, onClick, edgeSide = 'right' }: {

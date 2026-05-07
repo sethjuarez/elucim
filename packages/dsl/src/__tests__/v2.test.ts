@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { migrateV1ToV2, migrateV2ToV1, normalizeToV2, toRenderableV1, validate, validateV2 } from '../index';
+import { getDocumentLinearDuration, migrateV1ToV2, migrateV2ToV1, normalizeToV2, resolveExportFrameCount, toRenderableV1, validate, validateV2 } from '../index';
 import type { ElucimDocument, ElucimV2Document } from '../index';
 
 describe('Elucim v2 document foundation', () => {
   it('validates a minimal normalized v2 document', () => {
     const doc: ElucimV2Document = {
       version: '2.0',
-      scene: { type: 'player', width: 1920, height: 1080, durationInFrames: 120, children: ['title'] },
+      scene: { type: 'player', width: 1920, height: 1080, children: ['title'] },
       elements: {
         title: {
           id: 'title',
@@ -23,10 +23,56 @@ describe('Elucim v2 document foundation', () => {
     expect(validate(doc)).toEqual({ valid: true, errors: [] });
   });
 
+  it('does not require canvas duration for v2 scene layout', () => {
+    const doc: ElucimV2Document = {
+      version: '2.0',
+      scene: { type: 'scene', width: 800, height: 600, children: ['title'] },
+      elements: {
+        title: { id: 'title', type: 'text', props: { content: 'Hello' } },
+      },
+      timelines: {
+        intro: { id: 'intro', duration: 45, tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 45, value: 1 }] }] },
+      },
+    };
+
+    const result = validateV2(doc);
+    expect(result).toEqual({ valid: true, errors: [] });
+    expect((migrateV2ToV1(doc).root as any).durationInFrames).toBe(45);
+  });
+
+  it('requires explicit export policies instead of canvas duration for fixed machine output', () => {
+    const doc: ElucimV2Document = {
+      version: '2.0',
+      scene: { type: 'player', children: ['title'] },
+      elements: {
+        title: { id: 'title', type: 'text', props: { content: 'Hello' } },
+      },
+      timelines: {
+        idle: { id: 'idle', duration: 30, tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 1 }] }] },
+        unused: { id: 'unused', duration: 90, tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 1 }] }] },
+      },
+      defaultStateMachine: 'deck',
+      stateMachines: {
+        deck: {
+          id: 'deck',
+          entry: 'idle',
+          states: { idle: { timeline: 'idle' } },
+          transitions: [{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }],
+        },
+      },
+    };
+
+    expect(getDocumentLinearDuration(doc)).toBe(30);
+    expect(resolveExportFrameCount(doc, { type: 'state', machineId: 'deck', stateId: 'idle' })).toBe(30);
+    expect(resolveExportFrameCount(doc, { type: 'machineUntilExit', machineId: 'deck', maxFrames: 300 })).toBe(300);
+    expect(() => resolveExportFrameCount(doc, { type: 'machineFirstFrames', machineId: 'missing', frameCount: 10 })).toThrow('State machine "missing" does not exist');
+    expect(() => resolveExportFrameCount(doc, { type: 'machineUntilExit', machineId: 'deck', maxFrames: 0 })).toThrow('machineUntilExit.maxFrames must be a positive integer');
+  });
+
   it('reports machine-friendly reference errors', () => {
     const result = validateV2({
       version: '2.0',
-      scene: { type: 'scene', durationInFrames: 60, children: ['missing'] },
+      scene: { type: 'scene', children: ['missing'] },
       elements: {},
     });
 

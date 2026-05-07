@@ -51,7 +51,7 @@ describe('DslRenderer player override props', () => {
       <DslRenderer
         dsl={{
           version: '2.0',
-          scene: { type: 'player', durationInFrames: 60, children: ['dot'] },
+          scene: { type: 'player', children: ['dot'] },
           elements: {
             dot: { id: 'dot', type: 'circle', props: { type: 'circle', cx: 100, cy: 100, r: 20 } },
           },

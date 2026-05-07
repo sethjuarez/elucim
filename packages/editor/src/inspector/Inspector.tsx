@@ -14,13 +14,14 @@ import { colorPreview, isLiteralHexColor } from './colorUtils';
 export interface InspectorProps {
   className?: string;
   style?: React.CSSProperties;
+  showCanvasDuration?: boolean;
 }
 
 /**
  * Inspector content — shows properties for the selected element.
  * Rendered inside a FloatingPanel by ElucimEditor.
  */
-export function Inspector({ className, style }: InspectorProps) {
+export function Inspector({ className, style, showCanvasDuration = true }: InspectorProps) {
   const { state, dispatch } = useEditorState();
   const icons = useEditorIcons();
   const { selectedIds, document } = state;
@@ -64,8 +65,8 @@ export function Inspector({ className, style }: InspectorProps) {
         </div>
 
         <InspectorSection title="Dimensions">
-          <NumberField label="Width" value={root.width ?? 1920} onChange={val => handleCanvasChange('width', val)} />
-          <NumberField label="Height" value={root.height ?? 1080} onChange={val => handleCanvasChange('height', val)} />
+          <NumberField label="Width" value={root.width ?? 1920} onChange={val => handleCanvasChange('width', val)} liveUpdate={false} />
+          <NumberField label="Height" value={root.height ?? 1080} onChange={val => handleCanvasChange('height', val)} liveUpdate={false} />
         </InspectorSection>
 
         <InspectorSection title="Appearance">
@@ -73,8 +74,14 @@ export function Inspector({ className, style }: InspectorProps) {
         </InspectorSection>
 
         <InspectorSection title="Playback">
-          <NumberField label="FPS" value={root.fps ?? 60} onChange={val => handleCanvasChange('fps', val)} />
-          <NumberField label="Duration" value={root.durationInFrames ?? 120} onChange={val => handleCanvasChange('durationInFrames', val)} />
+          <NumberField label="FPS" value={root.fps ?? 60} onChange={val => handleCanvasChange('fps', val)} liveUpdate={false} />
+          {showCanvasDuration ? (
+            <NumberField label="Duration" value={root.durationInFrames ?? 120} onChange={val => handleCanvasChange('durationInFrames', val)} liveUpdate={false} />
+          ) : (
+            <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, lineHeight: 1.4 }}>
+              Duration is defined by timelines, state-machine preview, or export policy.
+            </div>
+          )}
         </InspectorSection>
       </div>
     );
@@ -357,8 +364,8 @@ function InspectorSection({ title, children }: { title: string; children: React.
 
 // ─── Field components ──────────────────────────────────────────────────────
 
-function NumberField({ label, value, onChange, step = 1 }: {
-  label: string; value: number | undefined; onChange: (v: number) => void; step?: number;
+function NumberField({ label, value, onChange, step = 1, liveUpdate = true }: {
+  label: string; value: number | undefined; onChange: (v: number) => void; step?: number; liveUpdate?: boolean;
 }) {
   const [localStr, setLocalStr] = React.useState(String(value ?? ''));
   const committedRef = React.useRef(value);
@@ -382,7 +389,7 @@ function NumberField({ label, value, onChange, step = 1 }: {
         onChange={e => {
           setLocalStr(e.target.value);
           const num = parseFloat(e.target.value);
-          if (!isNaN(num)) { onChange(num); committedRef.current = num; }
+          if (liveUpdate && !isNaN(num)) { onChange(num); committedRef.current = num; }
         }}
         onBlur={() => commit(localStr)}
         onKeyDown={e => { if (e.key === 'Enter') commit(localStr); }}

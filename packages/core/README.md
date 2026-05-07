@@ -20,23 +20,17 @@ pnpm add @elucim/core
 ## Quick Start
 
 ```tsx
-import { Player, FadeIn, Circle, Text, Group, Transform } from '@elucim/core';
+import { Player, Circle, Text, Group } from '@elucim/core';
 
 function MyAnimation() {
   return (
     <Player width={800} height={600} fps={30} durationInFrames={90} autoPlay loop>
-      <Group translate={[400, 280]}>
-        <Transform rotate={{ from: 0, to: 360 }} duration={90}>
-          <FadeIn duration={20}>
-            <Circle cx={0} cy={0} r={80} stroke="#6c5ce7" strokeWidth={3} fill="none" />
-            <Circle cx={60} cy={0} r={12} fill="#6c5ce7" />
-          </FadeIn>
-        </Transform>
-        <FadeIn duration={20}>
-          <Text x={0} y={10} fill="#e0e0e0" fontSize={24} textAnchor="middle">
-            Hello Elucim
-          </Text>
-        </FadeIn>
+      <Group translate={[400, 280]} fadeIn={20}>
+        <Circle cx={0} cy={0} r={80} stroke="#6c5ce7" strokeWidth={3} fill="none" />
+        <Circle cx={60} cy={0} r={12} fill="#6c5ce7" />
+        <Text x={0} y={10} fill="#e0e0e0" fontSize={24} textAnchor="middle">
+          Hello Elucim
+        </Text>
       </Group>
     </Player>
   );
@@ -81,7 +75,7 @@ All primitives support universal spatial transform props:
 | `translate` | `[dx, dy]` offset |
 | `zIndex` | Stacking order (higher renders on top) |
 
-These compose with animations — use static `rotation={45}` for a fixed rotation, or wrap in `<Transform rotate={{from:0, to:360}}>` for animated rotation.
+These compose with frame-driven values — use static `rotation={45}` for a fixed rotation, or derive `rotation` from `useCurrentFrame()` / `interpolate()` for custom React animation. For authored timelines and state machines, use `@elucim/dsl` v2 and the editor.
 
 ### 📊 Math Visualizations
 
@@ -95,19 +89,6 @@ These compose with animations — use static `rotation={45}` for a fixed rotatio
 | `Graph` | Graph theory visualization — nodes, edges, labels |
 | `LaTeX` | LaTeX math expressions rendered via KaTeX |
 | `BarChart` | Animated bar chart with labels and colors |
-
-### ✨ Animations
-
-| Component | Description |
-|-----------|-------------|
-| `FadeIn` / `FadeOut` | Opacity transitions |
-| `Draw` | Progressive stroke drawing (like handwriting) |
-| `Write` | Stroke draw followed by fill fade |
-| `Transform` | Animate position, scale, rotation, and opacity |
-| `Morph` | Color and scale morphing |
-| `Stagger` | Sequential delayed entrance for children |
-| `Parallel` | Run multiple animations simultaneously |
-| `Timeline` | Imperative animation sequencing |
 
 ### 🎭 Presentations
 
@@ -135,21 +116,17 @@ These compose with animations — use static `rotation={45}` for a fixed rotatio
 ### Animated Sine Curve
 
 ```tsx
-import { Player, Axes, FunctionPlot, Draw, Sequence, FadeIn, LaTeX } from '@elucim/core';
+import { Player, Axes, FunctionPlot, Sequence, LaTeX } from '@elucim/core';
 
 <Player width={800} height={500} fps={30} durationInFrames={120} autoPlay loop>
   <Axes origin={[400, 280]} domain={[-3, 3]} range={[-1.5, 1.5]} scale={80}
         axisColor="#888" labelColor="#888" />
   <Sequence from={10} durationInFrames={110}>
-    <Draw duration={60}>
-      <FunctionPlot fn={(x) => Math.sin(x)} domain={[-3, 3]}
-                    origin={[400, 280]} scale={80} color="#6c5ce7" strokeWidth={2.5} />
-    </Draw>
+    <FunctionPlot fn={(x) => Math.sin(x)} domain={[-3, 3]}
+                  origin={[400, 280]} scale={80} color="#6c5ce7" strokeWidth={2.5} draw={60} />
   </Sequence>
   <Sequence from={70} durationInFrames={50}>
-    <FadeIn duration={20}>
-      <LaTeX expression="f(x) = \sin(x)" x={600} y={60} fontSize={20} color="#6c5ce7" />
-    </FadeIn>
+    <LaTeX expression="f(x) = \sin(x)" x={600} y={60} fontSize={20} color="#6c5ce7" fadeIn={20} />
   </Sequence>
 </Player>
 ```
@@ -157,23 +134,19 @@ import { Player, Axes, FunctionPlot, Draw, Sequence, FadeIn, LaTeX } from '@eluc
 ### Slide Presentation
 
 ```tsx
-import { Presentation, Slide, Player, FadeIn, Text, LaTeX } from '@elucim/core';
+import { Presentation, Slide, Player, Text, LaTeX } from '@elucim/core';
 
 <Presentation width={1920} height={1080} transition="fade" transitionDuration={500} showHUD>
   <Slide title="Welcome">
     <Player width={1920} height={1080} fps={30} durationInFrames={90} autoPlay loop controls={false}>
-      <FadeIn duration={25}>
-        <Text x={960} y={480} fill="currentColor" fontSize={64} textAnchor="middle">
-          My Presentation
-        </Text>
-      </FadeIn>
+      <Text x={960} y={480} fill="currentColor" fontSize={64} textAnchor="middle" fadeIn={25}>
+        My Presentation
+      </Text>
     </Player>
   </Slide>
   <Slide title="The Math">
     <Player width={1920} height={1080} fps={30} durationInFrames={60} autoPlay loop controls={false}>
-      <FadeIn duration={30}>
-        <LaTeX expression="e^{i\pi} + 1 = 0" x={960} y={500} fontSize={48} color="#fdcb6e" />
-      </FadeIn>
+      <LaTeX expression="e^{i\pi} + 1 = 0" x={960} y={500} fontSize={48} color="#fdcb6e" fadeIn={30} />
     </Player>
   </Slide>
 </Presentation>

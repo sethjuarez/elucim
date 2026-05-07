@@ -5,7 +5,7 @@ import type { ElucimV2Document } from '../index';
 function doc(): ElucimV2Document {
   return {
     version: '2.0',
-    scene: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: ['group'] },
+    scene: { type: 'player', width: 800, height: 600, children: ['group'] },
     elements: {
       group: { id: 'group', type: 'group', children: ['title'], props: { type: 'group' } },
       title: { id: 'title', type: 'text', parentId: 'group', layout: { x: 20, y: 30 }, props: { type: 'text', content: 'Hello' } },

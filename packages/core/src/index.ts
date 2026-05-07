@@ -44,6 +44,12 @@ export { Group, type GroupProps } from './primitives/Group';
 export { useAnimation, type AnimationProps } from './primitives/animation';
 export { buildTransform, withTransform, sortByZIndex, type SpatialProps, type BaseElementProps } from './primitives/transform';
 
+// Legacy animation wrappers
+export { FadeIn, FadeOut, type FadeInProps, type FadeOutProps } from './animations/Fade';
+export { Draw, Write, type DrawProps, type WriteProps } from './animations/DrawWrite';
+export { Transform, Morph, type TransformProps, type MorphProps } from './animations/Transform';
+export { Parallel, Stagger, type ParallelProps, type StaggerProps } from './animations/Groups';
+
 // Theme
 export {
   type ElucimTheme, type ThemeColorScheme, type NormalizedElucimTheme,
@@ -69,13 +75,6 @@ export {
   spring,
   cubicBezier,
 } from './easing';
-
-// Animations (Phase 3)
-export { FadeIn, type FadeInProps, FadeOut, type FadeOutProps } from './animations/Fade';
-export { Draw, type DrawProps, Write, type WriteProps } from './animations/DrawWrite';
-export { Transform, type TransformProps, Morph, type MorphProps } from './animations/Transform';
-export { Parallel, Stagger, type StaggerProps } from './animations/Groups';
-export { Timeline, type TimelineAction, type PlayOptions } from './animations/Timeline';
 
 // Export / Video / Capture
 export {

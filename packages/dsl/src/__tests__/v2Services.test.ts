@@ -4,7 +4,7 @@ import type { ElucimV2Document } from '../index';
 
 const doc: ElucimV2Document = {
   version: '2.0',
-  scene: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: ['title'] },
+  scene: { type: 'player', width: 800, height: 600, children: ['title'] },
   elements: {
     title: {
       id: 'title',
@@ -23,7 +23,7 @@ describe('v2 agent-readable services', () => {
     expect(summary).toMatchObject({
       version: '2.0',
       elementCount: 1,
-      scene: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: ['title'] },
+      scene: { type: 'player', width: 800, height: 600, children: ['title'] },
       timelines: [],
       stateMachines: [],
       issues: [],
@@ -34,7 +34,7 @@ describe('v2 agent-readable services', () => {
   it('adds repair hints to validation errors', () => {
     const result = validateForAgent({
       version: '2.0',
-      scene: { type: 'scene', durationInFrames: 60, children: ['missing'] },
+      scene: { type: 'scene', children: ['missing'] },
       elements: { title: doc.elements.title },
     });
 

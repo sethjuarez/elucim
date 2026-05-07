@@ -2,6 +2,7 @@ import React, { useCallback, useRef } from 'react';
 import type { PanelPosition } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
+import { startRafDrag } from '../interactions/rafDrag';
 
 export interface FloatingPanelProps {
   children: React.ReactNode;
@@ -35,7 +36,6 @@ export function FloatingPanel({
   maxWidth,
 }: FloatingPanelProps) {
   const icons = useEditorIcons();
-  const dragRef = useRef<{ startX: number; startY: number; posX: number; posY: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -43,52 +43,39 @@ export function FloatingPanel({
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
 
-    e.preventDefault();
-    e.stopPropagation();
-    dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      posX: position.x,
-      posY: position.y,
-    };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  }, [position]);
+    const startPosition = position;
+    startRafDrag({
+      event: e,
+      onFrame: point => {
+        let newX = startPosition.x + point.deltaX;
+        let newY = startPosition.y + point.deltaY;
 
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag) return;
+        // Constrain and snap to viewport edges
+        const parent = panelRef.current?.parentElement;
+        if (parent && panelRef.current) {
+          const pw = parent.clientWidth;
+          const ph = parent.clientHeight;
+          const panelW = panelRef.current.offsetWidth;
+          const panelH = panelRef.current.offsetHeight;
+          const SNAP = 8;
 
-    const dx = e.clientX - drag.startX;
-    const dy = e.clientY - drag.startY;
+          newX = Math.max(SNAP, Math.min(pw - panelW - SNAP, newX));
+          newY = Math.max(SNAP, Math.min(ph - panelH - SNAP, newY));
 
-    let newX = drag.posX + dx;
-    let newY = drag.posY + dy;
+          if (Math.abs(newX - SNAP) < 12) newX = SNAP;
+          if (Math.abs(newX - (pw - panelW - SNAP)) < 12) newX = pw - panelW - SNAP;
+          if (Math.abs(newY - SNAP) < 12) newY = SNAP;
+          if (Math.abs(newY - (ph - panelH - SNAP)) < 12) newY = ph - panelH - SNAP;
+        }
 
-    // Constrain and snap to viewport edges
-    const parent = panelRef.current?.parentElement;
-    if (parent && panelRef.current) {
-      const pw = parent.clientWidth;
-      const ph = parent.clientHeight;
-      const panelW = panelRef.current.offsetWidth;
-      const panelH = panelRef.current.offsetHeight;
-      const SNAP = 8;
+        onPositionChange({ x: newX, y: newY });
+      },
+    });
+  }, [onPositionChange, position]);
 
-      newX = Math.max(SNAP, Math.min(pw - panelW - SNAP, newX));
-      newY = Math.max(SNAP, Math.min(ph - panelH - SNAP, newY));
+  const handlePointerMove = useCallback(() => {}, []);
 
-      if (Math.abs(newX - SNAP) < 12) newX = SNAP;
-      if (Math.abs(newX - (pw - panelW - SNAP)) < 12) newX = pw - panelW - SNAP;
-      if (Math.abs(newY - SNAP) < 12) newY = SNAP;
-      if (Math.abs(newY - (ph - panelH - SNAP)) < 12) newY = ph - panelH - SNAP;
-    }
-
-    onPositionChange({ x: newX, y: newY });
-  }, [onPositionChange]);
-
-  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    dragRef.current = null;
-    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-  }, []);
+  const handlePointerUp = useCallback(() => {}, []);
 
   return (
     <div

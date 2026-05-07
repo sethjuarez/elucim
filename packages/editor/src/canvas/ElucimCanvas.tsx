@@ -26,6 +26,14 @@ export interface ElucimCanvasProps {
   style?: React.CSSProperties;
   /** Optional render-only document, used for timeline/state preview without mutating editor state. */
   previewDocument?: ElucimDocument;
+  /** Whether a state-machine preview is actively driving the canvas. */
+  stateMachinePreviewActive?: boolean;
+  /** Fired for canvas clicks while state-machine preview is active. Return true when handled. */
+  onStateMachinePreviewClick?: () => boolean;
+  /** Fired for canvas key presses while state-machine preview is active. Return true when handled. */
+  onStateMachinePreviewKeyDown?: (key: string) => boolean;
+  /** Explicitly exits state-machine preview mode. */
+  onStateMachinePreviewExit?: () => void;
   /** Editor color scheme — used to pick content theme when background is a $token. */
   editorColorScheme?: string;
   /** Explicit content theme — when provided, used for scene CSS vars instead of built-in presets. */
@@ -261,7 +269,7 @@ function isDarkBackground(bg: string): boolean {
 /**
  * Full-bleed editor canvas with viewport pan/zoom, dot grid, minimap, and zoom controls.
  */
-export function ElucimCanvas({ className, style, previewDocument, editorColorScheme, contentTheme }: ElucimCanvasProps) {
+export function ElucimCanvas({ className, style, previewDocument, stateMachinePreviewActive, onStateMachinePreviewClick, onStateMachinePreviewKeyDown, onStateMachinePreviewExit, editorColorScheme, contentTheme }: ElucimCanvasProps) {
   const { state, dispatch } = useEditorState();
   const { document: editorDocument, selectedIds, currentFrame, viewport, isPanning } = state;
   const document = previewDocument ?? editorDocument;
@@ -641,12 +649,32 @@ export function ElucimCanvas({ className, style, previewDocument, editorColorSch
   }, [beginInlineEdit]);
 
   const handleContainerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (stateMachinePreviewActive && !shouldPreservePointerFocus(e.target) && onStateMachinePreviewClick?.()) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     if (!shouldPreservePointerFocus(e.target)) {
       e.currentTarget.focus({ preventScroll: true });
     }
     handlePanStart(e);
     handleMarqueeStart(e);
-  }, [handleMarqueeStart, handlePanStart]);
+  }, [handleMarqueeStart, handlePanStart, onStateMachinePreviewClick, stateMachinePreviewActive]);
+
+  const handleContainerKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!stateMachinePreviewActive || shouldPreservePointerFocus(e.target)) return;
+    if (onStateMachinePreviewKeyDown?.(e.key)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, [onStateMachinePreviewKeyDown, stateMachinePreviewActive]);
+
+  useEffect(() => {
+    if (stateMachinePreviewActive) containerRef.current?.focus({ preventScroll: true });
+  }, [stateMachinePreviewActive]);
+
+  const previewPillLeft = Math.min(Math.max(viewport.x, 12), Math.max(12, containerSize.width - 180));
+  const previewPillTop = Math.min(Math.max(12, viewport.y - 56), Math.max(12, containerSize.height - 40));
 
   return (
     <div
@@ -666,10 +694,57 @@ export function ElucimCanvas({ className, style, previewDocument, editorColorSch
       onPointerUp={(e) => { handlePanEnd(e); handleMarqueeEnd(e); }}
       onPointerEnter={() => setIsCanvasHovered(true)}
       onPointerLeave={() => setIsCanvasHovered(false)}
+      onKeyDown={handleContainerKeyDown}
       onContextMenu={handleContextMenu}
     >
       {/* Dot grid background */}
       <DotGrid spacing={20} />
+
+      {stateMachinePreviewActive && (
+        <div
+          aria-label="State machine preview mode canvas"
+          aria-live="polite"
+          style={{
+            position: 'absolute',
+            left: previewPillLeft,
+            top: previewPillTop,
+            zIndex: 8,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '5px 6px 5px 10px',
+            border: `1px solid ${v('--elucim-editor-accent')}`,
+            borderRadius: 999,
+            background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 18%, ${v('--elucim-editor-surface')})`,
+            color: v('--elucim-editor-fg'),
+            boxShadow: `0 2px 10px color-mix(in srgb, ${v('--elucim-editor-bg')} 55%, transparent)`,
+            fontSize: 12,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}
+        >
+          <span>Preview mode</span>
+          <button
+            type="button"
+            aria-label="Exit state machine preview mode"
+            onPointerDown={event => event.stopPropagation()}
+            onClick={onStateMachinePreviewExit}
+            style={{
+              border: `1px solid ${v('--elucim-editor-border-subtle')}`,
+              borderRadius: 999,
+              background: v('--elucim-editor-input-bg'),
+              color: v('--elucim-editor-fg'),
+              cursor: 'pointer',
+              fontSize: 11,
+              fontWeight: 800,
+              padding: '2px 7px',
+            }}
+          >
+            Exit
+          </button>
+        </div>
+      )}
 
       {/* Scene + overlay: transformed by viewport */}
       <div
@@ -680,9 +755,12 @@ export function ElucimCanvas({ className, style, previewDocument, editorColorSch
           transformOrigin: '0 0',
           transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
           willChange: 'transform',
-          border: `1px solid ${v('--elucim-editor-border')}`,
-          boxShadow: '0 2px 16px rgba(0,0,0,0.35)',
+          border: stateMachinePreviewActive ? `3px solid ${v('--elucim-editor-accent')}` : `1px solid ${v('--elucim-editor-border')}`,
+          boxShadow: stateMachinePreviewActive
+            ? `0 0 0 4px color-mix(in srgb, ${v('--elucim-editor-accent')} 22%, transparent), 0 2px 16px rgba(0,0,0,0.35)`
+            : '0 2px 16px rgba(0,0,0,0.35)',
           borderRadius: 2,
+          boxSizing: 'border-box',
           ...sceneThemeVars,
         }}
       >

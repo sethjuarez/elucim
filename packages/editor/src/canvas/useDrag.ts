@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react';
 import type { Dispatch } from 'react';
 import type { EditorAction } from '../state/types';
 import type { BoundingBox } from '../utils/bounds';
+import { startRafDrag, type RafDragPoint } from '../interactions/rafDrag';
 
 export interface DragState {
   type: 'move' | 'resize' | 'rotate' | 'move-graph-node';
@@ -24,7 +25,7 @@ interface UseDragOptions {
 
 /** Convert a mouse event to SVG coordinates */
 function toSvgCoords(
-  e: React.PointerEvent | PointerEvent,
+  e: React.PointerEvent | PointerEvent | RafDragPoint,
   svgEl: SVGSVGElement,
   sceneWidth: number,
   sceneHeight: number,
@@ -104,74 +105,84 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight, selectedIds
     accDx.current = 0;
     accDy.current = 0;
     didDrag.current = false;
-    svg.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  }, [svgRef, sceneWidth, sceneHeight]);
 
-  const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    const drag = dragRef.current;
-    const svg = svgRef.current;
-    if (!drag || !svg) return;
+    const applyDragFrame = (point: RafDragPoint) => {
+      const drag = dragRef.current;
+      const currentSvg = svgRef.current;
+      if (!drag || !currentSvg) return;
 
-    const coords = toSvgCoords(e, svg, sceneWidth, sceneHeight);
-    const dx = coords.x - drag.startX - accDx.current;
-    const dy = coords.y - drag.startY - accDy.current;
+      const currentCoords = toSvgCoords(point, currentSvg, sceneWidth, sceneHeight);
+      const dx = currentCoords.x - drag.startX - accDx.current;
+      const dy = currentCoords.y - drag.startY - accDy.current;
 
-    if (drag.type === 'move') {
-      if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
-        // Alt+drag: duplicate on first drag movement
-        if (e.altKey && !drag.altDuplicated) {
-          drag.altDuplicated = true;
-          const idsToClone = selectedIds.length > 1 && selectedIds.includes(drag.elementId)
-            ? [...selectedIds]
-            : [drag.elementId];
-          dispatch({ type: 'DUPLICATE_ELEMENTS', ids: idsToClone, offset: { dx: 0, dy: 0 } });
+      if (drag.type === 'move') {
+        if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
+          // Alt+drag: duplicate on first drag movement
+          if (point.altKey && !drag.altDuplicated) {
+            drag.altDuplicated = true;
+            const idsToClone = selectedIds.length > 1 && selectedIds.includes(drag.elementId)
+              ? [...selectedIds]
+              : [drag.elementId];
+            dispatch({ type: 'DUPLICATE_ELEMENTS', ids: idsToClone, offset: { dx: 0, dy: 0 } });
+          }
+          didDrag.current = true;
+          dispatch({ type: 'MOVE_ELEMENT', id: drag.elementId, dx, dy });
+          accDx.current += dx;
+          accDy.current += dy;
         }
-        didDrag.current = true;
-        dispatch({ type: 'MOVE_ELEMENT', id: drag.elementId, dx, dy });
-        accDx.current += dx;
-        accDy.current += dy;
+      } else if (drag.type === 'move-graph-node') {
+        if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
+          didDrag.current = true;
+          dispatch({ type: 'MOVE_GRAPH_NODE', graphId: drag.elementId, nodeId: drag.graphNodeId!, dx, dy });
+          accDx.current += dx;
+          accDy.current += dy;
+        }
+      } else if (drag.type === 'resize') {
+        const handle = drag.handle!;
+        if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
+          didDrag.current = true;
+          dispatch({ type: 'RESIZE_ELEMENT', id: drag.elementId, handle, dx, dy, constrain: point.shiftKey });
+          accDx.current += dx;
+          accDy.current += dy;
+        }
+      } else if (drag.type === 'rotate') {
+        const angleDelta = dx * 0.5;
+        if (Math.abs(angleDelta) >= 0.5) {
+          didDrag.current = true;
+          dispatch({ type: 'ROTATE_ELEMENT', id: drag.elementId, angleDeg: angleDelta });
+          accDx.current += dx;
+          accDy.current += dy;
+        }
       }
-    } else if (drag.type === 'move-graph-node') {
-      if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
-        didDrag.current = true;
-        dispatch({ type: 'MOVE_GRAPH_NODE', graphId: drag.elementId, nodeId: drag.graphNodeId!, dx, dy });
-        accDx.current += dx;
-        accDy.current += dy;
-      }
-    } else if (drag.type === 'resize') {
-      const handle = drag.handle!;
-      if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) {
-        didDrag.current = true;
-        dispatch({ type: 'RESIZE_ELEMENT', id: drag.elementId, handle, dx, dy, constrain: e.shiftKey });
-        accDx.current += dx;
-        accDy.current += dy;
-      }
-    } else if (drag.type === 'rotate') {
-      const angleDelta = dx * 0.5;
-      if (Math.abs(angleDelta) >= 0.5) {
-        didDrag.current = true;
-        dispatch({ type: 'ROTATE_ELEMENT', id: drag.elementId, angleDeg: angleDelta });
-        accDx.current += dx;
-        accDy.current += dy;
-      }
-    }
+    };
+
+    startRafDrag({
+      event: e,
+      moveThreshold: 1,
+      onFrame: applyDragFrame,
+      onCommit: () => {
+        const drag = dragRef.current;
+        if (drag && !didDrag.current) {
+          // No significant drag movement — treat as a click → select
+          if (modifierKeyRef.current) {
+            dispatch({ type: 'SELECT_TOGGLE', id: drag.elementId });
+          } else {
+            dispatch({ type: 'SELECT', ids: [drag.elementId] });
+          }
+        }
+        dragRef.current = null;
+        activeDragType.current = null;
+      },
+      onCancel: () => {
+        dragRef.current = null;
+        activeDragType.current = null;
+      },
+    });
   }, [dispatch, svgRef, sceneWidth, sceneHeight, selectedIds]);
 
-  const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    const drag = dragRef.current;
-    if (drag && !didDrag.current) {
-      // No significant drag movement — treat as a click → select
-      if (modifierKeyRef.current) {
-        dispatch({ type: 'SELECT_TOGGLE', id: drag.elementId });
-      } else {
-        dispatch({ type: 'SELECT', ids: [drag.elementId] });
-      }
-    }
-    dragRef.current = null;
-    activeDragType.current = null;
-    svgRef.current?.releasePointerCapture(e.pointerId);
-  }, [dispatch, svgRef]);
+  const handlePointerMove = useCallback((_e: React.PointerEvent<SVGSVGElement>) => {}, []);
+
+  const handlePointerUp = useCallback((_e: React.PointerEvent<SVGSVGElement>) => {}, []);
 
   return { handlePointerDown, handlePointerMove, handlePointerUp, activeDragType };
 }

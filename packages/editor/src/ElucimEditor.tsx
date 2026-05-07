@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { ElucimDocument, ElucimV2Document, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2Transition } from '@elucim/dsl';
-import { applyNudge, applyTimelineFrame, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, validate, validateV2 } from '@elucim/dsl';
+import type { ElucimDocument, ElucimV2Document, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2TimelineFrameSelection } from '@elucim/dsl';
+import { applyNudge, applyTimelineFrames, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, validate, validateV2 } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider } from './state/EditorProvider';
@@ -16,6 +16,7 @@ import { useEditorState } from './state/EditorProvider';
 import { findElementById } from './state/reducer';
 import { CANVAS_ID } from './state/types';
 import { buildThemeVars, deriveEditorTheme, v } from './theme/tokens';
+import { startRafDrag } from './interactions/rafDrag';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
@@ -122,9 +123,15 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
   const normalizedInitialDocument = useMemo(() => normalizeInitialDocument(initialDocument), [initialDocument]);
   const initialV2Document = initialDocument?.version === '2.0' ? initialDocument : undefined;
   const [v2Document, setV2Document] = useState<ElucimV2Document | undefined>(initialV2Document);
+  const lastEmittedV2Document = useRef<ElucimV2Document | undefined>(undefined);
   useEffect(() => {
+    if (initialV2Document && initialV2Document === lastEmittedV2Document.current) return;
     setV2Document(initialV2Document);
   }, [initialV2Document]);
+  const handleV2DocumentChange = (document: ElucimV2Document, details: ElucimV2EditorChangeDetails) => {
+    lastEmittedV2Document.current = document;
+    onV2DocumentChange?.(document, details);
+  };
   // Resolve 'last' to the actual final frame number
   const resolvedFrame = initialFrame === 'last'
     ? Math.max(0, ((normalizedInitialDocument?.root as any)?.durationInFrames ?? 1) - 1)
@@ -133,7 +140,7 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
   let inner = (
     <EditorErrorBoundary>
       <EditorProvider initialDocument={normalizedInitialDocument} initialFrame={resolvedFrame}>
-        <DocumentBridge onChange={onDocumentChange} onV2Change={onV2DocumentChange} onV2Warnings={onV2CompatibilityWarnings} v2Document={v2Document} />
+        <DocumentBridge onChange={onDocumentChange} onV2Change={handleV2DocumentChange} onV2Warnings={onV2CompatibilityWarnings} v2Document={v2Document} />
         <ElucimEditorLayout theme={theme} editorTheme={editorTheme} className={className} style={style} v2Document={v2Document} onV2DocumentChange={setV2Document} />
       </EditorProvider>
     </EditorErrorBoundary>
@@ -158,6 +165,9 @@ function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document)
     if (sourceElement) {
       migrated.elements[id] = {
         ...element,
+        layout: sourceElement.layout || element.layout
+          ? { ...sourceElement.layout, ...element.layout }
+          : element.layout,
         role: sourceElement.role ?? element.role,
         intent: sourceElement.intent ? { ...sourceElement.intent, ...element.intent } : element.intent,
       };
@@ -195,24 +205,10 @@ function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document)
             warnings.push(`State "${stateId}" in machine "${id}" references missing timeline "${nextState.timeline}" and will lose that timeline link.`);
             nextState.timeline = undefined;
           }
-          if (nextState.on) {
-            nextState.on = Object.fromEntries(
-              Object.entries(nextState.on).map(([eventName, transition]) => [
-                eventName,
-                cleanTransitionTimelineReference(transition, timelineIds, warning => warnings.push(`Transition "${eventName}" in state "${stateId}" of machine "${id}" ${warning}`)),
-              ]),
-            );
-          }
-          if (nextState.onComplete) {
-            nextState.onComplete = cleanTransitionTimelineReference(
-              nextState.onComplete,
-              timelineIds,
-              warning => warnings.push(`onComplete transition in state "${stateId}" of machine "${id}" ${warning}`),
-            );
-          }
           return [stateId, nextState];
         }),
       ),
+      transitions: machine.transitions,
     };
   }
   const document = {
@@ -226,19 +222,6 @@ function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document)
     warnings.push(`V2 output ${error.severity}: ${error.path}: ${error.message}`);
   }
   return { document, warnings };
-}
-
-function cleanTransitionTimelineReference(
-  transition: string | ElucimV2Transition,
-  timelineIds: Set<string>,
-  warn: (warning: string) => void,
-): string | ElucimV2Transition {
-  if (typeof transition === 'string' || !transition.timeline || timelineIds.has(transition.timeline)) {
-    return transition;
-  }
-  warn(`references missing timeline "${transition.timeline}" and will lose that timeline link.`);
-  const { timeline: _timeline, ...rest } = transition;
-  return rest;
 }
 
 function mapSourceIdsToMigratedIds(sourceV2: ElucimV2Document, migrated: ElucimV2Document): Map<string, string> {
@@ -295,9 +278,13 @@ function clampPanelSize(value: number, min: number, max: number): number {
  * keeping the standard editor shell, scrollbar styles, and theme injection.
  */
 export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Document, onV2DocumentChange }: ElucimEditorLayoutProps) {
-  const { state } = useEditorState();
+  const { state, dispatch } = useEditorState();
   const [workspace, setWorkspace] = useState<EditorWorkspace>(() => v2Document ? 'animate' : 'design');
-  const [activeTimelineId, setActiveTimelineId] = useState<string | undefined>(undefined);
+  const [previewTimelineFrames, setPreviewTimelineFrames] = useState<ElucimV2TimelineFrameSelection[] | undefined>(undefined);
+  const [stateMachinePreviewActive, setStateMachinePreviewActive] = useState(false);
+  const [stateMachinePreviewClickHandler, setStateMachinePreviewClickHandler] = useState<(() => boolean) | undefined>(undefined);
+  const [stateMachinePreviewKeyDownHandler, setStateMachinePreviewKeyDownHandler] = useState<((key: string) => boolean) | undefined>(undefined);
+  const [stateMachinePreviewExitHandler, setStateMachinePreviewExitHandler] = useState<(() => void) | undefined>(undefined);
   const [leftVisible, setLeftVisible] = useState(true);
   const [rightVisible, setRightVisible] = useState(() => !v2Document);
   const [timelineVisible, setTimelineVisible] = useState(true);
@@ -317,11 +304,21 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
   const themeVars = buildThemeVars(merged);
   const colorScheme = merged['--elucim-editor-color-scheme'] || merged['color-scheme'] || colorSchemeHint;
   const preferredLeftTab = workspace === 'polish' ? 'details' : workspace === 'design' ? 'objects' : undefined;
+  const stateMachineWorkspaceActive = workspace === 'states' && timelineVisible;
+  const liveV2Document = useMemo(() => {
+    if (!v2Document) return undefined;
+    return restoreV2FromEditorDoc(state.document, v2Document).document;
+  }, [state.document, v2Document]);
   const previewDocument = useMemo(() => {
-    if (!v2Document || !activeTimelineId || !v2Document.timelines?.[activeTimelineId]) return undefined;
-    return migrateV2ToV1(applyTimelineFrame(v2Document, activeTimelineId, state.currentFrame));
-  }, [activeTimelineId, state.currentFrame, v2Document]);
+    if (!liveV2Document || !previewTimelineFrames?.length) return undefined;
+    const renderableFrames = previewTimelineFrames.filter(frame => liveV2Document.timelines?.[frame.timelineId]);
+    if (renderableFrames.length === 0) return undefined;
+    return migrateV2ToV1(applyTimelineFrames(liveV2Document, renderableFrames));
+  }, [previewTimelineFrames, liveV2Document]);
   const selectWorkspace = (nextWorkspace: EditorWorkspace) => {
+    if (nextWorkspace !== 'animate' && state.isPlaying) {
+      dispatch({ type: 'SET_PLAYING', playing: false });
+    }
     setWorkspace(nextWorkspace);
     if (nextWorkspace === 'design') {
       setLeftVisible(true);
@@ -345,37 +342,22 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
     }
   };
   const startSideResize = (side: 'left' | 'right') => (event: React.PointerEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    const startX = event.clientX;
     const startWidth = side === 'left' ? leftWidth : rightWidth;
-    const onMove = (moveEvent: PointerEvent) => {
-      const delta = moveEvent.clientX - startX;
-      const nextWidth = side === 'left' ? startWidth + delta : startWidth - delta;
-      if (side === 'left') setLeftWidth(clampPanelSize(nextWidth, MIN_SIDE_WIDTH, MAX_SIDE_WIDTH));
-      else setRightWidth(clampPanelSize(nextWidth, MIN_SIDE_WIDTH, MAX_SIDE_WIDTH));
-    };
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+    startRafDrag({
+      event,
+      onFrame: point => {
+        const nextWidth = side === 'left' ? startWidth + point.deltaX : startWidth - point.deltaX;
+        if (side === 'left') setLeftWidth(clampPanelSize(nextWidth, MIN_SIDE_WIDTH, MAX_SIDE_WIDTH));
+        else setRightWidth(clampPanelSize(nextWidth, MIN_SIDE_WIDTH, MAX_SIDE_WIDTH));
+      },
+    });
   };
   const startTimelineResize = (event: React.PointerEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    const startY = event.clientY;
     const startHeight = timelineHeight;
-    const onMove = (moveEvent: PointerEvent) => {
-      setTimelineHeight(clampPanelSize(startHeight - (moveEvent.clientY - startY), MIN_TIMELINE_HEIGHT, MAX_TIMELINE_HEIGHT));
-    };
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+    startRafDrag({
+      event,
+      onFrame: point => setTimelineHeight(clampPanelSize(startHeight - point.deltaY, MIN_TIMELINE_HEIGHT, MAX_TIMELINE_HEIGHT)),
+    });
   };
 
   return (
@@ -462,7 +444,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
 
       <div
         style={{
-          flex: 1,
+          flex: stateMachineWorkspaceActive ? '0 0 clamp(96px, 14vh, 180px)' : 1,
           minHeight: 0,
           display: 'grid',
           gridTemplateColumns: `${leftVisible ? `${leftWidth}px` : '0px'} minmax(260px, 1fr) ${rightVisible ? `${rightWidth}px` : '0px'}`,
@@ -494,7 +476,15 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
             onShowRight={() => setRightVisible(true)}
             onShowTimeline={() => setTimelineVisible(true)}
           />
-          <ElucimCanvas previewDocument={previewDocument} editorColorScheme={colorScheme} contentTheme={theme} />
+          <ElucimCanvas
+            previewDocument={previewDocument}
+            stateMachinePreviewActive={stateMachinePreviewActive}
+            onStateMachinePreviewClick={stateMachinePreviewClickHandler}
+            onStateMachinePreviewKeyDown={stateMachinePreviewKeyDownHandler}
+            onStateMachinePreviewExit={stateMachinePreviewExitHandler}
+            editorColorScheme={colorScheme}
+            contentTheme={theme}
+          />
         </main>
 
         <aside
@@ -513,7 +503,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
           {rightVisible && <PanelResizeHandle side="left" label="Resize inspector" onPointerDown={startSideResize('right')} />}
           {rightVisible && (
             <PanelShell title="Inspector">
-              <Inspector />
+              <Inspector showCanvasDuration={!v2Document} />
             </PanelShell>
           )}
         </aside>
@@ -522,8 +512,9 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
       {timelineVisible && (
         <div
           style={{
-            height: timelineHeight,
-            flexShrink: 0,
+            height: stateMachineWorkspaceActive ? undefined : timelineHeight,
+            flex: stateMachineWorkspaceActive ? '1 1 0' : '0 0 auto',
+            minHeight: stateMachineWorkspaceActive ? 360 : undefined,
             borderTop: `1px solid ${v('--elucim-editor-border')}`,
             background: v('--elucim-editor-surface'),
             position: 'relative',
@@ -532,17 +523,22 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
           <PanelResizeHandle side="top" label="Resize timeline" onPointerDown={startTimelineResize} />
           <Timeline
             style={{ height: '100%', borderTop: 'none' }}
-            v2Timelines={v2Document?.timelines}
-            onV2TimelinesChange={v2Document && onV2DocumentChange ? timelines => onV2DocumentChange({ ...v2Document, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
-            v2StateMachines={v2Document?.stateMachines}
-            onV2StateMachinesChange={v2Document && onV2DocumentChange ? stateMachines => onV2DocumentChange({ ...v2Document, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) }) : undefined}
-            onV2MotionChange={v2Document && onV2DocumentChange ? (timelines, stateMachines) => onV2DocumentChange({
-              ...v2Document,
+            v2Document={liveV2Document}
+            v2Timelines={liveV2Document?.timelines}
+            onV2TimelinesChange={liveV2Document && onV2DocumentChange ? timelines => onV2DocumentChange({ ...liveV2Document, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
+            v2StateMachines={liveV2Document?.stateMachines}
+            onV2StateMachinesChange={liveV2Document && onV2DocumentChange ? stateMachines => onV2DocumentChange({ ...liveV2Document, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) }) : undefined}
+            onV2MotionChange={liveV2Document && onV2DocumentChange ? (timelines, stateMachines) => onV2DocumentChange({
+              ...liveV2Document,
               ...(timelines ? { timelines } : { timelines: undefined }),
               ...(stateMachines ? { stateMachines } : { stateMachines: undefined }),
             }) : undefined}
             preferredMotionType={workspace === 'states' ? 'stateMachine' : 'animation'}
-            onActiveTimelineChange={setActiveTimelineId}
+            onPreviewTimelineFramesChange={setPreviewTimelineFrames}
+            onStateMachinePreviewActiveChange={setStateMachinePreviewActive}
+            onStateMachinePreviewClickChange={handler => setStateMachinePreviewClickHandler(() => handler)}
+            onStateMachinePreviewKeyDownChange={handler => setStateMachinePreviewKeyDownHandler(() => handler)}
+            onStateMachinePreviewExitChange={handler => setStateMachinePreviewExitHandler(() => handler)}
           />
         </div>
       )}

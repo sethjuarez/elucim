@@ -1,8 +1,9 @@
-import type { ElucimV2Document, ElucimV2Element } from './types';
+import type { ElucimV2Document, ElucimV2Element, ElucimV2Transition } from './types';
 import type { ValidationError, ValidationResult } from '../validator/validate';
 
 const VALID_ROOT_TYPES = new Set(['scene', 'player']);
 const VALID_TIMELINE_PROPERTIES = new Set(['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke']);
+const RESERVED_EVENT_NAMES = new Set(['complete', 'entry', 'exit', 'next']);
 
 export function validateV2(doc: unknown): ValidationResult {
   const errors: ValidationError[] = [];
@@ -22,8 +23,8 @@ export function validateV2(doc: unknown): ValidationResult {
     if (!VALID_ROOT_TYPES.has(d.scene.type)) {
       errors.push({ path: 'scene.type', message: 'scene.type must be "scene" or "player"', severity: 'error' });
     }
-    if (!Number.isInteger(d.scene.durationInFrames) || d.scene.durationInFrames <= 0) {
-      errors.push({ path: 'scene.durationInFrames', message: 'durationInFrames must be a positive integer', severity: 'error' });
+    if ('durationInFrames' in d.scene) {
+      errors.push({ path: 'scene.durationInFrames', message: 'Scene duration is not part of v2; timelines, state machines, and export policies own time.', severity: 'error' });
     }
     if (!Array.isArray(d.scene.children)) {
       errors.push({ path: 'scene.children', message: 'scene.children must be an array of element IDs', severity: 'error' });
@@ -42,8 +43,15 @@ export function validateV2(doc: unknown): ValidationResult {
   validateReferences(d as ElucimV2Document, errors);
   validateTimelines(d as ElucimV2Document, errors);
   validateStateMachines(d as ElucimV2Document, errors);
+  validateDefaultStateMachine(d as ElucimV2Document, errors);
 
   return result(errors);
+}
+
+function validateDefaultStateMachine(doc: ElucimV2Document, errors: ValidationError[]) {
+  if (doc.defaultStateMachine && !doc.stateMachines?.[doc.defaultStateMachine]) {
+    errors.push({ path: 'defaultStateMachine', message: `Unknown default state machine "${doc.defaultStateMachine}"`, severity: 'error' });
+  }
 }
 
 function validateElement(id: string, element: ElucimV2Element, errors: ValidationError[]) {
@@ -137,42 +145,99 @@ function validateStateMachines(doc: ElucimV2Document, errors: ValidationError[])
     if (machine.id !== machineId) {
       errors.push({ path: `stateMachines.${machineId}.id`, message: `State machine id must match key "${machineId}"`, severity: 'error' });
     }
-    if (!machine.states?.[machine.initial]) {
-      errors.push({ path: `stateMachines.${machineId}.initial`, message: `Initial state "${machine.initial}" does not exist`, severity: 'error' });
+    if (!machine.states?.[machine.entry]) {
+      errors.push({ path: `stateMachines.${machineId}.entry`, message: `Entry state "${machine.entry}" does not exist`, severity: 'error' });
     }
-    if (machine.reset && !machine.states?.[machine.reset]) {
-      errors.push({ path: `stateMachines.${machineId}.reset`, message: `Reset state "${machine.reset}" does not exist`, severity: 'error' });
+    for (const [inputId, input] of Object.entries(machine.inputs ?? {})) {
+      if (!input || !['trigger', 'boolean', 'number'].includes(input.type)) {
+        errors.push({ path: `stateMachines.${machineId}.inputs.${inputId}.type`, message: 'Input type must be "trigger", "boolean", or "number"', severity: 'error' });
+      }
     }
     for (const [stateId, state] of Object.entries(machine.states ?? {})) {
       if (state.timeline && !timelineIds.has(state.timeline)) {
         errors.push({ path: `stateMachines.${machineId}.states.${stateId}.timeline`, message: `Unknown timeline "${state.timeline}"`, severity: 'error' });
       }
-      for (const [event, transition] of Object.entries(state.on ?? {})) {
-        validateTransition(machineId, stateId, `on.${event}`, transition, machine.states ?? {}, timelineIds, errors);
-      }
-      if (state.onComplete) {
-        validateTransition(machineId, stateId, 'onComplete', state.onComplete, machine.states ?? {}, timelineIds, errors);
-      }
     }
+    const nextSources = new Set<string>();
+    const eventSources = new Set<string>();
+    const entryTransitions = machine.transitions?.filter(transition => transition.from === 'entry') ?? [];
+    if (entryTransitions.length !== 1) {
+      errors.push({ path: `stateMachines.${machineId}.transitions`, message: 'Entry must have exactly one outgoing transition', severity: 'error' });
+    } else if (entryTransitions[0].to !== machine.entry) {
+      errors.push({ path: `stateMachines.${machineId}.entry`, message: 'Machine entry must match the explicit Entry transition target', severity: 'error' });
+    }
+    machine.transitions?.forEach((transition, index) => {
+      validateTransition(machineId, index, transition, machine.states ?? {}, timelineIds, errors);
+      const path = `stateMachines.${machineId}.transitions[${index}]`;
+      if (transition.from === 'entry') {
+        if (transition.to === 'entry' || transition.to === 'exit') {
+          errors.push({ path: `${path}.to`, message: 'Entry transition must target a real state', severity: 'error' });
+        }
+        if (transition.exitTime !== undefined) {
+          errors.push({ path: `${path}.exitTime`, message: 'Entry transitions cannot be Next transitions', severity: 'error' });
+        }
+        if (!transition.trigger) {
+          errors.push({ path: `${path}.trigger`, message: 'Entry transitions require a start event such as onStart or onClick', severity: 'error' });
+        } else if (RESERVED_EVENT_NAMES.has(transition.trigger)) {
+          errors.push({ path: `${path}.trigger`, message: `"${transition.trigger}" is reserved and cannot be used as an event name`, severity: 'error' });
+        }
+        if (transition.trigger === 'onKey' && !transition.key?.trim()) {
+          errors.push({ path: `${path}.key`, message: 'onKey transitions require a key', severity: 'error' });
+        }
+      }
+      if (transition.exitTime !== undefined) {
+        if (transition.trigger) {
+          errors.push({ path: `${path}.trigger`, message: 'Next transitions must not have event names', severity: 'error' });
+        }
+        if (nextSources.has(transition.from)) {
+          errors.push({ path: `${path}.from`, message: `State "${transition.from}" can only have one Next transition`, severity: 'error' });
+        }
+        nextSources.add(transition.from);
+        return;
+      }
+      if (transition.from !== 'entry') {
+        if (!transition.trigger) {
+          errors.push({ path: `${path}.trigger`, message: 'Event transitions require an event name', severity: 'error' });
+          return;
+        }
+        if (RESERVED_EVENT_NAMES.has(transition.trigger)) {
+          errors.push({ path: `${path}.trigger`, message: `"${transition.trigger}" is reserved and cannot be used as an event name`, severity: 'error' });
+        }
+        const eventKey = `${transition.from}:${transition.trigger}`;
+        if (transition.trigger === 'onKey' && !transition.key?.trim()) {
+          errors.push({ path: `${path}.key`, message: 'onKey transitions require a key', severity: 'error' });
+        }
+        const scopedEventKey = transition.trigger === 'onKey' ? `${eventKey}:${(transition.key ?? '').toLowerCase()}` : eventKey;
+        if (eventSources.has(scopedEventKey)) {
+          const eventLabel = transition.trigger === 'onKey' ? `${transition.trigger}:${transition.key ?? ''}` : transition.trigger;
+          errors.push({ path: `${path}.trigger`, message: `Duplicate event "${eventLabel}" from "${transition.from}"`, severity: 'error' });
+        }
+        eventSources.add(scopedEventKey);
+      }
+    });
   }
 }
 
 function validateTransition(
   machineId: string,
-  stateId: string,
-  transitionPath: string,
-  transition: string | { target: string; timeline?: string },
+  transitionIndex: number,
+  transition: ElucimV2Transition,
   states: Record<string, unknown>,
-  timelineIds: Set<string>,
+  _timelineIds: Set<string>,
   errors: ValidationError[],
 ) {
-  const target = typeof transition === 'string' ? transition : transition.target;
-  const timeline = typeof transition === 'string' ? undefined : transition.timeline;
-  if (!states[target]) {
-    errors.push({ path: `stateMachines.${machineId}.states.${stateId}.${transitionPath}`, message: `Unknown target state "${target}"`, severity: 'error' });
+  const path = `stateMachines.${machineId}.transitions[${transitionIndex}]`;
+  if (!transition.id) {
+    errors.push({ path: `${path}.id`, message: 'Transition id is required', severity: 'error' });
   }
-  if (timeline && !timelineIds.has(timeline)) {
-    errors.push({ path: `stateMachines.${machineId}.states.${stateId}.${transitionPath}.timeline`, message: `Unknown timeline "${timeline}"`, severity: 'error' });
+  if (transition.from !== 'entry' && transition.from !== 'any' && !states[transition.from]) {
+    errors.push({ path: `${path}.from`, message: `Unknown source state "${transition.from}"`, severity: 'error' });
+  }
+  if (transition.to !== 'entry' && transition.to !== 'exit' && !states[transition.to]) {
+    errors.push({ path: `${path}.to`, message: `Unknown target state "${transition.to}"`, severity: 'error' });
+  }
+  if (transition.exitTime !== undefined && (!Number.isFinite(transition.exitTime) || transition.exitTime < 0)) {
+    errors.push({ path: `${path}.exitTime`, message: 'Exit time must be a non-negative number', severity: 'error' });
   }
 }
 

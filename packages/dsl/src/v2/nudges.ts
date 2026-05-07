@@ -1,5 +1,6 @@
 import type { ElucimV2Command } from './commands';
 import { applyCommand } from './commands';
+import { getDocumentLinearDuration } from './duration';
 import type { ElucimV2Document } from './types';
 
 export interface ElucimV2Nudge {
@@ -71,7 +72,7 @@ function buildIntroTimeline(doc: ElucimV2Document, rootChildren: string[]) {
   if (targets.length === 0) return undefined;
   const stagger = 6;
   const fadeDuration = 18;
-  const duration = Math.min(doc.scene.durationInFrames, Math.max(fadeDuration, (targets.length - 1) * stagger + fadeDuration));
+  const duration = Math.min(getDocumentLinearDuration(doc), Math.max(fadeDuration, (targets.length - 1) * stagger + fadeDuration));
   return {
     id: 'auto-intro',
     duration,

@@ -13,6 +13,11 @@ export interface ElucimV2TimelinePatch {
 
 export type ElucimV2TimelineFrame = Record<string, ElucimV2TimelinePatch>;
 
+export interface ElucimV2TimelineFrameSelection {
+  timelineId: string;
+  frame: number;
+}
+
 export function evaluateTimeline(timeline: ElucimV2Timeline, frame: number): ElucimV2TimelineFrame {
   const patches: ElucimV2TimelineFrame = {};
   const clampedFrame = Math.max(0, Math.min(frame, timeline.duration));
@@ -32,17 +37,27 @@ export function evaluateTimeline(timeline: ElucimV2Timeline, frame: number): Elu
 }
 
 export function applyTimelineFrame(doc: ElucimV2Document, timelineId: string, frame: number): ElucimV2Document {
+  return applyTimelineFrames(doc, [{ timelineId, frame }]);
+}
+
+export function applyTimelineFrames(doc: ElucimV2Document, frames: ElucimV2TimelineFrameSelection[]): ElucimV2Document {
+  const next = cloneDoc(doc);
+  for (const { timelineId, frame } of frames) {
+    applyTimelineFrameToDocument(next, timelineId, frame);
+  }
+  return next;
+}
+
+function applyTimelineFrameToDocument(doc: ElucimV2Document, timelineId: string, frame: number): void {
   const timeline = doc.timelines?.[timelineId];
   if (!timeline) throw new Error(`Timeline "${timelineId}" does not exist`);
-  const next = cloneDoc(doc);
   const patches = evaluateTimeline(timeline, frame);
   for (const [id, patch] of Object.entries(patches)) {
-    const element = next.elements[id];
+    const element = doc.elements[id];
     if (!element) throw new Error(`Timeline "${timelineId}" targets missing element "${id}"`);
     element.layout = patch.layout ? { ...element.layout, ...patch.layout } : element.layout;
     element.props = patch.props ? { ...element.props, ...patch.props } : element.props;
   }
-  return next;
 }
 
 function evaluateTrack(track: ElucimV2TimelineTrack, frame: number): unknown {

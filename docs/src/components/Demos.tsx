@@ -7,10 +7,64 @@ import {
   Player, Sequence, Scene,
   Circle, Line, Arrow, Rect, Text, Polygon, Image, Group, BezierCurve,
   Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
-  FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel,
   Presentation, Slide,
   useCurrentFrame, interpolate,
 } from '@elucim/core';
+
+function FadeIn({ children, duration = 30 }: { children: React.ReactNode; duration?: number }) {
+  const frame = useCurrentFrame();
+  return <g opacity={interpolate(frame, [0, duration], [0, 1])}>{children}</g>;
+}
+
+function FadeOut({ children, duration = 30, totalFrames }: { children: React.ReactNode; duration?: number; totalFrames?: number }) {
+  const frame = useCurrentFrame();
+  const start = totalFrames !== undefined ? totalFrames - duration : 0;
+  return <g opacity={interpolate(frame, [start, start + duration], [1, 0])}>{children}</g>;
+}
+
+function Draw({ children, duration = 60, pathLength = 1000 }: { children: React.ReactElement; duration?: number; pathLength?: number }) {
+  const frame = useCurrentFrame();
+  const progress = interpolate(frame, [0, duration], [0, 1]);
+  return React.cloneElement(children, {
+    strokeDasharray: pathLength,
+    strokeDashoffset: pathLength * (1 - progress),
+    pathLength,
+  } as Record<string, unknown>);
+}
+
+function Write({ children, duration = 45 }: { children: React.ReactNode; duration?: number }) {
+  const frame = useCurrentFrame();
+  const opacity = interpolate(frame, [0, duration * 0.6], [0, 1]);
+  const scale = interpolate(frame, [0, duration], [0.95, 1]);
+  return <g opacity={opacity} transform={`scale(${scale})`} style={{ transformOrigin: 'center' }}>{children}</g>;
+}
+
+function Transform({ children, duration = 60, rotate }: { children: React.ReactNode; duration?: number; rotate?: { from: number; to: number } }) {
+  const frame = useCurrentFrame();
+  const angle = rotate ? interpolate(frame, [0, duration], [rotate.from, rotate.to]) : 0;
+  return <g transform={`rotate(${angle})`}>{children}</g>;
+}
+
+function Morph({ children }: { children: React.ReactNode }) {
+  return <g>{children}</g>;
+}
+
+function Stagger({ children, staggerDelay = 10 }: { children: React.ReactNode[]; staggerDelay?: number }) {
+  const frame = useCurrentFrame();
+  return (
+    <g>
+      {React.Children.toArray(children).map((child, index) => (
+        <g key={index} opacity={interpolate(frame, [index * staggerDelay, index * staggerDelay + staggerDelay * 2], [0, 1])}>
+          {child}
+        </g>
+      ))}
+    </g>
+  );
+}
+
+function Parallel({ children }: { children: React.ReactNode }) {
+  return <g>{children}</g>;
+}
 
 // ─── Primitives ─────────────────────────────────────────────────────
 

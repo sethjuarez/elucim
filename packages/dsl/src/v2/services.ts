@@ -17,7 +17,6 @@ export interface ElucimV2DocumentSummary {
     type: 'scene' | 'player';
     width?: number;
     height?: number;
-    durationInFrames: number;
     children: string[];
   };
   elementCount: number;
@@ -61,7 +60,6 @@ export function summarizeDocument(doc: ElucimV2Document): ElucimV2DocumentSummar
       type: doc.scene.type,
       width: doc.scene.width,
       height: doc.scene.height,
-      durationInFrames: doc.scene.durationInFrames,
       children: [...doc.scene.children],
     },
     elementCount: Object.keys(doc.elements).length,

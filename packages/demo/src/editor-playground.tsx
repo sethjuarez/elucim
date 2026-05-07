@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ElucimEditor } from '@elucim/editor';
-import { migrateV1ToV2 } from '@elucim/dsl';
+import { getDocumentLinearDuration, migrateV1ToV2 } from '@elucim/dsl';
 import type { ElucimDocument, ElucimV2Document } from '@elucim/dsl';
 
 /**
@@ -154,6 +154,13 @@ function createV2DemoDocument(doc: ElucimDocument): ElucimV2Document {
   const v2 = migrateV1ToV2(doc);
   return {
     ...v2,
+    elements: Object.fromEntries(Object.entries(v2.elements).map(([id, element]) => {
+      const props = { ...element.props };
+      delete props.fadeIn;
+      delete props.fadeOut;
+      delete props.draw;
+      return [id, { ...element, props }];
+    })),
     metadata: {
       title: 'Editor authoring sample',
       intent: 'Demonstrate native timeline and state-machine editing in the Elucim editor.',
@@ -166,31 +173,38 @@ function createV2DemoDocument(doc: ElucimDocument): ElucimV2Document {
     timelines: {
       intro: {
         id: 'intro',
-        duration: 30,
+        duration: 90,
         tracks: [
-          { target: 'rect-1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1, easing: 'easeOutCubic' }] },
-          { target: 'circle-1', property: 'scale', keyframes: [{ frame: 0, value: 0.8 }, { frame: 30, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'rect-1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 90, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'circle-1', property: 'scale', keyframes: [{ frame: 0, value: 0.75 }, { frame: 90, value: 1, easing: 'easeOutCubic' }] },
         ],
       },
       focus: {
         id: 'focus',
-        duration: 40,
+        duration: 90,
         tracks: [
-          { target: 'text-1', property: 'opacity', keyframes: [{ frame: 0, value: 0.35 }, { frame: 20, value: 1 }] },
+          { target: 'text-1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 60, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'text-1', property: 'scale', keyframes: [{ frame: 0, value: 0.9 }, { frame: 90, value: 1.08, easing: 'easeOutCubic' }] },
         ],
       },
     },
     stateMachines: {
       walkthrough: {
         id: 'walkthrough',
-        initial: 'idle',
-        reset: 'idle',
+        entry: 'idle',
+        inputs: { reset: { type: 'trigger' } },
         states: {
-          idle: { timeline: 'intro', on: { start: { target: 'focus', timeline: 'focus' } } },
+          idle: { timeline: 'intro' },
           focus: { timeline: 'focus' },
         },
+        transitions: [
+          { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+          { id: 'idle-next', from: 'idle', to: 'focus', exitTime: 1 },
+          { id: 'any-reset', from: 'any', to: 'entry', trigger: 'reset' },
+        ],
       },
     },
+    defaultStateMachine: 'walkthrough',
   };
 }
 
@@ -208,7 +222,7 @@ function App() {
   }, [initialDoc]);
 
   const lastFrame = doc.version === '2.0'
-    ? doc.scene.durationInFrames - 1
+    ? getDocumentLinearDuration(doc) - 1
     : (doc.root as any).durationInFrames! - 1;
   return (
     <ElucimEditor

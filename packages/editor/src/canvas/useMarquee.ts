@@ -4,6 +4,7 @@ import type { EditorAction, Viewport } from '../state/types';
 import { CANVAS_ID } from '../state/types';
 import type { BoundingBox } from '../utils/bounds';
 import { screenToScene } from './useViewport';
+import { startRafDrag } from '../interactions/rafDrag';
 
 export interface MarqueeRect {
   x: number;
@@ -58,88 +59,77 @@ export function useMarquee({
     const rect = container.getBoundingClientRect();
     const scene = screenToScene(e.clientX, e.clientY, rect, viewport);
 
-    startRef.current = { sceneX: scene.x, sceneY: scene.y };
+    const start = { sceneX: scene.x, sceneY: scene.y };
+    startRef.current = start;
     shiftRef.current = e.shiftKey;
     setMarquee(null);
 
-    container.setPointerCapture(e.pointerId);
-  }, [isPanning, activeTool, viewport, containerRef]);
-
-  const handleMarqueeMove = useCallback((e: React.PointerEvent) => {
-    if (!startRef.current) return;
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    const rect = container.getBoundingClientRect();
-    const scene = screenToScene(e.clientX, e.clientY, rect, viewport);
-    const { sceneX: sx, sceneY: sy } = startRef.current;
-
-    const x = Math.min(sx, scene.x);
-    const y = Math.min(sy, scene.y);
-    const width = Math.abs(scene.x - sx);
-    const height = Math.abs(scene.y - sy);
-
-    // Only show marquee after a minimum drag distance (avoid micro-drags)
-    if (width > 2 || height > 2) {
-      setMarquee({ x, y, width, height });
-    }
-  }, [viewport, containerRef]);
-
-  const handleMarqueeEnd = useCallback((e: React.PointerEvent) => {
-    const start = startRef.current;
-    startRef.current = null;
-
-    if (!start) return;
-
-    const container = containerRef.current;
-    if (container) {
-      container.releasePointerCapture(e.pointerId);
-    }
-
-    const rect = container?.getBoundingClientRect();
-    if (!rect) { setMarquee(null); return; }
-
-    const scene = screenToScene(e.clientX, e.clientY, rect, viewport);
-    const x = Math.min(start.sceneX, scene.x);
-    const y = Math.min(start.sceneY, scene.y);
-    const w = Math.abs(scene.x - start.sceneX);
-    const h = Math.abs(scene.y - start.sceneY);
-
-    // If drag was too small, treat as a click (select canvas)
-    if (w < 3 && h < 3) {
-      if (!shiftRef.current) {
-        dispatch({ type: 'SELECT', ids: [CANVAS_ID] });
-      }
-      setMarquee(null);
-      return;
-    }
-
-    // Find all elements whose bounds intersect the marquee
-    const marqueeBox = { x, y, width: w, height: h };
-    const hitIds: string[] = [];
-
-    for (const [id, bounds] of boundsMap) {
-      if (boundsIntersect(marqueeBox, bounds)) {
-        hitIds.push(id);
-      }
-    }
-
-    if (hitIds.length > 0) {
-      if (shiftRef.current) {
-        // Add to existing selection
-        for (const id of hitIds) {
-          dispatch({ type: 'SELECT_ADD', id });
+    startRafDrag({
+      event: e,
+      onFrame: point => {
+        const frameRect = container.getBoundingClientRect();
+        const current = screenToScene(point.clientX, point.clientY, frameRect, viewport);
+        const x = Math.min(start.sceneX, current.x);
+        const y = Math.min(start.sceneY, current.y);
+        const width = Math.abs(current.x - start.sceneX);
+        const height = Math.abs(current.y - start.sceneY);
+        if (width > 2 || height > 2) {
+          setMarquee({ x, y, width, height });
         }
-      } else {
-        dispatch({ type: 'SELECT', ids: hitIds });
-      }
-    } else if (!shiftRef.current) {
-      dispatch({ type: 'SELECT', ids: [CANVAS_ID] });
-    }
+      },
+      onCommit: point => {
+        startRef.current = null;
+        const commitRect = container.getBoundingClientRect();
+        const current = screenToScene(point.clientX, point.clientY, commitRect, viewport);
+        const x = Math.min(start.sceneX, current.x);
+        const y = Math.min(start.sceneY, current.y);
+        const w = Math.abs(current.x - start.sceneX);
+        const h = Math.abs(current.y - start.sceneY);
 
-    setMarquee(null);
-  }, [dispatch, viewport, containerRef, boundsMap]);
+        // If drag was too small, treat as a click (select canvas)
+        if (w < 3 && h < 3) {
+          if (!shiftRef.current) {
+            dispatch({ type: 'SELECT', ids: [CANVAS_ID] });
+          }
+          setMarquee(null);
+          return;
+        }
+
+        // Find all elements whose bounds intersect the marquee
+        const marqueeBox = { x, y, width: w, height: h };
+        const hitIds: string[] = [];
+
+        for (const [id, bounds] of boundsMap) {
+          if (boundsIntersect(marqueeBox, bounds)) {
+            hitIds.push(id);
+          }
+        }
+
+        if (hitIds.length > 0) {
+          if (shiftRef.current) {
+            // Add to existing selection
+            for (const id of hitIds) {
+              dispatch({ type: 'SELECT_ADD', id });
+            }
+          } else {
+            dispatch({ type: 'SELECT', ids: hitIds });
+          }
+        } else if (!shiftRef.current) {
+          dispatch({ type: 'SELECT', ids: [CANVAS_ID] });
+        }
+
+        setMarquee(null);
+      },
+      onCancel: () => {
+        startRef.current = null;
+        setMarquee(null);
+      },
+    });
+  }, [dispatch, isPanning, activeTool, viewport, containerRef, boundsMap]);
+
+  const handleMarqueeMove = useCallback((_e: React.PointerEvent) => {}, []);
+
+  const handleMarqueeEnd = useCallback((_e: React.PointerEvent) => {}, []);
 
   return {
     marquee,

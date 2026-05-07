@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { applyCommand, applyTimelineFrame, evaluateTimeline, validateV2, type ElucimV2Document } from '../index';
+import { applyCommand, applyTimelineFrame, applyTimelineFrames, evaluateTimeline, migrateV2ToV1, validateV2, type ElucimV2Document } from '../index';
 
 const doc: ElucimV2Document = {
   version: '2.0',
-  scene: { type: 'player', width: 800, height: 600, durationInFrames: 90, children: ['title'] },
+  scene: { type: 'player', width: 800, height: 600, children: ['title'] },
   elements: {
     title: {
       id: 'title',
@@ -61,6 +61,66 @@ describe('v2 timelines and keyframes', () => {
     expect(next.elements.title.props.opacity).toBe(1);
     expect(next.elements.title.layout?.translate).toEqual([0, 0]);
     expect(doc.elements.title.props.opacity).toBe(0);
+  });
+
+  it('applies multiple timeline frames in order for composed previews', () => {
+    const next = applyTimelineFrames({
+      ...doc,
+      elements: {
+        ...doc.elements,
+        title: {
+          ...doc.elements.title,
+          props: { ...doc.elements.title.props, opacity: 0 },
+        },
+      },
+      timelines: {
+        intro: doc.timelines!.intro,
+        focus: {
+          id: 'focus',
+          duration: 20,
+          tracks: [{ target: 'title', property: 'scale', keyframes: [{ frame: 0, value: 1 }, { frame: 20, value: 1.2 }] }],
+        },
+      },
+    }, [
+      { timelineId: 'intro', frame: 30 },
+      { timelineId: 'focus', frame: 10 },
+    ]);
+
+    expect(next.elements.title.props.opacity).toBe(1);
+    expect(next.elements.title.layout?.scale).toBe(1.1);
+  });
+
+  it('restores layout timeline patches into renderable v1 elements', () => {
+    const next = applyTimelineFrame({
+      ...doc,
+      elements: {
+        ...doc.elements,
+        title: {
+          ...doc.elements.title,
+          layout: { ...doc.elements.title.layout, scale: 1 },
+        },
+      },
+      timelines: {
+        intro: {
+          id: 'intro',
+          duration: 30,
+          tracks: [
+            { target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+            { target: 'title', property: 'scale', keyframes: [{ frame: 0, value: 0.8 }, { frame: 30, value: 1.2 }] },
+            { target: 'title', property: 'translate', keyframes: [{ frame: 0, value: [0, 24] }, { frame: 30, value: [0, 0] }] },
+            { target: 'title', property: 'rotate', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 90 }] },
+          ],
+        },
+      },
+    }, 'intro', 15);
+
+    const restored = migrateV2ToV1(next);
+    const title = restored.root.children[0] as any;
+
+    expect(title.opacity).toBe(0.5);
+    expect(title.scale).toBe(1);
+    expect(title.translate).toEqual([0, 12]);
+    expect(title.rotation).toBe(45);
   });
 
   it('lets commands upsert and preview timeline clips', () => {

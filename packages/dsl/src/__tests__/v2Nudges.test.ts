@@ -3,7 +3,7 @@ import { applyNudge, suggestDocumentNudges, validateV2, type ElucimV2Document } 
 
 const doc: ElucimV2Document = {
   version: '2.0',
-  scene: { type: 'player', width: 800, height: 600, durationInFrames: 90, children: ['title', 'metric'] },
+  scene: { type: 'player', width: 800, height: 600, children: ['title', 'metric'] },
   elements: {
     title: { id: 'title', type: 'text', layout: { x: 80, y: 80 }, props: { type: 'text', content: 'Revenue' } },
     metric: { id: 'metric', type: 'text', layout: { x: 80, y: 180 }, props: { type: 'text', content: '$2.4M' } },

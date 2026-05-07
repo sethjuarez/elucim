@@ -55,11 +55,13 @@ export type {
   ElucimV2TimelineTrack,
   ElucimV2Keyframe,
   ElucimV2StateMachine,
+  ElucimV2StateMachineInput,
   ElucimV2State,
   ElucimV2Transition,
 } from './v2/types';
 export { migrateV1ToV2, migrateV2ToV1, normalizeToV2, toRenderableV1, type NormalizeToV2Result } from './v2/migrate';
 export { validateV2 } from './v2/validateV2';
+export { DEFAULT_LINEAR_DURATION_IN_FRAMES, getDocumentLinearDuration, getMaxTimelineDuration, resolveExportFrameCount, type ElucimV2ExportPolicy } from './v2/duration';
 export { applyCommand, type ElucimV2Command, type ElucimV2CommandResult } from './v2/commands';
 export {
   summarizeDocument,
@@ -74,12 +76,18 @@ export {
 export {
   evaluateTimeline,
   applyTimelineFrame,
+  applyTimelineFrames,
   type ElucimV2TimelineFrame,
+  type ElucimV2TimelineFrameSelection,
   type ElucimV2TimelinePatch,
 } from './v2/timeline';
 export {
   getInitialStateSnapshot,
+  getStateMachineVisualFrames,
   transitionStateMachine,
+  type ElucimV2StateEvent,
+  type ElucimV2StateMachineVisualFrame,
+  type ElucimV2StateMachineVisualFrameOptions,
   type ElucimV2StateSnapshot,
   type ElucimV2StateTransitionResult,
 } from './v2/stateMachine';
