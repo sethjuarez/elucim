@@ -26,14 +26,15 @@ export interface ElucimCanvasProps {
   style?: React.CSSProperties;
   /** Optional render-only document, used for timeline/state preview without mutating editor state. */
   previewDocument?: ElucimDocument;
-  /** Whether a state-machine preview is actively driving the canvas. */
-  stateMachinePreviewActive?: boolean;
-  /** Fired for canvas clicks while state-machine preview is active. Return true when handled. */
-  onStateMachinePreviewClick?: () => boolean;
-  /** Fired for canvas key presses while state-machine preview is active. Return true when handled. */
-  onStateMachinePreviewKeyDown?: (key: string) => boolean;
-  /** Explicitly exits state-machine preview mode. */
-  onStateMachinePreviewExit?: () => void;
+  /** Optional preview mode chrome and event routing for render-only document previews. */
+  previewMode?: {
+    active: boolean;
+    label: string;
+    exitLabel?: string;
+    onClick?: () => boolean;
+    onKeyDown?: (key: string) => boolean;
+    onExit?: () => void;
+  };
   /** Editor color scheme — used to pick content theme when background is a $token. */
   editorColorScheme?: string;
   /** Explicit content theme — when provided, used for scene CSS vars instead of built-in presets. */
@@ -269,7 +270,7 @@ function isDarkBackground(bg: string): boolean {
 /**
  * Full-bleed editor canvas with viewport pan/zoom, dot grid, minimap, and zoom controls.
  */
-export function ElucimCanvas({ className, style, previewDocument, stateMachinePreviewActive, onStateMachinePreviewClick, onStateMachinePreviewKeyDown, onStateMachinePreviewExit, editorColorScheme, contentTheme }: ElucimCanvasProps) {
+export function ElucimCanvas({ className, style, previewDocument, previewMode, editorColorScheme, contentTheme }: ElucimCanvasProps) {
   const { state, dispatch } = useEditorState();
   const { document: editorDocument, selectedIds, currentFrame, viewport, isPanning } = state;
   const document = previewDocument ?? editorDocument;
@@ -286,6 +287,7 @@ export function ElucimCanvas({ className, style, previewDocument, stateMachinePr
   } | null>(null);
   const inlineEditRef = useRef<HTMLTextAreaElement>(null);
   const [isCanvasHovered, setIsCanvasHovered] = useState(false);
+  const previewModeActive = Boolean(previewMode?.active);
 
   // Resolve scene dimensions
   const width = ('width' in root ? root.width : undefined) ?? 1920;
@@ -652,26 +654,26 @@ export function ElucimCanvas({ className, style, previewDocument, stateMachinePr
     if (!shouldPreservePointerFocus(e.target)) {
       e.currentTarget.focus({ preventScroll: true });
     }
-    if (stateMachinePreviewActive && !shouldPreservePointerFocus(e.target) && onStateMachinePreviewClick?.()) {
+    if (previewModeActive && !shouldPreservePointerFocus(e.target) && previewMode?.onClick?.()) {
       e.preventDefault();
       e.stopPropagation();
       return;
     }
     handlePanStart(e);
     handleMarqueeStart(e);
-  }, [handleMarqueeStart, handlePanStart, onStateMachinePreviewClick, stateMachinePreviewActive]);
+  }, [handleMarqueeStart, handlePanStart, previewMode, previewModeActive]);
 
   const handleContainerKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!stateMachinePreviewActive || shouldPreservePointerFocus(e.target)) return;
-    if (onStateMachinePreviewKeyDown?.(e.key)) {
+    if (!previewModeActive || shouldPreservePointerFocus(e.target)) return;
+    if (previewMode?.onKeyDown?.(e.key)) {
       e.preventDefault();
       e.stopPropagation();
     }
-  }, [onStateMachinePreviewKeyDown, stateMachinePreviewActive]);
+  }, [previewMode, previewModeActive]);
 
   useEffect(() => {
-    if (stateMachinePreviewActive) containerRef.current?.focus({ preventScroll: true });
-  }, [stateMachinePreviewActive]);
+    if (previewModeActive) containerRef.current?.focus({ preventScroll: true });
+  }, [previewModeActive]);
 
   const previewPillLeft = Math.min(Math.max(viewport.x, 12), Math.max(12, containerSize.width - 180));
   const previewPillTop = Math.min(Math.max(12, viewport.y - 56), Math.max(12, containerSize.height - 40));
@@ -700,9 +702,9 @@ export function ElucimCanvas({ className, style, previewDocument, stateMachinePr
       {/* Dot grid background */}
       <DotGrid spacing={20} />
 
-      {stateMachinePreviewActive && (
+      {previewModeActive && (
         <div
-          aria-label="State machine preview mode canvas"
+          aria-label={`${previewMode?.label ?? 'Preview mode'} canvas`}
           aria-live="polite"
           style={{
             position: 'absolute',
@@ -724,12 +726,12 @@ export function ElucimCanvas({ className, style, previewDocument, stateMachinePr
             letterSpacing: 0.5,
           }}
         >
-          <span>Preview mode</span>
+          <span>{previewMode?.label ?? 'Preview mode'}</span>
           <button
             type="button"
-            aria-label="Exit state machine preview mode"
+            aria-label={previewMode?.exitLabel ?? 'Exit preview mode'}
             onPointerDown={event => event.stopPropagation()}
-            onClick={onStateMachinePreviewExit}
+            onClick={previewMode?.onExit}
             style={{
               border: `1px solid ${v('--elucim-editor-border-subtle')}`,
               borderRadius: 999,
@@ -755,8 +757,8 @@ export function ElucimCanvas({ className, style, previewDocument, stateMachinePr
           transformOrigin: '0 0',
           transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
           willChange: 'transform',
-          border: stateMachinePreviewActive ? `3px solid ${v('--elucim-editor-accent')}` : `1px solid ${v('--elucim-editor-border')}`,
-          boxShadow: stateMachinePreviewActive
+          border: previewModeActive ? `3px solid ${v('--elucim-editor-accent')}` : `1px solid ${v('--elucim-editor-border')}`,
+          boxShadow: previewModeActive
             ? `0 0 0 4px color-mix(in srgb, ${v('--elucim-editor-accent')} 22%, transparent), 0 2px 16px rgba(0,0,0,0.35)`
             : '0 2px 16px rgba(0,0,0,0.35)',
           borderRadius: 2,

@@ -122,17 +122,17 @@ test.describe('Editor state-machine interactions', () => {
 
     await page.getByRole('button', { name: 'Preview state machine walkthrough' }).click();
     await expect(page.getByText(/Waiting at Entry for Click/)).toBeVisible();
-    await expect(page.getByLabel('State machine preview mode canvas')).toContainText(/Preview mode/);
+    await expect(page.getByLabel('Preview mode canvas')).toContainText(/Preview mode/);
     await expect(page.getByRole('button', { name: 'Exit state machine preview mode' })).toBeVisible();
     await page.getByTitle('Zoom in').click();
     await page.getByTitle('Zoom in').click();
-    await expect(page.getByLabel('State machine preview mode canvas')).toBeInViewport();
+    await expect(page.getByLabel('Preview mode canvas')).toBeInViewport();
     await page.getByRole('button', { name: 'Add state to walkthrough' }).focus();
     await page.locator('.elucim-editor-canvas').click();
     await expect(page.getByText(/Previewing idle via onClick from entry/)).toBeVisible();
     await expect(page.locator('.elucim-editor-canvas')).toBeFocused();
     await page.getByRole('button', { name: 'Exit state machine preview mode' }).click();
-    await expect(page.getByLabel('State machine preview mode canvas')).not.toBeVisible();
+    await expect(page.getByLabel('Preview mode canvas')).not.toBeVisible();
   });
 
   test('waits for an onClick state transition after the source animation completes', async ({ page }) => {
@@ -163,6 +163,7 @@ test.describe('Editor state-machine interactions', () => {
     await expect(page.getByLabel('Transition entry-start key')).toHaveValue('Space');
     await page.getByRole('button', { name: 'Preview state machine walkthrough' }).click();
     await expect(page.getByText(/Waiting at Entry for Press Space/)).toBeVisible();
+    await expect(page.locator('.elucim-editor-canvas')).toBeFocused();
     await page.locator('.elucim-editor-canvas').press('Space');
     await expect(page.getByText(/Preview(?:ing)? idle via onKey from entry/)).toBeVisible();
   });
@@ -204,7 +205,7 @@ test.describe('Editor state-machine interactions', () => {
 
     await page.getByRole('button', { name: 'Preview state machine walkthrough' }).click();
     await expect(page.getByText(/Finished focus/)).toBeVisible({ timeout: 15000 });
-    await expect(page.getByLabel('State machine preview mode canvas')).not.toBeVisible();
+    await expect(page.getByLabel('Preview mode canvas')).not.toBeVisible();
     expect(await opacity(introRect)).toBe(1);
     expect(await opacity(focusText)).toBe(1);
 

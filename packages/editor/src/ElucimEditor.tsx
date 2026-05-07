@@ -478,10 +478,14 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
           />
           <ElucimCanvas
             previewDocument={previewDocument}
-            stateMachinePreviewActive={stateMachinePreviewActive}
-            onStateMachinePreviewClick={stateMachinePreviewClickHandler}
-            onStateMachinePreviewKeyDown={stateMachinePreviewKeyDownHandler}
-            onStateMachinePreviewExit={stateMachinePreviewExitHandler}
+            previewMode={{
+              active: stateMachinePreviewActive,
+              label: 'Preview mode',
+              exitLabel: 'Exit state machine preview mode',
+              onClick: stateMachinePreviewClickHandler,
+              onKeyDown: stateMachinePreviewKeyDownHandler,
+              onExit: stateMachinePreviewExitHandler,
+            }}
             editorColorScheme={colorScheme}
             contentTheme={theme}
           />
