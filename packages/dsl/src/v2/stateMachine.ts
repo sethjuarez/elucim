@@ -26,12 +26,20 @@ export interface ElucimV2StateMachineVisualFrame {
   frame: number;
 }
 
+/**
+ * Selects an ordered overlay stack of timeline frames for a state-machine visual preview.
+ *
+ * The returned array is intentionally ordered, not unique by timeline ID:
+ * start frames are applied first, then completed/current state frames overlay later.
+ * Consumers should apply selections in array order so later entries win.
+ */
 export interface ElucimV2StateMachineVisualFrameOptions {
   statePath?: string[];
   currentStateId: string;
   currentFrame: number;
   exited?: boolean;
   finished?: boolean;
+  missingState?: 'throw' | 'skip';
   missingTimeline?: 'throw' | 'skip';
 }
 
@@ -54,7 +62,10 @@ export function getStateMachineVisualFrames(
   for (const stateId of path) {
     if (stateId === 'entry') continue;
     const state = machine.states[stateId];
-    if (!state) throw new Error(`State "${stateId}" does not exist in machine "${machineId}"`);
+    if (!state) {
+      if (options.missingState === 'skip') continue;
+      throw new Error(`State "${stateId}" does not exist in machine "${machineId}"`);
+    }
     if (!state.timeline) continue;
     const timeline = doc.timelines?.[state.timeline];
     if (!timeline) {

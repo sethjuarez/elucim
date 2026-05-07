@@ -649,13 +649,13 @@ export function ElucimCanvas({ className, style, previewDocument, stateMachinePr
   }, [beginInlineEdit]);
 
   const handleContainerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!shouldPreservePointerFocus(e.target)) {
+      e.currentTarget.focus({ preventScroll: true });
+    }
     if (stateMachinePreviewActive && !shouldPreservePointerFocus(e.target) && onStateMachinePreviewClick?.()) {
       e.preventDefault();
       e.stopPropagation();
       return;
-    }
-    if (!shouldPreservePointerFocus(e.target)) {
-      e.currentTarget.focus({ preventScroll: true });
     }
     handlePanStart(e);
     handleMarqueeStart(e);

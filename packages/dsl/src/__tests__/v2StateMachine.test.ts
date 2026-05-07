@@ -146,6 +146,23 @@ describe('v2 state machines', () => {
     ]);
   });
 
+  it('can skip stale missing states while composing visual frames for editor previews', () => {
+    const frames = getStateMachineVisualFrames(doc, 'presentation', {
+      statePath: ['idle', 'deleted-state', 'entering'],
+      currentStateId: 'entering',
+      currentFrame: 12,
+      missingState: 'skip',
+    });
+
+    expect(frames).toEqual([
+      { timelineId: 'idle', frame: 0 },
+      { timelineId: 'intro', frame: 0 },
+      { timelineId: 'outro', frame: 0 },
+      { timelineId: 'idle', frame: 1 },
+      { timelineId: 'intro', frame: 12 },
+    ]);
+  });
+
   it('uses every timeline end frame once the state machine exits', () => {
     const frames = getStateMachineVisualFrames(doc, 'presentation', {
       statePath: ['idle', 'entering', 'visible'],

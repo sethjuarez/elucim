@@ -1213,6 +1213,7 @@ function TimelineClipRows({
         currentFrame,
         exited: stateMachinePreview.exited,
         finished: stateMachinePreview.finished,
+        missingState: 'skip',
         missingTimeline: 'skip',
       },
     );

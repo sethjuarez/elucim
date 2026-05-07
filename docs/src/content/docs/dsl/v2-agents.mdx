@@ -101,7 +101,7 @@ const nextState = transitionStateMachine(doc, 'deck', 'idle', 'start');
 
 State machines use a Rive-inspired but intentionally small model. Every machine has a visual **Entry** node, `entry` matches the explicit Entry transition target, `states` point at timelines, and machine-level `transitions` connect states. The Entry transition declares how the machine leaves Entry: `onStart` fires automatically when a preview/run begins, while events like `onClick` or `onKey` can intentionally gate the first state. A trigger transition fires when its `trigger` event is activated; an `exitTime` transition is the automatic **Next** path after the source state's timeline finishes. A transition whose target is `entry` resolves through Entry again, while a transition whose target is `exit` reaches the terminal **Exit** pseudo-node and stops that machine.
 
-The minimal event presets are `onStart`, `onClick`, `onKey`, and `reset`. Use `onKey` plus `key` metadata for exact keyboard interactions such as Enter, Space, Escape, or ArrowRight. `reset` is still a normal event transition; the convention is to target `entry`, then let Entry decide whether to restart immediately (`onStart`) or wait for its gated start event. Use a custom trigger name for domain events the host app sends, such as `back`, `timeout`, `answerCorrect`, or `dataLoaded`; custom names have no special behavior beyond matching the event string.
+The minimal event presets are `onStart`, `onClick`, `onKey`, and `reset`. Use `onKey` plus `key` metadata for keyboard interactions such as Enter, Space, Escape, or ArrowRight; key matching is case-insensitive, so `G` and `g` are the same binding. `reset` is still a normal event transition; the convention is to target `entry`, then let Entry decide whether to restart immediately (`onStart`) or wait for its gated start event. Use a custom trigger name for domain events the host app sends, such as `back`, `timeout`, `answerCorrect`, or `dataLoaded`; custom names have no special behavior beyond matching the event string.
 
 ```ts
 stateMachines: {
@@ -127,6 +127,8 @@ stateMachines: {
 ```
 
 Scenes do not own duration in v2. Timeline durations are scoped to the state being previewed; during state-machine playback, the active state's timeline duration controls when **Next** auto-runs. Fixed-frame output must use an explicit export policy such as a selected timeline, selected state, scripted machine path, or machine run with a max-frame cap.
+
+State-machine visual previews are composed as an ordered frame stack: all timelines are first applied at their start frame, then completed states and the active state overlay later in path order. If a timeline appears more than once in that stack, the later frame wins.
 
 Editor graph positions are optional metadata under `layout`: `layout.entry` stores the visual Entry node, `layout.states` stores state node positions, and `layout.viewport` stores the graph pan/zoom. Multiple state machines are independent interaction controllers over the same scene/timelines; a host chooses which machine is active for a given surface or interaction mode.
 

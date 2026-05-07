@@ -127,8 +127,10 @@ test.describe('Editor state-machine interactions', () => {
     await page.getByTitle('Zoom in').click();
     await page.getByTitle('Zoom in').click();
     await expect(page.getByLabel('State machine preview mode canvas')).toBeInViewport();
+    await page.getByRole('button', { name: 'Add state to walkthrough' }).focus();
     await page.locator('.elucim-editor-canvas').click();
     await expect(page.getByText(/Previewing idle via onClick from entry/)).toBeVisible();
+    await expect(page.locator('.elucim-editor-canvas')).toBeFocused();
     await page.getByRole('button', { name: 'Exit state machine preview mode' }).click();
     await expect(page.getByLabel('State machine preview mode canvas')).not.toBeVisible();
   });
