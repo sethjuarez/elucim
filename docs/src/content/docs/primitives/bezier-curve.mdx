@@ -6,7 +6,7 @@ description: Draw quadratic and cubic Bezier curves with timeline-friendly styli
 import LiveDemo from '@components/LiveDemo.tsx';
 import { BezierCurveDemo } from '@components/Demos.tsx';
 
-The `bezierCurve` primitive renders SVG Bezier curves — either **quadratic** (one control point) or **cubic** (two control points). Use it for smooth paths, flow diagrams, and organic shapes.
+The `bezierCurve` primitive renders SVG Bezier curves — either **quadratic** (one control point) or **cubic** (two control points). Use it for smooth paths, flow diagrams, connector continuations, and organic shapes.
 
 <LiveDemo client:visible height="300px">
   <BezierCurveDemo client:visible />
@@ -28,6 +28,11 @@ The `bezierCurve` primitive renders SVG Bezier curves — either **quadratic** (
 | `strokeWidth` | `number` | `2` | Width of the stroke |
 | `fill` | `string` | `'none'` | Fill color |
 | `strokeDasharray` | `string` | `undefined` | Dash pattern (e.g. `"6 3"`) |
+| `lineStyle` | `'solid' \| 'dashed' \| 'dotted'` | `'solid'` | Semantic line style when a custom dash pattern is not provided |
+| `strokeLinecap` | `'butt' \| 'round' \| 'square'` | `'round'` | SVG line cap style |
+| `strokeLinejoin` | `'miter' \| 'round' \| 'bevel'` | `'round'` | SVG join style |
+| `startCap` | `'none' \| 'arrow' \| 'dot'` | `'none'` | Optional marker at the start point |
+| `endCap` | `'none' \| 'arrow' \| 'dot'` | `'none'` | Optional marker at the end point |
 | `opacity` | `number` | `1` | Opacity from 0 to 1 |
 
 ## Quadratic vs Cubic
@@ -42,7 +47,7 @@ elements: {
   quadratic: {
     id: 'quadratic',
     type: 'bezierCurve',
-    props: { type: 'bezierCurve', x1: 50, y1: 250, cx1: 250, cy1: 30, x2: 450, y2: 250, stroke: '$accent', strokeWidth: 3 },
+    props: { type: 'bezierCurve', x1: 50, y1: 250, cx1: 250, cy1: 30, x2: 450, y2: 250, stroke: '$accent', strokeWidth: 3, endCap: 'arrow' },
   },
   cubic: {
     id: 'cubic',

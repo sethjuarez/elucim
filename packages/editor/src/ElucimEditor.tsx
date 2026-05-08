@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { RenderableDocument, ElucimDocument, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2TimelineFrameSelection } from '@elucim/dsl';
-import { analyzePolish, applyNudge, applyTimelineFrames, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, validate, validateV2 } from '@elucim/dsl';
+import type { RenderableDocument, ElucimDocument, ElucimDocumentNudge, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2TimelineFrameSelection } from '@elucim/dsl';
+import { analyzePolish, applyNudge, applyTimelineFrames, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, suggestSemanticLayoutNudges, validate, validateV2 } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider } from './state/EditorProvider';
@@ -760,9 +760,42 @@ function StateMachinePanel({ v2Document, onDocumentChange }: { v2Document?: Eluc
   const selectedV2Element = selectedId && currentV2Document ? currentV2Document.elements[selectedId] : undefined;
   const machineIds = Object.keys(currentV2Document?.stateMachines ?? {});
   const [dismissedNudgeIds, setDismissedNudgeIds] = useState<Set<string>>(() => new Set());
+  const [semanticLayoutNudges, setSemanticLayoutNudges] = useState<ElucimDocumentNudge[]>([]);
+  const [semanticLayoutError, setSemanticLayoutError] = useState<string | null>(null);
+  const [semanticLayoutLoading, setSemanticLayoutLoading] = useState(false);
+  const documentNudges = useMemo(() => currentV2Document
+    ? suggestDocumentNudges(currentV2Document)
+    : [], [currentV2Document]);
+  useEffect(() => {
+    if (!currentV2Document) {
+      setSemanticLayoutNudges([]);
+      setSemanticLayoutError(null);
+      setSemanticLayoutLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSemanticLayoutLoading(true);
+    setSemanticLayoutError(null);
+    suggestSemanticLayoutNudges(currentV2Document)
+      .then(nudges => {
+        if (cancelled) return;
+        setSemanticLayoutNudges(nudges);
+      })
+      .catch(error => {
+        if (cancelled) return;
+        setSemanticLayoutNudges([]);
+        setSemanticLayoutError(error instanceof Error ? error.message : String(error));
+      })
+      .finally(() => {
+        if (!cancelled) setSemanticLayoutLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentV2Document]);
   const nudgeCandidates = useMemo(() => currentV2Document
-    ? suggestDocumentNudges(currentV2Document).filter(nudge => !dismissedNudgeIds.has(nudge.id))
-    : [], [currentV2Document, dismissedNudgeIds]);
+    ? [...documentNudges, ...semanticLayoutNudges].filter(nudge => !dismissedNudgeIds.has(nudge.id))
+    : [], [currentV2Document, dismissedNudgeIds, documentNudges, semanticLayoutNudges]);
   const polishReport = useMemo(() => currentV2Document ? analyzePolish(currentV2Document) : undefined, [currentV2Document]);
   const nudgePreviews = useMemo(() => {
     if (!currentV2Document) return new Map<string, string[]>();
@@ -914,6 +947,16 @@ function StateMachinePanel({ v2Document, onDocumentChange }: { v2Document?: Eluc
           ) : (
             <div style={{ color: v('--elucim-editor-text-secondary'), lineHeight: 1.4 }}>
               No polish diagnostics found.
+            </div>
+          )}
+          {semanticLayoutLoading && (
+            <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, lineHeight: 1.35 }}>
+              Checking semantic layout relationships...
+            </div>
+          )}
+          {semanticLayoutError && (
+            <div style={{ color: v('--elucim-editor-warning'), fontSize: 10, lineHeight: 1.35 }}>
+              Semantic layout unavailable: {semanticLayoutError}
             </div>
           )}
         </div>

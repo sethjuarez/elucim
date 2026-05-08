@@ -31,6 +31,98 @@ export interface ElucimPolishReport {
 
 export type ElucimPresetElement = ElucimV2Element;
 
+export interface ElucimElementIntersection {
+  ids: [string, string];
+  area: number;
+  rect: { x: number; y: number; width: number; height: number };
+}
+
+export interface ElucimOffCanvasHeuristic {
+  id: string;
+  bounds: ElementBounds;
+  overflow: { left: number; top: number; right: number; bottom: number };
+}
+
+export interface ElucimTextHeuristic {
+  id: string;
+  content: string;
+  fontSize: number;
+  role?: string;
+  importance?: string;
+  isTitleCandidate: boolean;
+  belowMinimumSize: boolean;
+}
+
+export interface ElucimColorHeuristic {
+  id: string;
+  literalColors: Array<{ prop: string; value: string }>;
+}
+
+export interface ElucimGraphNodeOverlap {
+  ids: [string, string];
+  distance: number;
+  minimumDistance: number;
+}
+
+export interface ElucimGraphEdgeCrossing {
+  edges: [{ from: string; to: string }, { from: string; to: string }];
+}
+
+export interface ElucimGraphHeuristic {
+  id: string;
+  nodeCount: number;
+  edgeCount: number;
+  directedEdgeCount: number;
+  nodeOverlaps: ElucimGraphNodeOverlap[];
+  edgeCrossings: ElucimGraphEdgeCrossing[];
+}
+
+export interface ElucimSemanticRelationshipHeuristic {
+  id: string;
+  target?: string;
+  flowFrom: string[];
+  flowTo: string[];
+  relationship?: string;
+  group?: string;
+  rank?: number;
+  locked: boolean;
+}
+
+export interface ElucimConnectorContinuationHeuristic {
+  id: string;
+  type: 'line' | 'arrow';
+  fromElementId?: string;
+  toElementId?: string;
+  length: number;
+  suggestedCurve: {
+    x1: number;
+    y1: number;
+    cx1: number;
+    cy1: number;
+    cx2: number;
+    cy2: number;
+    x2: number;
+    y2: number;
+    lineStyle?: 'solid' | 'dashed' | 'dotted';
+    strokeLinecap: 'round';
+    strokeLinejoin: 'round';
+    endCap?: 'arrow';
+  };
+}
+
+export interface ElucimPolishHeuristicReport {
+  score: ElucimPolishScore;
+  diagnostics: ElucimPolishDiagnostic[];
+  bounds: ElementBounds[];
+  intersections: ElucimElementIntersection[];
+  offCanvas: ElucimOffCanvasHeuristic[];
+  text: ElucimTextHeuristic[];
+  colors: ElucimColorHeuristic[];
+  graphs: ElucimGraphHeuristic[];
+  semanticRelationships: ElucimSemanticRelationshipHeuristic[];
+  connectorContinuations: ElucimConnectorContinuationHeuristic[];
+}
+
 export interface ElucimCalloutCardPresetSpec {
   id: string;
   x: number;
@@ -88,6 +180,26 @@ export function analyzePolish(doc: ElucimV2Document): ElucimPolishReport {
   diagnostics.push(...checkGraphReadability(doc));
   diagnostics.push(...checkMotion(doc));
   return { diagnostics, score: scoreDiagnostics(diagnostics) };
+}
+
+export function inspectPolishHeuristics(doc: ElucimV2Document): ElucimPolishHeuristicReport {
+  const polish = analyzePolish(doc);
+  const bounds = collectElementBounds(doc);
+  return {
+    ...polish,
+    bounds,
+    intersections: collectIntersections(bounds),
+    offCanvas: collectOffCanvasHeuristics(doc, bounds),
+    text: collectTextHeuristics(doc),
+    colors: collectColorHeuristics(doc),
+    graphs: collectGraphHeuristics(doc),
+    semanticRelationships: collectSemanticRelationshipHeuristics(doc),
+    connectorContinuations: collectConnectorContinuations(doc, bounds),
+  };
+}
+
+export function getSmoothConnectorCandidates(doc: ElucimV2Document): ElucimConnectorContinuationHeuristic[] {
+  return collectConnectorContinuations(doc, collectElementBounds(doc));
 }
 
 export function collectElementBounds(doc: ElucimV2Document): ElementBounds[] {
@@ -286,6 +398,172 @@ function checkOverlaps(bounds: ElementBounds[]): ElucimPolishDiagnostic[] {
   return diagnostics.slice(0, 8);
 }
 
+function collectIntersections(bounds: ElementBounds[]): ElucimElementIntersection[] {
+  const intersections: ElucimElementIntersection[] = [];
+  for (let i = 0; i < bounds.length; i += 1) {
+    for (let j = i + 1; j < bounds.length; j += 1) {
+      const intersection = intersectionRect(bounds[i], bounds[j]);
+      if (!intersection) continue;
+      intersections.push({
+        ids: [bounds[i].id, bounds[j].id],
+        area: Math.round(intersection.width * intersection.height),
+        rect: intersection,
+      });
+    }
+  }
+  return intersections.sort((a, b) => b.area - a.area || a.ids.join(':').localeCompare(b.ids.join(':')));
+}
+
+function collectOffCanvasHeuristics(doc: ElucimV2Document, bounds: ElementBounds[]): ElucimOffCanvasHeuristic[] {
+  const width = doc.scene.width ?? DEFAULT_SCENE_WIDTH;
+  const height = doc.scene.height ?? DEFAULT_SCENE_HEIGHT;
+  return bounds
+    .map(box => ({
+      id: box.id,
+      bounds: box,
+      overflow: {
+        left: Math.max(0, -box.x),
+        top: Math.max(0, -box.y),
+        right: Math.max(0, box.x + box.width - width),
+        bottom: Math.max(0, box.y + box.height - height),
+      },
+    }))
+    .filter(item => Object.values(item.overflow).some(value => value > 0));
+}
+
+function collectTextHeuristics(doc: ElucimV2Document): ElucimTextHeuristic[] {
+  const title = findTitleElement(doc);
+  return Object.values(doc.elements)
+    .filter(element => element.type === 'text' || element.props.type === 'text')
+    .map(element => {
+      const fontSize = asNumber(element.props.fontSize) ?? 24;
+      const content = typeof element.props.content === 'string' ? element.props.content : element.id;
+      return {
+        id: element.id,
+        content,
+        fontSize,
+        role: element.role ?? element.intent?.role,
+        importance: element.intent?.importance,
+        isTitleCandidate: title?.id === element.id,
+        belowMinimumSize: fontSize < MIN_TEXT_SIZE,
+      };
+    })
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function collectColorHeuristics(doc: ElucimV2Document): ElucimColorHeuristic[] {
+  const colorProps = ['fill', 'stroke', 'color', 'labelColor', 'nodeColor', 'edgeColor'];
+  return Object.values(doc.elements)
+    .map(element => ({
+      id: element.id,
+      literalColors: colorProps
+        .map(prop => ({ prop, value: element.props[prop] }))
+        .filter((entry): entry is { prop: string; value: string } => typeof entry.value === 'string' && entry.value !== 'none' && isLiteralColor(entry.value)),
+    }))
+    .filter(item => item.literalColors.length > 0)
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function collectGraphHeuristics(doc: ElucimV2Document): ElucimGraphHeuristic[] {
+  return Object.values(doc.elements)
+    .map(element => {
+      const nodes = getGraphNodes(element);
+      const edges = getGraphEdges(element);
+      if (!nodes || !edges) return undefined;
+      const details = measureGraphDetails(nodes, edges);
+      return {
+        id: element.id,
+        nodeCount: nodes.length,
+        edgeCount: edges.length,
+        directedEdgeCount: edges.filter(edge => edge.directed).length,
+        nodeOverlaps: details.nodeOverlaps,
+        edgeCrossings: details.edgeCrossings,
+      };
+    })
+    .filter((item): item is ElucimGraphHeuristic => Boolean(item))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function collectSemanticRelationshipHeuristics(doc: ElucimV2Document): ElucimSemanticRelationshipHeuristic[] {
+  return Object.values(doc.elements)
+    .filter(element => Boolean(
+      element.intent?.target ||
+      element.intent?.flowFrom?.length ||
+      element.intent?.flowTo?.length ||
+      element.intent?.relationship ||
+      element.intent?.group ||
+      element.layout?.rank !== undefined ||
+      element.layout?.locked,
+    ))
+    .map(element => ({
+      id: element.id,
+      target: element.intent?.target,
+      flowFrom: element.intent?.flowFrom ?? [],
+      flowTo: element.intent?.flowTo ?? [],
+      relationship: element.intent?.relationship,
+      group: element.intent?.group,
+      rank: element.layout?.rank,
+      locked: element.layout?.locked === true,
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function collectConnectorContinuations(doc: ElucimV2Document, bounds: ElementBounds[]): ElucimConnectorContinuationHeuristic[] {
+  return Object.values(doc.elements)
+    .map((element): ElucimConnectorContinuationHeuristic | undefined => {
+      if (element.type !== 'line' && element.type !== 'arrow' && element.props.type !== 'line' && element.props.type !== 'arrow') return undefined;
+      const x1 = asNumber(element.props.x1);
+      const y1 = asNumber(element.props.y1);
+      const x2 = asNumber(element.props.x2);
+      const y2 = asNumber(element.props.y2);
+      if (x1 === undefined || y1 === undefined || x2 === undefined || y2 === undefined) return undefined;
+      const length = Math.hypot(x2 - x1, y2 - y1);
+      if (length < 80) return undefined;
+      const from = nearestElement(bounds, { x: x1, y: y1 }, element.id);
+      const to = nearestElement(bounds, { x: x2, y: y2 }, element.id);
+      if (!from || !to || from.id === to.id || from.distance > 80 || to.distance > 80) return undefined;
+      const curve = smoothCurveForConnector(x1, y1, x2, y2);
+      const lineStyle = asLineStyle(element.props.lineStyle);
+      return {
+        id: element.id,
+        type: element.type === 'arrow' || element.props.type === 'arrow' ? 'arrow' : 'line',
+        fromElementId: from.id,
+        toElementId: to.id,
+        length: Math.round(length),
+        suggestedCurve: {
+          ...curve,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          ...(lineStyle ? { lineStyle } : {}),
+          ...(element.type === 'arrow' || element.props.type === 'arrow' ? { endCap: 'arrow' as const } : {}),
+        },
+      };
+    })
+    .filter((item): item is ElucimConnectorContinuationHeuristic => Boolean(item))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function smoothCurveForConnector(x1: number, y1: number, x2: number, y2: number): ElucimConnectorContinuationHeuristic['suggestedCurve'] {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.hypot(dx, dy);
+  const offset = Math.min(140, Math.max(40, length * 0.35));
+  const unitX = length === 0 ? 1 : dx / length;
+  const unitY = length === 0 ? 0 : dy / length;
+  return {
+    x1,
+    y1,
+    cx1: Math.round(x1 + unitX * offset),
+    cy1: Math.round(y1 + unitY * offset),
+    cx2: Math.round(x2 - unitX * offset),
+    cy2: Math.round(y2 - unitY * offset),
+    x2,
+    y2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  };
+}
+
 function checkTextHierarchy(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
   const title = findTitleElement(doc);
   if (!title) return [];
@@ -429,6 +707,21 @@ function getElementBounds(element: ElucimV2Element): ElementBounds | undefined {
     const y2 = asNumber(props.y2) ?? 0;
     return { id: element.id, x: Math.min(x1, x2), y: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) };
   }
+  if (element.type === 'bezierCurve' || props.type === 'bezierCurve') {
+    const x1 = asNumber(props.x1) ?? 0;
+    const y1 = asNumber(props.y1) ?? 0;
+    const cx1 = asNumber(props.cx1) ?? x1;
+    const cy1 = asNumber(props.cy1) ?? y1;
+    const cx2 = asNumber(props.cx2) ?? cx1;
+    const cy2 = asNumber(props.cy2) ?? cy1;
+    const x2 = asNumber(props.x2) ?? x1;
+    const y2 = asNumber(props.y2) ?? y1;
+    const left = Math.min(x1, cx1, cx2, x2);
+    const top = Math.min(y1, cy1, cy2, y2);
+    const right = Math.max(x1, cx1, cx2, x2);
+    const bottom = Math.max(y1, cy1, cy2, y2);
+    return { id: element.id, x: left, y: top, width: right - left, height: bottom - top };
+  }
   const graphNodes = getGraphNodes(element);
   if (graphNodes) return graphBounds(graphNodes, element.id);
   return undefined;
@@ -483,17 +776,36 @@ function measureGraph(
   nodes: Array<{ id: string; x: number; y: number; radius?: number }>,
   edges: Array<{ from: string; to: string; directed?: boolean }>,
 ): GraphMetrics {
+  const details = measureGraphDetails(nodes, edges);
+  return {
+    crossings: details.edgeCrossings.length,
+    overlappingNodes: details.nodeOverlaps.length,
+    hasDirectedEdges: edges.some(edge => edge.directed),
+  };
+}
+
+function measureGraphDetails(
+  nodes: Array<{ id: string; x: number; y: number; radius?: number }>,
+  edges: Array<{ from: string; to: string; directed?: boolean }>,
+): { nodeOverlaps: ElucimGraphNodeOverlap[]; edgeCrossings: ElucimGraphEdgeCrossing[] } {
   const nodeMap = new Map(nodes.map(node => [node.id, node]));
-  let overlappingNodes = 0;
+  const nodeOverlaps: ElucimGraphNodeOverlap[] = [];
   for (let i = 0; i < nodes.length; i += 1) {
     for (let j = i + 1; j < nodes.length; j += 1) {
       const a = nodes[i];
       const b = nodes[j];
       const minDistance = (a.radius ?? 20) + (b.radius ?? 20) + 8;
-      if (distance(a, b) < minDistance) overlappingNodes += 1;
+      const actualDistance = distance(a, b);
+      if (actualDistance < minDistance) {
+        nodeOverlaps.push({
+          ids: [a.id, b.id],
+          distance: Math.round(actualDistance),
+          minimumDistance: minDistance,
+        });
+      }
     }
   }
-  let crossings = 0;
+  const edgeCrossings: ElucimGraphEdgeCrossing[] = [];
   for (let i = 0; i < edges.length; i += 1) {
     for (let j = i + 1; j < edges.length; j += 1) {
       const a = edges[i];
@@ -504,10 +816,14 @@ function measureGraph(
       const b1 = nodeMap.get(b.from);
       const b2 = nodeMap.get(b.to);
       if (!a1 || !a2 || !b1 || !b2) continue;
-      if (segmentsIntersect(a1, a2, b1, b2)) crossings += 1;
+      if (segmentsIntersect(a1, a2, b1, b2)) {
+        edgeCrossings.push({
+          edges: [{ from: a.from, to: a.to }, { from: b.from, to: b.to }],
+        });
+      }
     }
   }
-  return { crossings, overlappingNodes, hasDirectedEdges: edges.some(edge => edge.directed) };
+  return { nodeOverlaps, edgeCrossings };
 }
 
 function overlapArea(a: ElementBounds, b: ElementBounds): number {
@@ -516,8 +832,35 @@ function overlapArea(a: ElementBounds, b: ElementBounds): number {
   return x * y;
 }
 
+function intersectionRect(a: ElementBounds, b: ElementBounds): ElucimElementIntersection['rect'] | undefined {
+  const left = Math.max(a.x, b.x);
+  const top = Math.max(a.y, b.y);
+  const right = Math.min(a.x + a.width, b.x + b.width);
+  const bottom = Math.min(a.y + a.height, b.y + b.height);
+  if (right <= left || bottom <= top) return undefined;
+  return {
+    x: Math.round(left),
+    y: Math.round(top),
+    width: Math.round(right - left),
+    height: Math.round(bottom - top),
+  };
+}
+
 function distance(a: { x: number; y: number }, b: { x: number; y: number }): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function nearestElement(bounds: ElementBounds[], point: { x: number; y: number }, excludeId: string): { id: string; distance: number } | undefined {
+  return bounds
+    .filter(box => box.id !== excludeId)
+    .map(box => ({ id: box.id, distance: distanceToBox(box, point) }))
+    .sort((a, b) => a.distance - b.distance || a.id.localeCompare(b.id))[0];
+}
+
+function distanceToBox(bounds: ElementBounds, point: { x: number; y: number }): number {
+  const cx = Math.max(bounds.x, Math.min(point.x, bounds.x + bounds.width));
+  const cy = Math.max(bounds.y, Math.min(point.y, bounds.y + bounds.height));
+  return Math.hypot(point.x - cx, point.y - cy);
 }
 
 function segmentsIntersect(a: { x: number; y: number }, b: { x: number; y: number }, c: { x: number; y: number }, d: { x: number; y: number }): boolean {
@@ -534,6 +877,10 @@ function isLiteralColor(value: string): boolean {
 
 function asNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function asLineStyle(value: unknown): 'solid' | 'dashed' | 'dotted' | undefined {
+  return value === 'solid' || value === 'dashed' || value === 'dotted' ? value : undefined;
 }
 
 function clampScore(value: number): number {

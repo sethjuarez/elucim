@@ -81,7 +81,6 @@ export default defineConfig({
           items: [
             { slug: 'primitives/circle' },
             { slug: 'primitives/line' },
-            { slug: 'primitives/arrow' },
             { slug: 'primitives/rect' },
             { slug: 'primitives/text' },
             { slug: 'primitives/polygon' },

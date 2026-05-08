@@ -243,10 +243,12 @@ import {
   analyzePolish,
   applyNudge,
   createCalloutCardPreset,
+  inspectPolishHeuristics,
   suggestDocumentNudges,
 } from '@elucim/dsl';
 
 const polish = analyzePolish(doc);
+const heuristics = inspectPolishHeuristics(doc);
 const nudges = suggestDocumentNudges(doc);
 const safe = nudges.filter(nudge => nudge.confidence === 'safe');
 const polished = safe.reduce((current, nudge) => applyNudge(current, nudge).document, doc);
@@ -263,9 +265,24 @@ const calloutElements = createCalloutCardPreset({
 Agent guidance:
 
 - Prefer semantic roles and intent (`role: 'title'`, `role: 'callout'`, `intent.importance: 'primary' | 'secondary' | 'supporting'`) so polish can preserve explanatory meaning.
+- Add explicit relationship intent when the layout matters: `intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, `intent.group`, plus `layout.rank` and `layout.locked`.
 - Use theme tokens such as `$title`, `$surface`, `$primary`, and `$muted` instead of one-off literal colors unless a specific color is necessary.
 - Run `suggestDocumentNudges()` after drafting. Apply `safe` nudges automatically; present `review` nudges, especially graph layout changes, for review.
+- Use `inspectPolishHeuristics()` when an agent needs the raw evidence behind the aggregate score: element bounds, intersections, off-canvas overflow, text sizing, literal colors, graph crossings/overlaps, connector continuations, and semantic relationships.
+- Present `smooth-connector-continuations` as a review nudge when straight line/arrow connectors should become editable Bezier curves with rounded caps and smoother directionality.
 - For graph elements, provide stable node IDs and `edges`; the layered graph nudge rewrites node coordinates while keeping the graph editable.
+- Use `getAgentOperationCatalog()` when a host or CLI needs to pass the available authoring, validation, inspection, polish, and layout operations to an agent.
+
+For broader explanatory scenes, agents can request an ELK-backed semantic layout review nudge. ELK is used as a layout solver only; the result is written back as ordinary editable element coordinates.
+
+```ts
+import { applyNudge, suggestSemanticLayoutNudges } from '@elucim/dsl';
+
+const [layoutNudge] = await suggestSemanticLayoutNudges(doc);
+const next = layoutNudge ? applyNudge(doc, layoutNudge).document : doc;
+```
+
+Semantic layout nudges are always `review` confidence because they may move multiple elements.
 
 ### `DslRendererRef`
 

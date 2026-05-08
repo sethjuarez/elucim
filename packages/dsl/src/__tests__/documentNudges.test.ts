@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzePolish, applyNudge, createCalloutCardPreset, suggestDocumentNudges, validateV2, type ElucimDocument } from '../index';
+import { analyzePolish, applyNudge, createCalloutCardPreset, inspectPolishHeuristics, suggestDocumentNudges, validateV2, type ElucimDocument } from '../index';
 
 const doc: ElucimDocument = {
   version: '2.0',
@@ -72,6 +72,62 @@ describe('document polish nudges', () => {
       { id: 'c', x: expect.any(Number), y: expect.any(Number) },
     ]);
     expect(validateV2(next).valid).toBe(true);
+  });
+
+  it('exposes raw heuristic evidence for agents to interrogate', () => {
+    const heuristicDoc: ElucimDocument = {
+      version: '2.0',
+      scene: { type: 'player', width: 240, height: 180, children: ['a', 'b', 'label', 'flow'] },
+      elements: {
+        a: { id: 'a', type: 'rect', props: { x: 20, y: 20, width: 100, height: 80, fill: '#ff0000' }, intent: { flowTo: ['b'] }, layout: { rank: 0 } },
+        b: { id: 'b', type: 'rect', props: { x: 80, y: 60, width: 120, height: 100, fill: '$surface' }, intent: { flowFrom: ['a'] }, layout: { rank: 1, locked: true } },
+        label: { id: 'label', type: 'text', props: { x: 210, y: 190, content: 'tiny', fontSize: 10, fill: 'red' } },
+        flow: { id: 'flow', type: 'arrow', props: { x1: 120, y1: 60, x2: 200, y2: 110, stroke: '$primary', lineStyle: 'dashed' } },
+      },
+    };
+
+    const heuristics = inspectPolishHeuristics(heuristicDoc);
+
+    expect(heuristics.intersections).toContainEqual(expect.objectContaining({ ids: ['a', 'b'], area: 1600 }));
+    expect(heuristics.offCanvas.map(item => item.id)).toContain('label');
+    expect(heuristics.text).toContainEqual(expect.objectContaining({ id: 'label', belowMinimumSize: true }));
+    expect(heuristics.colors).toContainEqual(expect.objectContaining({ id: 'a', literalColors: [{ prop: 'fill', value: '#ff0000' }] }));
+    expect(heuristics.semanticRelationships).toContainEqual(expect.objectContaining({ id: 'b', flowFrom: ['a'], rank: 1, locked: true }));
+    expect(heuristics.connectorContinuations).toContainEqual(expect.objectContaining({
+      id: 'flow',
+      type: 'arrow',
+      fromElementId: 'a',
+      toElementId: 'b',
+      suggestedCurve: expect.objectContaining({ endCap: 'arrow', lineStyle: 'dashed', strokeLinecap: 'round' }),
+    }));
+  });
+
+  it('suggests a review nudge to smooth connector continuations', () => {
+    const connectorDoc: ElucimDocument = {
+      version: '2.0',
+      scene: { type: 'player', width: 500, height: 300, children: ['start', 'end', 'flow'] },
+      elements: {
+        start: { id: 'start', type: 'rect', props: { x: 40, y: 80, width: 100, height: 80 } },
+        end: { id: 'end', type: 'rect', props: { x: 300, y: 120, width: 100, height: 80 } },
+        flow: { id: 'flow', type: 'arrow', props: { x1: 140, y1: 120, x2: 300, y2: 160, stroke: '$primary' } },
+      },
+    };
+
+    const nudge = suggestDocumentNudges(connectorDoc).find(candidate => candidate.id === 'smooth-connector-continuations');
+    expect(nudge?.confidence).toBe('review');
+    if (!nudge) throw new Error('Expected smooth connector nudge');
+
+    const next = applyNudge(connectorDoc, nudge).document;
+    expect(next.elements.flow.type).toBe('bezierCurve');
+    expect(next.elements.flow.props).toMatchObject({
+      type: 'bezierCurve',
+      cx1: expect.any(Number),
+      cy1: expect.any(Number),
+      cx2: expect.any(Number),
+      cy2: expect.any(Number),
+      endCap: 'arrow',
+      strokeLinecap: 'round',
+    });
   });
 
   it('creates token-based explanatory callout presets', () => {

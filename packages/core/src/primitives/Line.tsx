@@ -12,6 +12,10 @@ export interface LineProps extends AnimationProps, SpatialProps, BaseElementProp
   opacity?: number;
   /** SVG stroke-dasharray for dashed lines, e.g. "6 3" */
   strokeDasharray?: string;
+  lineStyle?: 'solid' | 'dashed' | 'dotted';
+  strokeLinecap?: 'butt' | 'round' | 'square';
+  startCap?: 'none' | 'arrow' | 'dot';
+  endCap?: 'none' | 'arrow' | 'dot';
 }
 
 export function Line({
@@ -23,6 +27,10 @@ export function Line({
   strokeWidth = 2,
   opacity: baseOpacity = 1,
   strokeDasharray: userDasharray,
+  lineStyle = 'solid',
+  strokeLinecap = lineStyle === 'dotted' ? 'round' : 'butt',
+  startCap = 'none',
+  endCap = 'none',
   fadeIn,
   fadeOut,
   draw,
@@ -36,21 +44,40 @@ export function Line({
   const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, length);
 
   // draw animation dasharray takes precedence; otherwise use user-provided
-  const dasharray = anim.strokeDasharray ?? userDasharray;
+  const styleDasharray = lineStyle === 'dashed' ? '8 6' : lineStyle === 'dotted' ? '1 6' : undefined;
+  const dasharray = anim.strokeDasharray ?? userDasharray ?? styleDasharray;
+
+  const finalOpacity = baseOpacity * anim.opacity;
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const capRadius = Math.max(2, strokeWidth * 1.7);
+  const arrowHead = (x: number, y: number, theta: number) => {
+    const headSize = Math.max(8, strokeWidth * 4);
+    const headAngle = Math.PI / 6;
+    const p1x = x - headSize * Math.cos(theta - headAngle);
+    const p1y = y - headSize * Math.sin(theta - headAngle);
+    const p2x = x - headSize * Math.cos(theta + headAngle);
+    const p2y = y - headSize * Math.sin(theta + headAngle);
+    return `${x},${y} ${p1x},${p1y} ${p2x},${p2y}`;
+  };
 
   const el = (
-    <line
-      x1={x1}
-      y1={y1}
-      x2={x2}
-      y2={y2}
-      stroke={stroke}
-      strokeWidth={strokeWidth}
-      opacity={baseOpacity * anim.opacity}
-      strokeDasharray={dasharray}
-      strokeDashoffset={anim.strokeDashoffset}
-      data-testid="elucim-line"
-    />
+    <g data-testid="elucim-line" opacity={finalOpacity}>
+      <line
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        strokeDasharray={dasharray}
+        strokeDashoffset={anim.strokeDashoffset}
+        strokeLinecap={strokeLinecap}
+      />
+      {startCap === 'dot' && <circle cx={x1} cy={y1} r={capRadius} fill={stroke} />}
+      {endCap === 'dot' && <circle cx={x2} cy={y2} r={capRadius} fill={stroke} />}
+      {startCap === 'arrow' && <polygon points={arrowHead(x1, y1, angle + Math.PI)} fill={stroke} />}
+      {endCap === 'arrow' && <polygon points={arrowHead(x2, y2, angle)} fill={stroke} />}
+    </g>
   );
 
   return withTransform(

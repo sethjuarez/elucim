@@ -10,6 +10,7 @@ import {
   createStateMachine,
   evaluateSceneForAgent,
   getElementOrder,
+  getAgentOperationCatalog,
   getTimelineBounds,
   inspectSceneForAgent,
   repairDocumentForAgent,
@@ -118,6 +119,22 @@ describe('agent authoring API', () => {
     expect(report.nudges.length).toBeGreaterThan(0);
     expect(report.polish?.score.overall).toBeLessThan(100);
     expect(report.polish?.diagnostics.map(diagnostic => diagnostic.id)).toContain('missing-intent');
+    expect(report.heuristics?.bounds.map(bounds => bounds.id)).toContain('headline');
+  });
+
+  it('surfaces an operation catalog for agent tool planners', () => {
+    const catalog = getAgentOperationCatalog();
+
+    expect(catalog.map(operation => operation.name)).toContain('suggestSemanticLayoutNudges');
+    expect(catalog.map(operation => operation.name)).toContain('inspectPolishHeuristics');
+    expect(catalog.find(operation => operation.name === 'suggestSemanticLayoutNudges')).toMatchObject({
+      kind: 'layout',
+      async: true,
+    });
+    expect(catalog.find(operation => operation.name === 'applyAgentCommands')).toMatchObject({
+      kind: 'author',
+      async: false,
+    });
   });
 
   it('throws when timelines target missing elements', () => {

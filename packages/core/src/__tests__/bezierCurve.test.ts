@@ -25,4 +25,15 @@ describe('BezierCurve', () => {
     expect(props.cx2).toBe(70);
     expect(props.cy2).toBe(80);
   });
+
+  it('accepts line styling and caps', () => {
+    const props: BezierCurveProps = {
+      x1: 0, y1: 0, cx1: 40, cy1: 0, cx2: 60, cy2: 100, x2: 100, y2: 100,
+      lineStyle: 'dashed',
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      endCap: 'arrow',
+    };
+    expect(props.endCap).toBe('arrow');
+  });
 });

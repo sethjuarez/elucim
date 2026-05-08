@@ -29,6 +29,11 @@ export interface BezierCurveProps extends AnimationProps, SpatialProps, BaseElem
   opacity?: number;
   /** SVG stroke-dasharray for dashed curves, e.g. "6 3" */
   strokeDasharray?: string;
+  lineStyle?: 'solid' | 'dashed' | 'dotted';
+  strokeLinecap?: 'butt' | 'round' | 'square';
+  strokeLinejoin?: 'miter' | 'round' | 'bevel';
+  startCap?: 'none' | 'arrow' | 'dot';
+  endCap?: 'none' | 'arrow' | 'dot';
 }
 
 /**
@@ -100,6 +105,11 @@ export function BezierCurve({
   fill = 'none',
   opacity: baseOpacity = 1,
   strokeDasharray: userDasharray,
+  lineStyle = 'solid',
+  strokeLinecap = 'round',
+  strokeLinejoin = 'round',
+  startCap = 'none',
+  endCap = 'none',
   fadeIn,
   fadeOut,
   draw,
@@ -122,24 +132,48 @@ export function BezierCurve({
     : `M ${x1} ${y1} Q ${cx1} ${cy1}, ${x2} ${y2}`;
 
   // draw animation dasharray takes precedence; otherwise use user-provided
-  const dasharray = anim.strokeDasharray ?? userDasharray;
+  const styleDasharray = lineStyle === 'dashed' ? '8 6' : lineStyle === 'dotted' ? '1 6' : undefined;
+  const dasharray = anim.strokeDasharray ?? userDasharray ?? styleDasharray;
 
   const centerX = (x1 + x2) / 2;
   const centerY = (y1 + y2) / 2;
   const controlX2 = cx2 ?? cx1;
   const controlY2 = cy2 ?? cy1;
 
+  const finalOpacity = baseOpacity * anim.opacity;
+  const capRadius = Math.max(2, strokeWidth * 1.7);
+  const startTangent = isCubic ? { x: cx1 - x1, y: cy1 - y1 } : { x: cx1 - x1, y: cy1 - y1 };
+  const startAngle = Math.atan2(startTangent.y, startTangent.x) + Math.PI;
+  const endTangent = isCubic ? { x: x2 - cx2!, y: y2 - cy2! } : { x: x2 - cx1, y: y2 - cy1 };
+  const endAngle = Math.atan2(endTangent.y, endTangent.x);
+  const headSize = Math.max(8, strokeWidth * 4);
+  const headAngle = Math.PI / 6;
+  const s1x = x1 - headSize * Math.cos(startAngle - headAngle);
+  const s1y = y1 - headSize * Math.sin(startAngle - headAngle);
+  const s2x = x1 - headSize * Math.cos(startAngle + headAngle);
+  const s2y = y1 - headSize * Math.sin(startAngle + headAngle);
+  const p1x = x2 - headSize * Math.cos(endAngle - headAngle);
+  const p1y = y2 - headSize * Math.sin(endAngle - headAngle);
+  const p2x = x2 - headSize * Math.cos(endAngle + headAngle);
+  const p2y = y2 - headSize * Math.sin(endAngle + headAngle);
+
   const el = (
-    <path
-      d={d}
-      stroke={stroke}
-      strokeWidth={strokeWidth}
-      fill={fill}
-      opacity={baseOpacity * anim.opacity}
-      strokeDasharray={dasharray}
-      strokeDashoffset={anim.strokeDashoffset}
-      data-testid="elucim-bezier-curve"
-    />
+    <g data-testid="elucim-bezier-curve" opacity={finalOpacity}>
+      <path
+        d={d}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        fill={fill}
+        strokeDasharray={dasharray}
+        strokeDashoffset={anim.strokeDashoffset}
+        strokeLinecap={strokeLinecap}
+        strokeLinejoin={strokeLinejoin}
+      />
+      {startCap === 'dot' && <circle cx={x1} cy={y1} r={capRadius} fill={stroke} />}
+      {endCap === 'dot' && <circle cx={x2} cy={y2} r={capRadius} fill={stroke} />}
+      {startCap === 'arrow' && <polygon points={`${x1},${y1} ${s1x},${s1y} ${s2x},${s2y}`} fill={stroke} />}
+      {endCap === 'arrow' && <polygon points={`${x2},${y2} ${p1x},${p1y} ${p2x},${p2y}`} fill={stroke} />}
+    </g>
   );
 
   return withTransform(

@@ -38,6 +38,11 @@ export interface ElucimV2Intent {
   role?: string;
   description?: string;
   importance?: 'primary' | 'secondary' | 'supporting' | 'decorative';
+  target?: string;
+  flowFrom?: string[];
+  flowTo?: string[];
+  relationship?: string;
+  group?: string;
   generated?: boolean;
   polishLevel?: 'draft' | 'refined' | 'final';
   hints?: string[];
@@ -54,6 +59,8 @@ export interface ElucimV2Layout {
   translate?: [number, number];
   zIndex?: number;
   role?: string;
+  rank?: number;
+  locked?: boolean;
 }
 
 export interface ElucimV2Element {

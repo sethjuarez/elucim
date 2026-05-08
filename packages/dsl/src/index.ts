@@ -97,17 +97,37 @@ export {
   analyzePolish,
   collectElementBounds,
   createCalloutCardPreset,
+  getSmoothConnectorCandidates,
+  inspectPolishHeuristics,
   layoutGraphLayered,
   type ElucimCalloutCardPresetSpec,
+  type ElucimColorHeuristic,
+  type ElucimConnectorContinuationHeuristic,
+  type ElucimElementIntersection,
   type ElucimPresetElement,
   type ElucimPolishCategory,
   type ElucimPolishDiagnostic,
+  type ElucimPolishHeuristicReport,
   type ElucimPolishReport,
   type ElucimPolishScore,
   type ElucimPolishSeverity,
+  type ElucimGraphEdgeCrossing,
   type ElucimGraphEdgeLayout,
+  type ElucimGraphHeuristic,
   type ElucimGraphNodeLayout,
+  type ElucimGraphNodeOverlap,
+  type ElucimOffCanvasHeuristic,
+  type ElucimSemanticRelationshipHeuristic,
+  type ElucimTextHeuristic,
 } from './v2/polish';
+export {
+  applySemanticLayoutNudge,
+  planSemanticLayout,
+  suggestSemanticLayoutNudges,
+  type ElucimSemanticLayoutDirection,
+  type ElucimSemanticLayoutOptions,
+  type ElucimSemanticLayoutPlan,
+} from './v2/semanticLayout';
 
 // Math expression evaluator
 export {

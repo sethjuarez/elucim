@@ -159,8 +159,8 @@ Every node has a `"type"` field. The full set of supported types:
 | Type | Description |
 |------|-------------|
 | `circle` | SVG circle (`cx`, `cy`, `r`, `fill`, `stroke`) |
-| `line` | SVG line (`x1`, `y1`, `x2`, `y2`) |
-| `arrow` | Line with arrowhead (`x1`, `y1`, `x2`, `y2`, `headSize`) |
+| `line` | SVG line or straight connector (`x1`, `y1`, `x2`, `y2`, `lineStyle`, `startCap`, `endCap`) |
+| `bezierCurve` | Smooth connector/path (`x1`, `y1`, `cx1`, `cy1`, `cx2`, `cy2`, `x2`, `y2`, `startCap`, `endCap`) |
 | `rect` | Rectangle (`x`, `y`, `width`, `height`, `rx`, `ry`) |
 | `polygon` | Polygon from a `points` array |
 | `text` | Text label (`x`, `y`, `content`, `fontSize`) |

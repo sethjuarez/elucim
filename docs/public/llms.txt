@@ -21,8 +21,8 @@ Elucim is frame-based. A `Player` defines `fps` and `durationInFrames`, wrapping
 ### Primitives
 - `Circle`: SVG circle. Props: `cx`, `cy`, `r`, `stroke`, `fill`, `strokeWidth`, `fadeIn`, `draw`
 - `Rect`: Rectangle. Props: `x`, `y`, `width`, `height`, `rx`, `stroke`, `fill`
-- `Line`: Line segment. Props: `x1`, `y1`, `x2`, `y2`, `stroke`, `strokeWidth`
-- `Arrow`: Line with arrowhead. Props: `x1`, `y1`, `x2`, `y2`, `headSize`, `stroke`
+- `Line`: Line segment or straight connector. Props: `x1`, `y1`, `x2`, `y2`, `stroke`, `strokeWidth`, `lineStyle`, `startCap`, `endCap`
+- `BezierCurve`: Smooth connector/path. Props: `x1`, `y1`, `cx1`, `cy1`, `cx2`, `cy2`, `x2`, `y2`, `stroke`, `strokeWidth`, `lineStyle`, `startCap`, `endCap`
 - `Text`: SVG text. Props: `x`, `y`, `fill`, `fontSize`, `textAnchor`, `fontWeight`
 - `Polygon`: Arbitrary polygon. Props: `points` (array of [x,y])
 
@@ -89,12 +89,17 @@ When generating Elucim diagrams, use the normalized `ElucimDocument` shape and r
 
 - Use `evaluateSceneForAgent(doc)` from `@elucim/dsl/agent`; inspect `report.polish` for category scores and diagnostics.
 - Use `analyzePolish(doc)` from `@elucim/dsl` for direct polish analysis.
+- Use `inspectPolishHeuristics(doc)` when you need the raw evidence behind the score: bounds, intersections, off-canvas overflow, text sizing, colors, graph crossings/overlaps, connector continuations, and semantic relationships.
 - Use `suggestDocumentNudges(doc)` and `applyNudge(doc, nudge)` to make command-backed, previewable fixes.
 - Apply `nudge.confidence === "safe"` nudges automatically. Treat `review` nudges as user/editor-review changes, especially graph layout.
 - Use semantic roles and intent: `role: "title"`, `role: "callout"`, `intent.importance: "primary" | "secondary" | "supporting"`.
+- Add explicit layout relationships when possible: `intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, `intent.group`, plus `layout.rank` and `layout.locked`.
 - Use semantic color tokens (`$title`, `$surface`, `$primary`, `$muted`) instead of many literal colors.
 - For graph diagrams, provide stable node IDs and edges; the layered graph nudge can rewrite node `x`/`y` coordinates while preserving editability.
 - Prefer helper presets such as `createCalloutCardPreset()` for explanatory callouts instead of assembling raw rectangles and text from scratch.
+- For broader explanatory layouts, call `await suggestSemanticLayoutNudges(doc)` from `@elucim/dsl` and surface the returned ELK-backed `review` nudge instead of applying it silently.
+- Surface the `smooth-connector-continuations` review nudge when straight connectors should read as smoother directional Bezier continuations.
+- Hosts can call `getAgentOperationCatalog()` from `@elucim/dsl/agent` to pass agents the concrete authoring, validation, inspection, polish, and layout operations available in code.
 
 ### Builder API
 

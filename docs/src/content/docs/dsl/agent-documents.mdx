@@ -214,3 +214,7 @@ const polish = analyzePolish(polished);
 
 Polish analysis returns category scores and diagnostics for layout, hierarchy, readability, contrast, graph readability, explanatory structure, and motion. Current nudges cover safe metadata/readability/title hierarchy polish, a reviewable timeline-based intro clip, and reviewable layered graph layout for graph elements. This gives agents a simple workflow: generate the 80% layout, ask Elucim for refinements, apply safe command-backed nudges, and explain review nudges that should be confirmed by a human or opened in the editor.
 
+For broader explanatory scenes, agents should author explicit semantic relationships such as `intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, and `layout.rank`. Hosts can then call `suggestSemanticLayoutNudges(doc)` to get an ELK-backed review nudge that arranges ordinary elements from those relationships and writes the result back as normal document coordinates. Use `layout.locked: true` for elements that should not move. Agents can call `inspectPolishHeuristics(doc)` to interrogate the raw layout and quality evidence, including element intersections, graph crossings, literal colors, text sizing, overflow, connector continuations, and semantic relationships.
+
+Hosts that expose Elucim tools to agents can call `getAgentOperationCatalog()` from `@elucim/dsl/agent` and pass those operation descriptors alongside the document so the agent can plan against the real code-backed ops instead of prose-only instructions.
+

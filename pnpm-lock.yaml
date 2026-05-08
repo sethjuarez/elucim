@@ -188,6 +188,9 @@ importers:
 
   packages/dsl:
     dependencies:
+      elkjs:
+        specifier: ^0.11.1
+        version: 0.11.1
       js-yaml:
         specifier: ^4.1.1
         version: 4.1.1
@@ -2190,6 +2193,9 @@ packages:
 
   electron-to-chromium@1.5.302:
     resolution: {integrity: sha512-sM6HAN2LyK82IyPBpznDRqlTQAtuSaO+ShzFiWTvoMJLHyZ+Y39r8VMfHzwbU8MVBzQ4Wdn85+wlZl2TLGIlwg==}
+
+  elkjs@0.11.1:
+    resolution: {integrity: sha512-zxxR9k+rx5ktMwT/FwyLdPCrq7xN6e4VGGHH8hA01vVYKjTFik7nHOxBnAYtrgYUB1RpAiLvA1/U2YraWxyKKg==}
 
   emoji-regex@10.6.0:
     resolution: {integrity: sha512-toUI84YS5YmxW219erniWD0CIVOo46xGKColeNQRgOzDorgBi1v4D71/OFzgD9GO2UGKIv1C3Sp8DAn0+j5w7A==}
@@ -5407,6 +5413,8 @@ snapshots:
   dset@3.1.4: {}
 
   electron-to-chromium@1.5.302: {}
+
+  elkjs@0.11.1: {}
 
   emoji-regex@10.6.0: {}
 

@@ -12,7 +12,13 @@ import type {
 import type { ElucimDocument } from './index';
 import { applyCommand, type ElucimV2Command, type ElucimV2CommandResult } from './v2/commands';
 import { applyNudge, suggestDocumentNudges, type ElucimDocumentNudge } from './v2/nudges';
-import { analyzePolish, type ElucimPolishReport } from './v2/polish';
+import { inspectPolishHeuristics, type ElucimPolishHeuristicReport, type ElucimPolishReport } from './v2/polish';
+import {
+  planSemanticLayout,
+  suggestSemanticLayoutNudges,
+  type ElucimSemanticLayoutOptions,
+  type ElucimSemanticLayoutPlan,
+} from './v2/semanticLayout';
 import { applyTimelineFrame } from './v2/timeline';
 import {
   diffDocuments,
@@ -33,6 +39,29 @@ export type AgentLayout = NonNullable<AgentDocument['elements'][string]['layout'
 export type AgentAnimatableProperty = ElucimV2AnimatableProperty;
 export type AgentKeyframe = ElucimV2Keyframe;
 export type AgentNudge = ElucimDocumentNudge;
+
+export type AgentOperationKind = 'author' | 'validate' | 'inspect' | 'polish' | 'layout';
+
+export interface AgentOperationDescriptor {
+  name: string;
+  kind: AgentOperationKind;
+  async: boolean;
+  description: string;
+}
+
+const AGENT_OPERATION_CATALOG: readonly AgentOperationDescriptor[] = [
+  { name: 'createDocument', kind: 'author', async: false, description: 'Create an empty normalized ElucimDocument with scene metadata and defaults.' },
+  { name: 'addElement', kind: 'author', async: false, description: 'Add a stable-ID element with props, layout, role, and semantic intent.' },
+  { name: 'updateElement', kind: 'author', async: false, description: 'Patch element props, layout, role, intent, parent, or children without mutating the document.' },
+  { name: 'applyAgentCommands', kind: 'author', async: false, description: 'Apply a batch of high-level authoring commands and return summaries plus validation.' },
+  { name: 'validateForAgent', kind: 'validate', async: false, description: 'Validate document structure and references with agent-readable errors and warnings.' },
+  { name: 'evaluateSceneForAgent', kind: 'inspect', async: false, description: 'Return quality issues, polish diagnostics, summaries, and available deterministic nudges.' },
+  { name: 'inspectSceneForAgent', kind: 'inspect', async: false, description: 'Sample rendered frames for visibility, occupancy, off-canvas, contrast, and animation issues.' },
+  { name: 'inspectPolishHeuristics', kind: 'inspect', async: false, description: 'Return raw polish evidence: bounds, intersections, off-canvas overflow, text, colors, graph details, and semantic relationships.' },
+  { name: 'suggestDocumentNudges', kind: 'polish', async: false, description: 'Return command-backed safe and review polish nudges for metadata, motion, readability, and graph layout.' },
+  { name: 'suggestSemanticLayoutNudges', kind: 'layout', async: true, description: 'Use ELK to produce review-only layout nudges from semantic relationships and connector hints.' },
+  { name: 'applyNudge', kind: 'polish', async: false, description: 'Apply a selected command-backed nudge and return the updated editable document.' },
+] as const;
 
 export interface AgentElementPatch {
   type?: string;
@@ -164,6 +193,7 @@ export interface AgentQualityReport {
   summary?: AgentDocumentSummary;
   nudges: ElucimDocumentNudge[];
   polish?: ElucimPolishReport;
+  heuristics?: ElucimPolishHeuristicReport;
 }
 
 export interface AgentTimelineTrackBounds {
@@ -278,11 +308,21 @@ export interface AgentSceneInspectionReport {
 export {
   applyNudge,
   diffDocuments,
+  planSemanticLayout,
+  inspectPolishHeuristics,
   suggestDocumentNudges,
+  suggestSemanticLayoutNudges,
   summarizeDocument,
   validateForAgent,
+  type ElucimPolishHeuristicReport,
+  type ElucimSemanticLayoutOptions,
+  type ElucimSemanticLayoutPlan,
   type JsonPatchOperation,
 };
+
+export function getAgentOperationCatalog(): readonly AgentOperationDescriptor[] {
+  return AGENT_OPERATION_CATALOG;
+}
 
 export function createDocument(spec: AgentSceneSpec = {}): AgentDocument {
   return {
@@ -554,13 +594,15 @@ export function evaluateSceneForAgent(doc: AgentDocument): AgentQualityReport {
   const errorPenalty = issues.filter(issue => issue.severity === 'error').length * 25;
   const warningPenalty = issues.filter(issue => issue.severity === 'warning').length * 12;
   const infoPenalty = issues.filter(issue => issue.severity === 'info').length * 5;
+  const heuristics = validation.valid ? inspectPolishHeuristics(doc) : undefined;
   return {
     valid: validation.valid,
     score: Math.max(0, 100 - errorPenalty - warningPenalty - infoPenalty),
     issues,
     validation,
     summary: validation.valid ? summarizeDocument(doc) : undefined,
-    polish: validation.valid ? analyzePolish(doc) : undefined,
+    polish: heuristics ? { score: heuristics.score, diagnostics: heuristics.diagnostics } : undefined,
+    heuristics,
     nudges: validation.valid ? suggestDocumentNudges(doc) : [],
   };
 }

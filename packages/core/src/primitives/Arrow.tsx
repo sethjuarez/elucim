@@ -2,6 +2,7 @@ import React from 'react';
 import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
+/** @deprecated Use Line or BezierCurve with startCap/endCap instead. */
 export interface ArrowProps extends AnimationProps, SpatialProps, BaseElementProps {
   x1: number;
   y1: number;
@@ -13,8 +14,11 @@ export interface ArrowProps extends AnimationProps, SpatialProps, BaseElementPro
   opacity?: number;
   /** SVG stroke-dasharray for dashed arrows, e.g. "6 3" */
   strokeDasharray?: string;
+  lineStyle?: 'solid' | 'dashed' | 'dotted';
+  strokeLinecap?: 'butt' | 'round' | 'square';
 }
 
+/** @deprecated Use Line or BezierCurve with startCap/endCap instead. */
 export function Arrow({
   x1,
   y1,
@@ -25,6 +29,8 @@ export function Arrow({
   headSize = 10,
   opacity: baseOpacity = 1,
   strokeDasharray: userDasharray,
+  lineStyle = 'solid',
+  strokeLinecap = lineStyle === 'dotted' ? 'round' : 'butt',
   fadeIn,
   fadeOut,
   draw,
@@ -54,7 +60,8 @@ export function Arrow({
   const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, lineLength);
 
   const finalOpacity = baseOpacity * anim.opacity;
-  const dasharray = anim.strokeDasharray ?? userDasharray;
+  const styleDasharray = lineStyle === 'dashed' ? '8 6' : lineStyle === 'dotted' ? '1 6' : undefined;
+  const dasharray = anim.strokeDasharray ?? userDasharray ?? styleDasharray;
 
   const el = (
     <g data-testid="elucim-arrow" opacity={finalOpacity}>
@@ -68,6 +75,7 @@ export function Arrow({
           strokeWidth={strokeWidth}
           strokeDasharray={dasharray}
           strokeDashoffset={anim.strokeDashoffset}
+          strokeLinecap={strokeLinecap}
         />
       )}
       <polygon

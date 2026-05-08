@@ -2,7 +2,7 @@ import type { ElucimV2Command } from './commands';
 import { applyCommand } from './commands';
 import { getDocumentLinearDuration } from './duration';
 import type { ElucimV2Document } from './types';
-import { analyzePolish, graphNeedsLayout, layoutGraphElementLayered, POLISH_MIN_TEXT_SIZE, POLISH_TARGET_TITLE_SIZE, type ElucimPolishCategory } from './polish';
+import { analyzePolish, getSmoothConnectorCandidates, graphNeedsLayout, layoutGraphElementLayered, POLISH_MIN_TEXT_SIZE, POLISH_TARGET_TITLE_SIZE, type ElucimPolishCategory } from './polish';
 
 export interface ElucimDocumentNudge {
   id: string;
@@ -66,6 +66,33 @@ export function suggestDocumentNudges(doc: ElucimV2Document): ElucimDocumentNudg
       confidence: 'review',
       category: 'graph',
       commands: [{ op: 'updateElement', id: element.id, patch: { props: { nodes: nextNodes } } }],
+    });
+  }
+  const smoothConnectorCommands = getSmoothConnectorCandidates(doc).map(candidate => {
+    const element = doc.elements[candidate.id];
+    const { lineStyle, ...curve } = candidate.suggestedCurve;
+    return {
+      op: 'updateElement' as const,
+      id: candidate.id,
+      patch: {
+        type: 'bezierCurve',
+        props: {
+          ...element.props,
+          type: 'bezierCurve',
+          ...curve,
+          ...(lineStyle ? { lineStyle } : {}),
+        },
+      },
+    };
+  });
+  if (smoothConnectorCommands.length > 0) {
+    nudges.push({
+      id: 'smooth-connector-continuations',
+      title: 'Smooth connector continuations',
+      description: 'Convert straight line and arrow connectors into editable Bezier curves with rounded caps so flow direction reads more smoothly.',
+      confidence: 'review',
+      category: 'layout',
+      commands: smoothConnectorCommands,
     });
   }
 

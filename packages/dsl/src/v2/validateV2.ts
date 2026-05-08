@@ -90,6 +90,41 @@ function validateElement(id: string, element: ElucimV2Element, errors: Validatio
   if (element.children !== undefined && !Array.isArray(element.children)) {
     errors.push({ path: `${path}.children`, message: 'Element children must be an array of element IDs', severity: 'error' });
   }
+  validateIntent(element, path, errors);
+  validateLayout(element, path, errors);
+}
+
+function validateIntent(element: ElucimV2Element, path: string, errors: ValidationError[]) {
+  if (element.intent === undefined) return;
+  if (!element.intent || typeof element.intent !== 'object' || Array.isArray(element.intent)) {
+    errors.push({ path: `${path}.intent`, message: 'Element intent must be an object', severity: 'error' });
+    return;
+  }
+  if (element.intent.target !== undefined && typeof element.intent.target !== 'string') {
+    errors.push({ path: `${path}.intent.target`, message: 'intent.target must be an element ID string', severity: 'error' });
+  }
+  validateStringArray(element.intent.flowFrom, `${path}.intent.flowFrom`, errors);
+  validateStringArray(element.intent.flowTo, `${path}.intent.flowTo`, errors);
+  if (element.intent.relationship !== undefined && typeof element.intent.relationship !== 'string') {
+    errors.push({ path: `${path}.intent.relationship`, message: 'intent.relationship must be a string', severity: 'error' });
+  }
+  if (element.intent.group !== undefined && typeof element.intent.group !== 'string') {
+    errors.push({ path: `${path}.intent.group`, message: 'intent.group must be a string', severity: 'error' });
+  }
+}
+
+function validateLayout(element: ElucimV2Element, path: string, errors: ValidationError[]) {
+  if (element.layout === undefined) return;
+  if (!element.layout || typeof element.layout !== 'object' || Array.isArray(element.layout)) {
+    errors.push({ path: `${path}.layout`, message: 'Element layout must be an object', severity: 'error' });
+    return;
+  }
+  if (element.layout.rank !== undefined && !Number.isFinite(element.layout.rank)) {
+    errors.push({ path: `${path}.layout.rank`, message: 'layout.rank must be a finite number', severity: 'error' });
+  }
+  if (element.layout.locked !== undefined && typeof element.layout.locked !== 'boolean') {
+    errors.push({ path: `${path}.layout.locked`, message: 'layout.locked must be a boolean', severity: 'error' });
+  }
 }
 
 function validateReferences(doc: ElucimV2Document, errors: ValidationError[]) {
@@ -104,6 +139,25 @@ function validateReferences(doc: ElucimV2Document, errors: ValidationError[]) {
     if (element.parentId && !ids.has(element.parentId)) {
       errors.push({ path: `elements.${id}.parentId`, message: `Unknown parent ID "${element.parentId}"`, severity: 'error' });
     }
+    if (element.intent?.target && !ids.has(element.intent.target)) {
+      errors.push({ path: `elements.${id}.intent.target`, message: `Unknown intent target "${element.intent.target}"`, severity: 'error' });
+    } else if (element.intent?.target === id) {
+      errors.push({ path: `elements.${id}.intent.target`, message: 'Element cannot target itself', severity: 'error' });
+    }
+    element.intent?.flowFrom?.forEach((sourceId, index) => {
+      if (!ids.has(sourceId)) {
+        errors.push({ path: `elements.${id}.intent.flowFrom[${index}]`, message: `Unknown flow source "${sourceId}"`, severity: 'error' });
+      } else if (sourceId === id) {
+        errors.push({ path: `elements.${id}.intent.flowFrom[${index}]`, message: 'Element cannot flow from itself', severity: 'error' });
+      }
+    });
+    element.intent?.flowTo?.forEach((targetId, index) => {
+      if (!ids.has(targetId)) {
+        errors.push({ path: `elements.${id}.intent.flowTo[${index}]`, message: `Unknown flow target "${targetId}"`, severity: 'error' });
+      } else if (targetId === id) {
+        errors.push({ path: `elements.${id}.intent.flowTo[${index}]`, message: 'Element cannot flow to itself', severity: 'error' });
+      }
+    });
     element.children?.forEach((childId, index) => {
       if (!ids.has(childId)) {
         errors.push({ path: `elements.${id}.children[${index}]`, message: `Unknown child ID "${childId}"`, severity: 'error' });
@@ -112,6 +166,20 @@ function validateReferences(doc: ElucimV2Document, errors: ValidationError[]) {
       }
     });
   }
+}
+
+function validateStringArray(value: unknown, path: string, errors: ValidationError[]) {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    const pathParts = path.split('.');
+    errors.push({ path, message: `${pathParts[pathParts.length - 1]} must be an array of element ID strings`, severity: 'error' });
+    return;
+  }
+  value.forEach((entry, index) => {
+    if (typeof entry !== 'string') {
+      errors.push({ path: `${path}[${index}]`, message: 'Expected an element ID string', severity: 'error' });
+    }
+  });
 }
 
 function validateTimelines(doc: ElucimV2Document, errors: ValidationError[]) {

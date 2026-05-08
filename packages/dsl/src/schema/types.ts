@@ -109,6 +109,11 @@ export interface BezierCurveNode {
   strokeWidth?: number;
   fill?: string;
   strokeDasharray?: string;
+  lineStyle?: 'solid' | 'dashed' | 'dotted';
+  strokeLinecap?: 'butt' | 'round' | 'square';
+  strokeLinejoin?: 'miter' | 'round' | 'bevel';
+  startCap?: 'none' | 'arrow' | 'dot';
+  endCap?: 'none' | 'arrow' | 'dot';
   opacity?: number;
   fadeIn?: number;
   fadeOut?: number;
@@ -152,6 +157,10 @@ export interface LineNode {
   stroke?: string;
   strokeWidth?: number;
   strokeDasharray?: string;
+  lineStyle?: 'solid' | 'dashed' | 'dotted';
+  strokeLinecap?: 'butt' | 'round' | 'square';
+  startCap?: 'none' | 'arrow' | 'dot';
+  endCap?: 'none' | 'arrow' | 'dot';
   opacity?: number;
   fadeIn?: number;
   fadeOut?: number;
@@ -164,6 +173,7 @@ export interface LineNode {
   zIndex?: number;
 }
 
+/** @deprecated Use `line` or `bezierCurve` with `startCap`/`endCap` instead. */
 export interface ArrowNode {
   type: 'arrow';
   id?: string;
@@ -175,6 +185,8 @@ export interface ArrowNode {
   strokeWidth?: number;
   headSize?: number;
   strokeDasharray?: string;
+  lineStyle?: 'solid' | 'dashed' | 'dotted';
+  strokeLinecap?: 'butt' | 'round' | 'square';
   opacity?: number;
   fadeIn?: number;
   fadeOut?: number;

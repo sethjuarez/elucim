@@ -181,6 +181,11 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
           fill={resolveColor(node.fill)}
           strokeDasharray={node.strokeDasharray}
+          lineStyle={node.lineStyle}
+          strokeLinecap={node.strokeLinecap}
+          strokeLinejoin={node.strokeLinejoin}
+          startCap={node.startCap}
+          endCap={node.endCap}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
@@ -208,6 +213,10 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2}
           stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
           strokeDasharray={node.strokeDasharray}
+          lineStyle={node.lineStyle}
+          strokeLinecap={node.strokeLinecap}
+          startCap={node.startCap}
+          endCap={node.endCap}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}
@@ -222,6 +231,8 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2}
           stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth} headSize={node.headSize}
           strokeDasharray={node.strokeDasharray}
+          lineStyle={node.lineStyle}
+          strokeLinecap={node.strokeLinecap}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
           easing={resolveEasing(node.easing)}

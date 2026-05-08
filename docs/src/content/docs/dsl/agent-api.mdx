@@ -25,6 +25,7 @@ Rules:
 - Check that motion actually changes with `sampleAnimationForAgent()`.
 - Check that the scene is visible and readable with `inspectSceneForAgent()`.
 - Check polish with `evaluateSceneForAgent().polish` or `analyzePolish()`.
+- Add explicit relationship metadata (`target`, `flowFrom`, `flowTo`, `relationship`, `group`, `rank`) when element placement should communicate a flow or explanation.
 - Apply `safe` nudges automatically; treat `review` nudges as human/editor-review changes.
 - Return the final JSON/YAML document plus any validation or inspection warnings you could not fix.
 ```
@@ -46,8 +47,10 @@ import {
   createStateMachine,
   diffDocuments,
   evaluateSceneForAgent,
+  getAgentOperationCatalog,
   getElementOrder,
   getTimelineBounds,
+  inspectPolishHeuristics,
   inspectSceneForAgent,
   repairDocumentForAgent,
   reorderElement,
@@ -63,6 +66,7 @@ import {
 import {
   analyzePolish,
   createCalloutCardPreset,
+  suggestSemanticLayoutNudges,
 } from '@elucim/dsl';
 ```
 
@@ -152,9 +156,11 @@ doc = repairDocumentForAgent(doc).document;
 
 const validation = validateForAgent(doc);
 const quality = evaluateSceneForAgent(doc);
+const heuristics = inspectPolishHeuristics(doc);
 const inspection = inspectSceneForAgent(doc, { timelineId: 'intro' });
 const safeNudges = quality.nudges.filter(nudge => nudge.confidence === 'safe');
 doc = safeNudges.reduce((current, nudge) => applyNudge(current, nudge).document, doc);
+const semanticLayoutNudges = await suggestSemanticLayoutNudges(doc);
 ```
 
 ## Helper categories
@@ -166,8 +172,10 @@ doc = safeNudges.reduce((current, nudge) => applyNudge(current, nudge).document,
 | Timelines | `addTimeline`, `addRevealTimeline`, `getTimelineBounds`, `sampleAnimationForAgent` | Create explicit keyframe clips and prove they change properties. |
 | State machines | `createStateMachine`, `createLoopingStateMachine` | Wire timelines into runtime playback. |
 | Validation | `validateForAgent`, `repairDocumentForAgent` | Return structured errors, hints, conservative repairs, summaries, validation, and diffs. |
-| Quality | `evaluateSceneForAgent`, `inspectSceneForAgent`, `analyzePolish` | Catch missing metadata, missing motion, blank frames, tiny scenes, off-canvas elements, zero-size elements, low contrast, graph readability issues, weak hierarchy, and static timelines. |
+| Quality | `evaluateSceneForAgent`, `inspectSceneForAgent`, `analyzePolish`, `inspectPolishHeuristics` | Catch missing metadata, missing motion, blank frames, tiny scenes, off-canvas elements, zero-size elements, low contrast, graph readability issues, weak hierarchy, and static timelines. `inspectPolishHeuristics` exposes the raw evidence behind the score: bounds, intersections, overflow, text, colors, graph details, connector continuations, and semantic relationships. |
 | Review | `summarizeDocument`, `diffDocuments`, `suggestDocumentNudges`, `applyNudge` | Give hosts/humans compact context, JSON-patch-shaped diffs, and deterministic polish options. |
+| Semantic layout | `suggestSemanticLayoutNudges` | Use ELK as a review-only layout solver for explicit agent-authored relationships between ordinary elements. |
+| Operation catalog | `getAgentOperationCatalog` | Return the authoring, validation, inspection, polish, and layout operations a host can pass to an agent/tool planner. |
 | Presets | `createCalloutCardPreset` | Start from semantic, theme-tokenized explanatory building blocks instead of raw shapes. |
 
 ## Command surface
@@ -278,6 +286,55 @@ const calloutElements = createCalloutCardPreset({
 ```
 
 Use semantic roles and intent (`role: "title"`, `role: "callout"`, `intent.importance: "primary" | "secondary" | "supporting"`) plus theme tokens (`$title`, `$surface`, `$primary`, `$muted`) so polish can preserve meaning while improving presentation.
+
+### Semantic ELK layout
+
+For diagrams that are not `graph` primitives, agents should author semantic relationships and ask Elucim for an ELK-backed review nudge:
+
+```ts
+const doc = {
+  version: '2.0',
+  scene: { type: 'player', children: ['request', 'cache-check', 'database', 'cache-note'] },
+  elements: {
+    request: {
+      id: 'request',
+      type: 'rect',
+      role: 'step',
+      intent: { role: 'step', importance: 'primary', flowTo: ['cache-check'] },
+      layout: { x: 100, y: 200, width: 180, height: 80, rank: 1 },
+      props: { x: 100, y: 200, width: 180, height: 80, fill: '$surface' },
+    },
+    'cache-check': {
+      id: 'cache-check',
+      type: 'rect',
+      role: 'decision',
+      intent: { role: 'decision', importance: 'primary', flowFrom: ['request'], flowTo: ['database'] },
+      layout: { x: 320, y: 200, width: 200, height: 90, rank: 2 },
+      props: { x: 320, y: 200, width: 200, height: 90, fill: '$surface' },
+    },
+    database: {
+      id: 'database',
+      type: 'rect',
+      role: 'step',
+      intent: { role: 'step', importance: 'supporting', flowFrom: ['cache-check'] },
+      layout: { x: 580, y: 200, width: 180, height: 80, rank: 3 },
+      props: { x: 580, y: 200, width: 180, height: 80, fill: '$surface' },
+    },
+    'cache-note': {
+      id: 'cache-note',
+      type: 'text',
+      role: 'callout',
+      intent: { role: 'callout', target: 'cache-check', relationship: 'explains' },
+      layout: { x: 320, y: 340, width: 260, height: 44 },
+      props: { x: 320, y: 340, content: 'A hit avoids database work', fontSize: 18, fill: '$muted' },
+    },
+  },
+};
+
+const [nudge] = await suggestSemanticLayoutNudges(doc);
+```
+
+The semantic layout adapter builds a virtual graph from `target`, `flowFrom`, `flowTo`, `layout.rank`, and unambiguous line/curve connectors, runs ELK, then returns normal `updateElement` commands. `layout.locked: true` prevents an element from being moved by the returned commands.
 
 ## Repair policy
 

@@ -59,7 +59,7 @@ For math primitives like `<Axes>`, you specify an `origin` point that becomes th
 Normalized Elucim documents have three layers of composition:
 
 ### 1. Primitives
-The visual elements: `circle`, `line`, `arrow`, `rect`, `text`, `polygon`, `axes`, `functionPlot`, `vector`, `vectorField`, `matrix`, `graph`, `latex`, `barChart`.
+The visual elements: `circle`, `line`, `bezierCurve`, `rect`, `text`, `polygon`, `axes`, `functionPlot`, `vector`, `vectorField`, `matrix`, `graph`, `latex`, `barChart`.
 
 Elements are stored by stable ID in `elements`. Layout metadata such as `rotation`, `scale`, and `translate` lives in each element's `layout` object, while render-specific settings live in `props`. Sibling order in `scene.children` and group `children` arrays controls stacking.
 
