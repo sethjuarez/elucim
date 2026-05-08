@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.17.0](https://github.com/sethjuarez/elucim/compare/editor-v0.16.0...editor-v0.17.0) (2026-05-08)
+
+
+### Features
+
+* add deterministic diagram polish ([c397402](https://github.com/sethjuarez/elucim/commit/c397402a0e037a301a76cf98a7b63e77429a652a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.17.0
+    * @elucim/dsl bumped to 0.17.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.17.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.17.0
+
 ## [0.16.0](https://github.com/sethjuarez/elucim/compare/editor-v0.15.0...editor-v0.16.0) (2026-05-08)
 
 
