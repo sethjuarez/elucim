@@ -14,6 +14,16 @@ import { applyCommand, type ElucimV2Command, type ElucimV2CommandResult } from '
 import { applyNudge, suggestDocumentNudges, type ElucimDocumentNudge } from './v2/nudges';
 import { inspectPolishHeuristics, type ElucimPolishHeuristicReport, type ElucimPolishReport } from './v2/polish';
 import {
+  createCardGridPreset,
+  createConnectorPreset,
+  createStepCardPreset,
+  createTextBlockPreset,
+  type ElucimCardGridPresetSpec,
+  type ElucimConnectorPresetSpec,
+  type ElucimStepCardPresetSpec,
+  type ElucimTextBlockPresetSpec,
+} from './v2/composites';
+import {
   planSemanticLayout,
   suggestSemanticLayoutNudges,
   type ElucimSemanticLayoutOptions,
@@ -52,6 +62,10 @@ export interface AgentOperationDescriptor {
 const AGENT_OPERATION_CATALOG: readonly AgentOperationDescriptor[] = [
   { name: 'createDocument', kind: 'author', async: false, description: 'Create an empty normalized ElucimDocument with scene metadata and defaults.' },
   { name: 'addElement', kind: 'author', async: false, description: 'Add a stable-ID element with props, layout, role, and semantic intent.' },
+  { name: 'createConnectorPreset', kind: 'author', async: false, description: 'Create an editable semantic connector from source/target bounds with optional label and ELK-readable flow intent.' },
+  { name: 'createTextBlockPreset', kind: 'author', async: false, description: 'Create editable wrapped text as grouped text lines with stable IDs and readable sizing.' },
+  { name: 'createStepCardPreset', kind: 'author', async: false, description: 'Create an editable step card group with title, body, optional index/status, token colors, and layout rank.' },
+  { name: 'createCardGridPreset', kind: 'author', async: false, description: 'Create an editable grid of step cards with deterministic sizing, gutters, order, and semantic ranks.' },
   { name: 'updateElement', kind: 'author', async: false, description: 'Patch element props, layout, role, intent, parent, or children without mutating the document.' },
   { name: 'applyAgentCommands', kind: 'author', async: false, description: 'Apply a batch of high-level authoring commands and return summaries plus validation.' },
   { name: 'validateForAgent', kind: 'validate', async: false, description: 'Validate document structure and references with agent-readable errors and warnings.' },
@@ -309,12 +323,20 @@ export {
   applyNudge,
   diffDocuments,
   planSemanticLayout,
+  createCardGridPreset,
+  createConnectorPreset,
+  createStepCardPreset,
+  createTextBlockPreset,
   inspectPolishHeuristics,
   suggestDocumentNudges,
   suggestSemanticLayoutNudges,
   summarizeDocument,
   validateForAgent,
   type ElucimPolishHeuristicReport,
+  type ElucimCardGridPresetSpec,
+  type ElucimConnectorPresetSpec,
+  type ElucimStepCardPresetSpec,
+  type ElucimTextBlockPresetSpec,
   type ElucimSemanticLayoutOptions,
   type ElucimSemanticLayoutPlan,
   type JsonPatchOperation,

@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { analyzePolish, applyNudge, createCalloutCardPreset, inspectPolishHeuristics, suggestDocumentNudges, validateV2, type ElucimDocument } from '../index';
+import {
+  analyzePolish,
+  applyNudge,
+  createCalloutCardPreset,
+  createCardGridPreset,
+  createConnectorPreset,
+  createStepCardPreset,
+  createTextBlockPreset,
+  inspectPolishHeuristics,
+  suggestDocumentNudges,
+  validateV2,
+  type ElucimDocument,
+} from '../index';
 
 const doc: ElucimDocument = {
   version: '2.0',
@@ -146,6 +158,63 @@ describe('document polish nudges', () => {
 
     expect(presetDoc.elements['agent-note'].role).toBe('callout');
     expect(presetDoc.elements['agent-note-card'].props.fill).toBe('$surface');
+    expect(validateV2(presetDoc).valid).toBe(true);
+  });
+
+  it('creates editable composite helpers as ordinary grouped elements', () => {
+    const step = createStepCardPreset({
+      id: 'draft',
+      x: 80,
+      y: 100,
+      title: 'Draft the diagram',
+      body: 'Start with semantic cards instead of loose rectangles and labels.',
+      index: 1,
+      status: 'ready',
+      rank: 0,
+    });
+    const textBlock = createTextBlockPreset({
+      id: 'notes',
+      x: 420,
+      y: 100,
+      width: 260,
+      text: 'Wrapped text becomes editable lines while preserving the text block grouping.',
+    });
+    const grid = createCardGridPreset({
+      id: 'workflow',
+      x: 80,
+      y: 280,
+      columns: 2,
+      items: [
+        { id: 'grid-draft', title: 'Draft', body: 'Generate the first scene.' },
+        { id: 'grid-polish', title: 'Polish', body: 'Review layout and spacing.' },
+      ],
+    });
+    const connector = createConnectorPreset({
+      id: 'draft-to-notes',
+      from: 'draft',
+      to: 'notes',
+      fromBounds: { id: 'draft', x: 80, y: 100, width: 300, height: 134 },
+      toBounds: { id: 'notes', x: 420, y: 100, width: 260, height: 48 },
+      label: 'explains',
+    });
+    const roots = ['draft', 'notes', 'workflow', 'draft-to-notes'];
+    const elements = [...step, ...textBlock, ...grid, ...connector];
+    const presetDoc: ElucimDocument = {
+      version: '2.0',
+      scene: { type: 'player', width: 900, height: 650, children: roots },
+      elements: Object.fromEntries(elements.map(element => [element.id, element])),
+    };
+
+    expect(presetDoc.elements.draft.type).toBe('group');
+    expect(presetDoc.elements.draft.children).toContain('draft-card');
+    expect(presetDoc.elements.notes.type).toBe('group');
+    expect(presetDoc.elements.workflow.children).toEqual(['grid-draft', 'grid-polish']);
+    expect(presetDoc.elements['draft-to-notes']).toMatchObject({
+      type: 'group',
+      role: 'connector',
+      intent: { flowFrom: ['draft'], flowTo: ['notes'], relationship: 'flows-to' },
+    });
+    expect(presetDoc.elements['draft-to-notes-curve'].type).toBe('bezierCurve');
     expect(validateV2(presetDoc).valid).toBe(true);
   });
 });

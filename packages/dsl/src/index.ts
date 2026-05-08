@@ -121,6 +121,21 @@ export {
   type ElucimTextHeuristic,
 } from './v2/polish';
 export {
+  createCardGridPreset,
+  createConnectorPreset,
+  createStepCardPreset,
+  createTextBlockPreset,
+  type ElucimCardGridItemSpec,
+  type ElucimCardGridPresetSpec,
+  type ElucimCompositeElement,
+  type ElucimConnectorAnchor,
+  type ElucimConnectorCurve,
+  type ElucimConnectorPresetSpec,
+  type ElucimStepCardPresetSpec,
+  type ElucimTextAlign,
+  type ElucimTextBlockPresetSpec,
+} from './v2/composites';
+export {
   applySemanticLayoutNudge,
   planSemanticLayout,
   suggestSemanticLayoutNudges,

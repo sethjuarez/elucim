@@ -124,6 +124,16 @@ function extractIntentEdges(doc: ElucimV2Document, elementIds: Set<string>): Vir
   for (const element of Object.values(doc.elements)) {
     const intent = element.intent;
     if (!intent) continue;
+    if (isSemanticConnector(element)) {
+      const fromIds = intent.flowFrom?.filter(id => elementIds.has(id)) ?? [];
+      const toIds = intent.flowTo?.filter(id => elementIds.has(id)) ?? [];
+      for (const from of fromIds) {
+        for (const to of toIds) {
+          if (from !== to) edges.push({ id: `connector-intent:${element.id}:${from}->${to}`, from, to, source: 'intent' });
+        }
+      }
+      continue;
+    }
     if (intent.target && elementIds.has(intent.target)) {
       edges.push({ id: `target:${intent.target}->${element.id}`, from: intent.target, to: element.id, source: 'intent' });
     }
@@ -135,6 +145,10 @@ function extractIntentEdges(doc: ElucimV2Document, elementIds: Set<string>): Vir
     }
   }
   return edges;
+}
+
+function isSemanticConnector(element: ElucimV2Element): boolean {
+  return element.role === 'connector' || element.intent?.role === 'connector';
 }
 
 function extractRankEdges(doc: ElucimV2Document, elementIds: Set<string>): VirtualEdge[] {
@@ -205,6 +219,7 @@ function buildLayoutCommands(doc: ElucimV2Document, virtual: VirtualLayout, resu
   const nodeById = new Map(virtual.nodes.map(node => [node.id, node]));
   const commands: ElucimV2Command[] = [];
   const movedIds = new Set<string>();
+  const nodeDeltas = new Map<string, { dx: number; dy: number }>();
 
   for (const resultNode of resultNodes.sort((a, b) => a.id.localeCompare(b.id))) {
     const virtualNode = nodeById.get(resultNode.id);
@@ -215,8 +230,67 @@ function buildLayoutCommands(doc: ElucimV2Document, virtual: VirtualLayout, resu
     const deltaY = nextY - virtualNode.bounds.y;
     if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) continue;
     commands.push(...moveElementByDelta(doc, virtualNode.id, deltaX, deltaY, movedIds));
+    nodeDeltas.set(virtualNode.id, { dx: deltaX, dy: deltaY });
+  }
+  commands.push(...moveAttachedSemanticConnectors(doc, nodeDeltas, movedIds));
+  return commands;
+}
+
+function moveAttachedSemanticConnectors(
+  doc: ElucimV2Document,
+  nodeDeltas: Map<string, { dx: number; dy: number }>,
+  movedIds: Set<string>,
+): ElucimV2Command[] {
+  const commands: ElucimV2Command[] = [];
+  for (const element of Object.values(doc.elements)) {
+    if (!isSemanticConnector(element)) continue;
+    const sourceDeltas = (element.intent?.flowFrom ?? []).map(id => nodeDeltas.get(id)).filter((delta): delta is { dx: number; dy: number } => Boolean(delta));
+    const targetDeltas = (element.intent?.flowTo ?? []).map(id => nodeDeltas.get(id)).filter((delta): delta is { dx: number; dy: number } => Boolean(delta));
+    const endpointPatch = connectorEndpointPatch(element, averageDelta(sourceDeltas), averageDelta(targetDeltas));
+    if (endpointPatch) {
+      commands.push({ op: 'updateElement', id: element.id, patch: endpointPatch });
+      movedIds.add(element.id);
+      continue;
+    }
+    const deltas = [...sourceDeltas, ...targetDeltas];
+    if (deltas.length === 0) continue;
+    const { dx, dy } = averageDelta(deltas)!;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+    commands.push(...moveElementByDelta(doc, element.id, dx, dy, movedIds));
   }
   return commands;
+}
+
+function connectorEndpointPatch(
+  element: ElucimV2Element,
+  sourceDelta: { dx: number; dy: number } | undefined,
+  targetDelta: { dx: number; dy: number } | undefined,
+): Extract<ElucimV2Command, { op: 'updateElement' }>['patch'] | undefined {
+  const props = element.props;
+  if (sourceDelta === undefined && targetDelta === undefined) return undefined;
+  if (typeof props.x1 !== 'number' && typeof props.y1 !== 'number' && typeof props.x2 !== 'number' && typeof props.y2 !== 'number') return undefined;
+  const start = sourceDelta ?? targetDelta ?? { dx: 0, dy: 0 };
+  const end = targetDelta ?? sourceDelta ?? { dx: 0, dy: 0 };
+  return {
+    props: {
+      ...(typeof props.x1 === 'number' ? { x1: Math.round(props.x1 + start.dx) } : {}),
+      ...(typeof props.y1 === 'number' ? { y1: Math.round(props.y1 + start.dy) } : {}),
+      ...(typeof props.cx1 === 'number' ? { cx1: Math.round(props.cx1 + start.dx) } : {}),
+      ...(typeof props.cy1 === 'number' ? { cy1: Math.round(props.cy1 + start.dy) } : {}),
+      ...(typeof props.cx2 === 'number' ? { cx2: Math.round(props.cx2 + end.dx) } : {}),
+      ...(typeof props.cy2 === 'number' ? { cy2: Math.round(props.cy2 + end.dy) } : {}),
+      ...(typeof props.x2 === 'number' ? { x2: Math.round(props.x2 + end.dx) } : {}),
+      ...(typeof props.y2 === 'number' ? { y2: Math.round(props.y2 + end.dy) } : {}),
+    },
+  };
+}
+
+function averageDelta(deltas: Array<{ dx: number; dy: number }>): { dx: number; dy: number } | undefined {
+  if (deltas.length === 0) return undefined;
+  return {
+    dx: Math.round(deltas.reduce((total, delta) => total + delta.dx, 0) / deltas.length),
+    dy: Math.round(deltas.reduce((total, delta) => total + delta.dy, 0) / deltas.length),
+  };
 }
 
 function moveElementByDelta(doc: ElucimV2Document, id: string, dx: number, dy: number, movedIds: Set<string>): ElucimV2Command[] {

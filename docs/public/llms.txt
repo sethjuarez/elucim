@@ -96,6 +96,9 @@ When generating Elucim diagrams, use the normalized `ElucimDocument` shape and r
 - Use semantic roles and intent: `role: "title"`, `role: "callout"`, `intent.importance: "primary" | "secondary" | "supporting"`.
 - Add explicit layout relationships when possible: `intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, `intent.group`, plus `layout.rank` and `layout.locked`.
 - Use semantic color tokens (`$title`, `$surface`, `$primary`, `$muted`) instead of many literal colors.
+- Prefer composite authoring helpers for designed-slide structure instead of hand-assembling loose primitives: `createStepCardPreset()`, `createTextBlockPreset()`, `createCardGridPreset()`, and `createConnectorPreset()` from `@elucim/dsl`.
+- From the CLI, use `add-step-card`, `add-text-block`, `add-card-grid`, and `add-connector` to add those composites to an existing document. These write ordinary editable groups and primitives. `add-connector` supports `--line-style`, `--start-cap`, `--end-cap`, and `--stroke-width`.
+- Use `createConnectorPreset()` or `elucim add-connector` for reading order and layout semantics. Generated connector intent contributes virtual ELK edges during semantic layout; the persisted document remains normal editable Elucim elements.
 - For graph diagrams, provide stable node IDs and edges; the layered graph nudge can rewrite node `x`/`y` coordinates while preserving editability.
 - Prefer helper presets such as `createCalloutCardPreset()` for explanatory callouts instead of assembling raw rectangles and text from scratch.
 - For broader explanatory layouts, call `await suggestSemanticLayoutNudges(doc)` from `@elucim/dsl` and surface the returned ELK-backed `review` nudge instead of applying it silently.

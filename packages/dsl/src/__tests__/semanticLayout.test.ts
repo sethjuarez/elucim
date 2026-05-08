@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyNudge,
+  createConnectorPreset,
   planSemanticLayout,
   suggestSemanticLayoutNudges,
   validateV2,
@@ -118,6 +119,47 @@ describe('semantic layout nudges', () => {
     expect(validateV2(next).valid).toBe(true);
   });
 
+  it('uses semantic connector composites as virtual ELK edges', async () => {
+    const connector = createConnectorPreset({
+      id: 'request-to-cache',
+      from: 'request',
+      to: 'cache',
+      fromBounds: { id: 'request', x: 300, y: 160, width: 140, height: 70 },
+      toBounds: { id: 'cache', x: 310, y: 170, width: 150, height: 80 },
+      label: 'lookup',
+    });
+    const doc: ElucimDocument = {
+      version: '2.0',
+      scene: { type: 'player', width: 900, height: 500, children: ['request', 'cache', 'request-to-cache'] },
+      elements: {
+        request: {
+          id: 'request',
+          type: 'rect',
+          role: 'step',
+          intent: { role: 'step', importance: 'primary' },
+          layout: { x: 300, y: 160, width: 140, height: 70 },
+          props: { type: 'rect', x: 300, y: 160, width: 140, height: 70, fill: '$surface' },
+        },
+        cache: {
+          id: 'cache',
+          type: 'rect',
+          role: 'step',
+          intent: { role: 'step', importance: 'primary' },
+          layout: { x: 310, y: 170, width: 150, height: 80 },
+          props: { type: 'rect', x: 310, y: 170, width: 150, height: 80, fill: '$surface' },
+        },
+        ...Object.fromEntries(connector.map(element => [element.id, element])),
+      },
+    };
+
+    const nudges = await suggestSemanticLayoutNudges(doc);
+    const next = applyNudge(doc, nudges[0]).document;
+
+    expect(nudges).toHaveLength(1);
+    expect(next.elements.request.layout?.x).toBeLessThan(next.elements.cache.layout?.x ?? 0);
+    expect(validateV2(next).valid).toBe(true);
+  });
+
   it('keeps locked elements fixed while arranging unlocked peers', async () => {
     const doc = semanticFlowDoc();
     doc.elements.request.layout = { ...doc.elements.request.layout, locked: true };
@@ -213,8 +255,8 @@ describe('semantic layout nudges', () => {
     expect(Math.abs(deltaX) + Math.abs(deltaY)).toBeGreaterThan(0);
     expect(after.cx1).toBe(before.cx1 + deltaX);
     expect(after.cy1).toBe(before.cy1 + deltaY);
-    expect(after.cx2).toBe(before.cx2 + deltaX);
-    expect(after.cy2).toBe(before.cy2 + deltaY);
+    expect(after.cx2).not.toBe(before.cx2);
+    expect(after.cy2).not.toBe(before.cy2);
   });
 
   it('does not move locked children inside a semantic group', async () => {

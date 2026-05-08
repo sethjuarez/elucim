@@ -243,6 +243,9 @@ import {
   analyzePolish,
   applyNudge,
   createCalloutCardPreset,
+  createConnectorPreset,
+  createStepCardPreset,
+  createTextBlockPreset,
   inspectPolishHeuristics,
   suggestDocumentNudges,
 } from '@elucim/dsl';
@@ -260,12 +263,40 @@ const calloutElements = createCalloutCardPreset({
   title: 'Key insight',
   body: 'A semantic, token-based callout gives agents a polished starting point.',
 });
+
+const stepElements = createStepCardPreset({
+  id: 'draft',
+  x: 80,
+  y: 120,
+  title: 'Draft',
+  body: 'Cards, text blocks, and connectors are normal grouped elements.',
+  index: 1,
+});
+
+const connectorElements = createConnectorPreset({
+  id: 'draft-to-review',
+  from: 'draft',
+  to: 'review',
+  fromBounds: { id: 'draft', x: 80, y: 120, width: 300, height: 132 },
+  toBounds: { id: 'review', x: 440, y: 120, width: 300, height: 132 },
+  label: 'then',
+});
+
+const textBlockElements = createTextBlockPreset({
+  id: 'takeaway',
+  x: 80,
+  y: 320,
+  width: 360,
+  text: 'Wrapped text emits editable text lines inside a group.',
+});
 ```
 
 Agent guidance:
 
 - Prefer semantic roles and intent (`role: 'title'`, `role: 'callout'`, `intent.importance: 'primary' | 'secondary' | 'supporting'`) so polish can preserve explanatory meaning.
 - Add explicit relationship intent when the layout matters: `intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, `intent.group`, plus `layout.rank` and `layout.locked`.
+- Use composite helpers such as `createStepCardPreset()`, `createTextBlockPreset()`, `createCardGridPreset()`, and `createConnectorPreset()` for designed-slide structure. They emit ordinary editable groups and primitives, not a separate persisted layout format.
+- Prefer `createConnectorPreset()` for reading order and layout relationships. Its generated connector intent is consumed as a virtual ELK edge during semantic layout.
 - Use theme tokens such as `$title`, `$surface`, `$primary`, and `$muted` instead of one-off literal colors unless a specific color is necessary.
 - Run `suggestDocumentNudges()` after drafting. Apply `safe` nudges automatically; present `review` nudges, especially graph layout changes, for review.
 - Use `inspectPolishHeuristics()` when an agent needs the raw evidence behind the aggregate score: element bounds, intersections, off-canvas overflow, text sizing, literal colors, graph crossings/overlaps, connector continuations, and semantic relationships.
