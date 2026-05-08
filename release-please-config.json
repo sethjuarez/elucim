@@ -23,6 +23,10 @@
     "packages/editor": {
       "component": "editor",
       "changelog-path": "CHANGELOG.md"
+    },
+    "packages/cli": {
+      "component": "cli",
+      "changelog-path": "CHANGELOG.md"
     }
   },
   "plugins": [
@@ -33,7 +37,7 @@
     {
       "type": "linked-versions",
       "groupName": "elucim",
-      "components": ["core", "dsl", "editor"]
+      "components": ["core", "dsl", "editor", "cli"]
     }
   ]
 }

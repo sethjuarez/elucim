@@ -78,6 +78,21 @@ import { DslRenderer } from '@elucim/dsl/react';
 <DslRenderer dsl={doc} />;
 ```
 
+## CLI discovery
+
+Agents running from a shell can use the publishable CLI instead of writing one-off scripts:
+
+```bash
+npx elucim ops --json
+npx elucim validate diagram.elc --json
+npx elucim inspect diagram.elc --json
+npx elucim nudges diagram.elc --semantic-layout --json
+npx elucim polish diagram.elc --apply-safe --out polished.elc --json
+npx elucim layout diagram.elc --out laid-out.elc --json
+```
+
+`ops --json` returns the CLI command catalog and the same code-backed agent operation catalog exposed by `getAgentOperationCatalog()`.
+
 ## Recommended agent loop
 
 1. **Create** a normalized starter document with `createDocument()`.

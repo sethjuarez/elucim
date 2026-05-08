@@ -1,0 +1,52 @@
+{
+  "name": "elucim",
+  "version": "0.17.0",
+  "description": "Agent-discoverable CLI for validating, inspecting, polishing, and laying out Elucim documents",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sethjuarez/elucim.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://elucim.com",
+  "bugs": "https://github.com/sethjuarez/elucim/issues",
+  "keywords": [
+    "elucim",
+    "cli",
+    "agent",
+    "diagram",
+    "polish",
+    "layout"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "elucim": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc -p tsconfig.lint.json --noEmit"
+  },
+  "dependencies": {
+    "@elucim/dsl": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
