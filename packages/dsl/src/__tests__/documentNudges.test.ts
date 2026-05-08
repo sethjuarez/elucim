@@ -2,9 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   analyzePolish,
   applyNudge,
+  createAutoLayoutGroupPreset,
+  createBadgePreset,
+  createBoundaryPreset,
   createCalloutCardPreset,
   createCardGridPreset,
+  createComparisonTablePreset,
   createConnectorPreset,
+  createDecisionNodePreset,
+  createProgressiveRevealGroupPreset,
+  createQueueStackPreset,
+  createTimelineRoadmapPreset,
   createStepCardPreset,
   createTextBlockPreset,
   inspectPolishHeuristics,
@@ -215,6 +223,67 @@ describe('document polish nudges', () => {
       intent: { flowFrom: ['draft'], flowTo: ['notes'], relationship: 'flows-to' },
     });
     expect(presetDoc.elements['draft-to-notes-curve'].type).toBe('bezierCurve');
+    expect(validateV2(presetDoc).valid).toBe(true);
+  });
+
+  it('creates the remaining suggestion-table composites as editable elements', () => {
+    const badge = createBadgePreset({ id: 'badge', x: 40, y: 40, label: 'beta' });
+    const boundary = createBoundaryPreset({ id: 'system-boundary', x: 30, y: 90, width: 260, height: 180, label: 'System' });
+    const decision = createDecisionNodePreset({ id: 'cache-hit', x: 330, y: 80, text: 'Cache hit?', rank: 1 });
+    const queue = createQueueStackPreset({
+      id: 'work-queue',
+      x: 40,
+      y: 320,
+      title: 'Queue',
+      items: [{ label: 'Request' }, { label: 'Render', status: 'active' }],
+    });
+    const roadmap = createTimelineRoadmapPreset({
+      id: 'roadmap',
+      x: 360,
+      y: 280,
+      milestones: [{ label: 'Draft' }, { label: 'Polish' }, { label: 'Publish' }],
+    });
+    const comparison = createComparisonTablePreset({
+      id: 'tradeoffs',
+      x: 40,
+      y: 470,
+      columns: ['Agent', 'Human'],
+      rows: [{ label: 'Strength', cells: ['Fast draft', 'Final taste'] }],
+    });
+    const reveal = createProgressiveRevealGroupPreset({ id: 'progressive', targets: ['badge', 'cache-hit'], stagger: 5 });
+    const autoLayout = createAutoLayoutGroupPreset({
+      id: 'auto-layout',
+      x: 720,
+      y: 90,
+      direction: 'stack',
+      items: [{
+        id: 'auto-child',
+        element: {
+          id: 'auto-child',
+          type: 'rect',
+          role: 'card',
+          layout: { width: 120, height: 80 },
+          props: { type: 'rect', x: 0, y: 0, width: 120, height: 80, fill: '$surface' },
+        },
+      }],
+    });
+    const roots = ['badge', 'system-boundary', 'cache-hit', 'work-queue', 'roadmap', 'tradeoffs', 'progressive', 'auto-layout'];
+    const elements = [...badge, ...boundary, ...decision, ...queue, ...roadmap, ...comparison, ...reveal.elements, ...autoLayout];
+    const presetDoc: ElucimDocument = {
+      version: '2.0',
+      scene: { type: 'player', width: 1000, height: 700, children: roots },
+      elements: Object.fromEntries(elements.map(element => [element.id, element])),
+      timelines: { [reveal.timeline.id]: reveal.timeline },
+    };
+
+    expect(presetDoc.elements.badge.role).toBe('badge');
+    expect(presetDoc.elements['system-boundary'].role).toBe('boundary');
+    expect(presetDoc.elements['cache-hit']).toMatchObject({ type: 'group', role: 'decisionNode' });
+    expect(presetDoc.elements['work-queue'].intent?.role).toBe('stack');
+    expect(presetDoc.elements.roadmap.intent?.role).toBe('timeline');
+    expect(presetDoc.elements.tradeoffs.role).toBe('comparisonTable');
+    expect(presetDoc.elements['auto-layout'].role).toBe('autoLayoutGroup');
+    expect(presetDoc.timelines?.['progressive-reveal'].tracks).toHaveLength(2);
     expect(validateV2(presetDoc).valid).toBe(true);
   });
 });

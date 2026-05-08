@@ -242,10 +242,16 @@ Generated diagrams should be checked with the deterministic polish APIs before h
 import {
   analyzePolish,
   applyNudge,
+  createBadgePreset,
+  createBoundaryPreset,
   createCalloutCardPreset,
+  createComparisonTablePreset,
   createConnectorPreset,
+  createDecisionNodePreset,
+  createQueueStackPreset,
   createStepCardPreset,
   createTextBlockPreset,
+  createTimelineRoadmapPreset,
   inspectPolishHeuristics,
   suggestDocumentNudges,
 } from '@elucim/dsl';
@@ -289,13 +295,28 @@ const textBlockElements = createTextBlockPreset({
   width: 360,
   text: 'Wrapped text emits editable text lines inside a group.',
 });
+
+const supportingElements = [
+  ...createBadgePreset({ id: 'status', x: 80, y: 80, label: 'review' }),
+  ...createBoundaryPreset({ id: 'system', x: 60, y: 110, width: 420, height: 260, label: 'System boundary' }),
+  ...createDecisionNodePreset({ id: 'cache-hit', x: 560, y: 120, text: 'Cache hit?' }),
+  ...createQueueStackPreset({ id: 'queue', x: 80, y: 420, items: [{ label: 'Request' }, { label: 'Render' }] }),
+  ...createTimelineRoadmapPreset({ id: 'roadmap', x: 420, y: 420, milestones: [{ label: 'Draft' }, { label: 'Polish' }] }),
+  ...createComparisonTablePreset({
+    id: 'tradeoffs',
+    x: 80,
+    y: 560,
+    columns: ['Agent', 'Human'],
+    rows: [{ label: 'Best at', cells: ['Fast structure', 'Final taste'] }],
+  }),
+];
 ```
 
 Agent guidance:
 
 - Prefer semantic roles and intent (`role: 'title'`, `role: 'callout'`, `intent.importance: 'primary' | 'secondary' | 'supporting'`) so polish can preserve explanatory meaning.
 - Add explicit relationship intent when the layout matters: `intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, `intent.group`, plus `layout.rank` and `layout.locked`.
-- Use composite helpers such as `createStepCardPreset()`, `createTextBlockPreset()`, `createCardGridPreset()`, and `createConnectorPreset()` for designed-slide structure. They emit ordinary editable groups and primitives, not a separate persisted layout format.
+- Use composite helpers such as `createStepCardPreset()`, `createTextBlockPreset()`, `createCardGridPreset()`, `createConnectorPreset()`, `createDecisionNodePreset()`, `createBoundaryPreset()`, `createBadgePreset()`, `createQueueStackPreset()`, `createTimelineRoadmapPreset()`, `createComparisonTablePreset()`, `createAutoLayoutGroupPreset()`, and `createProgressiveRevealGroupPreset()` for designed-slide structure. They emit ordinary editable groups, primitives, and timelines, not a separate persisted layout format.
 - Prefer `createConnectorPreset()` for reading order and layout relationships. Its generated connector intent is consumed as a virtual ELK edge during semantic layout.
 - Use theme tokens such as `$title`, `$surface`, `$primary`, and `$muted` instead of one-off literal colors unless a specific color is necessary.
 - Run `suggestDocumentNudges()` after drafting. Apply `safe` nudges automatically; present `review` nudges, especially graph layout changes, for review.

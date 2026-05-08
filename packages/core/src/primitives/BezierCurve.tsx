@@ -85,6 +85,20 @@ function approximateQuadraticLength(
   return length;
 }
 
+function nonZeroVector(...vectors: Array<{ x: number; y: number }>): { x: number; y: number } {
+  return vectors.find(vector => Math.hypot(vector.x, vector.y) > 0.001) ?? { x: 1, y: 0 };
+}
+
+function arrowHead(x: number, y: number, theta: number, strokeWidth: number): string {
+  const headSize = Math.max(8, strokeWidth * 4);
+  const headAngle = Math.PI / 6;
+  const p1x = x - headSize * Math.cos(theta - headAngle);
+  const p1y = y - headSize * Math.sin(theta - headAngle);
+  const p2x = x - headSize * Math.cos(theta + headAngle);
+  const p2y = y - headSize * Math.sin(theta + headAngle);
+  return `${x},${y} ${p1x},${p1y} ${p2x},${p2y}`;
+}
+
 /**
  * SVG Bezier curve with animation support.
  *
@@ -142,20 +156,32 @@ export function BezierCurve({
 
   const finalOpacity = baseOpacity * anim.opacity;
   const capRadius = Math.max(2, strokeWidth * 1.7);
-  const startTangent = isCubic ? { x: cx1 - x1, y: cy1 - y1 } : { x: cx1 - x1, y: cy1 - y1 };
+  const startTangent = isCubic
+    ? nonZeroVector(
+      { x: cx1 - x1, y: cy1 - y1 },
+      { x: cx2! - cx1, y: cy2! - cy1 },
+      { x: x2 - cx2!, y: y2 - cy2! },
+      { x: x2 - x1, y: y2 - y1 },
+    )
+    : nonZeroVector(
+      { x: cx1 - x1, y: cy1 - y1 },
+      { x: x2 - cx1, y: y2 - cy1 },
+      { x: x2 - x1, y: y2 - y1 },
+    );
+  const endTangent = isCubic
+    ? nonZeroVector(
+      { x: x2 - cx2!, y: y2 - cy2! },
+      { x: cx2! - cx1, y: cy2! - cy1 },
+      { x: cx1 - x1, y: cy1 - y1 },
+      { x: x2 - x1, y: y2 - y1 },
+    )
+    : nonZeroVector(
+      { x: x2 - cx1, y: y2 - cy1 },
+      { x: cx1 - x1, y: cy1 - y1 },
+      { x: x2 - x1, y: y2 - y1 },
+    );
   const startAngle = Math.atan2(startTangent.y, startTangent.x) + Math.PI;
-  const endTangent = isCubic ? { x: x2 - cx2!, y: y2 - cy2! } : { x: x2 - cx1, y: y2 - cy1 };
   const endAngle = Math.atan2(endTangent.y, endTangent.x);
-  const headSize = Math.max(8, strokeWidth * 4);
-  const headAngle = Math.PI / 6;
-  const s1x = x1 - headSize * Math.cos(startAngle - headAngle);
-  const s1y = y1 - headSize * Math.sin(startAngle - headAngle);
-  const s2x = x1 - headSize * Math.cos(startAngle + headAngle);
-  const s2y = y1 - headSize * Math.sin(startAngle + headAngle);
-  const p1x = x2 - headSize * Math.cos(endAngle - headAngle);
-  const p1y = y2 - headSize * Math.sin(endAngle - headAngle);
-  const p2x = x2 - headSize * Math.cos(endAngle + headAngle);
-  const p2y = y2 - headSize * Math.sin(endAngle + headAngle);
 
   const el = (
     <g data-testid="elucim-bezier-curve" opacity={finalOpacity}>
@@ -171,8 +197,8 @@ export function BezierCurve({
       />
       {startCap === 'dot' && <circle cx={x1} cy={y1} r={capRadius} fill={stroke} />}
       {endCap === 'dot' && <circle cx={x2} cy={y2} r={capRadius} fill={stroke} />}
-      {startCap === 'arrow' && <polygon points={`${x1},${y1} ${s1x},${s1y} ${s2x},${s2y}`} fill={stroke} />}
-      {endCap === 'arrow' && <polygon points={`${x2},${y2} ${p1x},${p1y} ${p2x},${p2y}`} fill={stroke} />}
+      {startCap === 'arrow' && <polygon points={arrowHead(x1, y1, startAngle, strokeWidth)} fill={stroke} />}
+      {endCap === 'arrow' && <polygon points={arrowHead(x2, y2, endAngle, strokeWidth)} fill={stroke} />}
     </g>
   );
 

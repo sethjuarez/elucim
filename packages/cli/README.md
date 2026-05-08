@@ -15,3 +15,5 @@ npx @elucim/cli add-connector diagram.elc --id draft-to-review --from draft --to
 Use `npx @elucim/cli ops --json` as the discovery entrypoint for agents. The installed binary is still `elucim`, so global installs can run `elucim ops --json`.
 
 Authoring shortcuts such as `add-step-card`, `add-text-block`, `add-card-grid`, and `add-connector` write normal editable Elucim elements. At edit time these are groups plus SVG primitives; semantic connectors also add relationship metadata that the ELK layout pass reads as virtual graph edges.
+
+The broader composite helper set is available from `@elucim/dsl` and advertised by `elucim ops --json`: decision nodes, boundaries/containers, badges/pills, queues/stacks, roadmaps, comparison tables, auto-layout groups, and progressive reveal groups.
