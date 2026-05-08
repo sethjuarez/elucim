@@ -3,8 +3,9 @@
  */
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, act } from '@testing-library/react';
+import { render, act, fireEvent } from '@testing-library/react';
 import { DslRenderer, type DslRendererRef } from '../renderer/DslRenderer';
+import { fromYaml } from '../yaml/fromYaml';
 
 const playerDsl = {
   version: '1.0' as const,
@@ -60,6 +61,168 @@ describe('DslRenderer player override props', () => {
     );
     expect(container.querySelector('[data-testid="dsl-root"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="dsl-error"]')).toBeNull();
+  });
+
+  it('runs default v2 state-machine click events in the viewer', () => {
+    const { container } = render(
+      <DslRenderer
+        dsl={{
+          version: '2.0',
+          scene: { type: 'player', width: 400, height: 300, children: ['title'] },
+          elements: {
+            title: { id: 'title', type: 'text', props: { type: 'text', x: 20, y: 40, content: 'Hello', opacity: 1 } },
+          },
+          timelines: {
+            intro: {
+              id: 'intro',
+              duration: 30,
+              tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+            },
+            outro: {
+              id: 'outro',
+              duration: 20,
+              tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0.5 }, { frame: 20, value: 1 }] }],
+            },
+          },
+          defaultStateMachine: 'deck',
+          stateMachines: {
+            deck: {
+              id: 'deck',
+              entry: 'intro',
+              states: { intro: { timeline: 'intro' }, outro: { timeline: 'outro' } },
+              transitions: [
+                { id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' },
+                { id: 'intro-click', from: 'intro', to: 'outro', trigger: 'onClick' },
+              ],
+            },
+          },
+        }}
+      />,
+    );
+
+    expect(container.querySelector('[data-testid="elucim-text"]')?.getAttribute('opacity')).toBe('0');
+    fireEvent.click(container.querySelector('[data-testid="dsl-root"]')!);
+    expect(container.querySelector('[data-testid="elucim-text"]')?.getAttribute('opacity')).toBe('0.5');
+  });
+
+  it('runs default v2 state-machine key events in the viewer', () => {
+    const { container } = render(
+      <DslRenderer
+        dsl={{
+          version: '2.0',
+          scene: { type: 'player', width: 400, height: 300, children: ['title'] },
+          elements: {
+            title: { id: 'title', type: 'text', props: { type: 'text', x: 20, y: 40, content: 'Hello', opacity: 1 } },
+          },
+          timelines: {
+            idle: {
+              id: 'idle',
+              duration: 10,
+              tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0.25 }, { frame: 10, value: 0.25 }] }],
+            },
+            done: {
+              id: 'done',
+              duration: 10,
+              tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0.75 }, { frame: 10, value: 0.75 }] }],
+            },
+          },
+          defaultStateMachine: 'deck',
+          stateMachines: {
+            deck: {
+              id: 'deck',
+              entry: 'idle',
+              states: { idle: { timeline: 'idle' }, done: { timeline: 'done' } },
+              transitions: [
+                { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+                { id: 'idle-key', from: 'idle', to: 'done', trigger: 'onKey', key: 'G' },
+              ],
+            },
+          },
+        }}
+      />,
+    );
+
+    expect(container.querySelector('[data-testid="elucim-text"]')?.getAttribute('opacity')).toBe('0.25');
+    fireEvent.keyDown(container.querySelector('[data-testid="dsl-root"]')!, { key: 'g' });
+    expect(container.querySelector('[data-testid="elucim-text"]')?.getAttribute('opacity')).toBe('0.75');
+  });
+
+  it('renders v2 state machines parsed from YAML in the viewer', () => {
+    const dsl = fromYaml(`
+version: '2.0'
+scene:
+  type: player
+  width: 400
+  height: 300
+  children: [title]
+elements:
+  title:
+    id: title
+    type: text
+    props:
+      type: text
+      x: 20
+      y: 40
+      content: Hello
+      opacity: 1
+timelines:
+  intro:
+    id: intro
+    duration: 30
+    tracks:
+      - target: title
+        property: opacity
+        keyframes:
+          - { frame: 0, value: 0 }
+          - { frame: 30, value: 1 }
+defaultStateMachine: deck
+stateMachines:
+  deck:
+    id: deck
+    entry: intro
+    states:
+      intro: { timeline: intro }
+    transitions:
+      - { id: entry-start, from: entry, to: intro, trigger: onStart }
+`);
+
+    const { container } = render(<DslRenderer dsl={dsl} />);
+
+    expect(container.querySelector('[data-testid="dsl-error"]')).toBeNull();
+    expect(container.querySelector('[data-testid="elucim-text"]')?.getAttribute('opacity')).toBe('0');
+  });
+
+  it('renders v2 poster frames after applying timeline data', () => {
+    const { container } = render(
+      <DslRenderer
+        poster="last"
+        dsl={{
+          version: '2.0',
+          scene: { type: 'player', width: 400, height: 300, children: ['title'] },
+          elements: {
+            title: { id: 'title', type: 'text', props: { type: 'text', x: 20, y: 40, content: 'Hello', opacity: 0 } },
+          },
+          timelines: {
+            intro: {
+              id: 'intro',
+              duration: 30,
+              tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+            },
+          },
+          defaultStateMachine: 'deck',
+          stateMachines: {
+            deck: {
+              id: 'deck',
+              entry: 'intro',
+              states: { intro: { timeline: 'intro' } },
+              transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+            },
+          },
+        }}
+      />,
+    );
+
+    expect(container.querySelector('[data-testid="elucim-text"]')?.getAttribute('opacity')).toBe('1');
   });
 });
 

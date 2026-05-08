@@ -1,4 +1,4 @@
-import type { ElucimDocument, ElementNode } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
 import type { EditorState, EditorAction, AlignDirection, DistributeDirection, AnimationWrapperType } from './types';
 import { CANVAS_ID } from './types';
 import { getElementId, isUndoableAction } from './types';
@@ -96,6 +96,18 @@ function collectIdsFromArray(arr: ElementNode[], parentPath: string): string[] {
     }
   }
   return ids;
+}
+
+function groupLocationsByParent(root: ElucimDocument['root'], ids: string[]): ElementLocation[][] {
+  const groups = new Map<ElementNode[], ElementLocation[]>();
+  for (const id of ids) {
+    const loc = findElementById(root, id);
+    if (!loc?.parent) continue;
+    const group = groups.get(loc.parent) ?? [];
+    group.push(loc);
+    groups.set(loc.parent, group);
+  }
+  return [...groups.values()];
 }
 
 // ─── Position helpers ──────────────────────────────────────────────────────
@@ -652,14 +664,12 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'REORDER_ELEMENT': {
       const doc = cloneDoc(state.document);
-      const rootChildren = getChildren(doc.root);
-      if (!rootChildren) return state;
       const loc = findElementById(doc.root, action.id);
-      if (!loc?.parent || loc.parent !== rootChildren) return state;
-      const newIdx = Math.max(0, Math.min(action.newIndex, rootChildren.length - 1));
+      if (!loc?.parent) return state;
+      const newIdx = Math.max(0, Math.min(action.newIndex, loc.parent.length - 1));
       if (newIdx === loc.index) return state;
-      const [removed] = rootChildren.splice(loc.index, 1);
-      rootChildren.splice(newIdx, 0, removed);
+      const [removed] = loc.parent.splice(loc.index, 1);
+      loc.parent.splice(newIdx, 0, removed);
       return { ...state, document: doc };
     }
 
@@ -693,21 +703,18 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'SET_EDITOR_THEME':
       return { ...state, themeOverrides: action.overrides };
 
-    // ─── Z-order actions ─────────────────────────────────────────────────
+    // ─── Layer order actions ─────────────────────────────────────────────
 
     case 'BRING_FORWARD': {
       const doc = cloneDoc(state.document);
-      const rootChildren = getChildren(doc.root);
-      if (!rootChildren) return state;
-      // Process from end to start to avoid index shift issues
-      const sorted = action.ids
-        .map(id => { const loc = findElementById(doc.root, id); return loc && loc.parent === rootChildren ? loc.index : -1; })
-        .filter(i => i >= 0)
-        .sort((a, b) => b - a);
-      for (const idx of sorted) {
-        if (idx < rootChildren.length - 1) {
-          const [el] = rootChildren.splice(idx, 1);
-          rootChildren.splice(idx + 1, 0, el);
+      for (const group of groupLocationsByParent(doc.root, action.ids)) {
+        const parent = group[0].parent!;
+        const sorted = group.map(loc => loc.index).sort((a, b) => b - a);
+        for (const idx of sorted) {
+          if (idx < parent.length - 1) {
+            const [el] = parent.splice(idx, 1);
+            parent.splice(idx + 1, 0, el);
+          }
         }
       }
       return { ...state, document: doc };
@@ -715,16 +722,14 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'SEND_BACKWARD': {
       const doc = cloneDoc(state.document);
-      const rootChildren = getChildren(doc.root);
-      if (!rootChildren) return state;
-      const sorted = action.ids
-        .map(id => { const loc = findElementById(doc.root, id); return loc && loc.parent === rootChildren ? loc.index : -1; })
-        .filter(i => i >= 0)
-        .sort((a, b) => a - b);
-      for (const idx of sorted) {
-        if (idx > 0) {
-          const [el] = rootChildren.splice(idx, 1);
-          rootChildren.splice(idx - 1, 0, el);
+      for (const group of groupLocationsByParent(doc.root, action.ids)) {
+        const parent = group[0].parent!;
+        const sorted = group.map(loc => loc.index).sort((a, b) => a - b);
+        for (const idx of sorted) {
+          if (idx > 0) {
+            const [el] = parent.splice(idx, 1);
+            parent.splice(idx - 1, 0, el);
+          }
         }
       }
       return { ...state, document: doc };
@@ -732,33 +737,29 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'BRING_TO_FRONT': {
       const doc = cloneDoc(state.document);
-      const rootChildren = getChildren(doc.root);
-      if (!rootChildren) return state;
-      const sorted = action.ids
-        .map(id => { const loc = findElementById(doc.root, id); return loc && loc.parent === rootChildren ? loc.index : -1; })
-        .filter(i => i >= 0)
-        .sort((a, b) => b - a);
-      const removed: ElementNode[] = [];
-      for (const idx of sorted) {
-        removed.unshift(...rootChildren.splice(idx, 1));
+      for (const group of groupLocationsByParent(doc.root, action.ids)) {
+        const parent = group[0].parent!;
+        const sorted = group.map(loc => loc.index).sort((a, b) => b - a);
+        const removed: ElementNode[] = [];
+        for (const idx of sorted) {
+          removed.unshift(...parent.splice(idx, 1));
+        }
+        parent.push(...removed);
       }
-      rootChildren.push(...removed);
       return { ...state, document: doc };
     }
 
     case 'SEND_TO_BACK': {
       const doc = cloneDoc(state.document);
-      const rootChildren = getChildren(doc.root);
-      if (!rootChildren) return state;
-      const sorted = action.ids
-        .map(id => { const loc = findElementById(doc.root, id); return loc && loc.parent === rootChildren ? loc.index : -1; })
-        .filter(i => i >= 0)
-        .sort((a, b) => b - a);
-      const removed: ElementNode[] = [];
-      for (const idx of sorted) {
-        removed.unshift(...rootChildren.splice(idx, 1));
+      for (const group of groupLocationsByParent(doc.root, action.ids)) {
+        const parent = group[0].parent!;
+        const sorted = group.map(loc => loc.index).sort((a, b) => b - a);
+        const removed: ElementNode[] = [];
+        for (const idx of sorted) {
+          removed.unshift(...parent.splice(idx, 1));
+        }
+        parent.unshift(...removed);
       }
-      rootChildren.unshift(...removed);
       return { ...state, document: doc };
     }
 

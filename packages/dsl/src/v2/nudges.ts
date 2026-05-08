@@ -29,16 +29,6 @@ export function suggestDocumentNudges(doc: ElucimV2Document): ElucimV2Nudge[] {
   }
 
   const rootChildren = doc.scene.children.filter(id => doc.elements[id]);
-  const missingZIndex = rootChildren.some((id, index) => doc.elements[id].layout?.zIndex !== index);
-  if (missingZIndex && rootChildren.length > 1) {
-    nudges.push({
-      id: 'normalize-root-layer-order',
-      title: 'Normalize root layer order',
-      description: 'Assign top-level zIndex values that match scene order for predictable agent patches and editor hierarchy behavior.',
-      confidence: 'safe',
-      commands: rootChildren.map((id, index) => ({ op: 'updateElement', id, patch: { layout: { zIndex: index } } })),
-    });
-  }
 
   if (!doc.timelines || Object.keys(doc.timelines).length === 0) {
     const timeline = buildIntroTimeline(doc, rootChildren);

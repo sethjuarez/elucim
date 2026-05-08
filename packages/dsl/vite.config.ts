@@ -17,7 +17,8 @@ export default defineConfig({
     lib: {
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
-        builders: resolve(__dirname, 'src/builders/index.ts'),
+        react: resolve(__dirname, 'src/react.ts'),
+        agent: resolve(__dirname, 'src/agent.ts'),
       },
       formats: ['es'],
       fileName: (_format, entryName) => `${entryName}.js`,

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useMemo, type Dispatch, type ReactNode } from 'react';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument } from '@elucim/dsl';
 import type { EditorState, EditorAction } from './types';
 import { createInitialState } from './types';
 import { editorReducer } from './reducer';

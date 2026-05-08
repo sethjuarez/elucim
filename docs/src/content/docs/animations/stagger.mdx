@@ -1,104 +1,54 @@
 ---
-title: Stagger & Parallel
-description: Control the timing of multiple child animations.
+title: Staggered Timelines
+description: Coordinate multiple elements by offsetting keyframes in a normalized timeline.
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { StaggerDemo } from '@components/Demos.tsx';
-import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 <LiveDemo client:visible height="250px">
   <StaggerDemo client:visible />
 </LiveDemo>
 
-## Stagger
+Staggering is just keyframe offsets in a single timeline. There is no `Stagger` or `Parallel` wrapper in normalized V2 documents.
 
-Reveals children one by one, inserting a fixed delay between each child's start time.
+## Staggered reveal
 
-### Props
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `staggerDelay` | `number` | Frames between each child's start |
-| `children` | `ReactNode` | Animation elements to stagger |
-
-### Example
-
-```tsx
-<Stagger staggerDelay={10}>
-  <FadeIn duration={20}>
-    <Circle cx={100} cy={150} r={30} fill="#4f9eff" />
-  </FadeIn>
-  <FadeIn duration={20}>
-    <Circle cx={200} cy={150} r={30} fill="#ff6b6b" />
-  </FadeIn>
-  <FadeIn duration={20}>
-    <Circle cx={300} cy={150} r={30} fill="#50fa7b" />
-  </FadeIn>
-</Stagger>
+```ts
+timelines: {
+  intro: {
+    id: 'intro',
+    duration: 48,
+    tracks: [
+      { target: 'step-1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 18, value: 1 }] },
+      { target: 'step-2', property: 'opacity', keyframes: [{ frame: 8, value: 0 }, { frame: 26, value: 1 }] },
+      { target: 'step-3', property: 'opacity', keyframes: [{ frame: 16, value: 0 }, { frame: 34, value: 1 }] },
+      { target: 'step-4', property: 'opacity', keyframes: [{ frame: 24, value: 0 }, { frame: 42, value: 1 }] },
+    ],
+  },
+}
 ```
 
-## Parallel
+## Parallel reveal
 
-A semantic grouping component — all children start at the same frame. Use `Parallel` to mark animations that should play concurrently.
+Elements run in parallel when their keyframes use the same frame range:
 
-### Props
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `children` | `ReactNode` | Animation elements to run concurrently |
-
-### Example
-
-```tsx
-<Parallel>
-  <FadeIn duration={30}>
-    <Circle cx={150} cy={150} r={40} fill="#4f9eff" />
-  </FadeIn>
-  <Transform from={{ translateX: 100 }} to={{ translateX: 0 }} duration={30}>
-    <Rect x={250} y={110} width={80} height={80} fill="#ff6b6b" />
-  </Transform>
-</Parallel>
+```ts
+tracks: [
+  { target: 'circle', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+  { target: 'label', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+]
 ```
 
-## Code Example
+Agent helpers can create this structure for common cases:
 
-<Tabs>
-  <TabItem label="React">
-    ```jsx
-    import { Player, Stagger, FadeIn, Rect } from '@elucim/core';
+```ts
+import { addRevealTimeline } from '@elucim/dsl/agent';
 
-    <Player width={500} height={250} fps={30} durationInFrames={90}>
-      <Stagger staggerDelay={8}>
-        {[0, 1, 2, 3, 4].map(i => (
-          <FadeIn key={i} duration={15}>
-            <Rect x={40 + i * 90} y={80} width={70} height={70}
-                  stroke={['#6c5ce7', '#a29bfe', '#74b9ff', '#ff6b6b', '#ffd93d'][i]}
-                  strokeWidth={2} rx={8} />
-          </FadeIn>
-        ))}
-      </Stagger>
-    </Player>
-    ```
-  </TabItem>
-  <TabItem label="DSL JSON">
-    ```json
-    {
-      "width": 500, "height": 250, "fps": 30, "durationInFrames": 90,
-      "children": [
-        {
-          "type": "stagger", "staggerDelay": 8,
-          "children": [
-            { "type": "rect", "x": 40, "y": 80, "width": 70, "height": 70, "stroke": "#6c5ce7", "rx": 8, "fadeIn": { "duration": 15 } },
-            { "type": "rect", "x": 130, "y": 80, "width": 70, "height": 70, "stroke": "#a29bfe", "rx": 8, "fadeIn": { "duration": 15 } },
-            { "type": "rect", "x": 220, "y": 80, "width": 70, "height": 70, "stroke": "#74b9ff", "rx": 8, "fadeIn": { "duration": 15 } },
-            { "type": "rect", "x": 310, "y": 80, "width": 70, "height": 70, "stroke": "#ff6b6b", "rx": 8, "fadeIn": { "duration": 15 } },
-            { "type": "rect", "x": 400, "y": 80, "width": 70, "height": 70, "stroke": "#ffd93d", "rx": 8, "fadeIn": { "duration": 15 } }
-          ]
-        }
-      ]
-    }
-    ```
-  </TabItem>
-</Tabs>
-
+const updated = addRevealTimeline(doc, {
+  id: 'intro',
+  targets: ['step-1', 'step-2', 'step-3', 'step-4'],
+  preset: 'staggeredFadeIn',
+  stagger: 8,
+}).document;
+```

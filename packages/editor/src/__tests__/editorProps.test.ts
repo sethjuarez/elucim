@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createInitialState, createDefaultDocument } from '../state/types';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument } from '@elucim/dsl';
 
 // ─── initialFrame="last" resolution ────────────────────────────────────────
 

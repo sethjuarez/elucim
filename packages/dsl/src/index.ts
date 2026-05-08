@@ -2,12 +2,10 @@
 
 // Schema types
 export type {
-  ElucimDocument,
+  ElucimDocument as RenderableDocument,
   RootNode,
   SceneNode,
   PlayerNode,
-  PresentationNode,
-  SlideNode,
   SequenceNode,
   GroupNode,
   ElementNode,
@@ -25,14 +23,6 @@ export type {
   MatrixNode,
   GraphNode,
   LaTeXNode,
-  FadeInNode,
-  FadeOutNode,
-  DrawNode,
-  WriteNode,
-  TransformNode,
-  MorphNode,
-  StaggerNode,
-  ParallelNode,
   EasingSpec,
   SpringEasing,
   CubicBezierEasing,
@@ -45,7 +35,7 @@ export type {
 } from './schema/types';
 
 export type {
-  ElucimV2Document,
+  ElucimV2Document as ElucimDocument,
   ElucimV2Scene,
   ElucimV2Element,
   ElucimV2Metadata,
@@ -83,9 +73,15 @@ export {
 } from './v2/timeline';
 export {
   getInitialStateSnapshot,
+  startStateMachineRun,
+  dispatchStateMachineRunEvent,
+  advanceStateMachineRunFrame,
+  getStateMachineRunVisualFrames,
   getStateMachineVisualFrames,
   transitionStateMachine,
   type ElucimV2StateEvent,
+  type ElucimV2StateMachineRun,
+  type ElucimV2StateMachineRunResult,
   type ElucimV2StateMachineVisualFrame,
   type ElucimV2StateMachineVisualFrameOptions,
   type ElucimV2StateSnapshot,
@@ -120,8 +116,6 @@ export {
   renderRoot,
   renderScene,
   renderPlayer,
-  renderPresentation,
-  renderSlide,
   renderElement,
   type RenderRootOverrides,
 } from './renderer/renderElements';
@@ -138,15 +132,6 @@ export { DARK_THEME, LIGHT_THEME, themeToVars, getThemeDefaults, normalizeTheme,
 
 // Image resolver (canonical source: @elucim/core)
 export { ImageResolverProvider, useImageResolver, type ImageResolverFn } from '@elucim/core';
-
-// Builders — fluent API for programmatic presentation authoring
-export {
-  presentation,
-  PresentationBuilder,
-  type PresentationOptions,
-} from './builders/PresentationBuilder';
-export { SlideBuilder } from './builders/SlideBuilder';
-export { darkTheme, lightTheme, deckDarkTheme, deckLightTheme, type BuilderTheme, type Theme } from './builders/themes';
 
 // YAML parser
 export { fromYaml, ElucimYamlError } from './yaml/fromYaml';

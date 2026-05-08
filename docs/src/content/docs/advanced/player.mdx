@@ -1,9 +1,9 @@
 ---
 title: Player Component
-description: Full API reference for the Player — the playback container for Elucim animations.
+description: Low-level React API reference for the Player playback container.
 ---
 
-The `<Player>` is the main playback container for Elucim animations. It wraps a `<Scene>`, adds a playback timeline, controls bar, and keyboard shortcuts. Every standalone animation needs a Player.
+The `<Player>` is the low-level React playback container used by Elucim's renderer and by advanced hand-coded React scenes. For authored documents, use a normalized `ElucimDocument` rendered with `<DslRenderer dsl={doc} />`; `DslRenderer` creates the appropriate player surface for you.
 
 ## Props
 
@@ -19,22 +19,29 @@ The `<Player>` is the main playback container for Elucim animations. It wraps a 
 | `autoPlay` | `boolean` | `false` | Start playing automatically on mount |
 | `className` | `string` | — | CSS class for the root element |
 | `style` | `React.CSSProperties` | — | Inline styles for the root element |
-| `children` | `React.ReactNode` | — | Elucim primitives, animations, and math components |
+| `children` | `React.ReactNode` | — | Elucim primitives or custom React-rendered content |
 
 ## Basic Usage
 
 ```tsx
-import { Player, FadeIn, Circle, Text } from '@elucim/core';
+import { Player, Circle, Text, useCurrentFrame, interpolate } from '@elucim/core';
+
+function Content() {
+  const frame = useCurrentFrame();
+  const opacity = interpolate(frame, [0, 20], [0, 1]);
+
+  return (
+    <g opacity={opacity}>
+      <Circle cx={400} cy={300} r={80} stroke="#6c5ce7" strokeWidth={3} />
+      <Text x={400} y={305} fill="#fff" fontSize={24} textAnchor="middle">
+        Hello World
+      </Text>
+    </g>
+  );
+}
 
 <Player width={800} height={600} fps={30} durationInFrames={90}>
-  <FadeIn duration={20}>
-    <Circle cx={400} cy={300} r={80} stroke="#6c5ce7" strokeWidth={3} />
-  </FadeIn>
-  <FadeIn duration={20}>
-    <Text x={400} y={305} fill="#fff" fontSize={24} textAnchor="middle">
-      Hello World
-    </Text>
-  </FadeIn>
+  <Content />
 </Player>
 ```
 

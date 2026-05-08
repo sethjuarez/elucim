@@ -1,6 +1,8 @@
 import type { ElucimDocument, ElementNode, PlayerNode, SceneNode } from '../schema/types';
 import type { ElucimV2Document, ElucimV2Element, ElucimV2Scene } from './types';
 import { getDocumentLinearDuration } from './duration';
+import { getInitialStateSnapshot, getStateMachineVisualFrames } from './stateMachine';
+import { applyTimelineFrames } from './timeline';
 
 export interface NormalizeToV2Result {
   document: ElucimV2Document;
@@ -50,7 +52,7 @@ export function normalizeToV2(doc: unknown): NormalizeToV2Result {
 
 export function toRenderableV1(doc: unknown): ElucimDocument {
   if (isV1Document(doc)) return doc;
-  return migrateV2ToV1(normalizeToV2(doc).document);
+  return migrateV2ToV1(applyDefaultStateMachineInitialFrame(normalizeToV2(doc).document));
 }
 
 export function migrateV1ToV2(doc: ElucimDocument): ElucimV2Document {
@@ -110,6 +112,19 @@ export function migrateV2ToV1(doc: ElucimV2Document): ElucimDocument {
       children,
     } as SceneNode | PlayerNode,
   };
+}
+
+function applyDefaultStateMachineInitialFrame(doc: ElucimV2Document): ElucimV2Document {
+  if (!doc.defaultStateMachine || !doc.stateMachines?.[doc.defaultStateMachine]) return doc;
+  const snapshot = getInitialStateSnapshot(doc, doc.defaultStateMachine);
+  const frames = getStateMachineVisualFrames(doc, doc.defaultStateMachine, {
+    statePath: [snapshot.stateId],
+    currentStateId: snapshot.stateId,
+    currentFrame: 0,
+    missingState: 'skip',
+    missingTimeline: 'skip',
+  });
+  return frames.length > 0 ? applyTimelineFrames(doc, frames) : doc;
 }
 
 function restoreElement(doc: ElucimV2Document, id: string): ElementNode {

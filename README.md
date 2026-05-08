@@ -1,20 +1,20 @@
 # Elucim
 
-> **Animate concepts. Illuminate understanding.**
+> **Describe animated explanations as data. Render them anywhere.**
 
-A JavaScript/TypeScript library for creating animated concept explanations — 3Blue1Brown-style math visualizations, built natively for the web in React.
+Elucim is a TypeScript toolkit for normalized, interactive concept diagrams: a Mermaid-like document language for animated explanations, with richer SVG/math primitives, explicit timelines, state machines, React rendering, and a visual editor.
 
 ## ✅ Implementation Status
 
 | Phase | Status | What's Included |
 |-------|--------|----------------|
-| **Phase 1: Core Engine** | ✅ Complete | Scene, Sequence, Player, interpolate, 20+ easing functions, SVG primitives |
+| **Phase 1: Core Engine** | ✅ Complete | Player, Scene, hooks, easing, SVG/math primitives |
 | **Phase 2: Math Primitives** | ✅ Complete | Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX (KaTeX) |
-| **Phase 3: Animation System** | ✅ Complete | FadeIn/Out, Draw, Write, Transform, Morph, Stagger, Parallel, Timeline DSL |
+| **Phase 3: Animation System** | ✅ Complete | Normalized timelines, state machines, keyframe evaluation, low-level React hooks |
 | **Phase 4: New Primitives** | ✅ Complete | Polygon, VectorField, LaTeX, Image, Group, BarChart |
 | **Phase 5: Tooling** | ✅ Complete | Interactive Explorer, Video Export, Starlight docs site |
-| **Phase 6: Presentation** | ✅ Complete | Slide mode, transitions, HUD, keyboard nav, presenter notes |
-| **Phase 7: DSL** | ✅ Complete | JSON/YAML DSL for AI agents, safe math evaluator, validator, DslRenderer |
+| **Phase 6: Presentation** | ✅ Complete | React presentation shell, transitions, HUD, keyboard nav, presenter notes |
+| **Phase 7: DSL** | ✅ Complete | Normalized JSON/YAML documents for users and AI agents, safe math evaluator, validator, DslRenderer, timelines/state machines |
 | **Phase 8: Composability** | ✅ Complete | Universal SpatialProps (rotation, scale, translate), z-index stacking, Group container |
 | **Phase 9: Visual Editor** | ✅ Complete | Canvas editor with toolbar, inspector, timeline, theming, marquee selection |
 | **Testing** | ✅ Complete | 34 Playwright e2e tests + 429 Vitest unit tests |
@@ -32,16 +32,16 @@ pnpm --filter @elucim/docs dev        # Documentation site → http://localhost:
 
 | Package | Description | npm |
 |---------|-------------|-----|
-| **[@elucim/core](./packages/core)** | React components, hooks, primitives, animations, export | [![npm](https://img.shields.io/npm/v/@elucim/core)](https://www.npmjs.com/package/@elucim/core) |
-| **[@elucim/dsl](./packages/dsl)** | JSON/YAML DSL for AI agents — describe animations as data | [![npm](https://img.shields.io/npm/v/@elucim/dsl)](https://www.npmjs.com/package/@elucim/dsl) |
+| **[@elucim/dsl](./packages/dsl)** | Primary authoring surface: normalized JSON/YAML documents, timelines, state machines, DslRenderer | [![npm](https://img.shields.io/npm/v/@elucim/dsl)](https://www.npmjs.com/package/@elucim/dsl) |
+| **[@elucim/core](./packages/core)** | Low-level React components, hooks, primitives, playback, and export utilities | [![npm](https://img.shields.io/npm/v/@elucim/core)](https://www.npmjs.com/package/@elucim/core) |
 | **[@elucim/editor](./packages/editor)** | Visual canvas editor — Figma-like design tool | [![npm](https://img.shields.io/npm/v/@elucim/editor)](https://www.npmjs.com/package/@elucim/editor) |
 
 ## Monorepo Structure
 
 ```
 packages/
-  core/       — Library: components, hooks, primitives, animations, export
-  dsl/        — JSON/YAML DSL: schema, validator, renderer, math evaluator, builder API
+  dsl/        — Primary authoring model: normalized scene schema, validator, renderer, timelines, state machines
+  core/       — Low-level React components, hooks, primitives, playback, export
   editor/     — Visual editor: canvas, toolbar, inspector, timeline, theming
   demo/       — Demo playground with 15+ interactive scenes
   explorer/   — Storybook-style primitive browser with live controls
@@ -72,7 +72,7 @@ cd packages/e2e && npx playwright test
 
 ## What Is It?
 
-Elucim is a JavaScript/TypeScript library for creating **animated concept explanations** — think 3Blue1Brown-style math visualizations, but built natively for the web in React. It blends the best of [Manim](https://www.manim.community/) (rich mathematical animation primitives) and [Remotion](https://www.remotion.dev/) (React-based, programmatic, frame-driven), with a critical differentiator neither offers: **fully interactive, live-in-browser animations** that viewers can scrub, pause, and eventually interact with.
+Elucim is a JavaScript/TypeScript toolkit for creating **animated concept explanations** — think 3Blue1Brown-style math visualizations, but authored as normalized data and rendered live in the browser. The primary authoring model is an `ElucimDocument`: one scene, stable element IDs, explicit timelines, state machines, and metadata. React hosts render that document with `<DslRenderer dsl={doc} />`.
 
 The name comes from *elucidate* — to make clear through explanation — with a nod to Manim's `-im` suffix.
 
@@ -95,50 +95,51 @@ There is no JavaScript-native tool for building **beautiful, mathematical, inter
 
 ### 1. Primitive System
 
-First-class visual primitives that know how to animate themselves:
+First-class visual primitives represented as normalized elements:
 
 - Geometric shapes (Circle, Line, Arrow, Polygon)
 - Math & data (Axes, FunctionPlot, Graph, Vector, Matrix)
 - Text & LaTeX rendering
 - Image embedding (PNG, JPEG, SVG, WebP, GIF)
 - Composable Group containers
-- Universal spatial transforms: rotation, scale, translate, zIndex
-- Each primitive can `fadeIn`, `write`, `transform`, `morph`, `trace`
+- Layout metadata for rotation, scale, translate, and zIndex
+- Timeline tracks for motion such as opacity, translate, scale, rotate, fill, and stroke
 
-### 2. React-Based & Declarative (from Remotion)
+### 2. Normalized Document Model
 
-Everything is a React component. Animations compose naturally:
-
-```tsx
-<Scene duration={180} fps={60}>
-  <Sequence from={0} duration={60}>
-    <Axes domain={[-5, 5]} range={[-2, 2]} />
-  </Sequence>
-  <Sequence from={40} duration={80}>
-    <FunctionPlot fn={Math.sin} color="blue" />
-  </Sequence>
-  <Sequence from={90}>
-    <Label text="sin(x)" position={[Math.PI, 0]} />
-  </Sequence>
-</Scene>
-```
-
-### 3. Imperative Timeline DSL
-
-An optional Manim-style API for authors who prefer sequential thinking:
+Scenes are inspectable JSON/YAML data:
 
 ```ts
-const scene = new Scene()
-scene.play(FadeIn(axes))
-scene.play(Draw(sinCurve), { runTime: 2 })
-scene.play(Write(label))
+import { DslRenderer, type ElucimDocument } from '@elucim/dsl';
+
+const doc: ElucimDocument = {
+  version: '2.0',
+  scene: { type: 'player', width: 800, height: 600, children: ['axes', 'curve'] },
+  elements: {
+    axes: { id: 'axes', type: 'axes', props: { type: 'axes', origin: [400, 300], xRange: [-5, 5], yRange: [-3, 3], scale: 50 } },
+    curve: { id: 'curve', type: 'functionPlot', props: { type: 'functionPlot', expression: 'sin(x)', domain: [-5, 5], origin: [400, 300], scale: 50, opacity: 0 } },
+  },
+  timelines: {
+    intro: { id: 'intro', duration: 45, tracks: [{ target: 'curve', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 45, value: 1 }] }] },
+  },
+  defaultStateMachine: 'main',
+  stateMachines: {
+    main: { id: 'main', entry: 'intro', states: { intro: { timeline: 'intro' } }, transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }] },
+  },
+};
+
+export function Scene() {
+  return <DslRenderer dsl={doc} />;
+}
 ```
 
-This compiles down to the same frame-based rendering under the hood.
+### 3. React Rendering and Low-Level Core APIs
+
+`@elucim/dsl` renders documents through React. `@elucim/core` provides the lower-level primitives, player, hooks, and export utilities that power the renderer and remain available for advanced hand-coded React integrations.
 
 ### 4. Interactive by Default
 
-Unlike Manim and Remotion, Elucim renders **live in the browser**. The `<Player>` component lets viewers scrub the timeline, step through animation checkpoints, and (eventually) interact with mathematical objects directly. Export to video is additive — not the primary output.
+Unlike Manim and Remotion, Elucim renders **live in the browser**. `DslRenderer` can run the document's default state machine interactively, while the lower-level `<Player>` remains available for custom React playback. Export to video is additive — not the primary output.
 
 ### 5. Renderer-Agnostic Core
 
@@ -153,12 +154,11 @@ The primitive abstraction is renderer-independent:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                  React Layer                     │
-│   <Scene> <Sequence> <Primitive> <Player>         │
+│              Normalized Document Layer           │
+│   ElucimDocument · elements · timelines · states  │
 ├─────────────────────────────────────────────────┤
-│               Timeline Engine                    │
-│   Frame clock · Interpolation · Easing           │
-│   Imperative DSL → declarative frame mapping     │
+│                 React Runtime                    │
+│   DslRenderer · Player · frame clock · easing     │
 ├──────────────────┬──────────────────────────────┤
 │   SVG/Canvas     │       BabylonJS (3D)          │
 │   Renderer       │       Renderer                │
@@ -168,12 +168,12 @@ The primitive abstraction is renderer-independent:
 
 **Key abstractions:**
 
-- `Scene` — a composition with dimensions, fps, and duration
-- `Sequence` — a time-offset wrapper (from Remotion)
-- `Primitive` — a renderable visual element with built-in animation methods
-- `useCurrentFrame()` — the core hook, returns frame number (0 → duration)
-- `interpolate(frame, [in, out], [from, to], easing)` — maps time to values
-- `<Player>` — interactive browser component for scrubbing/stepping
+- `ElucimDocument` — normalized single-scene document with stable IDs
+- `elements` — ID-keyed visual primitives and semantic metadata
+- `timelines` — explicit keyframe tracks over safe animatable properties
+- `stateMachines` — interactive Entry/state/transition playback
+- `<DslRenderer>` — React renderer for normalized documents
+- `@elucim/core` — lower-level React primitives, hooks, player, and export utilities
 
 ---
 
@@ -188,52 +188,8 @@ The primitive abstraction is renderer-independent:
 | Video export | ✅ | ✅ | ✅ |
 | 3D support | ✅ (BabylonJS) | ⚠️ | ❌ |
 | LaTeX rendering | ✅ | ✅ | ❌ |
-| Slide/presentation mode | ✅ | ✅ | ❌ |
+| Host-level presentation shell | ✅ | ✅ | ❌ |
 | Open source | ✅ | ✅ | ⚠️ (BSL) |
-
----
-
-## Phased Plan
-
-### Phase 1 — Core Engine
-
-- [ ] `Scene` and `Sequence` components
-- [ ] `useCurrentFrame()` and `interpolate()` hooks
-- [ ] SVG renderer with basic primitives: Circle, Line, Arrow, Rect, Text
-- [ ] `<Player>` component with scrubbing
-- [ ] Easing library (linear, easeIn, easeOut, spring, etc.)
-
-### Phase 2 — Math Primitives
-
-- [ ] `Axes` with configurable domain/range
-- [ ] `FunctionPlot` (continuous functions)
-- [ ] `Vector` and `VectorField`
-- [ ] `Matrix` display and transformation
-- [ ] LaTeX rendering (via MathJax or KaTeX)
-- [ ] `Graph` (nodes + edges)
-
-### Phase 3 — Animation System
-
-- [ ] Built-in animation types: `FadeIn`, `FadeOut`, `Write`, `Draw`, `Transform`, `Morph`
-- [ ] Imperative timeline DSL (`scene.play()`)
-- [ ] Animation groups (parallel + sequential)
-- [ ] `Transform` between arbitrary primitives
-
-### Phase 4 — 3D & Export
-
-- [ ] BabylonJS renderer backend
-- [ ] 3D primitives: `Surface`, `ParametricCurve`, `Axes3D`
-- [ ] Video export (via WebCodecs or Remotion integration)
-- [x] Slide/presentation mode
-
-### Phase 5 — DX & Ecosystem
-
-- [ ] VSCode extension with live preview
-- [ ] Hot reload dev server
-- [ ] Storybook-style primitive explorer
-- [ ] Documentation site with interactive examples
-
----
 
 ## Tech Stack
 
@@ -266,7 +222,6 @@ The primitive abstraction is renderer-independent:
 ## Open Questions
 
 - Rendering strategy: pure SVG vs. hybrid SVG+Canvas for performance at scale
-- Should the imperative DSL be first-class or a thin wrapper?
 - Remotion interop: deep integration vs. standalone?
 
 ---

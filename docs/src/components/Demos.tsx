@@ -10,6 +10,7 @@ import {
   Presentation, Slide,
   useCurrentFrame, interpolate,
 } from '@elucim/core';
+import { DslRenderer, type ElucimDocument } from '@elucim/dsl/react';
 
 function FadeIn({ children, duration = 30 }: { children: React.ReactNode; duration?: number }) {
   const frame = useCurrentFrame();
@@ -372,146 +373,190 @@ export function BarChartDemo() {
 // ─── Animations ─────────────────────────────────────────────────────
 
 export function FadeDemo() {
-  return (
-    <Player width={500} height={250} fps={30} durationInFrames={120} autoPlay loop>
-      {/* Labels visible immediately */}
-      <Text x={125} y={220} fill="currentColor" fontSize={12} textAnchor="middle" opacity={0.5}>FadeIn</Text>
-      <Text x={375} y={220} fill="currentColor" fontSize={12} textAnchor="middle" opacity={0.5}>FadeOut</Text>
-      {/* Left: circle fades in */}
-      <Circle cx={125} cy={125} r={50} stroke="#6c5ce7" strokeWidth={3} fill="rgba(108,92,231,0.2)" fadeIn={30} />
-      <Sequence from={30} durationInFrames={90}>
-        <FadeIn duration={20}>
-          <Text x={125} y={130} fill="#6c5ce7" fontSize={14} textAnchor="middle">Visible!</Text>
-        </FadeIn>
-      </Sequence>
-      {/* Right: circle appears then fades out */}
-      <Sequence from={0} durationInFrames={60}>
-        <Circle cx={375} cy={125} r={50} stroke="#ff6b6b" strokeWidth={3} fill="rgba(255,107,107,0.2)" fadeIn={20} />
-      </Sequence>
-      <Sequence from={60} durationInFrames={60}>
-        <FadeOut duration={40}>
-          <Circle cx={375} cy={125} r={50} stroke="#ff6b6b" strokeWidth={3} fill="rgba(255,107,107,0.2)" />
-        </FadeOut>
-      </Sequence>
-      <Sequence from={60} durationInFrames={60}>
-        <FadeIn duration={15}>
-          <Text x={375} y={130} fill="#ff6b6b" fontSize={14} textAnchor="middle">Gone!</Text>
-        </FadeIn>
-      </Sequence>
-    </Player>
-  );
+  const doc: ElucimDocument = {
+    version: '2.0',
+    scene: { type: 'player', width: 500, height: 250, fps: 30, loop: true, children: ['in-label', 'out-label', 'in-circle', 'in-text', 'out-circle', 'out-text'] },
+    elements: {
+      'in-label': { id: 'in-label', type: 'text', props: { type: 'text', x: 125, y: 220, content: 'opacity in', fill: '$muted', fontSize: 12, textAnchor: 'middle' } },
+      'out-label': { id: 'out-label', type: 'text', props: { type: 'text', x: 375, y: 220, content: 'opacity out', fill: '$muted', fontSize: 12, textAnchor: 'middle' } },
+      'in-circle': { id: 'in-circle', type: 'circle', props: { type: 'circle', cx: 125, cy: 125, r: 50, stroke: '$accent', strokeWidth: 3, fill: 'rgba(108,92,231,0.2)', opacity: 1 } },
+      'in-text': { id: 'in-text', type: 'text', props: { type: 'text', x: 125, y: 130, content: 'Visible!', fill: '$accent', fontSize: 14, textAnchor: 'middle', opacity: 1 } },
+      'out-circle': { id: 'out-circle', type: 'circle', props: { type: 'circle', cx: 375, cy: 125, r: 50, stroke: '#ff6b6b', strokeWidth: 3, fill: 'rgba(255,107,107,0.2)', opacity: 0 } },
+      'out-text': { id: 'out-text', type: 'text', props: { type: 'text', x: 375, y: 130, content: 'Gone!', fill: '#ff6b6b', fontSize: 14, textAnchor: 'middle', opacity: 1 } },
+    },
+    timelines: {
+      fade: {
+        id: 'fade',
+        duration: 90,
+        tracks: [
+          { target: 'in-circle', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+          { target: 'in-text', property: 'opacity', keyframes: [{ frame: 30, value: 0 }, { frame: 50, value: 1 }] },
+          { target: 'out-circle', property: 'opacity', keyframes: [{ frame: 50, value: 1 }, { frame: 90, value: 0 }] },
+          { target: 'out-text', property: 'opacity', keyframes: [{ frame: 60, value: 0 }, { frame: 75, value: 1 }] },
+        ],
+      },
+    },
+    defaultStateMachine: 'main',
+    stateMachines: {
+      main: {
+        id: 'main',
+        entry: 'fade',
+        states: { fade: { timeline: 'fade' } },
+        transitions: [{ id: 'entry-start', from: 'entry', to: 'fade', trigger: 'onStart' }],
+      },
+    },
+    metadata: { title: 'Opacity timeline demo' },
+  };
+
+  return <DslRenderer dsl={doc} colorScheme="auto" />;
 }
 
 export function DrawDemo() {
-  return (
-    <Player width={500} height={250} fps={30} durationInFrames={90} autoPlay loop>
-      {/* Use built-in draw prop for stroke animation */}
-      <Circle cx={125} cy={125} r={60} stroke="#6c5ce7" strokeWidth={3} fill="none" draw={40} />
-      <Sequence from={10} durationInFrames={80}>
-        <Write duration={30}>
-          <Text x={125} y={130} fill="#6c5ce7" fontSize={16} textAnchor="middle">Draw</Text>
-        </Write>
-      </Sequence>
-      <Sequence from={20} durationInFrames={70}>
-        <Rect x={300} y={65} width={120} height={120} stroke="#ff6b6b" strokeWidth={3} fill="none" rx={8} draw={40} />
-      </Sequence>
-      <Sequence from={30} durationInFrames={60}>
-        <Write duration={30}>
-          <Text x={360} y={130} fill="#ff6b6b" fontSize={16} textAnchor="middle">Write</Text>
-        </Write>
-      </Sequence>
-    </Player>
-  );
+  const doc: ElucimDocument = {
+    version: '2.0',
+    scene: { type: 'player', width: 500, height: 250, fps: 30, loop: true, children: ['circle', 'circle-text', 'rect', 'rect-text'] },
+    elements: {
+      circle: { id: 'circle', type: 'circle', props: { type: 'circle', cx: 125, cy: 125, r: 60, stroke: '$accent', strokeWidth: 3, fill: 'none', opacity: 1 } },
+      'circle-text': { id: 'circle-text', type: 'text', props: { type: 'text', x: 125, y: 130, content: 'Reveal', fill: '$accent', fontSize: 16, textAnchor: 'middle', opacity: 1 } },
+      rect: { id: 'rect', type: 'rect', props: { type: 'rect', x: 300, y: 65, width: 120, height: 120, stroke: '#ff6b6b', strokeWidth: 3, fill: 'none', rx: 8, opacity: 1 } },
+      'rect-text': { id: 'rect-text', type: 'text', props: { type: 'text', x: 360, y: 130, content: 'Write', fill: '#ff6b6b', fontSize: 16, textAnchor: 'middle', opacity: 1 } },
+    },
+    timelines: {
+      reveal: {
+        id: 'reveal',
+        duration: 70,
+        tracks: [
+          { target: 'circle', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+          { target: 'circle-text', property: 'opacity', keyframes: [{ frame: 10, value: 0 }, { frame: 40, value: 1 }] },
+          { target: 'rect', property: 'opacity', keyframes: [{ frame: 20, value: 0 }, { frame: 50, value: 1 }] },
+          { target: 'rect-text', property: 'opacity', keyframes: [{ frame: 30, value: 0 }, { frame: 60, value: 1 }] },
+        ],
+      },
+    },
+    defaultStateMachine: 'main',
+    stateMachines: {
+      main: {
+        id: 'main',
+        entry: 'reveal',
+        states: { reveal: { timeline: 'reveal' } },
+        transitions: [{ id: 'entry-start', from: 'entry', to: 'reveal', trigger: 'onStart' }],
+      },
+    },
+    metadata: { title: 'Property reveal demo' },
+  };
+
+  return <DslRenderer dsl={doc} colorScheme="auto" />;
 }
 
 export function TransformDemo() {
-  return (
-    <Player width={500} height={250} fps={30} durationInFrames={90} autoPlay loop>
-      <Transform
-        scale={{ from: 0.5, to: 1.2 }}
-        rotate={{ from: 0, to: 360 }}
-        opacity={{ from: 0.3, to: 1 }}
-        duration={60}
-      >
-        <Circle cx={150} cy={125} r={40} stroke="#6c5ce7" strokeWidth={3} fill="rgba(108,92,231,0.2)" />
-      </Transform>
-      <Sequence from={15} durationInFrames={75}>
-        <Morph
-          fromColor="#ff6b6b"
-          toColor="#4ecdc4"
-          fromScale={0.8}
-          toScale={1.3}
-          fromOpacity={0.3}
-          toOpacity={1}
-          duration={50}
-        >
-          <Rect x={310} y={85} width={80} height={80} stroke="#ff6b6b" strokeWidth={2} fill="rgba(255,107,107,0.3)" rx={6} />
-        </Morph>
-      </Sequence>
-    </Player>
-  );
+  const doc: ElucimDocument = {
+    version: '2.0',
+    scene: { type: 'player', width: 500, height: 250, fps: 30, loop: true, children: ['orb', 'card', 'label'] },
+    elements: {
+      orb: { id: 'orb', type: 'circle', layout: { scale: 1.2, rotation: 360 }, props: { type: 'circle', cx: 150, cy: 125, r: 40, stroke: '$accent', strokeWidth: 3, fill: 'rgba(108,92,231,0.2)', opacity: 1 } },
+      card: { id: 'card', type: 'rect', layout: { scale: 1.3 }, props: { type: 'rect', x: 310, y: 85, width: 80, height: 80, stroke: '#4ecdc4', strokeWidth: 2, fill: 'rgba(78,205,196,0.3)', rx: 6, opacity: 1 } },
+      label: { id: 'label', type: 'text', props: { type: 'text', x: 250, y: 218, content: 'layout + timeline transform tracks', fill: '$muted', fontSize: 12, textAnchor: 'middle' } },
+    },
+    timelines: {
+      transform: {
+        id: 'transform',
+        duration: 60,
+        tracks: [
+          { target: 'orb', property: 'scale', keyframes: [{ frame: 0, value: 0.5 }, { frame: 60, value: 1.2 }] },
+          { target: 'orb', property: 'rotate', keyframes: [{ frame: 0, value: 0 }, { frame: 60, value: 360 }] },
+          { target: 'card', property: 'fill', keyframes: [{ frame: 15, value: '#ff6b6b' }, { frame: 60, value: '#4ecdc4' }] },
+        ],
+      },
+    },
+    defaultStateMachine: 'main',
+    stateMachines: {
+      main: {
+        id: 'main',
+        entry: 'transform',
+        states: { transform: { timeline: 'transform' } },
+        transitions: [{ id: 'entry-start', from: 'entry', to: 'transform', trigger: 'onStart' }],
+      },
+    },
+    metadata: { title: 'Transform timeline demo' },
+  };
+
+  return <DslRenderer dsl={doc} colorScheme="auto" />;
 }
 
 export function StaggerDemo() {
-  return (
-    <Player width={500} height={250} fps={30} durationInFrames={90} autoPlay loop>
-      <Stagger staggerDelay={8}>
-        {[0, 1, 2, 3, 4].map(i => (
-          <FadeIn key={i} duration={15}>
-            <Rect x={40 + i * 90} y={80} width={70} height={70}
-                  stroke={['#6c5ce7', '#a29bfe', '#74b9ff', '#ff6b6b', '#ffd93d'][i]}
-                  strokeWidth={2}
-                  fill={`${['#6c5ce7', '#a29bfe', '#74b9ff', '#ff6b6b', '#ffd93d'][i]}22`}
-                  rx={8} />
-          </FadeIn>
-        ))}
-      </Stagger>
-      <Sequence from={50} durationInFrames={40}>
-        <FadeIn duration={15}>
-          <Text x={250} y={200} fill="currentColor" fontSize={12} textAnchor="middle">
-            Elements appear with staggerDelay between each
-          </Text>
-        </FadeIn>
-      </Sequence>
-    </Player>
-  );
+  const colors = ['#6c5ce7', '#a29bfe', '#74b9ff', '#ff6b6b', '#ffd93d'];
+  const doc: ElucimDocument = {
+    version: '2.0',
+    scene: { type: 'player', width: 500, height: 250, fps: 30, loop: true, children: ['box-0', 'box-1', 'box-2', 'box-3', 'box-4', 'caption'] },
+    elements: {
+      ...Object.fromEntries(colors.map((color, i) => [
+        `box-${i}`,
+        { id: `box-${i}`, type: 'rect', props: { type: 'rect', x: 40 + i * 90, y: 80, width: 70, height: 70, stroke: color, strokeWidth: 2, fill: `${color}22`, rx: 8, opacity: 1 } },
+      ])),
+      caption: { id: 'caption', type: 'text', props: { type: 'text', x: 250, y: 200, content: 'Each box uses an offset keyframe', fill: '$muted', fontSize: 12, textAnchor: 'middle', opacity: 1 } },
+    },
+    timelines: {
+      stagger: {
+        id: 'stagger',
+        duration: 70,
+        tracks: [
+          ...colors.map((_, i) => ({ target: `box-${i}`, property: 'opacity', keyframes: [{ frame: i * 8, value: 0 }, { frame: i * 8 + 15, value: 1 }] })),
+          { target: 'caption', property: 'opacity', keyframes: [{ frame: 50, value: 0 }, { frame: 65, value: 1 }] },
+        ],
+      },
+    },
+    defaultStateMachine: 'main',
+    stateMachines: {
+      main: {
+        id: 'main',
+        entry: 'stagger',
+        states: { stagger: { timeline: 'stagger' } },
+        transitions: [{ id: 'entry-start', from: 'entry', to: 'stagger', trigger: 'onStart' }],
+      },
+    },
+    metadata: { title: 'Staggered timeline demo' },
+  };
+
+  return <DslRenderer dsl={doc} colorScheme="auto" />;
 }
 
 // ─── Quick Start Demo ───────────────────────────────────────────────
 
 export function CodeResultDemo() {
-  return (
-    <Player width={400} height={300} fps={30} durationInFrames={90} autoPlay loop>
-      <FadeIn duration={20}>
-        <Circle cx={200} cy={140} r={60} stroke="#6c5ce7" strokeWidth={3} fill="none" />
-      </FadeIn>
-      <Sequence from={15} durationInFrames={75}>
-        <FadeIn duration={20}>
-          <Text x={200} y={148} fill="currentColor" fontSize={20} textAnchor="middle">
-            Hello World
-          </Text>
-        </FadeIn>
-      </Sequence>
-    </Player>
-  );
+  const doc: ElucimDocument = {
+    version: '2.0',
+    scene: { type: 'player', width: 400, height: 300, fps: 30, children: ['circle', 'title'] },
+    elements: {
+      circle: { id: 'circle', type: 'circle', props: { type: 'circle', cx: 200, cy: 140, r: 60, stroke: '$accent', strokeWidth: 3, fill: 'none' } },
+      title: { id: 'title', type: 'text', props: { type: 'text', x: 200, y: 148, content: 'Hello World', fill: '$foreground', fontSize: 20, textAnchor: 'middle' } },
+    },
+    metadata: { title: 'Hello World' },
+  };
+
+  return <DslRenderer dsl={doc} colorScheme="auto" />;
 }
 
-const codeSnippet = `import { Player, FadeIn, Circle, Text }
-  from '@elucim/core';
+const codeSnippet = `import { DslRenderer, type ElucimDocument }
+  from '@elucim/dsl';
 
-<Player width={400} height={300}
-  durationInFrames={90} autoPlay loop>
-  <FadeIn>
-    <Circle cx={200} cy={140} r={60}
-      stroke="#6c5ce7" fill="none" />
-  </FadeIn>
-  <FadeIn>
-    <Text x={200} y={148}
-      fontSize={20} textAnchor="middle">
-      Hello World
-    </Text>
-  </FadeIn>
-</Player>`;
+const doc: ElucimDocument = {
+  version: '2.0',
+  scene: { type: 'player', width: 400, height: 300, children: ['circle', 'title'] },
+  elements: {
+    circle: {
+      id: 'circle',
+      type: 'circle',
+      props: { type: 'circle', cx: 200, cy: 140, r: 60, stroke: '$accent', fill: 'none' },
+    },
+    title: {
+      id: 'title',
+      type: 'text',
+      props: { type: 'text', x: 200, y: 148, content: 'Hello World', textAnchor: 'middle' },
+    },
+  },
+};
+
+<DslRenderer dsl={doc} />`;
 
 export function CodeResultTabs() {
   const [tab, setTab] = React.useState<'result' | 'code'>('result');
@@ -544,111 +589,140 @@ export function CodeResultTabs() {
 }
 
 export function QuickStartDemo() {
+  const quickStartScene: ElucimDocument = {
+    version: '2.0',
+    scene: {
+      type: 'player',
+      width: 500,
+      height: 350,
+      fps: 30,
+      loop: true,
+      background: '$background',
+      children: ['ring', 'title', 'subtitle'],
+    },
+    elements: {
+      ring: {
+        id: 'ring',
+        type: 'circle',
+        role: 'hero-shape',
+        props: { type: 'circle', cx: 250, cy: 175, r: 80, stroke: '$accent', strokeWidth: 3, fill: 'none', opacity: 0 },
+      },
+      title: {
+        id: 'title',
+        type: 'text',
+        role: 'title',
+        props: { type: 'text', x: 250, y: 180, fill: '$foreground', fontSize: 24, textAnchor: 'middle', content: 'Hello World', opacity: 0 },
+      },
+      subtitle: {
+        id: 'subtitle',
+        type: 'text',
+        role: 'caption',
+        props: { type: 'text', x: 250, y: 300, fill: '$muted', fontSize: 14, textAnchor: 'middle', content: 'Your first Elucim scene', opacity: 0 },
+      },
+    },
+    timelines: {
+      intro: {
+        id: 'intro',
+        duration: 80,
+        tracks: [
+          { target: 'ring', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 20, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'title', property: 'opacity', keyframes: [{ frame: 30, value: 0 }, { frame: 50, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'subtitle', property: 'opacity', keyframes: [{ frame: 60, value: 0 }, { frame: 80, value: 1, easing: 'easeOutCubic' }] },
+        ],
+      },
+    },
+    defaultStateMachine: 'main',
+    stateMachines: {
+      main: {
+        id: 'main',
+        entry: 'intro',
+        states: { intro: { timeline: 'intro' } },
+        transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+      },
+    },
+    metadata: { title: 'Hello World', intent: 'Introduce a first Elucim scene.' },
+  };
+
   return (
-    <Player width={500} height={350} fps={30} durationInFrames={120} autoPlay loop>
-      <Sequence from={0} durationInFrames={60}>
-        <FadeIn duration={20}>
-          <Circle cx={250} cy={175} r={80} stroke="#6c5ce7" strokeWidth={3} fill="none" />
-        </FadeIn>
-      </Sequence>
-      <Sequence from={30} durationInFrames={90}>
-        <FadeIn duration={20}>
-          <Text x={250} y={180} fill="currentColor" fontSize={24} textAnchor="middle">
-            Hello World
-          </Text>
-        </FadeIn>
-      </Sequence>
-      <Sequence from={60} durationInFrames={60}>
-        <FadeIn duration={20}>
-          <Text x={250} y={300} fill="currentColor" fontSize={14} textAnchor="middle">
-            Your first Elucim scene ✨
-          </Text>
-        </FadeIn>
-      </Sequence>
-    </Player>
+    <DslRenderer dsl={quickStartScene} colorScheme="auto" />
   );
 }
 
 // ─── Hero Demo ──────────────────────────────────────────────────────
 
 export function HeroDemo() {
-  return (
-    <Player width={600} height={360} fps={30} durationInFrames={210} autoPlay loop>
-      {/* Title */}
-      <Sequence from={0} durationInFrames={210}>
-        <FadeIn duration={25}>
-          <Text x={300} y={38} fill="#6c5ce7" fontSize={22} fontWeight="bold" textAnchor="middle">
-            What you can build with Elucim
-          </Text>
-        </FadeIn>
-      </Sequence>
+  const bars = [
+    { id: 'bar-0', x: 120, y: 305, height: 45, fill: '$accent' },
+    { id: 'bar-1', x: 175, y: 280, height: 70, fill: '$accentMuted' },
+    { id: 'bar-2', x: 230, y: 295, height: 55, fill: '$accent' },
+    { id: 'bar-3', x: 285, y: 260, height: 90, fill: '$accentMuted' },
+    { id: 'bar-4', x: 340, y: 285, height: 65, fill: '$accent' },
+    { id: 'bar-5', x: 395, y: 270, height: 80, fill: '$accentMuted' },
+  ];
+  const doc: ElucimDocument = {
+    version: '2.0',
+    scene: {
+      type: 'player',
+      width: 600,
+      height: 360,
+      fps: 30,
+      loop: true,
+      children: ['title', 'primitive-label', 'primitive-circle', 'primitive-arrow', 'math-label', 'math-axis-x', 'math-axis-y', 'curve', 'latex-label', 'latex', 'scene-label', ...bars.map((bar) => bar.id)],
+    },
+    elements: {
+      title: { id: 'title', type: 'text', props: { type: 'text', x: 300, y: 38, content: 'What you can build with Elucim', fill: '$accent', fontSize: 22, fontWeight: 'bold', textAnchor: 'middle', opacity: 1 } },
+      'primitive-label': { id: 'primitive-label', type: 'text', props: { type: 'text', x: 82, y: 75, content: 'Primitives', fill: '$muted', fontSize: 11, textAnchor: 'middle', opacity: 1 } },
+      'primitive-circle': { id: 'primitive-circle', type: 'circle', props: { type: 'circle', cx: 82, cy: 130, r: 35, stroke: '$accent', strokeWidth: 2.5, fill: 'none', opacity: 1 } },
+      'primitive-arrow': { id: 'primitive-arrow', type: 'arrow', props: { type: 'arrow', x1: 50, y1: 190, x2: 115, y2: 190, stroke: '$accentMuted', strokeWidth: 2, headSize: 8, opacity: 1 } },
+      'math-label': { id: 'math-label', type: 'text', props: { type: 'text', x: 300, y: 75, content: 'Math visualizations', fill: '$muted', fontSize: 11, textAnchor: 'middle', opacity: 1 } },
+      'math-axis-x': { id: 'math-axis-x', type: 'line', props: { type: 'line', x1: 210, y1: 145, x2: 390, y2: 145, stroke: '$foreground', strokeWidth: 1, opacity: 0.4 } },
+      'math-axis-y': { id: 'math-axis-y', type: 'line', props: { type: 'line', x1: 300, y1: 100, x2: 300, y2: 190, stroke: '$foreground', strokeWidth: 1, opacity: 0.4 } },
+      curve: { id: 'curve', type: 'bezierCurve', props: { type: 'bezierCurve', x1: 210, y1: 145, cx1: 250, cy1: 95, cx2: 350, cy2: 195, x2: 390, y2: 145, stroke: '$accent', strokeWidth: 2.5, fill: 'none', opacity: 1 } },
+      'latex-label': { id: 'latex-label', type: 'text', props: { type: 'text', x: 518, y: 75, content: 'LaTeX equations', fill: '$muted', fontSize: 11, textAnchor: 'middle', opacity: 1 } },
+      latex: { id: 'latex', type: 'latex', props: { type: 'latex', expression: 'e^{i\\pi} + 1 = 0', x: 518, y: 135, fontSize: 18, color: '$accent', opacity: 1 } },
+      'scene-label': { id: 'scene-label', type: 'text', props: { type: 'text', x: 300, y: 235, content: 'Compose into animated scenes', fill: '$muted', fontSize: 11, textAnchor: 'middle', opacity: 1 } },
+      ...Object.fromEntries(bars.map((bar) => [
+        bar.id,
+        { id: bar.id, type: 'rect', props: { type: 'rect', x: bar.x, y: bar.y, width: 40, height: bar.height, fill: bar.fill, rx: 3, opacity: 1 } },
+      ])),
+    },
+    timelines: {
+      intro: {
+        id: 'intro',
+        duration: 190,
+        tracks: [
+          { target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 18, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'primitive-label', property: 'opacity', keyframes: [{ frame: 12, value: 0 }, { frame: 30, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'primitive-circle', property: 'opacity', keyframes: [{ frame: 24, value: 0 }, { frame: 42, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'primitive-arrow', property: 'opacity', keyframes: [{ frame: 36, value: 0 }, { frame: 54, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'math-label', property: 'opacity', keyframes: [{ frame: 54, value: 0 }, { frame: 72, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'math-axis-x', property: 'opacity', keyframes: [{ frame: 66, value: 0 }, { frame: 84, value: 0.4, easing: 'easeOutCubic' }] },
+          { target: 'math-axis-y', property: 'opacity', keyframes: [{ frame: 66, value: 0 }, { frame: 84, value: 0.4, easing: 'easeOutCubic' }] },
+          { target: 'curve', property: 'opacity', keyframes: [{ frame: 78, value: 0 }, { frame: 102, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'latex-label', property: 'opacity', keyframes: [{ frame: 96, value: 0 }, { frame: 114, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'latex', property: 'opacity', keyframes: [{ frame: 108, value: 0 }, { frame: 132, value: 1, easing: 'easeOutCubic' }] },
+          { target: 'scene-label', property: 'opacity', keyframes: [{ frame: 126, value: 0 }, { frame: 144, value: 1, easing: 'easeOutCubic' }] },
+          ...bars.map((bar, index) => ({
+            target: bar.id,
+            property: 'opacity' as const,
+            keyframes: [{ frame: 138 + index * 5, value: 0 }, { frame: 156 + index * 5, value: 1, easing: 'easeOutCubic' }],
+          })),
+        ],
+      },
+    },
+    defaultStateMachine: 'main',
+    stateMachines: {
+      main: {
+        id: 'main',
+        entry: 'intro',
+        states: { intro: { timeline: 'intro' } },
+        transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+      },
+    },
+    metadata: { title: 'What you can build with Elucim' },
+  };
 
-      {/* Step 1: Primitives — circle + arrow */}
-      <Sequence from={15} durationInFrames={195}>
-        <FadeIn duration={15}>
-          <Text x={82} y={75} fill="#888" fontSize={11} textAnchor="middle">
-            Primitives
-          </Text>
-        </FadeIn>
-      </Sequence>
-      <Sequence from={25} durationInFrames={185}>
-        <Circle cx={82} cy={130} r={35} stroke="#6c5ce7" strokeWidth={2.5} fill="none" draw={25} />
-      </Sequence>
-      <Sequence from={40} durationInFrames={170}>
-        <FadeIn duration={15}>
-          <Arrow x1={50} y1={190} x2={115} y2={190} stroke="#a29bfe" strokeWidth={2} headSize={8} />
-        </FadeIn>
-      </Sequence>
-
-      {/* Step 2: Math — axes + sine curve */}
-      <Sequence from={55} durationInFrames={155}>
-        <FadeIn duration={15}>
-          <Text x={300} y={75} fill="#888" fontSize={11} textAnchor="middle">
-            Math visualizations
-          </Text>
-        </FadeIn>
-      </Sequence>
-      <Sequence from={65} durationInFrames={145}>
-        <Axes origin={[300, 145]} domain={[-3.5, 3.5]} range={[-1.2, 1.2]} scale={35}
-              axisColor="currentColor" labelColor="currentColor" showGrid={false} tickSize={0} showLabels={false} />
-        <FunctionPlot fn={Math.sin} domain={[-3.5, 3.5]} origin={[300, 145]} scale={35}
-                      color="#6c5ce7" strokeWidth={2.5} draw={35} />
-      </Sequence>
-
-      {/* Step 3: LaTeX */}
-      <Sequence from={105} durationInFrames={105}>
-        <FadeIn duration={15}>
-          <Text x={518} y={75} fill="#888" fontSize={11} textAnchor="middle">
-            LaTeX equations
-          </Text>
-        </FadeIn>
-      </Sequence>
-      <Sequence from={115} durationInFrames={95}>
-        <FadeIn duration={20}>
-          <LaTeX expression="e^{i\pi} + 1 = 0" x={518} y={135} fontSize={18} color="#6c5ce7" />
-        </FadeIn>
-      </Sequence>
-
-      {/* Step 4: Full scene — bar chart at the bottom */}
-      <Sequence from={140} durationInFrames={70}>
-        <FadeIn duration={15}>
-          <Text x={300} y={235} fill="#888" fontSize={11} textAnchor="middle">
-            Compose into animated scenes
-          </Text>
-        </FadeIn>
-      </Sequence>
-      <Sequence from={150} durationInFrames={60}>
-        <Stagger staggerDelay={6}>
-          <Rect x={120} y={305} width={40} height={45} fill="#6c5ce7" rx={3} fadeIn={12} />
-          <Rect x={175} y={280} width={40} height={70} fill="#a29bfe" rx={3} fadeIn={12} />
-          <Rect x={230} y={295} width={40} height={55} fill="#6c5ce7" rx={3} fadeIn={12} />
-          <Rect x={285} y={260} width={40} height={90} fill="#a29bfe" rx={3} fadeIn={12} />
-          <Rect x={340} y={285} width={40} height={65} fill="#6c5ce7" rx={3} fadeIn={12} />
-          <Rect x={395} y={270} width={40} height={80} fill="#a29bfe" rx={3} fadeIn={12} />
-        </Stagger>
-      </Sequence>
-    </Player>
-  );
+  return <DslRenderer dsl={doc} colorScheme="auto" />;
 }
 
 // ─── Example Demos ──────────────────────────────────────────────────
@@ -830,17 +904,20 @@ export function AgenticDemo() {
 // ─── Presentation ───────────────────────────────────────────────────
 
 export function TransformsDemo() {
-  return (
-    <Player width={500} height={300} fps={30} durationInFrames={90} autoPlay loop>
-      <Group rotation={15} translate={[50, 0]} fadeIn={20}>
-        <Rect x={125} y={50} width={200} height={200} stroke="#6c5ce7" fill="none" strokeWidth={2} />
-        <Circle cx={225} cy={150} r={50} stroke="#e17055" fill="none" strokeWidth={2} />
-        <Text x={225} y={155} fill="currentColor" fontSize={14} textAnchor="middle">rotated group</Text>
-      </Group>
-      <Circle cx={400} cy={150} r={30} stroke="#00b894" fill="none" strokeWidth={2} zIndex={2} />
-      <Text x={400} y={200} fill="currentColor" fontSize={12} textAnchor="middle">zIndex: 2</Text>
-    </Player>
-  );
+  const doc: ElucimDocument = {
+    version: '2.0',
+    scene: { type: 'player', width: 500, height: 300, fps: 30, children: ['group-box', 'group-circle', 'group-label', 'front-circle', 'front-label'] },
+    elements: {
+      'group-box': { id: 'group-box', type: 'rect', layout: { rotation: 15, translate: [50, 0] }, props: { type: 'rect', x: 125, y: 50, width: 200, height: 200, stroke: '$accent', fill: 'none', strokeWidth: 2 } },
+      'group-circle': { id: 'group-circle', type: 'circle', layout: { rotation: 15, translate: [50, 0] }, props: { type: 'circle', cx: 225, cy: 150, r: 50, stroke: '#e17055', fill: 'none', strokeWidth: 2 } },
+      'group-label': { id: 'group-label', type: 'text', layout: { rotation: 15, translate: [50, 0] }, props: { type: 'text', x: 225, y: 155, content: 'shared layout', fill: '$foreground', fontSize: 14, textAnchor: 'middle' } },
+      'front-circle': { id: 'front-circle', type: 'circle', props: { type: 'circle', cx: 400, cy: 150, r: 30, stroke: '#00b894', fill: 'none', strokeWidth: 2 } },
+      'front-label': { id: 'front-label', type: 'text', props: { type: 'text', x: 400, y: 200, content: 'last child paints on top', fill: '$foreground', fontSize: 12, textAnchor: 'middle' } },
+    },
+    metadata: { title: 'Layout composition demo' },
+  };
+
+  return <DslRenderer dsl={doc} colorScheme="auto" />;
 }
 
 export function PresentationDemo() {

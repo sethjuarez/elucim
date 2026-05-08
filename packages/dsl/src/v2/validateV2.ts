@@ -4,6 +4,8 @@ import type { ValidationError, ValidationResult } from '../validator/validate';
 const VALID_ROOT_TYPES = new Set(['scene', 'player']);
 const VALID_TIMELINE_PROPERTIES = new Set(['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke']);
 const RESERVED_EVENT_NAMES = new Set(['complete', 'entry', 'exit', 'next']);
+const LEGACY_WRAPPER_ELEMENT_TYPES = new Set(['sequence', 'fadein', 'fadeout', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
+const LEGACY_ANIMATION_PROPS = new Set(['fadeIn', 'fadeOut', 'draw', 'write']);
 
 export function validateV2(doc: unknown): ValidationResult {
   const errors: ValidationError[] = [];
@@ -65,9 +67,25 @@ function validateElement(id: string, element: ElucimV2Element, errors: Validatio
   }
   if (!element.type || typeof element.type !== 'string') {
     errors.push({ path: `${path}.type`, message: 'Element type is required', severity: 'error' });
+  } else if (LEGACY_WRAPPER_ELEMENT_TYPES.has(element.type.toLowerCase())) {
+    errors.push({
+      path: `${path}.type`,
+      message: `Legacy wrapper element "${element.type}" is not part of v2. Use timelines and state machines for motion.`,
+      severity: 'error',
+    });
   }
   if (!element.props || typeof element.props !== 'object' || Array.isArray(element.props)) {
     errors.push({ path: `${path}.props`, message: 'Element props must be an object', severity: 'error' });
+  } else {
+    for (const prop of LEGACY_ANIMATION_PROPS) {
+      if (prop in element.props) {
+        errors.push({
+          path: `${path}.props.${prop}`,
+          message: `Legacy animation prop "${prop}" is not part of v2. Use timeline tracks and keyframes instead.`,
+          severity: 'error',
+        });
+      }
+    }
   }
   if (element.children !== undefined && !Array.isArray(element.children)) {
     errors.push({ path: `${path}.children`, message: 'Element children must be an array of element IDs', severity: 'error' });

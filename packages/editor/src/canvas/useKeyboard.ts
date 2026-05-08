@@ -3,7 +3,7 @@ import type { Dispatch } from 'react';
 import type { EditorAction } from '../state/types';
 import { CANVAS_ID, MIN_ZOOM, MAX_ZOOM } from '../state/types';
 import { collectAllIds } from '../state/reducer';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument } from '@elucim/dsl';
 
 interface UseKeyboardOptions {
   dispatch: Dispatch<EditorAction>;

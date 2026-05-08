@@ -1,9 +1,9 @@
 ---
 title: DSL Overview
-description: Describe Elucim scenes and presentations as JSON or YAML documents with the @elucim/dsl package.
+description: Describe Elucim scenes, timelines, and state machines as JSON or YAML documents with the @elucim/dsl package.
 ---
 
-The `@elucim/dsl` package lets you describe Elucim scenes and presentations as **JSON or YAML documents** instead of JSX. This is ideal for AI-generated content, server-side authoring, and storing animations in databases or files.
+The `@elucim/dsl` package lets agents and content pipelines describe Elucim visuals as **JSON or YAML documents** instead of JSX. Elucim documents are normalized scene graphs with explicit elements, timelines, and optional state machines.
 
 ## ElucimDocument
 
@@ -12,12 +12,17 @@ Every DSL document is an `ElucimDocument` object:
 ```ts
 interface ElucimDocument {
   $schema?: string;         // Optional JSON Schema URL for editor autocomplete
-  version: '1.0';           // DSL version (required)
-  root: RootNode;           // Top-level node: scene, player, or presentation
+  version: '2.0';           // DSL version (required)
+  scene: ElucimScene;       // Root scene/player settings
+  elements: Record<string, ElucimElement>;
+  timelines?: Record<string, ElucimTimeline>;
+  stateMachines?: Record<string, ElucimStateMachine>;
+  defaultStateMachine?: string;
+  metadata?: ElucimMetadata;
 }
 ```
 
-The `root` can be a **scene**, **player**, or **presentation** node. Presentations contain **slide** children, and each slide typically wraps a **player** node.
+The `scene` chooses the render surface and references top-level element IDs. Elements are stored by ID so timelines and state machines can target stable objects directly.
 
 ## Minimal Example
 
@@ -25,30 +30,56 @@ The `root` can be a **scene**, **player**, or **presentation** node. Presentatio
 
 ```json
 {
-  "version": "1.0",
-  "root": {
+  "version": "2.0",
+  "scene": {
     "type": "player",
     "width": 800,
     "height": 600,
     "fps": 30,
-    "durationInFrames": 90,
     "background": "#0a0a1e",
-    "children": [
-      {
-        "type": "fadeIn",
-        "duration": 30,
-        "children": [
-          {
-            "type": "circle",
-            "cx": 400,
-            "cy": 300,
-            "r": 60,
-            "stroke": "#4fc3f7",
-            "strokeWidth": 3
-          }
-        ]
+    "children": ["orb"]
+  },
+  "elements": {
+    "orb": {
+      "id": "orb",
+      "type": "circle",
+      "props": {
+        "type": "circle",
+        "cx": 400,
+        "cy": 300,
+        "r": 60,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "opacity": 0
       }
-    ]
+    }
+  },
+  "timelines": {
+    "intro": {
+      "id": "intro",
+      "duration": 30,
+      "tracks": [
+        {
+          "target": "orb",
+          "property": "opacity",
+          "keyframes": [
+            { "frame": 0, "value": 0 },
+            { "frame": 30, "value": 1 }
+          ]
+        }
+      ]
+    }
+  },
+  "defaultStateMachine": "main",
+  "stateMachines": {
+    "main": {
+      "id": "main",
+      "entry": "intro",
+      "states": { "intro": { "timeline": "intro" } },
+      "transitions": [
+        { "id": "entry-start", "from": "entry", "to": "intro", "trigger": "onStart" }
+      ]
+    }
   }
 }
 ```
@@ -58,24 +89,45 @@ The `root` can be a **scene**, **player**, or **presentation** node. Presentatio
 The same document in YAML — parsed with `fromYaml()`:
 
 ```yaml
-version: "1.0"
-root:
+version: "2.0"
+scene:
   type: player
   width: 800
   height: 600
   fps: 30
-  durationInFrames: 90
   background: "#0a0a1e"
-  children:
-    - type: fadeIn
-      duration: 30
-      children:
-        - type: circle
-          cx: 400
-          cy: 300
-          r: 60
-          stroke: "#4fc3f7"
-          strokeWidth: 3
+  children: [orb]
+elements:
+  orb:
+    id: orb
+    type: circle
+    props:
+      type: circle
+      cx: 400
+      cy: 300
+      r: 60
+      stroke: "$accent"
+      strokeWidth: 3
+      opacity: 0
+timelines:
+  intro:
+    id: intro
+    duration: 30
+    tracks:
+      - target: orb
+        property: opacity
+        keyframes:
+          - { frame: 0, value: 0 }
+          - { frame: 30, value: 1 }
+defaultStateMachine: main
+stateMachines:
+  main:
+    id: main
+    entry: intro
+    states:
+      intro: { timeline: intro }
+    transitions:
+      - { id: entry-start, from: entry, to: intro, trigger: onStart }
 ```
 
 ```ts
@@ -93,16 +145,14 @@ const doc = fromYaml(yamlString);
 
 Every node has a `"type"` field. The full set of supported types:
 
-### Container Nodes
+### Document Sections
 
-| Type | Description |
+| Section | Description |
 |------|-------------|
-| `scene` | Root scene with `width`, `height`, `fps`, `durationInFrames`, `children` |
-| `player` | Scene with playback controls (`controls`, `loop`, `autoPlay`) |
-| `presentation` | Multi-slide deck with transitions and HUD |
-| `slide` | Individual slide with `title`, `notes`, `background`, `children` |
-| `sequence` | Timed container — offsets children by `from` frame |
-| `group` | Groups children without timing changes |
+| `scene` | Root scene/player settings with top-level child element IDs |
+| `elements` | ID-keyed primitive/group definitions |
+| `timelines` | Explicit property tracks and keyframes |
+| `stateMachines` | Entry/state/transition controllers for interactive playback |
 
 ### Primitive Nodes
 
@@ -128,57 +178,13 @@ Every node has a `"type"` field. The full set of supported types:
 | `latex` | LaTeX expression rendered via KaTeX |
 | `barChart` | Labeled bar chart |
 
-### Animation Nodes
+### Motion
 
-| Type | Description |
-|------|-------------|
-| `fadeIn` | Fade children in over `duration` frames |
-| `fadeOut` | Fade children out |
-| `draw` | Progressively draw SVG strokes |
-| `write` | Write-on text effect |
-| `transform` | Animate translate, scale, rotate, opacity |
-| `morph` | Morph between color/opacity/scale states |
-| `stagger` | Stagger children with a frame delay between each |
-| `parallel` | Animate all children simultaneously |
-
-## Presentation Structure
-
-Presentations use `"type": "presentation"` at the root, with `"slide"` children. Each slide contains a `"player"` node for its animated content:
-
-```json
-{
-  "version": "1.0",
-  "root": {
-    "type": "presentation",
-    "width": 900,
-    "height": 650,
-    "transition": "fade",
-    "transitionDuration": 10,
-    "showHud": true,
-    "slides": [
-      {
-        "type": "slide",
-        "title": "Slide One",
-        "notes": "Presenter notes here",
-        "children": [
-          {
-            "type": "player",
-            "width": 900,
-            "height": 650,
-            "fps": 30,
-            "durationInFrames": 120,
-            "children": [ /* ... */ ]
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+Animation is represented by timeline tracks and state-machine transitions, not wrapper nodes like `fadeIn` or `sequence`. This keeps generated documents inspectable and gives the editor/viewer a single motion model.
 
 ## Next Steps
 
 - [DslRenderer](/dsl/renderer/) — render a document in React
 - [Validation](/dsl/validation/) — validate documents before rendering
-- [Builder API](/dsl/builder-api/) — generate DSL documents with TypeScript
-- [Themes](/dsl/themes/) — pre-built color themes and semantic color tokens (`$accent`, `$foreground`, etc.)
+- [Agent documents](/dsl/agent-documents/) — author interactive timeline flows
+- [Themes](/dsl/themes/) — semantic color tokens (`$accent`, `$foreground`, etc.)

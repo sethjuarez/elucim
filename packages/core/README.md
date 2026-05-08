@@ -17,21 +17,32 @@ pnpm add @elucim/core
 
 **Peer dependencies:** React 18 or 19
 
-## Quick Start
+## Advanced React Usage
+
+`@elucim/core` is the low-level React runtime and primitive layer. For normal user/agent-authored scenes, prefer normalized `ElucimDocument` files rendered with `@elucim/dsl`'s `<DslRenderer>`. Use core directly when you intentionally want hand-coded React components, custom hooks, or host-level presentation shells.
 
 ```tsx
-import { Player, Circle, Text, Group } from '@elucim/core';
+import { Player, Circle, Text, Group, useCurrentFrame, interpolate } from '@elucim/core';
 
-function MyAnimation() {
+function PulsingGroup() {
+  const frame = useCurrentFrame();
+  const opacity = interpolate(frame, [0, 20], [0, 1]);
+
+  return (
+    <Group translate={[400, 280]} opacity={opacity}>
+      <Circle cx={0} cy={0} r={80} stroke="#6c5ce7" strokeWidth={3} fill="none" />
+      <Circle cx={60} cy={0} r={12} fill="#6c5ce7" />
+      <Text x={0} y={10} fill="#e0e0e0" fontSize={24} textAnchor="middle">
+        Hello Elucim
+      </Text>
+    </Group>
+  );
+}
+
+export function MyAnimation() {
   return (
     <Player width={800} height={600} fps={30} durationInFrames={90} autoPlay loop>
-      <Group translate={[400, 280]} fadeIn={20}>
-        <Circle cx={0} cy={0} r={80} stroke="#6c5ce7" strokeWidth={3} fill="none" />
-        <Circle cx={60} cy={0} r={12} fill="#6c5ce7" />
-        <Text x={0} y={10} fill="#e0e0e0" fontSize={24} textAnchor="middle">
-          Hello Elucim
-        </Text>
-      </Group>
+      <PulsingGroup />
     </Player>
   );
 }
@@ -45,7 +56,6 @@ function MyAnimation() {
 |-----------|-------------|
 | `Player` | Interactive player with controls, scrubber, play/pause, keyboard shortcuts |
 | `Scene` | Raw SVG scene for embedding in custom playback systems |
-| `Sequence` | Time-offset wrapper — schedule children to appear at specific frames |
 | `captureFrame` | Single-frame capture to PNG/JPEG |
 | `PlayerRef` | Imperative handle type for Player (getSvgElement, play, pause, seek) |
 
@@ -53,15 +63,15 @@ function MyAnimation() {
 
 | Component | Description |
 |-----------|-------------|
-| `Circle` | SVG circle with optional animation props |
+| `Circle` | SVG circle primitive |
 | `Rect` | Rectangle with optional rounded corners |
 | `Line` | Line segment |
 | `Arrow` | Line with arrowhead |
 | `Polygon` | Arbitrary polygon from point arrays |
-| `BezierCurve` | Quadratic and cubic Bezier curves with draw animation support |
+| `BezierCurve` | Quadratic and cubic Bezier curves |
 | `Text` | SVG text element |
 | `Image` | Embed images (PNG, JPEG, SVG, WebP, GIF) with `borderRadius`, `clipShape`, and transform support |
-| `Group` | Composable container that applies shared transforms, animations, and z-index sorting to children |
+| `Group` | Composable container that applies shared transforms to children; later siblings render on top |
 
 ### 🔄 Transforms & Composition
 
@@ -73,7 +83,8 @@ All primitives support universal spatial transform props:
 | `rotationOrigin` | `[cx, cy]` center of rotation |
 | `scale` | Uniform scale factor |
 | `translate` | `[dx, dy]` offset |
-| `zIndex` | Stacking order (higher renders on top) |
+
+Stacking follows sibling order: elements rendered later paint on top.
 
 These compose with frame-driven values — use static `rotation={45}` for a fixed rotation, or derive `rotation` from `useCurrentFrame()` / `interpolate()` for custom React animation. For authored timelines and state machines, use `@elucim/dsl` v2 and the editor.
 
@@ -113,22 +124,28 @@ These compose with frame-driven values — use static `rotation={45}` for a fixe
 
 ## Examples
 
-### Animated Sine Curve
+### Hand-coded Sine Curve
 
 ```tsx
-import { Player, Axes, FunctionPlot, Sequence, LaTeX } from '@elucim/core';
+import { Player, Axes, FunctionPlot, LaTeX, useCurrentFrame, interpolate } from '@elucim/core';
 
-<Player width={800} height={500} fps={30} durationInFrames={120} autoPlay loop>
-  <Axes origin={[400, 280]} domain={[-3, 3]} range={[-1.5, 1.5]} scale={80}
-        axisColor="#888" labelColor="#888" />
-  <Sequence from={10} durationInFrames={110}>
-    <FunctionPlot fn={(x) => Math.sin(x)} domain={[-3, 3]}
-                  origin={[400, 280]} scale={80} color="#6c5ce7" strokeWidth={2.5} draw={60} />
-  </Sequence>
-  <Sequence from={70} durationInFrames={50}>
-    <LaTeX expression="f(x) = \sin(x)" x={600} y={60} fontSize={20} color="#6c5ce7" fadeIn={20} />
-  </Sequence>
-</Player>
+function SineCurve() {
+  const frame = useCurrentFrame();
+  const curveOpacity = interpolate(frame, [10, 40], [0, 1]);
+  const labelOpacity = interpolate(frame, [70, 90], [0, 1]);
+
+  return (
+    <>
+      <Axes origin={[400, 280]} domain={[-3, 3]} range={[-1.5, 1.5]} scale={80}
+            axisColor="#888" labelColor="#888" />
+      <FunctionPlot fn={(x) => Math.sin(x)} domain={[-3, 3]}
+                    origin={[400, 280]} scale={80} color="#6c5ce7" strokeWidth={2.5}
+                    opacity={curveOpacity} />
+      <LaTeX expression="f(x) = \\sin(x)" x={600} y={60} fontSize={20}
+             color="#6c5ce7" opacity={labelOpacity} />
+    </>
+  );
+}
 ```
 
 ### Slide Presentation
@@ -139,14 +156,14 @@ import { Presentation, Slide, Player, Text, LaTeX } from '@elucim/core';
 <Presentation width={1920} height={1080} transition="fade" transitionDuration={500} showHUD>
   <Slide title="Welcome">
     <Player width={1920} height={1080} fps={30} durationInFrames={90} autoPlay loop controls={false}>
-      <Text x={960} y={480} fill="currentColor" fontSize={64} textAnchor="middle" fadeIn={25}>
+      <Text x={960} y={480} fill="currentColor" fontSize={64} textAnchor="middle">
         My Presentation
       </Text>
     </Player>
   </Slide>
   <Slide title="The Math">
     <Player width={1920} height={1080} fps={30} durationInFrames={60} autoPlay loop controls={false}>
-      <LaTeX expression="e^{i\pi} + 1 = 0" x={960} y={500} fontSize={48} color="#fdcb6e" fadeIn={30} />
+      <LaTeX expression="e^{i\pi} + 1 = 0" x={960} y={500} fontSize={48} color="#fdcb6e" />
     </Player>
   </Slide>
 </Presentation>

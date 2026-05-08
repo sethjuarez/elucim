@@ -1,91 +1,93 @@
 ---
-title: FadeIn & FadeOut
-description: Animate elements in and out with opacity transitions.
+title: Opacity Timelines
+description: Fade elements in and out with normalized timeline tracks.
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { FadeDemo } from '@components/Demos.tsx';
-import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 <LiveDemo client:visible height="250px">
   <FadeDemo client:visible />
 </LiveDemo>
 
-## FadeIn
+Use opacity timelines for fade motion in normalized documents. Do not author `FadeIn`, `FadeOut`, or `fadeIn` props in `ElucimDocument`; V2 validation rejects wrapper animation syntax.
 
-Animates children from `opacity: 0` to `opacity: 1` over the given duration.
+## Fade in
 
-### Props
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `duration` | `number` | Length of the animation in frames |
-| `children` | `ReactNode` | Elements to fade in |
-
-### Example
-
-```tsx
-<FadeIn duration={30}>
-  <Circle cx={200} cy={150} r={60} fill="#4f9eff" />
-</FadeIn>
+```ts
+timelines: {
+  intro: {
+    id: 'intro',
+    duration: 30,
+    tracks: [
+      {
+        target: 'circle',
+        property: 'opacity',
+        keyframes: [
+          { frame: 0, value: 0 },
+          { frame: 30, value: 1, easing: 'easeOutCubic' },
+        ],
+      },
+    ],
+  },
+}
 ```
 
-## FadeOut
+## Fade out
 
-Animates children from `opacity: 1` to `opacity: 0` over the given duration.
-
-### Props
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `duration` | `number` | Length of the animation in frames |
-| `children` | `ReactNode` | Elements to fade out |
-
-### Example
-
-```tsx
-<FadeOut duration={30}>
-  <Circle cx={200} cy={150} r={60} fill="#ff6b6b" />
-</FadeOut>
+```ts
+timelines: {
+  outro: {
+    id: 'outro',
+    duration: 30,
+    tracks: [
+      {
+        target: 'circle',
+        property: 'opacity',
+        keyframes: [
+          { frame: 0, value: 1 },
+          { frame: 30, value: 0, easing: 'easeInCubic' },
+        ],
+      },
+    ],
+  },
+}
 ```
 
-## Code Example
+## Complete scene
 
-<Tabs>
-  <TabItem label="React">
-    ```jsx
-    import { Player, FadeIn, FadeOut, Sequence, Circle, Text } from '@elucim/core';
+```tsx
+import { DslRenderer, type ElucimDocument } from '@elucim/dsl';
 
-    <Player width={500} height={250} fps={30} durationInFrames={90}>
-      <FadeIn duration={30}>
-        <Circle cx={125} cy={125} r={50} stroke="#6c5ce7" strokeWidth={3} fill="rgba(108,92,231,0.2)" />
-      </FadeIn>
-      <Sequence from={60} durationInFrames={30}>
-        <FadeOut duration={30}>
-          <Circle cx={375} cy={125} r={50} stroke="#ff6b6b" strokeWidth={3} fill="rgba(255,107,107,0.2)" />
-        </FadeOut>
-      </Sequence>
-    </Player>
-    ```
-  </TabItem>
-  <TabItem label="DSL JSON">
-    ```json
-    {
-      "width": 500, "height": 250, "fps": 30, "durationInFrames": 90,
-      "children": [
-        {
-          "type": "circle", "cx": 125, "cy": 125, "r": 50,
-          "stroke": "#6c5ce7", "strokeWidth": 3, "fill": "rgba(108,92,231,0.2)",
-          "fadeIn": { "duration": 30 }
-        },
-        {
-          "type": "circle", "cx": 375, "cy": 125, "r": 50,
-          "stroke": "#ff6b6b", "strokeWidth": 3, "fill": "rgba(255,107,107,0.2)",
-          "fadeOut": { "duration": 30 }
-        }
-      ]
-    }
-    ```
-  </TabItem>
-</Tabs>
+const doc: ElucimDocument = {
+  version: '2.0',
+  scene: { type: 'player', width: 500, height: 250, children: ['circle'] },
+  elements: {
+    circle: {
+      id: 'circle',
+      type: 'circle',
+      props: { type: 'circle', cx: 250, cy: 125, r: 50, stroke: '$accent', strokeWidth: 3, fill: 'none', opacity: 0 },
+    },
+  },
+  timelines: {
+    intro: {
+      id: 'intro',
+      duration: 30,
+      tracks: [{ target: 'circle', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+    },
+  },
+  defaultStateMachine: 'main',
+  stateMachines: {
+    main: {
+      id: 'main',
+      entry: 'intro',
+      states: { intro: { timeline: 'intro' } },
+      transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+    },
+  },
+};
 
+export function FadeScene() {
+  return <DslRenderer dsl={doc} />;
+}
+```

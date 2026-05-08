@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { editorReducer } from '../state/reducer';
 import { createInitialState } from '../state/types';
 import type { EditorState } from '../state/types';
-import type { ElucimDocument, CircleNode, RectNode, LineNode } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument, CircleNode, RectNode, LineNode } from '@elucim/dsl';
 
 function stateWithElements(...elements: any[]): EditorState {
   const doc: ElucimDocument = {

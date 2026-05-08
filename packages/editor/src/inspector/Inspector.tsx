@@ -4,7 +4,7 @@ import type { ElementNode } from '@elucim/dsl';
 import { TOKEN_NAMES } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
-import { CANVAS_ID, type AnimationWrapperType } from '../state/types';
+import { CANVAS_ID } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
 import { useImagePicker } from '../image/ImagePickerProvider';
 import { v } from '../theme/tokens';
@@ -151,11 +151,6 @@ export function Inspector({ className, style, showCanvasDuration = true }: Inspe
       {/* Style section */}
       <InspectorSection title="Style">
         <StyleFields element={element} onChange={handleChange} />
-      </InspectorSection>
-
-      {/* Animation section */}
-      <InspectorSection title="Animation">
-        <AnimationFields element={element} elementId={elementId} onChange={handleChange} />
       </InspectorSection>
 
       {/* Transform section */}
@@ -732,100 +727,6 @@ function StyleFields({ element, onChange }: { element: ElementNode; onChange: (f
   );
 }
 
-// ─── Animation Fields ──────────────────────────────────────────────────────
-
-const EASING_OPTIONS = [
-  'linear',
-  'easeInQuad', 'easeOutQuad', 'easeInOutQuad',
-  'easeInCubic', 'easeOutCubic', 'easeInOutCubic',
-  'easeInSine', 'easeOutSine', 'easeInOutSine',
-  'easeOutElastic', 'easeOutBounce',
-  'easeInBack', 'easeOutBack',
-];
-
-const ANIMATION_WRAPPER_OPTIONS: { label: string; value: AnimationWrapperType }[] = [
-  { label: 'Fade In', value: 'fadeIn' },
-  { label: 'Fade Out', value: 'fadeOut' },
-  { label: 'Draw', value: 'draw' },
-  { label: 'Write', value: 'write' },
-  { label: 'Transform', value: 'transform' },
-  { label: 'Morph', value: 'morph' },
-  { label: 'Stagger', value: 'stagger' },
-  { label: 'Parallel', value: 'parallel' },
-];
-
-function isAnimationWrapperElement(element: ElementNode): boolean {
-  return ANIMATION_WRAPPER_OPTIONS.some(option => option.value === element.type);
-}
-
-function AnimationFields({ element, elementId, onChange }: { element: ElementNode; elementId: string | null; onChange: (field: string, value: any) => void }) {
-  const el = element as any;
-  const { dispatch } = useEditorState();
-  const [extras, setExtras] = useState<Set<string>>(new Set());
-
-  const hasFadeIn = el.fadeIn !== undefined && el.fadeIn > 0;
-  const hasFadeOut = el.fadeOut !== undefined && el.fadeOut > 0;
-  const hasDraw = el.draw !== undefined && el.draw > 0;
-  const hasEasing = el.easing !== undefined && el.easing !== 'linear';
-
-  const addable: string[] = [];
-  if (!hasFadeIn && !extras.has('fadeIn')) addable.push('Fade In');
-  if (!hasFadeOut && !extras.has('fadeOut')) addable.push('Fade Out');
-  if (!hasDraw && !extras.has('draw')) addable.push('Draw');
-  if (!hasEasing && !extras.has('easing')) addable.push('Easing');
-
-  const addField = (label: string) => {
-    const key = label === 'Fade In' ? 'fadeIn' : label === 'Fade Out' ? 'fadeOut' : label.toLowerCase();
-    setExtras(prev => new Set(prev).add(key));
-  };
-
-  return (
-    <>
-      {(hasFadeIn || extras.has('fadeIn')) && (
-        <NumberField label="Fade In" value={el.fadeIn} onChange={v => onChange('fadeIn', v)} />
-      )}
-      {(hasFadeOut || extras.has('fadeOut')) && (
-        <NumberField label="Fade Out" value={el.fadeOut} onChange={v => onChange('fadeOut', v)} />
-      )}
-      {(hasDraw || extras.has('draw')) && (
-        <NumberField label="Draw" value={el.draw} onChange={v => onChange('draw', v)} />
-      )}
-      {(hasEasing || extras.has('easing')) && (
-        <SelectField label="Easing" value={el.easing ?? 'linear'} options={EASING_OPTIONS} onChange={v => onChange('easing', v)} />
-      )}
-      {addable.length > 0 && (
-        <AddFieldButton options={addable} onAdd={addField} />
-      )}
-      {elementId && (
-        <div style={{ marginTop: 6 }}>
-          <SelectField
-            label="Animate With"
-            value=""
-            options={['', ...ANIMATION_WRAPPER_OPTIONS.map(option => option.label)]}
-            onChange={label => {
-              const option = ANIMATION_WRAPPER_OPTIONS.find(item => item.label === label);
-              if (option) dispatch({ type: 'WRAP_IN_ANIMATION', id: elementId, wrapper: option.value });
-            }}
-          />
-          <div style={{ marginTop: 4, color: v('--elucim-editor-muted'), lineHeight: 1.35 }}>
-            Adds an animation wrapper around this element. Expand the wrapper in the timeline to select its child.
-          </div>
-          {isAnimationWrapperElement(element) && (
-            <div style={{ marginTop: 4 }}>
-              <InspectorActionButton
-                icon={null}
-                label="Unwrap animation"
-                title="Remove this animation wrapper"
-                onClick={() => dispatch({ type: 'UNWRAP_ANIMATION', id: elementId })}
-              />
-            </div>
-          )}
-        </div>
-      )}
-    </>
-  );
-}
-
 // ─── Transform Fields ──────────────────────────────────────────────────────
 
 function TransformFields({ element, onChange }: { element: ElementNode; onChange: (field: string, value: any) => void }) {
@@ -836,18 +737,15 @@ function TransformFields({ element, onChange }: { element: ElementNode; onChange
   const hasScale = el.scale !== undefined && el.scale !== 1;
   const hasTranslate = Array.isArray(el.translate);
   const hasOrigin = Array.isArray(el.rotationOrigin);
-  const hasZIndex = el.zIndex !== undefined && el.zIndex !== 0;
 
   const addable: string[] = [];
   if (!hasRotation && !extras.has('rotation')) addable.push('Rotation');
   if (!hasScale && !extras.has('scale')) addable.push('Scale');
   if (!hasTranslate && !extras.has('translate')) addable.push('Translate');
   if (!hasOrigin && !extras.has('origin')) addable.push('Origin');
-  if (!hasZIndex && !extras.has('zIndex')) addable.push('Z-Index');
 
   const addField = (label: string) => {
-    const key = label === 'Z-Index' ? 'zIndex' : label.toLowerCase();
-    setExtras(prev => new Set(prev).add(key));
+    setExtras(prev => new Set(prev).add(label.toLowerCase()));
   };
 
   const scaleVal = el.scale;
@@ -894,9 +792,6 @@ function TransformFields({ element, onChange }: { element: ElementNode; onChange
             onChange={v => onChange('rotationOrigin', [Array.isArray(rotOriginVal) ? rotOriginVal[0] : 0, v])}
           />
         </>
-      )}
-      {(hasZIndex || extras.has('zIndex')) && (
-        <NumberField label="Z-Index" value={el.zIndex} onChange={v => onChange('zIndex', v)} />
       )}
       {addable.length > 0 && (
         <AddFieldButton options={addable} onAdd={addField} />

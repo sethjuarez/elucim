@@ -1,13 +1,12 @@
 ---
 title: Image
-description: Embed raster and vector images with clipping, rounded corners, and animation support.
+description: Embed raster and vector images with clipping, rounded corners, and transform support.
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { ImageDemo } from '@components/Demos.tsx';
-import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-The `<Image>` primitive embeds an external image (PNG, JPEG, SVG, WebP, or GIF) into your scene. It supports rounded corners, circular/elliptical clipping, and all the standard spatial and animation props.
+The `image` primitive embeds an external image (PNG, JPEG, SVG, WebP, or GIF) into your scene. It supports rounded corners, circular/elliptical clipping, and standard spatial layout fields.
 
 <LiveDemo client:visible height="350px">
   <ImageDemo client:visible />
@@ -31,75 +30,51 @@ The `<Image>` primitive embeds an external image (PNG, JPEG, SVG, WebP, or GIF) 
 | `rotationOrigin` | `[number, number]` | element center | Center point for rotation |
 | `scale` | `number \| [number, number]` | `1` | Uniform or per-axis scale |
 | `translate` | `[number, number]` | `[0, 0]` | Translation offset `[dx, dy]` |
-| `fadeIn` | `number` | — | Fade in over N frames |
-| `fadeOut` | `number` | — | Fade out over N frames |
-| `zIndex` | `number` | `0` | Rendering order (higher = on top) |
+
+Images stack by sibling order in `scene.children` or their parent group's `children` array. Later siblings paint on top.
 
 ## Code Examples
 
 ### Basic image
 
-<Tabs syncKey="code-style">
-  <TabItem label="React">
-    ```jsx
-    import { Player, Image } from '@elucim/core';
-
-    <Player width={500} height={300} fps={30} durationInFrames={60}>
-      <Image src="/photo.png" x={100} y={50} width={300} height={200} />
-    </Player>
-    ```
-  </TabItem>
-  <TabItem label="DSL (JSON)">
-    ```json
-    {
-      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
-      "children": [
-        {
-          "type": "image", "src": "/photo.png",
-          "x": 100, "y": 50, "width": 300, "height": 200
-        }
-      ]
-    }
-    ```
-  </TabItem>
-</Tabs>
-
+```ts
+elements: {
+  photo: {
+    id: 'photo',
+    type: 'image',
+    props: { type: 'image', src: '/photo.png', x: 100, y: 50, width: 300, height: 200 },
+  },
+}
+```
 ### Circular clip
 
-```jsx
-<Image
-  src="/avatar.png"
-  x={200} y={100} width={100} height={100}
-  clipShape="circle"
-/>
+```ts
+props: { type: 'image', src: '/avatar.png', x: 200, y: 100, width: 100, height: 100, clipShape: 'circle' }
 ```
 
 ### Rounded corners
 
-```jsx
-<Image
-  src="/thumbnail.jpg"
-  x={50} y={50} width={400} height={250}
-  borderRadius={20}
-/>
+```ts
+props: { type: 'image', src: '/thumbnail.jpg', x: 50, y: 50, width: 400, height: 250, borderRadius: 20 }
 ```
 
 ### Rotated image
 
-```jsx
-<Image
-  src="/diagram.svg"
-  x={100} y={50} width={200} height={200}
-  rotation={15}
-/>
+```ts
+layout: { rotation: 15 }
+props: { type: 'image', src: '/diagram.svg', x: 100, y: 50, width: 200, height: 200 }
 ```
 
-### Image with fade-in animation
+### Image with fade-in timeline
 
-```jsx
-<FadeIn duration={30}>
-  <Image src="/hero.png" x={0} y={0} width={500} height={300} />
-</FadeIn>
+```ts
+timelines: {
+  intro: {
+    id: 'intro',
+    duration: 30,
+    tracks: [{ target: 'hero', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+  },
+}
 ```
 
 :::tip
@@ -113,14 +88,24 @@ Instead of hardcoding URLs, you can use opaque **asset references** via the `ima
 This is useful when your app manages images through a CMS, asset library, or API — the document stores an ID, and the resolver provides the actual URL at runtime.
 
 ```tsx
-import { ImageResolverProvider, Image, Player } from '@elucim/core';
+import { DslRenderer, ImageResolverProvider, type ElucimDocument } from '@elucim/dsl';
 
 const resolver = (ref) => `https://cdn.example.com/assets/${ref}`;
 
+const doc: ElucimDocument = {
+  version: '2.0',
+  scene: { type: 'player', width: 500, height: 300, children: ['hero'] },
+  elements: {
+    hero: {
+      id: 'hero',
+      type: 'image',
+      props: { type: 'image', imageRef: 'hero-banner', x: 0, y: 0, width: 500, height: 300 },
+    },
+  },
+};
+
 <ImageResolverProvider resolver={resolver}>
-  <Player width={500} height={300} fps={30} durationInFrames={60}>
-    <Image imageRef="hero-banner" x={0} y={0} width={500} height={300} />
-  </Player>
+  <DslRenderer dsl={doc} />
 </ImageResolverProvider>
 ```
 

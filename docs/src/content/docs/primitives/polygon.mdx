@@ -1,13 +1,12 @@
 ---
 title: Polygon
-description: Render closed polygonal shapes from an array of points with optional draw animation.
+description: Render closed polygonal shapes from an array of points.
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { PolygonDemo } from '@components/Demos.tsx';
-import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-The `<Polygon>` primitive draws a closed shape from an array of `[x, y]` coordinate pairs. It supports fill, stroke, and a built-in draw animation that progressively traces the outline over a given number of frames.
+The `polygon` primitive draws a closed shape from an array of `[x, y]` coordinate pairs. It supports fill, stroke, and timeline-friendly opacity/color changes.
 
 <LiveDemo client:visible height="300px">
   <PolygonDemo client:visible />
@@ -21,56 +20,25 @@ The `<Polygon>` primitive draws a closed shape from an array of `[x, y]` coordin
 | `fill` | `string` | `'none'` | Fill color |
 | `stroke` | `string` | `'currentColor'` | Stroke color |
 | `strokeWidth` | `number` | `1` | Width of the stroke |
-| `draw` | `number` | `undefined` | Number of frames for the draw-in animation |
 | `opacity` | `number` | `1` | Opacity from 0 to 1 |
 
 ## Code Example
 
-<Tabs syncKey="code-style">
-  <TabItem label="React">
-    ```jsx
-    import { Player, Draw, Polygon } from '@elucim/core';
-
-    <Player width={500} height={300} fps={30} durationInFrames={60}>
-      <Draw duration={30}>
-        <Polygon
-          points={[[150, 40], [50, 180], [250, 180]]}
-          stroke="#ff6b6b" strokeWidth={2.5} fill="rgba(255,107,107,0.1)"
-        />
-      </Draw>
-      <Draw duration={30}>
-        <Polygon
-          points={[[350, 40], [280, 130], [310, 240], [390, 240], [420, 130]]}
-          stroke="#6c5ce7" strokeWidth={2.5} fill="rgba(108,92,231,0.1)"
-        />
-      </Draw>
-    </Player>
-    ```
-  </TabItem>
-  <TabItem label="DSL (JSON)">
-    ```json
-    {
-      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
-      "children": [
-        {
-          "type": "polygon",
-          "points": [[150, 40], [50, 180], [250, 180]],
-          "stroke": "#ff6b6b", "strokeWidth": 2.5, "fill": "rgba(255,107,107,0.1)",
-          "draw": { "duration": 30 }
-        },
-        {
-          "type": "polygon",
-          "points": [[350, 40], [280, 130], [310, 240], [390, 240], [420, 130]],
-          "stroke": "#6c5ce7", "strokeWidth": 2.5, "fill": "rgba(108,92,231,0.1)",
-          "draw": { "duration": 30 }
-        }
-      ]
-    }
-    ```
-  </TabItem>
-</Tabs>
-
+```ts
+elements: {
+  triangle: {
+    id: 'triangle',
+    type: 'polygon',
+    props: { type: 'polygon', points: [[150, 40], [50, 180], [250, 180]], stroke: '$secondary', strokeWidth: 2.5, fill: 'rgba(255,107,107,0.1)' },
+  },
+  pentagon: {
+    id: 'pentagon',
+    type: 'polygon',
+    props: { type: 'polygon', points: [[350, 40], [280, 130], [310, 240], [390, 240], [420, 130]], stroke: '$accent', strokeWidth: 2.5, fill: 'rgba(108,92,231,0.1)' },
+  },
+}
+```
 :::note
-The `draw` prop animates the polygon's stroke over the specified number of frames. This pairs well with staggered scene timing for a hand-drawn reveal effect.
+Use timelines to reveal polygons with opacity, fill, stroke, or scale tracks.
 :::
 

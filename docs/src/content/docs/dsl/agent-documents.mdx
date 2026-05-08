@@ -1,0 +1,214 @@
+---
+title: Agent documents
+description: Use normalized Elucim documents, commands, timelines, state machines, and nudges from host apps such as CutReady.
+---
+
+The Elucim DSL is the agent-friendly document layer for host apps that want generated diagrams to be easy to patch, refine, and preview. The canonical document shape is normalized by stable element ID and animated with explicit timelines and state machines.
+
+## Document shape
+
+Elucim documents are normalized by stable element ID:
+
+```ts
+import type { ElucimDocument } from '@elucim/dsl';
+
+const doc: ElucimDocument = {
+  version: '2.0',
+  scene: {
+    type: 'player',
+    width: 1920,
+    height: 1080,
+    children: ['headline', 'metric'],
+  },
+  elements: {
+    headline: {
+      id: 'headline',
+      type: 'text',
+      role: 'title',
+      layout: { x: 120, y: 120 },
+      props: { type: 'text', content: 'CutReady impact', fill: '$title' },
+    },
+    metric: {
+      id: 'metric',
+      type: 'text',
+      role: 'metric',
+      layout: { x: 120, y: 260 },
+      props: { type: 'text', content: '42% faster', fill: '$accent' },
+    },
+  },
+};
+```
+
+Agents should make stable IDs part of their output contract. That lets a host app ask for precise edits like “update `metric`” instead of regenerating the whole slide.
+
+## Agent authoring API
+
+Use `@elucim/dsl/agent` when a host app or LLM wants high-impact edits without memorizing every schema detail. The helpers are deterministic and pure: they return a new document plus summaries and validation feedback.
+
+```ts
+import {
+  applyAgentCommands,
+  createDocument,
+  evaluateSceneForAgent,
+} from '@elucim/dsl/agent';
+
+const doc = applyAgentCommands(createDocument({
+  preset: 'slide',
+  metadata: {
+    title: 'Derivative intuition',
+    intent: 'Explain slope as local rate of change.',
+  },
+}), [
+  {
+    op: 'addElement',
+    element: {
+      id: 'headline',
+      type: 'text',
+      role: 'title',
+      intent: { purpose: 'Introduce the takeaway' },
+      layout: { x: 120, y: 120 },
+      props: { content: 'Slope is local change', fill: '$title' },
+    },
+  },
+  { op: 'addRevealTimeline', timeline: { id: 'intro', targets: ['headline'], preset: 'fadeIn' } },
+  { op: 'createStateMachine', stateMachine: { id: 'main', timelineId: 'intro', start: 'onStart' } },
+]).document;
+
+const report = evaluateSceneForAgent(doc);
+```
+
+The generated motion is explicit timeline/state-machine data. The agent helpers do not create wrapper animation props, which keeps generated scenes aligned with the normalized state-machine model.
+
+:::tip[Point an agent at the API reference]
+For a concise agent-facing prompt card, helper map, output contract, and inspection workflow, use [Agent API Reference](/dsl/agent-api/). It is intentionally written so users can paste that page into a coding agent's context before asking it to generate an Elucim diagram.
+:::
+
+## Validation
+
+Use agent validation at host boundaries:
+
+```ts
+import { validateForAgent } from '@elucim/dsl/agent';
+
+const validation = validateForAgent(doc);
+if (!validation.valid) throw new Error(validation.errors.map(e => `${e.path}: ${e.message}`).join('\n'));
+```
+
+The visual editor opens normalized documents as the native authoring path. It preserves metadata, element intent, timelines, and state machines where possible, and exposes timeline, state-machine, metadata, intent, and nudge review controls.
+
+## Command surface
+
+Host apps and agents can use `applyAgentCommands()` for common edits and `applyCommand()` for lower-level deterministic operations:
+
+```ts
+import { applyAgentCommands } from '@elucim/dsl/agent';
+
+const updated = applyAgentCommands(doc, [
+  {
+    op: 'updateElement',
+    id: 'metric',
+    patch: {
+      props: { content: '51% faster' },
+      layout: { x: 160, y: 280 },
+    },
+  },
+]).document;
+```
+
+Commands are pure: the input document is not mutated. Agent commands cover adding, updating, deleting, moving, reparenting, sibling reordering, timeline creation, reveal presets, state-machine creation, metadata updates, and deterministic nudges. Use `scene.children` and each group element's `children` array as the stacking order; later siblings paint on top, so agents should call `reorderElement()`, `bringElementForward()`, or `sendElementBackward()` instead of adding z-index metadata.
+
+## Agent services
+
+Use the document services to give agents compact context and repairable feedback:
+
+```ts
+import { diffDocuments, summarizeDocument, validateForAgent } from '@elucim/dsl/agent';
+
+const summary = summarizeDocument(doc);
+const validation = validateForAgent(doc);
+const patch = diffDocuments(before, after);
+```
+
+`validateForAgent()` returns structured validation errors plus repair hints. `diffDocuments()` returns JSON-patch-shaped operations that are useful for review, logging, and host approval flows.
+
+## Repair and animation diagnostics
+
+Agents can also ask Elucim to inspect timeline bounds, repair common generated mistakes, and prove that a timeline changes visible properties over sampled frames:
+
+```ts
+import {
+  createLoopingStateMachine,
+  getTimelineBounds,
+  inspectSceneForAgent,
+  repairDocumentForAgent,
+  sampleAnimationForAgent,
+} from '@elucim/dsl/agent';
+
+const bounds = getTimelineBounds(doc);
+const repaired = repairDocumentForAgent(doc);
+const animation = sampleAnimationForAgent(repaired.document, 'intro');
+const inspection = inspectSceneForAgent(repaired.document, { timelineId: 'intro' });
+const playable = createLoopingStateMachine(repaired.document, { timelineId: 'intro' }).document;
+```
+
+`repairDocumentForAgent()` is intentionally conservative: today it extends timelines whose keyframes exceed their declared duration and returns summaries, validation, and a JSON-patch diff. `sampleAnimationForAgent()` evaluates selected frames and reports which element properties changed, which gives agents a cheap way to answer "does this scene actually animate?" before launching a browser.
+
+`inspectSceneForAgent()` is the higher-level "can I see it?" check. It samples frames, estimates element bounds, reports visible element counts and occupied area, and flags common weak-scene issues such as blank frames, tiny compositions, off-canvas elements, zero-size elements, low literal color contrast, and timelines that do not visibly change.
+
+## Timelines and state machines
+
+Timelines are keyframe clips over a small safe property set: `opacity`, `translate`, `scale`, `rotate`, `fill`, and `stroke`.
+
+```ts
+import { applyTimelineFrame, transitionStateMachine } from '@elucim/dsl';
+
+const previewDoc = applyTimelineFrame(doc, 'intro', 18);
+const nextState = transitionStateMachine(doc, 'deck', 'idle', 'start');
+```
+
+State machines use a Rive-inspired but intentionally small model. Every machine has a visual **Entry** node, `entry` matches the explicit Entry transition target, `states` point at timelines, and machine-level `transitions` connect states. The Entry transition declares how the machine leaves Entry: `onStart` fires automatically when a preview/run begins, while events like `onClick` or `onKey` can intentionally gate the first state. A trigger transition fires when its `trigger` event is activated; an `exitTime` transition is the automatic **Next** path after the source state's timeline finishes. A transition whose target is `entry` resolves through Entry again, while a transition whose target is `exit` reaches the terminal **Exit** pseudo-node and stops that machine.
+
+The minimal event presets are `onStart`, `onClick`, `onKey`, and `reset`. Use `onKey` plus `key` metadata for keyboard interactions such as Enter, Space, Escape, or ArrowRight; key matching is case-insensitive, so `G` and `g` are the same binding. `reset` is still a normal event transition; the convention is to target `entry`, then let Entry decide whether to restart immediately (`onStart`) or wait for its gated start event. Use a custom trigger name for domain events the host app sends, such as `back`, `timeout`, `answerCorrect`, or `dataLoaded`; custom names have no special behavior beyond matching the event string.
+
+```ts
+stateMachines: {
+  deck: {
+    id: 'deck',
+    entry: 'idle',
+    inputs: {
+      start: { type: 'trigger' },
+      reset: { type: 'trigger' },
+    },
+    states: {
+      idle: { timeline: 'intro' },
+      focus: { timeline: 'focus' },
+    },
+    transitions: [
+      { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+      { id: 'idle-start', from: 'idle', to: 'focus', trigger: 'start' },
+      { id: 'focus-reset', from: 'focus', to: 'entry', trigger: 'reset' },
+      { id: 'focus-next', from: 'focus', to: 'exit', exitTime: 1 },
+    ],
+  },
+}
+```
+
+Scenes do not own duration. Timeline durations are scoped to the state being previewed; during state-machine playback, the active state's timeline duration controls when **Next** auto-runs. Fixed-frame output must use an explicit export policy such as a selected timeline, selected state, scripted machine path, or machine run with a max-frame cap.
+
+State-machine visual previews are composed as an ordered frame stack: all timelines are first applied at their start frame, then completed states and the active state overlay later in path order. If a timeline appears more than once in that stack, the later frame wins. Generic DSL viewers that render a document through the React `DslRenderer` run the default state machine with the same click, key, Next, Entry, Exit, and finished-frame semantics used by the editor. Static bridge/export paths still apply the default state machine's initial frame stack so pasted JSON/YAML opens at the authored start state even outside an interactive runtime.
+
+Editor graph positions are optional metadata under `layout`: `layout.entry` stores the visual Entry node, `layout.states` stores state node positions, and `layout.viewport` stores the graph pan/zoom. Multiple state machines are independent interaction controllers over the same scene/timelines; a host chooses which machine is active for a given surface or interaction mode.
+
+## Deterministic nudges
+
+Elucim does not call an LLM. Host apps such as CutReady can ask Elucim for deterministic nudges, show them to an agent or human, and apply the exact command list:
+
+```ts
+import { applyNudge, suggestDocumentNudges } from '@elucim/dsl/agent';
+
+const nudges = suggestDocumentNudges(doc);
+const polished = applyNudge(doc, nudges[0]).document;
+```
+
+Initial nudges cover safe metadata polish and a reviewable timeline-based intro clip. This gives agents a simple workflow: generate the 80% layout, ask Elucim for refinements, then apply or explain the chosen command-backed nudges.
+

@@ -4,7 +4,7 @@ import { useEditorState } from '../state/EditorProvider';
 import { getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from './templates';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
-import type { ElucimDocument, ElementNode } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
 import { importFromJson } from '../utils/io';
 
 // ─── Built-in scene themes ─────────────────────────────────────────────────

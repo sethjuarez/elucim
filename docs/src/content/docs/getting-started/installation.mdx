@@ -20,12 +20,13 @@ pnpm add @elucim/editor @elucim/core @elucim/dsl react react-dom
 
 ## KaTeX (for LaTeX rendering)
 
-If you plan to use the `<LaTeX>` component or the DSL `latex` node type, add the KaTeX CSS to your HTML:
+If you plan to use the `<LaTeX>` component or the DSL `latex` node type, serve the KaTeX CSS with your app and add it to your HTML:
 
 ```html
-<link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.33/dist/katex.min.css" />
+<link rel="stylesheet" href="/vendor/katex/katex.min.css" />
 ```
+
+The Elucim docs and demo vendor this file locally to avoid CDN/runtime privacy warnings. In your own app, copy `katex/dist/katex.min.css` and the adjacent `fonts/` folder into your public assets.
 
 ## TypeScript
 

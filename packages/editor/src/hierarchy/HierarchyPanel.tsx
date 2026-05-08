@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import type { ElementNode, ElucimV2Document } from '@elucim/dsl';
+import type { ElementNode, ElucimDocument } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { CANVAS_ID, getElementId } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
@@ -8,7 +8,7 @@ import { v } from '../theme/tokens';
 export interface HierarchyPanelProps {
   className?: string;
   style?: React.CSSProperties;
-  v2Document?: ElucimV2Document;
+  v2Document?: ElucimDocument;
 }
 
 interface HierarchyRow {
@@ -17,7 +17,20 @@ interface HierarchyRow {
   label: string;
   type: string;
   depth: number;
+  parentPath: string;
+  index: number;
   hasChildren: boolean;
+}
+
+interface DragState {
+  id: string;
+  parentPath: string;
+  index: number;
+}
+
+interface DropIndicator {
+  id: string;
+  position: 'before' | 'after';
 }
 
 function getChildren(element: ElementNode): ElementNode[] {
@@ -27,21 +40,25 @@ function getChildren(element: ElementNode): ElementNode[] {
 }
 
 function getRows(elements: ElementNode[], collapsedIds: Set<string>, parentPath = 'root', depth = 0): HierarchyRow[] {
-  return elements.flatMap((element, index) => {
+  return elements.map((element, index) => {
     const id = getElementId(element, index, parentPath);
     const children = getChildren(element);
     const label = ('id' in element && element.id) ? element.id : `${element.type}[${index}]`;
-    const row: HierarchyRow = {
+    return {
       element,
       id,
       label,
       type: element.type,
       depth,
+      parentPath,
+      index,
       hasChildren: children.length > 0,
+      children,
     };
-    return collapsedIds.has(id)
+  }).reverse().flatMap(({ children: rowChildren, ...row }) => {
+    return collapsedIds.has(row.id)
       ? [row]
-      : [row, ...getRows(children, collapsedIds, id, depth + 1)];
+      : [row, ...getRows(rowChildren, collapsedIds, row.id, depth + 1)];
   });
 }
 
@@ -66,6 +83,8 @@ export function HierarchyPanel({ className, style, v2Document }: HierarchyPanelP
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [dragging, setDragging] = useState<DragState | null>(null);
+  const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null);
   const rows = getRows(children, collapsedIds);
   const rootSelected = state.selectedIds.length === 1 && state.selectedIds[0] === CANVAS_ID;
 
@@ -90,6 +109,27 @@ export function HierarchyPanel({ className, style, v2Document }: HierarchyPanelP
     }
     setEditingId(null);
   }, [dispatch, editingId, editValue]);
+
+  const getDropPosition = useCallback((event: React.DragEvent<HTMLElement>): 'before' | 'after' => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    return event.clientY < bounds.top + bounds.height / 2 ? 'before' : 'after';
+  }, []);
+
+  const finishDrop = useCallback((row: HierarchyRow, position: 'before' | 'after') => {
+    if (!dragging || dragging.id === row.id || dragging.parentPath !== row.parentPath) return;
+    const siblingRows = rows.filter(candidate => candidate.parentPath === row.parentPath);
+    const draggingDisplayIndex = siblingRows.findIndex(candidate => candidate.id === dragging.id);
+    const targetDisplayIndex = siblingRows.findIndex(candidate => candidate.id === row.id);
+    if (draggingDisplayIndex < 0 || targetDisplayIndex < 0) return;
+    const nextDisplayRows = [...siblingRows];
+    const [draggedRow] = nextDisplayRows.splice(draggingDisplayIndex, 1);
+    const targetDisplayIndexAfterRemoval = nextDisplayRows.findIndex(candidate => candidate.id === row.id);
+    const insertDisplayIndex = targetDisplayIndexAfterRemoval + (position === 'after' ? 1 : 0);
+    nextDisplayRows.splice(insertDisplayIndex, 0, draggedRow);
+    const newDisplayIndex = nextDisplayRows.findIndex(candidate => candidate.id === dragging.id);
+    const newIndex = nextDisplayRows.length - 1 - newDisplayIndex;
+    dispatch({ type: 'REORDER_ELEMENT', id: dragging.id, newIndex });
+  }, [dispatch, dragging, rows]);
 
   return (
     <div
@@ -126,6 +166,34 @@ export function HierarchyPanel({ className, style, v2Document }: HierarchyPanelP
               aria-selected={selected}
               aria-expanded={row.hasChildren ? !collapsed : undefined}
               tabIndex={-1}
+              draggable={editingId !== row.id}
+              title="Drag to reorder within this parent group"
+              aria-grabbed={dragging?.id === row.id ? true : undefined}
+              onDragStart={event => {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', row.id);
+                setDragging({ id: row.id, parentPath: row.parentPath, index: row.index });
+              }}
+              onDragOver={event => {
+                if (!dragging || dragging.id === row.id || dragging.parentPath !== row.parentPath) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                setDropIndicator({ id: row.id, position: getDropPosition(event) });
+              }}
+              onDragLeave={() => {
+                setDropIndicator(current => current?.id === row.id ? null : current);
+              }}
+              onDrop={event => {
+                event.preventDefault();
+                const position = getDropPosition(event);
+                finishDrop(row, position);
+                setDragging(null);
+                setDropIndicator(null);
+              }}
+              onDragEnd={() => {
+                setDragging(null);
+                setDropIndicator(null);
+              }}
               onClick={event => {
                 event.currentTarget.focus({ preventScroll: true });
                 dispatch({ type: 'SELECT', ids: [row.id] });
@@ -139,8 +207,12 @@ export function HierarchyPanel({ className, style, v2Document }: HierarchyPanelP
                 padding: '0 6px 0 4px',
                 borderRadius: 4,
                 background: selected ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 16%, transparent)` : 'transparent',
+                boxShadow: dropIndicator?.id === row.id
+                  ? `inset 0 ${dropIndicator.position === 'before' ? '2px' : '-2px'} 0 ${v('--elucim-editor-accent')}`
+                  : undefined,
+                opacity: dragging?.id === row.id ? 0.55 : 1,
                 color: selected ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
-                cursor: 'default',
+                cursor: editingId === row.id ? 'text' : 'grab',
               }}
             >
               <span style={{ width: row.depth * 12, flexShrink: 0 }} />

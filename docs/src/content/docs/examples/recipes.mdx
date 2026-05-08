@@ -6,175 +6,82 @@ description: Common patterns for Elucim animations — function plots, staggered
 import LiveDemo from '../../../components/LiveDemo';
 import { TangentDemo, PipelineDemo } from '../../../components/Demos';
 
-Bite-sized patterns you can copy into your projects. Each recipe is self-contained and demonstrates a common animation technique.
+Bite-sized normalized document patterns you can copy into your projects. Each recipe demonstrates structure that agents, editors, and React hosts can inspect and patch.
 
 ## 1. Animated Function Plot with Moving Tangent
 
-Use `useCurrentFrame` and `interpolate` to sweep a tangent line along a curve.
+Use element IDs and timeline tracks to reveal a function plot and tangent construction.
 
 <LiveDemo client:visible>
   <TangentDemo client:visible />
 </LiveDemo>
 
-```tsx
-import { Player, Axes, FunctionPlot, Line, Circle, Text,
-         useCurrentFrame, interpolate, easeInOutCubic } from '@elucim/core';
-
-function TangentDemo() {
-  const frame = useCurrentFrame();
-  const x = interpolate(frame, [0, 120], [-3, 3], { easing: easeInOutCubic });
-  const y = Math.sin(x);
-  const dy = Math.cos(x); // derivative of sin
-  const ox = 300, oy = 200, sc = 50;
-  const px = ox + x * sc, py = oy - y * sc;
-
-  return (
-    <Player width={600} height={400} fps={30} durationInFrames={120}>
-      <Axes origin={[ox, oy]} xRange={[-4, 4]} yRange={[-2, 2]} scale={sc} />
-      <FunctionPlot fn={Math.sin} domain={[-4, 4]} origin={[ox, oy]} scale={sc}
-                    color="#818cf8" />
-      <Line x1={px - 40} y1={py + 40 * dy} x2={px + 40} y2={py - 40 * dy}
-            stroke="#f472b6" strokeWidth={2} />
-      <Circle cx={px} cy={py} r={4} fill="#f472b6" />
-    </Player>
-  );
+```ts
+elements: {
+  axes: { id: 'axes', type: 'axes', props: { type: 'axes', origin: [300, 200], xRange: [-4, 4], yRange: [-2, 2], scale: 50 } },
+  curve: { id: 'curve', type: 'functionPlot', props: { type: 'functionPlot', expression: 'sin(x)', domain: [-4, 4], origin: [300, 200], scale: 50, color: '$accent', opacity: 0 } },
+  tangent: { id: 'tangent', type: 'line', props: { type: 'line', x1: 220, y1: 230, x2: 300, y2: 150, stroke: '$tertiary', strokeWidth: 2, opacity: 0 } },
+},
+timelines: {
+  intro: {
+    id: 'intro',
+    duration: 60,
+    tracks: [
+      { target: 'curve', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] },
+      { target: 'tangent', property: 'opacity', keyframes: [{ frame: 30, value: 0 }, { frame: 60, value: 1 }] },
+    ],
+  },
 }
 ```
 
 ## 2. Staggered Box Reveal with Labels
 
-Use `<Stagger>` to reveal a row of labeled boxes one at a time.
+Use staggered keyframes to reveal a row of labeled boxes one at a time.
 
 <LiveDemo client:visible>
   <PipelineDemo client:visible />
 </LiveDemo>
 
-```tsx
-import { Player, Stagger, FadeIn, Rect, Text } from '@elucim/core';
-
+```ts
 const labels = ['Input', 'Tokenize', 'Embed', 'Attend', 'Output'];
-
-function Pipeline() {
-  return (
-    <Player width={700} height={200} fps={30} durationInFrames={90}>
-      <Stagger staggerDelay={8}>
-        {labels.map((label, i) => (
-          <FadeIn key={i} duration={15}>
-            <Rect x={30 + i * 130} y={60} width={110} height={50}
-                  fill="rgba(79,195,247,0.15)" stroke="#4fc3f7" rx={8} />
-            <Text x={85 + i * 130} y={90} fill="#e0e7ff" fontSize={14}
-                  textAnchor="middle">{label}</Text>
-          </FadeIn>
-        ))}
-      </Stagger>
-    </Player>
-  );
-}
+const tracks = labels.map((_, index) => ({
+  target: `step-${index + 1}`,
+  property: 'opacity',
+  keyframes: [{ frame: index * 8, value: 0 }, { frame: index * 8 + 15, value: 1 }],
+}));
 ```
 
 ## 3. Graph Visualization with Colored Edges
 
-Use the `<Graph>` component with custom edge colors and labels.
+Use the `graph` element with custom edge colors and labels.
 
-```tsx
-import { Player, FadeIn, Graph } from '@elucim/core';
-
-function NetworkGraph() {
-  return (
-    <Player width={500} height={400} fps={30} durationInFrames={60}>
-      <FadeIn duration={20}>
-        <Graph
-          nodes={[
+```ts
+elements: {
+  network: {
+    id: 'network',
+    type: 'graph',
+    props: {
+      type: 'graph',
+      nodes: [
             { id: 'a', x: 100, y: 200, label: 'A', color: '#4fc3f7' },
             { id: 'b', x: 250, y: 80,  label: 'B', color: '#a78bfa' },
             { id: 'c', x: 400, y: 200, label: 'C', color: '#f472b6' },
             { id: 'd', x: 250, y: 320, label: 'D', color: '#34d399' },
-          ]}
-          edges={[
+      ],
+      edges: [
             { from: 'a', to: 'b', color: '#4fc3f7' },
             { from: 'b', to: 'c', color: '#a78bfa', directed: true },
             { from: 'c', to: 'd', color: '#f472b6' },
             { from: 'd', to: 'a', color: '#34d399', directed: true },
             { from: 'a', to: 'c', color: '#64748b', label: '5' },
-          ]}
-          nodeRadius={20}
-          edgeWidth={2}
-        />
-      </FadeIn>
-    </Player>
-  );
+      ],
+      nodeRadius: 20,
+      edgeWidth: 2,
+    },
+  },
 }
 ```
-
-## 4. Multi-Slide Presentation with DSL Builder
-
-Generate a two-slide deck programmatically and render it.
-
-```tsx
-import { DslRenderer } from '@elucim/dsl';
-import { presentation, darkTheme } from '@elucim/dsl';
-
-const t = darkTheme;
-const doc = presentation('Quick Demo', darkTheme, { width: 800, height: 500 })
-  .slide('Intro', s => {
-    s.title('Welcome');
-    s.wait(5);
-    s.subtitle('Built with the Builder API');
-    s.wait(5);
-    const boxes = s.boxRow(['Step 1', 'Step 2', 'Step 3'], {
-      y: 300, boxWidth: 120, boxHeight: 50, gap: 20,
-    });
-    s.connectDown(boxes, { color: t.muted });
-  })
-  .slide('Conclusion', s => {
-    s.title('That\'s it!');
-    s.wait(5);
-    s.latex('\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}', { y: 300, fontSize: 32 });
-  })
-  .build();
-
-function App() {
-  return <DslRenderer dsl={doc} style={{ maxWidth: 800, margin: '0 auto' }} />;
-}
-```
-
-## 5. Presentation-Grade Talk Starter
-
-Use the premium deck theme and high-level helpers when one generated visual should become one full-screen slide.
-
-```tsx
-import { DslRenderer, deckDarkTheme, presentation } from '@elucim/dsl';
-
-const doc = presentation('NDC Talk Starter', deckDarkTheme, {
-  width: 960,
-  height: 540,
-  transition: 'fade',
-  showHud: false,
-})
-  .slide('Opening', s => {
-    s.hero('From demo to deck', 'Elucim visuals as full-screen talk slides');
-    s.callout('One generated visual = one slide-ready story beat.');
-  })
-  .slide('Talk arc', s => {
-    s.title('Shape the talk as a sequence');
-    s.process(['Problem', 'Mental model', 'Demo', 'Takeaway']);
-  })
-  .slide('Visual grammar', s => {
-    s.compare(
-      { title: 'Before', body: 'Dense + tiny + repeated' },
-      { title: 'After', body: 'Hero + semantic + clear' },
-    );
-    s.metric('1', 'hero object');
-  })
-  .build();
-
-function TalkPreview() {
-  return <DslRenderer dsl={doc} poster="last" />;
-}
-```
-
-Use `showHud: true` for an interactive preview deck. Keep it `false` for exported or poster-style frames that should drop cleanly into a talk without presentation chrome.
 
 :::tip
-These recipes are starting points — combine them freely. Wrap any recipe in `<Stagger>` or `<Timeline>` for more complex sequencing, or embed them in `<Slide>` components for presentations.
+These recipes are starting points — combine them freely with timelines and state machines so motion can be inspected and edited outside React.
 :::

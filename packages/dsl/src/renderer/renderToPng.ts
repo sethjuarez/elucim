@@ -1,6 +1,8 @@
 import { renderToSvgString } from './renderToSvgString';
 import { resolveColor, SEMANTIC_TOKENS } from './resolveColor';
-import type { ElucimDocument } from '../schema/types';
+import { toRenderableV1 } from '../v2/migrate';
+import type { ElucimDocument as RenderableDocument } from '../schema/types';
+import type { ElucimV2Document as ElucimDocument } from '../v2/types';
 
 /**
  * Strip all CSS functions that are invalid in standalone SVGs loaded via Image:
@@ -54,11 +56,12 @@ export interface RenderToPngOptions {
  * ```
  */
 export async function renderToPng(
-  dsl: ElucimDocument,
+  dsl: ElucimDocument | RenderableDocument,
   frame: number,
   options?: RenderToPngOptions,
 ): Promise<Uint8Array> {
   const scale = options?.scale ?? 2;
+  const renderable = toRenderableV1(dsl);
 
   // 1. Render DSL → HTML string containing <svg> (server-side, no DOM needed)
   const htmlString = renderToSvgString(dsl, frame, {
@@ -93,7 +96,7 @@ export async function renderToPng(
 
   // 5. Inject background rect from the DSL root
   //    $token → resolveColor → var(--elucim-X, #hex) → strip to #hex
-  let bg: string = (dsl.root as any).background ?? '#ffffff';
+  let bg: string = (renderable.root as any).background ?? '#ffffff';
   if (bg.startsWith('$')) {
     bg = resolveColor(bg) ?? '#ffffff';
   }

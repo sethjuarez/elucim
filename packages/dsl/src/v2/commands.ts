@@ -6,8 +6,8 @@ export type ElucimV2Command =
   | { op: 'updateElement'; id: string; patch: Partial<Omit<ElucimV2Element, 'id'>> }
   | { op: 'deleteElement'; id: string }
   | { op: 'moveElement'; id: string; layout: Partial<ElucimV2Layout> }
+  | { op: 'reorderElement'; id: string; index: number }
   | { op: 'reparentElement'; id: string; parentId?: string; index?: number }
-  | { op: 'applyAnimationPreset'; ids: string[]; preset: 'intro' | 'reveal' | 'outro'; duration?: number }
   | { op: 'upsertTimeline'; timeline: ElucimV2Timeline }
   | { op: 'deleteTimeline'; id: string }
   | { op: 'applyTimelineFrame'; timelineId: string; frame: number }
@@ -30,10 +30,10 @@ export function applyCommand(doc: ElucimV2Document, command: ElucimV2Command): E
       return deleteElement(next, command.id);
     case 'moveElement':
       return moveElement(next, command);
+    case 'reorderElement':
+      return reorderElement(next, command);
     case 'reparentElement':
       return reparentElement(next, command);
-    case 'applyAnimationPreset':
-      return applyAnimationPreset(next, command);
     case 'upsertTimeline':
       return upsertTimeline(next, command.timeline);
     case 'deleteTimeline':
@@ -111,6 +111,16 @@ function moveElement(
   return { document: doc, changed: true, summary: `Moved element "${command.id}".` };
 }
 
+function reorderElement(
+  doc: ElucimV2Document,
+  command: Extract<ElucimV2Command, { op: 'reorderElement' }>,
+): ElucimV2CommandResult {
+  const element = doc.elements[command.id];
+  if (!element) throw new Error(`Element "${command.id}" does not exist`);
+  insertChild(doc, element.parentId, command.id, command.index);
+  return { document: doc, changed: true, summary: `Reordered element "${command.id}".` };
+}
+
 function reparentElement(
   doc: ElucimV2Document,
   command: Extract<ElucimV2Command, { op: 'reparentElement' }>,
@@ -125,24 +135,6 @@ function reparentElement(
   element.parentId = command.parentId;
   insertChild(doc, command.parentId, command.id, command.index);
   return { document: doc, changed: true, summary: `Reparented element "${command.id}".` };
-}
-
-function applyAnimationPreset(
-  doc: ElucimV2Document,
-  command: Extract<ElucimV2Command, { op: 'applyAnimationPreset' }>,
-): ElucimV2CommandResult {
-  const duration = command.duration ?? (command.preset === 'reveal' ? 45 : 20);
-  for (const id of command.ids) {
-    const element = doc.elements[id];
-    if (!element) throw new Error(`Element "${id}" does not exist`);
-    element.props = {
-      ...element.props,
-      ...(command.preset === 'intro' ? { fadeIn: duration } : {}),
-      ...(command.preset === 'reveal' ? { draw: duration } : {}),
-      ...(command.preset === 'outro' ? { fadeOut: duration } : {}),
-    };
-  }
-  return { document: doc, changed: command.ids.length > 0, summary: `Applied "${command.preset}" preset to ${command.ids.length} element(s).` };
 }
 
 function upsertTimeline(doc: ElucimV2Document, timeline: ElucimV2Timeline): ElucimV2CommandResult {

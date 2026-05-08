@@ -5,7 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/@elucim/editor)](https://www.npmjs.com/package/@elucim/editor)
 [![license](https://img.shields.io/npm/l/@elucim/editor)](https://github.com/sethjuarez/elucim/blob/main/LICENSE)
 
-`@elucim/editor` is a drop-in React component that provides a full visual editing experience for [Elucim](https://www.npmjs.com/package/@elucim/core) animations — a floating toolbar, contextual inspector, animation timeline, zoom/pan canvas, and drag-and-drop element manipulation. Think Figma for animated math visualizations.
+`@elucim/editor` is a drop-in React component that provides a full visual editing experience for normalized [ElucimDocument](https://www.npmjs.com/package/@elucim/dsl) scenes — a floating toolbar, contextual inspector, animation timeline, state-machine authoring, zoom/pan canvas, and drag-and-drop element manipulation. Think Figma for animated math visualizations.
 
 ## Install
 
@@ -36,18 +36,42 @@ import { ElucimEditor } from '@elucim/editor';
 import type { ElucimDocument } from '@elucim/dsl';
 
 const myScene: ElucimDocument = {
-  version: '1.0',
-  root: {
+  version: '2.0',
+  scene: {
     type: 'player',
     width: 800,
     height: 600,
     fps: 60,
-    durationInFrames: 300,
     background: '#0d0d1a',
-    children: [
-      { type: 'circle', cx: 400, cy: 300, r: 80, stroke: '#6c5ce7', strokeWidth: 3, fill: 'none' },
-      { type: 'latex', expression: 'e^{i\\pi} + 1 = 0', x: 400, y: 300, fontSize: 24, color: '#fdcb6e' },
-    ],
+    children: ['orbit', 'equation'],
+  },
+  elements: {
+    orbit: {
+      id: 'orbit',
+      type: 'circle',
+      props: { type: 'circle', cx: 400, cy: 300, r: 80, stroke: '#6c5ce7', strokeWidth: 3, fill: 'none', opacity: 0 },
+    },
+    equation: {
+      id: 'equation',
+      type: 'latex',
+      props: { type: 'latex', expression: 'e^{i\\pi} + 1 = 0', x: 400, y: 300, fontSize: 24, color: '#fdcb6e' },
+    },
+  },
+  timelines: {
+    intro: {
+      id: 'intro',
+      duration: 30,
+      tracks: [{ target: 'orbit', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+    },
+  },
+  defaultStateMachine: 'main',
+  stateMachines: {
+    main: {
+      id: 'main',
+      entry: 'intro',
+      states: { intro: { timeline: 'intro' } },
+      transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+    },
   },
 };
 
@@ -77,10 +101,9 @@ Floating, draggable, collapsible tool panel with categorized element templates:
 | **Data** | Bar Chart, Graph |
 | **Media** | Text, Image |
 | **Layout** | Group |
-| **Animation** | FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel |
-| **Structure** | Sequence |
+| **Animation** | Timeline tracks, keyframes, and state-machine transitions |
 
-Click any template to add it to the scene.
+Click any template to add it to the normalized scene.
 
 ### 🔍 Inspector
 
@@ -93,11 +116,11 @@ Contextual property panel that auto-positions next to the selected element:
 
 ### 🎬 Timeline
 
-Premiere-style bottom panel for animation control:
+Premiere-style bottom panel for timeline and state-machine control:
 
 - Play/pause with frame counter
 - Scrub bar for seeking to any frame
-- Frame-accurate playback at the scene's configured FPS
+- Frame-accurate playback of the active timeline/state at the scene's configured FPS
 
 ### ✋ Interactions
 
@@ -112,10 +135,12 @@ Premiere-style bottom panel for animation control:
 
 ### 📤 Import / Export
 
+For app-level persistence, prefer `onDocumentChange`; it emits normalized `ElucimDocument` output.
+
 ```tsx
 import { exportToJson, importFromJson, downloadAsJson } from '@elucim/editor';
 
-// Export current document
+// Advanced editor UI integrations can still serialize the editor working document.
 const json = exportToJson(editorState.document);
 
 // Download as file
@@ -123,6 +148,18 @@ downloadAsJson(editorState.document, 'my-animation.json');
 
 // Import from JSON
 const doc = importFromJson(jsonString);
+```
+
+For application persistence, prefer the top-level editor callback:
+
+```tsx
+<ElucimEditor
+  initialDocument={document}
+  onDocumentChange={(nextDocument, details) => {
+    saveDocument(nextDocument);
+    if (details.warnings.length > 0) showWarnings(details.warnings);
+  }}
+/>
 ```
 
 ## Theming
@@ -178,6 +215,8 @@ const vars = buildThemeVars({ accent: '#e040fb', bg: '#1e1e2e' });
 ```
 
 ## State Management
+
+The editor uses normalized `ElucimDocument` as its native input/output shape. Integrations should pass and persist normalized documents through `initialDocument` and `onDocumentChange`.
 
 The editor uses a reducer-based state model. Access it programmatically via context hooks:
 
@@ -243,7 +282,7 @@ The editor wraps its entire component tree in an error boundary. If a rendering 
 | Export | Description |
 |--------|-------------|
 | `useEditorState()` | `[state, dispatch]` — full editor state and action dispatcher |
-| `useEditorDocument()` | Current `ElucimDocument` |
+| `useEditorDocument()` | Current internal editor document for advanced composition; integrations should persist via `onDocumentChange` |
 | `useEditorSelection()` | Array of selected element IDs |
 | `useViewport()` | Zoom/pan state and handlers |
 | `useDrag()` | Element drag/resize/rotate interactions |

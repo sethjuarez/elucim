@@ -1,9 +1,9 @@
 ---
 title: Editor Overview
-description: Visual canvas editor for building Elucim animations — Figma-like drag-and-drop scene design.
+description: Visual editor for normalized Elucim JSON/YAML scenes, timelines, state machines, and polish nudges.
 ---
 
-The Elucim editor is a drop-in React component that lets you visually build animated scenes — add elements, edit properties, preview animations, and export to JSON. Think Figma, but for animated math visualizations.
+The Elucim editor is a drop-in React workspace for building normalized `ElucimDocument` scenes visually. It edits the same JSON/YAML-compatible document model that `<DslRenderer>` renders: elements live in the document tree, motion lives in timelines and state machines, and generated polish can be reviewed before it changes the scene.
 
 ## Installation
 
@@ -11,199 +11,173 @@ The Elucim editor is a drop-in React component that lets you visually build anim
 pnpm add @elucim/editor @elucim/core @elucim/dsl react react-dom
 ```
 
-## Quick Start
+## Quick start
 
 ```tsx
 import { ElucimEditor } from '@elucim/editor';
 
-function App() {
+export function App() {
   return <ElucimEditor style={{ width: '100vw', height: '100vh' }} />;
 }
 ```
 
-This renders a full-screen editor with a toolbar, inspector, timeline, and infinite canvas — ready to use.
+This opens the full editor shell with workspace tabs, a hierarchy/create dock, canvas, inspector, zoom controls, minimap, and the motion panel.
 
-<img class="theme-img-dark" src="/images/editor/editor-overview-dark.png" alt="Elucim Editor — dark mode with toolbar, canvas, and timeline" />
-<img class="theme-img-light" src="/images/editor/editor-overview-light.png" alt="Elucim Editor — light mode with toolbar, canvas, and timeline" />
+<img class="theme-img-dark" src="/images/editor/editor-overview-dark.png" alt="Elucim editor in dark mode showing dense canvas, hierarchy, inspector, and motion panel" />
+<img class="theme-img-light" src="/images/editor/editor-overview-light.png" alt="Elucim editor in light mode showing dense canvas, hierarchy, inspector, and motion panel" />
 
-### Loading an Existing Scene
+## Load a normalized document
 
-Pass an `initialDocument` to open the editor with a pre-built scene:
+Pass an `initialDocument` to open an existing normalized scene. Edits are emitted through `onDocumentChange` as normalized `ElucimDocument` output.
 
 ```tsx
 import { ElucimEditor } from '@elucim/editor';
 import type { ElucimDocument } from '@elucim/dsl';
 
-const myScene: ElucimDocument = {
-  version: '1.0',
-  root: {
+const scene: ElucimDocument = {
+  version: '2.0',
+  scene: {
     type: 'player',
-    width: 800,
-    height: 600,
+    width: 1280,
+    height: 720,
     fps: 60,
-    durationInFrames: 300,
-    background: '#0d0d1a',
-    children: [
-      { type: 'circle', cx: 400, cy: 300, r: 80, stroke: '#4ecdc4', strokeWidth: 3, fill: 'none' },
-      { type: 'latex', expression: 'e^{i\\pi} + 1 = 0', x: 400, y: 300, fontSize: 24, color: '#ffe66d' },
-    ],
+    background: '$background',
+    children: ['title', 'node'],
   },
+  elements: {
+    title: {
+      id: 'title',
+      type: 'text',
+      role: 'title',
+      props: { type: 'text', content: 'Energy transfer', x: 640, y: 96, fill: '$title', fontSize: 44, textAnchor: 'middle' },
+    },
+    node: {
+      id: 'node',
+      type: 'circle',
+      role: 'concept',
+      props: { type: 'circle', cx: 640, cy: 360, r: 84, fill: '$surface', stroke: '$accent', strokeWidth: 3 },
+    },
+  },
+  timelines: {
+    intro: {
+      id: 'intro',
+      duration: 60,
+      tracks: [
+        { target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 60, value: 1 }] },
+      ],
+    },
+  },
+  metadata: { title: 'Energy transfer', intent: 'Show the main concept before adding detail.' },
 };
 
-function App() {
-  return <ElucimEditor initialDocument={myScene} style={{ width: '100vw', height: '100vh' }} />;
-}
-```
-
-### Starting at a Specific Frame
-
-Use `initialFrame` to open the editor at a specific animation frame — useful when elements use `fadeIn` animations and you want to see them fully visible on load:
-
-```tsx
-function App() {
-  const lastFrame = myScene.root.durationInFrames! - 1;
+export function App() {
   return (
     <ElucimEditor
-      initialDocument={myScene}
-      initialFrame={lastFrame}
+      initialDocument={scene}
+      initialFrame="last"
+      onDocumentChange={(doc, details) => {
+        saveDocument(doc);
+        if (details.warnings.length > 0) showCompatibilityWarnings(details.warnings);
+      }}
       style={{ width: '100vw', height: '100vh' }}
     />
   );
 }
 ```
 
-## Editor Layout
+`initialFrame` can be a frame number or `'last'`, which is useful when opening generated documents with reveal timelines.
 
-The editor uses a **floating panel** design — all UI chrome hovers over an infinite canvas:
+## Workspace model
 
-| Panel | Position | Purpose |
-|-------|----------|---------|
-| **Toolbar** | Top-left | Add elements from categorized templates |
-| **Inspector** | Contextual | Edit properties of the selected element |
-| **Timeline** | Bottom | Play/pause animations, scrub to any frame |
-| **Minimap** | Bottom-right | Bird's-eye view for navigating large scenes |
-| **Zoom Controls** | Bottom-right | Zoom in/out, zoom-to-fit |
+The editor is organized around four workspaces:
 
-All panels are **draggable** — reposition them anywhere on the canvas.
+| Workspace | Use it for |
+|-----------|------------|
+| **Design** | Arrange elements, browse the scene hierarchy, add templates, edit static properties, group, align, and distribute. |
+| **Animate** | Create and edit timelines, tracks, keyframes, easing, and sampled timeline preview frames. |
+| **State Machine** | Wire timelines into Entry/state/Exit flows, transitions, trigger inputs, keyboard/click events, and preview behavior. |
+| **Polish** | Review metadata, selected-element intent, validation warnings, compatibility notes, and suggested document nudges. |
 
-## Adding Elements
+Normalized documents open in **Animate** by default so existing timelines are immediately visible. New blank editor sessions start in **Design**.
 
-Open the **Toolbar** (top-left) and click any template to add it to the scene:
+## Layout
 
-| Category | Elements |
-|----------|----------|
-| **Shapes** | Circle, Rectangle, Line, Arrow, Polygon, Bezier Curve |
-| **Math** | Axes, Function Plot, Vector, Vector Field, Matrix, LaTeX |
+The current editor shell is a docked workspace UI:
+
+| Region | Purpose |
+|--------|---------|
+| **Top bar** | Workspace tabs plus show/hide toggles for left panel, inspector, and timeline. |
+| **Left dock** | `Hierarchy` tab for scene structure and `Create` tab for element templates. |
+| **Canvas** | Pan/zoom stage with grid, selection overlay, context menu, minimap, and zoom controls. |
+| **Inspector** | Contextual properties for the canvas or selected element. |
+| **Motion panel** | Timeline editor or state-machine graph, depending on workspace/tab. |
+
+The left dock, inspector, and timeline are resizable. Hidden regions can be restored from the top bar or the collapsed rail.
+
+## Creating elements
+
+Open the **Create** tab in the left dock and choose from the template palette:
+
+| Category | Templates |
+|----------|-----------|
+| **Presentation** | Title, Subtitle, Hero Card, Metric, Callout |
+| **Shape** | Rectangle, Circle, Polygon, Image |
+| **Line** | Line, Arrow, Bezier Curve |
+| **Text** | Text, LaTeX |
+| **Math** | Axes, Function Plot, Vector, Vector Field, Matrix |
 | **Data** | Bar Chart, Graph |
-| **Media** | Text, Image |
-| **Layout** | Group |
-| **Animation** | FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel |
-| **Structure** | Sequence |
 
-Each template inserts a pre-configured element with sensible defaults. Select it and use the [Inspector](/editor/inspector/) to customize.
+Templates insert normal scene elements with sensible tokenized colors. Select the new element and use the inspector for static properties, then use timelines/state machines for motion.
 
-:::tip
-The toolbar is collapsible — click the collapse button to minimize it when you need more canvas space.
-:::
+## Selecting and arranging
 
-## Selecting Elements
+- Click an element to select it; Shift/Ctrl/Cmd+click toggles multi-selection.
+- Drag selected elements to move them; Alt+drag duplicates first, then drags the copy.
+- Drag handles to resize; Shift+drag constrains uniform resizing.
+- Use the hierarchy or right-click context menu for grouping, clipboard actions, layer order, align, and distribute.
+- Double-click an item in the hierarchy to rename it. Renames are mapped back into normalized output where possible.
 
-### Single Selection
+<img class="theme-img-dark" src="/images/editor/editor-element-selected.png" alt="Selected element in the editor with hierarchy, inspector, and selection handles" />
+<img class="theme-img-light" src="/images/editor/editor-element-selected-light.png" alt="Selected element in the editor light theme with hierarchy, inspector, and selection handles" />
 
-Click any element on the canvas to select it. A selection box with resize handles appears, and the inspector opens next to the element.
+## Motion authoring
 
-<img class="theme-img-dark" src="/images/editor/editor-element-selected.png" alt="Element selected with resize handles and inspector panel" />
-<img class="theme-img-light" src="/images/editor/editor-element-selected-light.png" alt="Element selected with resize handles and inspector panel (light mode)" />
+Motion is not authored as wrapper JSX. Use:
 
-### Multi-Selection
+1. **Timelines** for property tracks and keyframes on `opacity`, `translate`, `scale`, `rotate`, `fill`, or `stroke`.
+2. **State machines** to decide when timelines run and how users can move through animated states.
+3. **Preview controls** to scrub frames, play animation, or trigger state-machine events.
 
-- **Shift+click** — add or remove individual elements from the selection
-- **Marquee select** — click and drag on empty canvas to draw a selection rectangle (like Photoshop's lasso)
+<img class="theme-img-dark" src="/images/editor/editor-timeline.png" alt="Dense editor timeline with animation tracks and keyframes" />
+<img class="theme-img-light" src="/images/editor/editor-timeline-light.png" alt="Dense editor timeline in light mode with animation tracks and keyframes" />
 
-### Canvas Selection
+## Import, export, and persistence
 
-Click on empty canvas space to select the **canvas itself**. The inspector switches to show scene-level properties: width, height, background color, FPS, and duration.
+For host applications, prefer `onDocumentChange`; it gives you the normalized output document. The toolbar **Save**, **Open**, and **Copy** actions are convenience UI for local JSON workflows. Imported v2 JSON is validated and migrated into the editor working shape; output is restored to normalized v2 when emitted.
 
-Press **Escape** to fully deselect everything.
-
-## Moving & Transforming
-
-- **Drag** a selected element to move it
-- **Resize handles** — drag the corner or edge handles on the selection box
-- **Rotation handle** — drag the circular handle above the selection to rotate (a custom rotation cursor appears)
-
-All transforms support **undo/redo** with `Ctrl+Z` / `Ctrl+Shift+Z` (up to 50 levels of history).
-
-## Canvas Navigation
-
-### Zoom
-
-- **Ctrl+scroll** — zoom in and out (0.1× to 5×)
-- **Zoom controls** (bottom-right) — click `+`/`-` buttons or "Fit" to zoom-to-fit
-
-### Pan
-
-- **Middle-click drag** — pan the canvas
-- **Space + drag** — hold Space and drag to pan
-
-The **dot grid** background adapts to your zoom level, and the **minimap** (bottom-right) shows your current viewport position.
-
-## Animation Playback
-
-The **Timeline** panel at the bottom provides:
-
-<img class="theme-img-dark" src="/images/editor/editor-timeline.png" alt="Timeline with playback controls and animation bars" />
-<img class="theme-img-light" src="/images/editor/editor-timeline-light.png" alt="Timeline with playback controls and animation bars (light mode)" />
-
-- **Play/Pause** button — preview animations in real-time at the scene's FPS
-- **Scrub bar** — drag to seek to any frame
-- **Frame counter** — shows current frame / total frames
-
-## Import & Export
-
-### Export
-
-Press `Ctrl+E` or use the export function programmatically:
-
-```tsx
-import { exportToJson, downloadAsJson } from '@elucim/editor';
-
-// Get JSON string
-const json = exportToJson(document);
-
-// Download as file
-downloadAsJson(document, 'my-animation.json');
-```
-
-### Import
-
-```tsx
-import { importFromJson } from '@elucim/editor';
-
-const document = importFromJson(jsonString);
-```
-
-The exported JSON is a standard [Elucim DSL document](/dsl/overview/) — it can be rendered with `<DslRenderer>` from `@elucim/dsl` or loaded back into the editor.
-
-## Keyboard Shortcuts
+## Keyboard shortcuts
 
 | Shortcut | Action |
 |----------|--------|
 | `Delete` / `Backspace` | Delete selected elements |
 | `Ctrl+Z` | Undo |
-| `Ctrl+Shift+Z` | Redo |
-| `Ctrl+A` | Select all |
-| `Escape` | Deselect all |
-| `Space` (hold) | Pan mode |
-| `Ctrl+Scroll` | Zoom in/out |
-| `Ctrl+E` | Export to JSON |
+| `Ctrl+Y` / `Ctrl+Shift+Z` | Redo |
+| `Ctrl+A` | Select all elements |
+| `Ctrl+D` | Duplicate selected elements |
+| `Ctrl+C` / `Ctrl+V` | Copy / paste selected elements |
+| `Ctrl+G` / `Ctrl+Shift+G` | Group / ungroup |
+| `Ctrl+]` / `Ctrl+[` | Bring forward / send backward |
+| `Ctrl+Shift+]` / `Ctrl+Shift+[` | Bring to front / send to back |
+| Arrow keys | Nudge selected elements by 1px |
+| Shift+Arrow keys | Nudge by 10px |
+| `Ctrl+=` / `Ctrl+-` | Zoom in / out |
+| `Ctrl+0` / `Ctrl+1` | Fit to view / 100% zoom |
+| Space (hold) | Pan mode |
+| Escape | Deselect and return to select tool |
 
-## Error Recovery
+## Next steps
 
-If something goes wrong during rendering (for example, an invalid math expression), the editor shows a recovery screen instead of crashing. Click **"Try again"** to reset and continue editing. Your document state is preserved.
-
-## Next Steps
-
-- Learn about the [Inspector & Properties](/editor/inspector/) — editing element and canvas properties
-- Customize the look with [Editor Theming](/editor/theming/)
-- See the full [Editor API Reference](/editor/api/)
+- Learn about the [Inspector & Properties](/editor/inspector/).
+- Customize chrome and content colors with [Editor Theming](/editor/theming/).
+- Integrate asset libraries with [Image Assets](/editor/images/).
+- See the [Editor API Reference](/editor/api/).

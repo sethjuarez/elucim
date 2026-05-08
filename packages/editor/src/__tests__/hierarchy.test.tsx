@@ -24,15 +24,29 @@ function CaptureSelection({ onSelection }: { onSelection: (ids: string[]) => voi
   return null;
 }
 
-function renderHierarchy(onSelection: (ids: string[]) => void = () => {}) {
+function CaptureRootChildren({ onChildren }: { onChildren: (ids: string[]) => void }) {
+  const { state } = useEditorState();
+  useEffect(() => {
+    const children = 'children' in state.document.root ? state.document.root.children ?? [] : [];
+    onChildren(children.map(child => ('id' in child && child.id) ? child.id : child.type));
+  }, [onChildren, state.document]);
+  return null;
+}
+
+function renderHierarchy(
+  onSelection: (ids: string[]) => void = () => {},
+  children: unknown[] = [group],
+  onChildren: (ids: string[]) => void = () => {},
+) {
   return render(
     <EditorProvider
       initialDocument={{
         version: '1.0',
-        root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [group] },
+        root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: children as any },
       }}
     >
       <CaptureSelection onSelection={onSelection} />
+      <CaptureRootChildren onChildren={onChildren} />
       <HierarchyPanel />
     </EditorProvider>,
   );
@@ -59,5 +73,30 @@ describe('hierarchy panel', () => {
 
     fireEvent.click(getByRole('button', { name: 'Expand g1' }));
     expect(getByText('child-rect')).toBeTruthy();
+  });
+
+  it('reorders sibling rows by dragging in the hierarchy', async () => {
+    let rootChildren: string[] = [];
+    const backRect: RectNode = { ...rect, id: 'back-rect' };
+    const frontRect: RectNode = { ...rect, id: 'front-rect' };
+    const { getAllByRole, getByText } = renderHierarchy(() => {}, [backRect, frontRect], ids => { rootChildren = ids; });
+    const dataTransfer = {
+      effectAllowed: '',
+      dropEffect: '',
+      setData: () => {},
+      getData: () => '',
+    };
+
+    expect(getAllByRole('treeitem')[0].textContent).toContain('front-rect');
+
+    const frontRow = getByText('front-rect').closest('[role="treeitem"]')!;
+    const backRow = getByText('back-rect').closest('[role="treeitem"]')!;
+    backRow.getBoundingClientRect = () => ({ top: 0, bottom: 26, left: 0, right: 200, width: 200, height: 26, x: 0, y: 0, toJSON: () => ({}) });
+
+    fireEvent.dragStart(frontRow, { dataTransfer });
+    fireEvent.dragOver(backRow, { dataTransfer, clientY: 20 });
+    fireEvent.drop(backRow, { dataTransfer, clientY: 20 });
+
+    await waitFor(() => expect(rootChildren).toEqual(['front-rect', 'back-rect']));
   });
 });

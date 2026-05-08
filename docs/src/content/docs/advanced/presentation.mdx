@@ -6,7 +6,9 @@ description: Build multi-slide animated presentations with transitions, keyboard
 import LiveDemo from '../../../components/LiveDemo.tsx';
 import { PresentationDemo } from '../../../components/Demos.tsx';
 
-The `<Presentation>` component turns Elucim into a full slide-deck system. Each `<Slide>` can contain its own `<Player>` with independent animations, and transitions handle movement between slides.
+The `<Presentation>` component turns Elucim into a full slide-deck system. Each `<Slide>` can contain its own normalized document rendered with `<DslRenderer>`, and transitions handle movement between slides.
+
+This is a React composition shell from `@elucim/core`, not the canonical JSON/YAML DSL authoring model. Agent-authored documents should stay as normalized scenes with timelines and state machines; use `<Presentation>` only when a React host app wants to arrange multiple scenes into a deck.
 
 <LiveDemo title="Presentation Demo — use ← → to navigate slides">
   <PresentationDemo client:only="react" />
@@ -34,12 +36,29 @@ The `<Presentation>` component turns Elucim into a full slide-deck system. Each 
 | `title` | `string` | — | Slide title (displayed in the HUD and presenter view) |
 | `notes` | `string` | — | Presenter notes (shown when `showNotes` is enabled) |
 | `background` | `string` | — | Background color override for this slide |
-| `children` | `React.ReactNode` | — | Slide content — any Elucim components, HTML, or a `<Player>` |
+| `children` | `React.ReactNode` | — | Slide content — usually a `<DslRenderer>` scene, but any React content is allowed |
 
 ## Basic Usage
 
 ```tsx
-import { Presentation, Slide, Player, FadeIn, Text, LaTeX } from '@elucim/core';
+import { Presentation, Slide } from '@elucim/core';
+import { DslRenderer, type ElucimDocument } from '@elucim/dsl';
+
+const welcome: ElucimDocument = {
+  version: '2.0',
+  scene: { type: 'player', width: 1920, height: 1080, children: ['title'] },
+  elements: {
+    title: { id: 'title', type: 'text', props: { type: 'text', x: 960, y: 540, content: 'Welcome to Elucim', fill: '$title', fontSize: 64, textAnchor: 'middle' } },
+  },
+};
+
+const equation: ElucimDocument = {
+  version: '2.0',
+  scene: { type: 'player', width: 1920, height: 1080, children: ['equation'] },
+  elements: {
+    equation: { id: 'equation', type: 'latex', props: { type: 'latex', expression: 'e^{i\\pi} + 1 = 0', x: 960, y: 500, fontSize: 48 } },
+  },
+};
 
 <Presentation
   width={1920}
@@ -49,21 +68,11 @@ import { Presentation, Slide, Player, FadeIn, Text, LaTeX } from '@elucim/core';
   showHUD
 >
   <Slide title="Welcome" notes="Introduce the topic">
-    <Player width={1920} height={1080} fps={30} durationInFrames={90}>
-      <FadeIn duration={30}>
-        <Text x={960} y={540} fill="#fff" fontSize={64} textAnchor="middle">
-          Welcome to Elucim
-        </Text>
-      </FadeIn>
-    </Player>
+    <DslRenderer dsl={welcome} controls={false} fitToContainer />
   </Slide>
 
   <Slide title="The Math" notes="Show the core equation">
-    <Player width={1920} height={1080} fps={30} durationInFrames={60}>
-      <FadeIn duration={20}>
-        <LaTeX expression="e^{i\\pi} + 1 = 0" x={960} y={500} fontSize={48} />
-      </FadeIn>
-    </Player>
+    <DslRenderer dsl={equation} controls={false} fitToContainer />
   </Slide>
 </Presentation>
 ```
@@ -116,7 +125,7 @@ function SlideCounter() {
 | `toggleFullscreen()` | `() => void` | Toggle fullscreen on/off |
 
 :::tip
-Each `<Slide>` typically contains its own `<Player>` so that every slide has independent animation playback. The slide's `notes` prop is only visible when `showNotes` is enabled — perfect for a dual-screen presenter setup.
+Each `<Slide>` typically contains its own `<DslRenderer>` scene so that every slide has independent document playback. The slide's `notes` prop is only visible when `showNotes` is enabled — perfect for a dual-screen presenter setup.
 :::
 
 ## Theming
@@ -131,20 +140,13 @@ Pass a CSS custom property for the `background` prop to let your site's theme co
 <Presentation background="var(--slide-bg, #1a1a2e)" />
 ```
 
-### Players Inside Slides
+### Documents Inside Slides
 
-Players inside a Presentation automatically detect the context and become transparent with fill sizing. Always set `controls={false}` so the Presentation's own HUD handles navigation:
+Render normalized documents inside slides with `controls={false}` so the Presentation's own HUD handles navigation:
 
 ```tsx
 <Slide title="Animated Math">
-  <Player width={700} height={400} fps={30} durationInFrames={90}
-          autoPlay loop controls={false}>
-    <FadeIn duration={25}>
-      <Text x={350} y={150} fill="currentColor" fontSize={36} textAnchor="middle">
-        Theme-aware text
-      </Text>
-    </FadeIn>
-  </Player>
+  <DslRenderer dsl={sceneDoc} controls={false} fitToContainer />
 </Slide>
 ```
 

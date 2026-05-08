@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { ElucimDocument, ElucimV2Document, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2TimelineFrameSelection } from '@elucim/dsl';
+import type { RenderableDocument, ElucimDocument, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2TimelineFrameSelection } from '@elucim/dsl';
 import { applyNudge, applyTimelineFrames, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, validate, validateV2 } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
@@ -20,7 +20,7 @@ import { startRafDrag } from './interactions/rafDrag';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
-  initialDocument?: ElucimDocument | ElucimV2Document;
+  initialDocument?: RenderableDocument | ElucimDocument;
   /** Initial animation frame. Use `'last'` to start at the final frame. */
   initialFrame?: number | 'last';
   /**
@@ -35,12 +35,10 @@ export interface ElucimEditorProps {
    * These override any values auto-derived from `theme`.
    */
   editorTheme?: Record<string, string>;
-  /** Called whenever the document changes. Receives the updated document. */
-  onDocumentChange?: (document: ElucimDocument) => void;
-  /** Called with a v2-compatible document when the editor was initialized with v2 input. */
-  onV2DocumentChange?: (document: ElucimV2Document, details: ElucimV2EditorChangeDetails) => void;
-  /** Called when the v2 compatibility bridge has warnings host apps may want to display. */
-  onV2CompatibilityWarnings?: (warnings: string[]) => void;
+  /** Called whenever the document changes. Receives the updated normalized document. */
+  onDocumentChange?: (document: ElucimDocument, details: ElucimEditorChangeDetails) => void;
+  /** Called when normalized output has warnings host apps may want to display. */
+  onCompatibilityWarnings?: (warnings: string[]) => void;
   /**
    * Image picker callback.  When provided, the Inspector shows a "…" browse
    * button next to image `src` fields.  Return `null` if the user cancels.
@@ -58,7 +56,7 @@ export interface ElucimEditorProps {
   style?: React.CSSProperties;
 }
 
-export interface ElucimV2EditorChangeDetails {
+export interface ElucimEditorChangeDetails {
   changedFormat: boolean;
   warnings: string[];
 }
@@ -66,47 +64,48 @@ export interface ElucimV2EditorChangeDetails {
 /** Bridges internal editor state to external document change callbacks. */
 function DocumentBridge({
   onChange,
-  onV2Change,
-  onV2Warnings,
+  onWarnings,
   v2Document,
 }: {
-  onChange?: (doc: ElucimDocument) => void;
-  onV2Change?: (doc: ElucimV2Document, details: ElucimV2EditorChangeDetails) => void;
-  onV2Warnings?: (warnings: string[]) => void;
-  v2Document?: ElucimV2Document;
+  onChange?: (doc: ElucimDocument, details: ElucimEditorChangeDetails) => void;
+  onWarnings?: (warnings: string[]) => void;
+  v2Document?: ElucimDocument;
 }) {
   const doc = useEditorDocument();
   const cbRef = useRef(onChange);
-  const v2CbRef = useRef(onV2Change);
   const previousDocRef = useRef(doc);
+  const previousV2DocumentRef = useRef(v2Document);
   const previousWarningsRef = useRef('');
   cbRef.current = onChange;
-  v2CbRef.current = onV2Change;
   const isFirst = useRef(true);
 
   useEffect(() => {
     if (isFirst.current) { isFirst.current = false; return; }
     const docChanged = previousDocRef.current !== doc;
+    const v2Changed = previousV2DocumentRef.current !== v2Document;
     previousDocRef.current = doc;
-    if (docChanged) cbRef.current?.(doc);
-    if (v2Document) {
-      const result = restoreV2FromEditorDoc(doc, v2Document);
-      v2CbRef.current?.(result.document, {
-        changedFormat: docChanged,
-        warnings: result.warnings,
-      });
-      const warningKey = result.warnings.join('\n');
-      if (warningKey !== previousWarningsRef.current) {
-        previousWarningsRef.current = warningKey;
-        onV2Warnings?.(result.warnings);
-      }
+    previousV2DocumentRef.current = v2Document;
+    const result = v2Document
+      ? restoreV2FromEditorDoc(doc, v2Document)
+      : { document: migrateV1ToV2(doc), warnings: [] };
+    const details: ElucimEditorChangeDetails = {
+      changedFormat: docChanged,
+      warnings: result.warnings,
+    };
+    if (docChanged || v2Changed) {
+      cbRef.current?.(result.document, details);
     }
-  }, [doc, onV2Warnings, v2Document]);
+    const warningKey = result.warnings.join('\n');
+    if (warningKey !== previousWarningsRef.current) {
+      previousWarningsRef.current = warningKey;
+      onWarnings?.(result.warnings);
+    }
+  }, [doc, onWarnings, v2Document]);
 
   return null;
 }
 
-function normalizeInitialDocument(document: ElucimDocument | ElucimV2Document | undefined): ElucimDocument | undefined {
+function normalizeInitialDocument(document: RenderableDocument | ElucimDocument | undefined): RenderableDocument | undefined {
   if (!document || document.version === '1.0') return document;
   const result = validate(document);
   if (!result.valid) {
@@ -119,18 +118,21 @@ function normalizeInitialDocument(document: ElucimDocument | ElucimV2Document | 
  * A visual editor for creating and editing Elucim animated scenes.
  * Persistent shell with hierarchy, stage, inspector, and timeline.
  */
-export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange, onV2DocumentChange, onV2CompatibilityWarnings, onBrowseImage, imageResolver }: ElucimEditorProps) {
+export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange, onCompatibilityWarnings, onBrowseImage, imageResolver }: ElucimEditorProps) {
   const normalizedInitialDocument = useMemo(() => normalizeInitialDocument(initialDocument), [initialDocument]);
   const initialV2Document = initialDocument?.version === '2.0' ? initialDocument : undefined;
-  const [v2Document, setV2Document] = useState<ElucimV2Document | undefined>(initialV2Document);
-  const lastEmittedV2Document = useRef<ElucimV2Document | undefined>(undefined);
+  const [v2Document, setV2Document] = useState<ElucimDocument | undefined>(initialV2Document);
+  const lastEmittedV2Document = useRef<ElucimDocument | undefined>(undefined);
   useEffect(() => {
     if (initialV2Document && initialV2Document === lastEmittedV2Document.current) return;
     setV2Document(initialV2Document);
   }, [initialV2Document]);
-  const handleV2DocumentChange = (document: ElucimV2Document, details: ElucimV2EditorChangeDetails) => {
+  const handleDocumentChange = (document: ElucimDocument, details: ElucimEditorChangeDetails) => {
     lastEmittedV2Document.current = document;
-    onV2DocumentChange?.(document, details);
+    onDocumentChange?.(document, details);
+  };
+  const handleCompatibilityWarnings = (warnings: string[]) => {
+    onCompatibilityWarnings?.(warnings);
   };
   // Resolve 'last' to the actual final frame number
   const resolvedFrame = initialFrame === 'last'
@@ -140,8 +142,8 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
   let inner = (
     <EditorErrorBoundary>
       <EditorProvider initialDocument={normalizedInitialDocument} initialFrame={resolvedFrame}>
-        <DocumentBridge onChange={onDocumentChange} onV2Change={handleV2DocumentChange} onV2Warnings={onV2CompatibilityWarnings} v2Document={v2Document} />
-        <ElucimEditorLayout theme={theme} editorTheme={editorTheme} className={className} style={style} v2Document={v2Document} onV2DocumentChange={setV2Document} />
+        <DocumentBridge onChange={handleDocumentChange} onWarnings={handleCompatibilityWarnings} v2Document={v2Document} />
+        <ElucimEditorLayout theme={theme} editorTheme={editorTheme} className={className} style={style} v2Document={v2Document} onDocumentChange={setV2Document} />
       </EditorProvider>
     </EditorErrorBoundary>
   );
@@ -156,7 +158,7 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
   return inner;
 }
 
-function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document): { document: ElucimV2Document; warnings: string[] } {
+function restoreV2FromEditorDoc(doc: RenderableDocument, sourceV2: ElucimDocument): { document: ElucimDocument; warnings: string[] } {
   const migrated = migrateV1ToV2(doc);
   const idMap = mapSourceIdsToMigratedIds(sourceV2, migrated);
   const reverseIdMap = new Map([...idMap.entries()].map(([sourceId, migratedId]) => [migratedId, sourceId]));
@@ -224,7 +226,7 @@ function restoreV2FromEditorDoc(doc: ElucimDocument, sourceV2: ElucimV2Document)
   return { document, warnings };
 }
 
-function mapSourceIdsToMigratedIds(sourceV2: ElucimV2Document, migrated: ElucimV2Document): Map<string, string> {
+function mapSourceIdsToMigratedIds(sourceV2: ElucimDocument, migrated: ElucimDocument): Map<string, string> {
   const idMap = new Map<string, string>();
   const visit = (sourceIds: string[], migratedIds: string[]) => {
     const count = Math.min(sourceIds.length, migratedIds.length);
@@ -253,8 +255,8 @@ export interface ElucimEditorLayoutProps {
   editorTheme?: Record<string, string>;
   className?: string;
   style?: React.CSSProperties;
-  v2Document?: ElucimV2Document;
-  onV2DocumentChange?: (document: ElucimV2Document) => void;
+  v2Document?: ElucimDocument;
+  onDocumentChange?: (document: ElucimDocument) => void;
 }
 
 type EditorWorkspace = 'design' | 'animate' | 'states' | 'polish';
@@ -277,7 +279,7 @@ function clampPanelSize(value: number, min: number, max: number): number {
  * custom composition (e.g. adding panels inside the editor context) while
  * keeping the standard editor shell, scrollbar styles, and theme injection.
  */
-export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Document, onV2DocumentChange }: ElucimEditorLayoutProps) {
+export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Document, onDocumentChange }: ElucimEditorLayoutProps) {
   const { state, dispatch } = useEditorState();
   const [workspace, setWorkspace] = useState<EditorWorkspace>(() => v2Document ? 'animate' : 'design');
   const [previewTimelineFrames, setPreviewTimelineFrames] = useState<ElucimV2TimelineFrameSelection[] | undefined>(undefined);
@@ -463,7 +465,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
             position: 'relative',
           }}
         >
-          {leftVisible && <LeftDock v2Document={v2Document} onV2DocumentChange={onV2DocumentChange} preferredTab={preferredLeftTab} />}
+          {leftVisible && <LeftDock v2Document={v2Document} onDocumentChange={onDocumentChange} preferredTab={preferredLeftTab} />}
           {leftVisible && <PanelResizeHandle side="right" label="Resize left panel" onPointerDown={startSideResize('left')} />}
         </aside>
 
@@ -529,10 +531,10 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
             style={{ height: '100%', borderTop: 'none' }}
             v2Document={liveV2Document}
             v2Timelines={liveV2Document?.timelines}
-            onV2TimelinesChange={liveV2Document && onV2DocumentChange ? timelines => onV2DocumentChange({ ...liveV2Document, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
+            onV2TimelinesChange={liveV2Document && onDocumentChange ? timelines => onDocumentChange({ ...liveV2Document, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
             v2StateMachines={liveV2Document?.stateMachines}
-            onV2StateMachinesChange={liveV2Document && onV2DocumentChange ? stateMachines => onV2DocumentChange({ ...liveV2Document, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) }) : undefined}
-            onV2MotionChange={liveV2Document && onV2DocumentChange ? (timelines, stateMachines) => onV2DocumentChange({
+            onV2StateMachinesChange={liveV2Document && onDocumentChange ? stateMachines => onDocumentChange({ ...liveV2Document, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) }) : undefined}
+            onV2MotionChange={liveV2Document && onDocumentChange ? (timelines, stateMachines) => onDocumentChange({
               ...liveV2Document,
               ...(timelines ? { timelines } : { timelines: undefined }),
               ...(stateMachines ? { stateMachines } : { stateMachines: undefined }),
@@ -671,7 +673,7 @@ function RailButton({ label, onClick }: { label: string; onClick: () => void }) 
   );
 }
 
-function LeftDock({ v2Document, onV2DocumentChange, preferredTab }: { v2Document?: ElucimV2Document; onV2DocumentChange?: (document: ElucimV2Document) => void; preferredTab?: 'objects' | 'create' | 'details' }) {
+function LeftDock({ v2Document, onDocumentChange, preferredTab }: { v2Document?: ElucimDocument; onDocumentChange?: (document: ElucimDocument) => void; preferredTab?: 'objects' | 'create' | 'details' }) {
   const [tab, setTab] = useState<'objects' | 'create'>('objects');
   useEffect(() => {
     if (preferredTab === 'objects' || preferredTab === 'create') setTab(preferredTab);
@@ -683,7 +685,7 @@ function LeftDock({ v2Document, onV2DocumentChange, preferredTab }: { v2Document
           Polish
         </div>
         <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-          <StateMachinePanel v2Document={v2Document} onV2DocumentChange={onV2DocumentChange} />
+          <StateMachinePanel v2Document={v2Document} onDocumentChange={onDocumentChange} />
         </div>
       </section>
     );
@@ -748,8 +750,8 @@ function DockTab({
   );
 }
 
-function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: ElucimV2Document; onV2DocumentChange?: (document: ElucimV2Document) => void }) {
-  const { state, dispatch } = useEditorState();
+function StateMachinePanel({ v2Document, onDocumentChange }: { v2Document?: ElucimDocument; onDocumentChange?: (document: ElucimDocument) => void }) {
+  const { state } = useEditorState();
   const selectedId = state.selectedIds.length === 1 && state.selectedIds[0] !== CANVAS_ID ? state.selectedIds[0] : null;
   const selected = selectedId ? findElementById(state.document.root, selectedId)?.element : null;
   const selectedLabel = selectedId && selected ? (('id' in selected && selected.id) ? selected.id : selectedId) : null;
@@ -772,25 +774,20 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
     });
     return new Map(entries);
   }, [currentV2Document, nudgeCandidates]);
-  const applyState = (changes: Record<string, unknown>) => {
-    if (!selectedId) return;
-    dispatch({ type: 'UPDATE_ELEMENT', id: selectedId, changes: changes as any });
-  };
-
-  const updateV2Document = (updater: (document: ElucimV2Document) => ElucimV2Document) => {
+  const updateV2Document = (updater: (document: ElucimDocument) => ElucimDocument) => {
     const baseDocument = v2Compatibility?.document ?? v2Document;
     if (!baseDocument) return;
-    onV2DocumentChange?.(updater(baseDocument));
+    onDocumentChange?.(updater(baseDocument));
   };
 
-  const updateMetadata = (changes: NonNullable<ElucimV2Document['metadata']>) => {
+  const updateMetadata = (changes: NonNullable<ElucimDocument['metadata']>) => {
     updateV2Document(document => ({
       ...document,
       metadata: { ...document.metadata, ...changes },
     }));
   };
 
-  const updateSelectedIntent = (changes: NonNullable<NonNullable<ElucimV2Document['elements'][string]>['intent']>) => {
+  const updateSelectedIntent = (changes: NonNullable<NonNullable<ElucimDocument['elements'][string]>['intent']>) => {
     if (!selectedId) return;
     updateV2Document(document => ({
       ...document,
@@ -808,7 +805,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
     const baseDocument = v2Compatibility?.document ?? v2Document;
     const nudge = nudgeCandidates.find(candidate => candidate.id === nudgeId);
     if (!baseDocument || !nudge) return;
-    onV2DocumentChange?.(applyNudge(baseDocument, nudge).document);
+    onDocumentChange?.(applyNudge(baseDocument, nudge).document);
     setDismissedNudgeIds(previous => new Set(previous).add(nudge.id));
   };
 
@@ -845,7 +842,7 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
             <select
               aria-label="Polish level"
               value={v2Document.metadata?.polishLevel ?? 'draft'}
-              onChange={event => updateMetadata({ polishLevel: event.target.value as NonNullable<ElucimV2Document['metadata']>['polishLevel'] })}
+              onChange={event => updateMetadata({ polishLevel: event.target.value as NonNullable<ElucimDocument['metadata']>['polishLevel'] })}
               style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
             >
               <option value="draft">draft</option>
@@ -1005,43 +1002,8 @@ function StateMachinePanel({ v2Document, onV2DocumentChange }: { v2Document?: El
         </div>
       )}
 
-      <div
-        style={{
-          padding: 8,
-          border: `1px solid ${v('--elucim-editor-border-subtle')}`,
-          borderRadius: 6,
-          background: v('--elucim-editor-input-bg'),
-        }}
-      >
-        <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 }}>
-          Target
-        </div>
-        <div style={{ color: selectedLabel ? v('--elucim-editor-fg') : v('--elucim-editor-text-muted') }}>
-          {selectedLabel ?? 'Select one element'}
-        </div>
-      </div>
-
-      <StatePresetButton
-        title="Intro"
-        description="Fade this element in over the first 20 frames."
-        disabled={!selectedId}
-        onClick={() => applyState({ fadeIn: 20 })}
-      />
-      <StatePresetButton
-        title="Reveal"
-        description="Draw/reveal this element over 45 frames."
-        disabled={!selectedId}
-        onClick={() => applyState({ draw: 45 })}
-      />
-      <StatePresetButton
-        title="Outro"
-        description="Fade this element out over the final 20 frames."
-        disabled={!selectedId}
-        onClick={() => applyState({ fadeOut: 20 })}
-      />
-
       <div style={{ color: v('--elucim-editor-text-muted'), lineHeight: 1.45 }}>
-        Next, this can become a real state graph: states like Intro, Focus, and Outro connected by click, time, or data triggers.
+        Selected element: {selectedLabel ?? 'none'}. Use timeline-backed nudges or the State Machine workspace for motion.
       </div>
     </div>
   );
@@ -1063,49 +1025,13 @@ function summarizeNudgeCommand(command: ReturnType<typeof suggestDocumentNudges>
       return `Delete element "${command.id}"`;
     case 'moveElement':
       return `Move element "${command.id}"`;
+    case 'reorderElement':
+      return `Reorder element "${command.id}" to sibling index ${command.index}`;
     case 'reparentElement':
       return `Reparent element "${command.id}"`;
-    case 'applyAnimationPreset':
-      return `Apply ${command.preset} preset to ${command.ids.length} element${command.ids.length === 1 ? '' : 's'}`;
     case 'applyTimelineFrame':
       return `Preview timeline "${command.timelineId}" at frame ${command.frame}`;
   }
-}
-
-function StatePresetButton({
-  title,
-  description,
-  disabled,
-  onClick,
-}: {
-  title: string;
-  description: string;
-  disabled?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      style={{
-        display: 'block',
-        width: '100%',
-        padding: '8px 9px',
-        border: `1px solid ${v('--elucim-editor-border-subtle')}`,
-        borderRadius: 6,
-        background: disabled ? 'transparent' : `color-mix(in srgb, ${v('--elucim-editor-accent')} 8%, transparent)`,
-        color: disabled ? v('--elucim-editor-text-disabled') : v('--elucim-editor-fg'),
-        cursor: disabled ? 'default' : 'pointer',
-        textAlign: 'left',
-      }}
-    >
-      <div style={{ fontWeight: 700, marginBottom: 2 }}>{title}</div>
-      <div style={{ color: disabled ? v('--elucim-editor-text-disabled') : v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
-        {description}
-      </div>
-    </button>
-  );
 }
 
 function PanelShell({

@@ -4,10 +4,10 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ElucimV2Document } from '@elucim/dsl';
+import type { ElucimDocument } from '@elucim/dsl';
 import { ElucimEditor } from '../ElucimEditor';
 
-const v2Document: ElucimV2Document = {
+const v2Document: ElucimDocument = {
   version: '2.0',
   scene: { type: 'player', width: 800, height: 600, children: ['title'] },
   elements: {
@@ -115,7 +115,7 @@ describe('StateMachinePanel', () => {
   });
 
   it('renders state machine graph nodes with persisted layout metadata', () => {
-    const onV2DocumentChange = vi.fn();
+    const onDocumentChange = vi.fn();
     const { container } = render(React.createElement(ElucimEditor, {
       initialDocument: {
         ...v2Document,
@@ -126,7 +126,7 @@ describe('StateMachinePanel', () => {
           },
         },
       },
-      onV2DocumentChange,
+      onDocumentChange,
     }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
@@ -134,20 +134,20 @@ describe('StateMachinePanel', () => {
     const node = container.querySelector('.react-flow__node[data-id="idle"]');
     expect(entryNode).toBeTruthy();
     expect(node).toBeTruthy();
-    expect(onV2DocumentChange).not.toHaveBeenCalled();
+    expect(onDocumentChange).not.toHaveBeenCalled();
   });
 
   it('edits v2 metadata and selected element intent without losing v2 extras', async () => {
-    const onV2DocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onV2DocumentChange }));
+    const onDocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
     fireEvent.change(screen.getByLabelText('Polish level'), { target: { value: 'refined' } });
 
-    await waitFor(() => expect(onV2DocumentChange).toHaveBeenCalled());
-    expect(onV2DocumentChange.mock.calls.at(-1)?.[0].metadata.polishLevel).toBe('refined');
-    expect(onV2DocumentChange.mock.calls.at(-1)?.[0].timelines?.intro).toBeTruthy();
-    expect(onV2DocumentChange.mock.calls.at(-1)?.[0].stateMachines?.deck).toBeTruthy();
+    await waitFor(() => expect(onDocumentChange).toHaveBeenCalled());
+    expect(onDocumentChange.mock.calls.at(-1)?.[0].metadata.polishLevel).toBe('refined');
+    expect(onDocumentChange.mock.calls.at(-1)?.[0].timelines?.intro).toBeTruthy();
+    expect(onDocumentChange.mock.calls.at(-1)?.[0].stateMachines?.deck).toBeTruthy();
 
     fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
@@ -155,7 +155,7 @@ describe('StateMachinePanel', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
     fireEvent.change(screen.getByLabelText('Selected role'), { target: { value: 'hero' } });
 
-    await waitFor(() => expect(onV2DocumentChange.mock.calls.at(-1)?.[0].elements.title.intent.role).toBe('hero'));
+    await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].elements.title.intent.role).toBe('hero'));
   });
 
   it('surfaces warnings for lossy v2 compatibility output', () => {
@@ -184,40 +184,40 @@ describe('StateMachinePanel', () => {
   });
 
   it('creates state machines and authors states/transitions from the motion graph', async () => {
-    const onV2DocumentChange = vi.fn();
+    const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, {
       initialDocument: { ...v2Document, stateMachines: undefined },
-      onV2DocumentChange,
+      onDocumentChange,
     }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add state machine' }));
 
-    await waitFor(() => expect(onV2DocumentChange.mock.calls.at(-1)?.[0].stateMachines?.['state-machine']).toBeTruthy());
+    await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].stateMachines?.['state-machine']).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Add state to state-machine' }));
 
-    await waitFor(() => expect(onV2DocumentChange.mock.calls.at(-1)?.[0].stateMachines['state-machine'].states.state).toBeTruthy());
+    await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].stateMachines['state-machine'].states.state).toBeTruthy());
     expect(screen.queryByRole('button', { name: 'Add transition from state' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove state state' }));
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
       expect(latest.stateMachines?.['state-machine'].states.state).toBeUndefined();
       expect(latest.stateMachines?.['state-machine'].entry).toBe('idle');
     });
   });
 
   it('renames state machines and states while preserving references', async () => {
-    const onV2DocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onV2DocumentChange }));
+    const onDocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
     fireEvent.change(screen.getByLabelText('Rename state machine deck'), { target: { value: 'Deck Flow' } });
     fireEvent.blur(screen.getByLabelText('Rename state machine deck'));
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
       expect(latest.stateMachines?.['deck-flow']?.id).toBe('deck-flow');
       expect(latest.stateMachines?.deck).toBeUndefined();
     });
@@ -227,7 +227,7 @@ describe('StateMachinePanel', () => {
     fireEvent.blur(screen.getByLabelText('Rename state idle'));
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
       const machine = latest.stateMachines?.['deck-flow'];
       expect(machine?.states.ready).toBeTruthy();
       expect(machine?.states.idle).toBeUndefined();
@@ -237,8 +237,8 @@ describe('StateMachinePanel', () => {
   });
 
   it('renames state machines from the motion list on double click', async () => {
-    const onV2DocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onV2DocumentChange }));
+    const onDocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
     fireEvent.doubleClick(screen.getByRole('button', { name: 'Select state machine deck' }));
@@ -247,15 +247,15 @@ describe('StateMachinePanel', () => {
     fireEvent.blur(renameInput);
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
       expect(latest.stateMachines?.['deck-flow']?.id).toBe('deck-flow');
       expect(latest.stateMachines?.deck).toBeUndefined();
     });
   });
 
   it('keeps event inputs aligned with renamed and deleted transitions', async () => {
-    const onV2DocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onV2DocumentChange }));
+    const onDocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
     fireEvent.click(screen.getByLabelText('Select graph state idle'));
@@ -264,7 +264,7 @@ describe('StateMachinePanel', () => {
     fireEvent.blur(screen.getByLabelText('Rename transition trigger start'));
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
       expect(latest.stateMachines?.deck.transitions?.[0].trigger).toBe('begin');
       expect(latest.stateMachines?.deck.inputs?.begin).toEqual({ type: 'trigger' });
       expect(latest.stateMachines?.deck.inputs?.start).toBeUndefined();
@@ -273,15 +273,15 @@ describe('StateMachinePanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove transition Event: begin' }));
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
       expect(latest.stateMachines?.deck.transitions).toEqual([{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }]);
       expect(latest.stateMachines?.deck.inputs).toBeUndefined();
     });
   });
 
   it('shows source target type and event-specific metadata for selected transitions', async () => {
-    const onV2DocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onV2DocumentChange }));
+    const onDocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit Event: start transition from idle' }));
@@ -297,14 +297,14 @@ describe('StateMachinePanel', () => {
     fireEvent.change(screen.getByLabelText('Transition idle-start target state'), { target: { value: 'entry' } });
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
       expect(latest.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'entry', trigger: 'onKey', key: 'A' });
     });
 
     fireEvent.change(screen.getByLabelText('Transition idle-start type'), { target: { value: 'next' } });
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
       expect(latest.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'entry', exitTime: 1 });
       expect(latest.stateMachines?.deck.transitions?.[0].trigger).toBeUndefined();
       expect(latest.stateMachines?.deck.transitions?.[0].key).toBeUndefined();
@@ -312,7 +312,7 @@ describe('StateMachinePanel', () => {
   });
 
   it('clears transitions and onComplete references when deleting a state', async () => {
-    const onV2DocumentChange = vi.fn();
+    const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, {
       initialDocument: {
         ...v2Document,
@@ -331,7 +331,7 @@ describe('StateMachinePanel', () => {
           },
         },
       },
-      onV2DocumentChange,
+      onDocumentChange,
     }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
@@ -339,7 +339,7 @@ describe('StateMachinePanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove state intro' }));
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
       expect(latest.stateMachines?.deck.states.intro).toBeUndefined();
       expect(latest.stateMachines?.deck.transitions).toEqual([{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }]);
     });

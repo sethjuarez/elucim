@@ -8,31 +8,85 @@ import { QuickStartDemo } from '@components/Demos.tsx';
 
 ## Your First Scene
 
-Every Elucim scene starts with a `<Player>` — it manages the animation timeline, playback controls, and rendering surface.
+The recommended authoring path is a normalized `ElucimDocument` rendered with `<DslRenderer>`. You can write the same DSL as JSON or YAML; both parse to the same document shape with one scene, stable element IDs, explicit timelines, and a state machine that controls playback.
 
 ```tsx
-import { Player, Sequence, FadeIn, Circle, Text } from '@elucim/core';
+import { DslRenderer, type ElucimDocument } from '@elucim/dsl';
 
-function MyFirstScene() {
-  return (
-    <Player width={500} height={350} fps={30} durationInFrames={120}>
-      <Sequence from={0} durationInFrames={60}>
-        <FadeIn duration={20}>
-          <Circle cx={250} cy={175} r={80}
-                  stroke="#6c5ce7" strokeWidth={3} fill="none" />
-        </FadeIn>
-      </Sequence>
-      <Sequence from={30} durationInFrames={90}>
-        <FadeIn duration={20}>
-          <Text x={250} y={180} fill="#fff"
-                fontSize={24} textAnchor="middle">
-            Hello World
-          </Text>
-        </FadeIn>
-      </Sequence>
-    </Player>
-  );
+const scene: ElucimDocument = {
+  version: '2.0',
+  scene: {
+    type: 'player',
+    width: 500,
+    height: 350,
+    fps: 30,
+    background: '$background',
+    children: ['ring', 'title'],
+  },
+  elements: {
+    ring: {
+      id: 'ring',
+      type: 'circle',
+      role: 'hero-shape',
+      props: {
+        type: 'circle',
+        cx: 250,
+        cy: 175,
+        r: 80,
+        stroke: '$accent',
+        strokeWidth: 3,
+        fill: 'none',
+        opacity: 0,
+      },
+    },
+    title: {
+      id: 'title',
+      type: 'text',
+      role: 'title',
+      props: {
+        type: 'text',
+        x: 250,
+        y: 180,
+        fill: '$foreground',
+        fontSize: 24,
+        textAnchor: 'middle',
+        content: 'Hello World',
+        opacity: 0,
+      },
+    },
+  },
+  timelines: {
+    intro: {
+      id: 'intro',
+      duration: 50,
+      tracks: [
+        { target: 'ring', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 20, value: 1 }] },
+        { target: 'title', property: 'opacity', keyframes: [{ frame: 30, value: 0 }, { frame: 50, value: 1 }] },
+      ],
+    },
+  },
+  defaultStateMachine: 'main',
+  stateMachines: {
+    main: {
+      id: 'main',
+      entry: 'intro',
+      states: { intro: { timeline: 'intro' } },
+      transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+    },
+  },
+};
+
+export function MyFirstScene() {
+  return <DslRenderer dsl={scene} colorScheme="auto" />;
 }
+```
+
+If you prefer YAML authoring, load the same shape with `fromYaml()`:
+
+```ts
+import { fromYaml } from '@elucim/dsl';
+
+const scene = fromYaml(yamlString);
 ```
 
 <LiveDemo client:visible height="350px">
@@ -41,26 +95,26 @@ function MyFirstScene() {
 
 ## What's Happening
 
-1. **`<Player>`** creates a 500×350 SVG canvas running at 30fps for 4 seconds (120 frames)
-2. **`<Sequence from={0}>`** starts the circle at frame 0
-3. **`<FadeIn duration={20}>`** fades the circle in over 20 frames (~0.67s)
-4. **`<Sequence from={30}>`** starts the text at frame 30 (1 second in)
-5. The circle and text overlap — multiple `Sequence` blocks run concurrently
+1. **`scene`** defines the 500×350 render surface and top-level element order.
+2. **`elements`** stores each visual by stable ID so later edits can target `ring` or `title`.
+3. **`timelines.intro`** animates opacity with explicit keyframes instead of wrapper components.
+4. **`stateMachines.main`** starts the intro timeline automatically through the Entry transition.
+5. **`<DslRenderer>`** turns the normalized document into the interactive React/SVG scene.
 
-## Key Props
+## Key Fields
 
-| Prop | Description |
+| Field | Description |
 |------|-------------|
-| `width` / `height` | Canvas dimensions in pixels |
-| `fps` | Frames per second (30 or 60 recommended) |
-| `durationInFrames` | Total animation length |
-| `autoPlay` | Start playing immediately |
-| `loop` | Loop when finished |
-| `controls` | Show play/pause/scrub bar (default: `true`) |
+| `scene.width` / `scene.height` | Canvas dimensions in pixels |
+| `scene.fps` | Frames per second for timeline playback |
+| `scene.children` | Ordered top-level element IDs |
+| `elements` | ID-keyed visual primitives and metadata |
+| `timelines` | Keyframe tracks for motion |
+| `stateMachines` | Entry, click/key, reset, and auto-advance behavior |
 
 ## Next Steps
 
-- Learn about [Core Concepts](/getting-started/core-concepts/) — frames, sequences, and the coordinate system
+- Learn about [Core Concepts](/getting-started/core-concepts/) — frames, timelines, state machines, and the coordinate system
 - Explore all [Primitives](/primitives/circle/) — shapes, text, and math objects
-- Try [Animations](/animations/fade/) — FadeIn, Draw, Transform, Stagger, and more
+- Read [Agent Documents](/dsl/agent-documents/) and the [Agent API Reference](/dsl/agent-api/) — normalized documents, commands, and LLM-friendly helper workflows
 

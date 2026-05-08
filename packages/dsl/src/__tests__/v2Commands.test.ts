@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { applyCommand, validateV2 } from '../index';
-import type { ElucimV2Document } from '../index';
+import type { ElucimDocument } from '../index';
 
-function doc(): ElucimV2Document {
+function doc(): ElucimDocument {
   return {
     version: '2.0',
     scene: { type: 'player', width: 800, height: 600, children: ['group'] },
@@ -60,6 +60,20 @@ describe('v2 command API', () => {
     expect(validateV2(result.document).valid).toBe(true);
   });
 
+  it('reorders elements within their current sibling list', () => {
+    const withSubtitle = applyCommand(doc(), {
+      op: 'addElement',
+      parentId: 'group',
+      element: { id: 'subtitle', type: 'text', props: { type: 'text', content: 'World' }, layout: { x: 20, y: 70 } },
+    }).document;
+
+    const result = applyCommand(withSubtitle, { op: 'reorderElement', id: 'title', index: 1 });
+
+    expect(result.document.elements.group.children).toEqual(['subtitle', 'title']);
+    expect(result.document.elements.title.parentId).toBe('group');
+    expect(validateV2(result.document).valid).toBe(true);
+  });
+
   it('deletes descendants and cleans timeline tracks', () => {
     const result = applyCommand(doc(), { op: 'deleteElement', id: 'group' });
 
@@ -68,12 +82,6 @@ describe('v2 command API', () => {
     expect(result.document.elements.title).toBeUndefined();
     expect(result.document.timelines?.intro.tracks).toEqual([]);
     expect(validateV2(result.document).valid).toBe(true);
-  });
-
-  it('applies animation presets through existing prop semantics', () => {
-    const result = applyCommand(doc(), { op: 'applyAnimationPreset', ids: ['title'], preset: 'reveal' });
-
-    expect(result.document.elements.title.props.draw).toBe(45);
   });
 
   it('throws for unsafe reparent cycles', () => {

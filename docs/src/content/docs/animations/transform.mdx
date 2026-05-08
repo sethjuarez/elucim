@@ -1,119 +1,47 @@
 ---
-title: Transform & Morph
-description: Spatial motion and color/opacity transitions.
+title: Transform Timelines
+description: Animate translate, scale, rotate, color, and opacity with normalized tracks.
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { TransformDemo } from '@components/Demos.tsx';
-import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 <LiveDemo client:visible height="250px">
   <TransformDemo client:visible />
 </LiveDemo>
 
-## Transform
+Use `layout` for static placement and timelines for motion. Normalized documents animate `translate`, `scale`, and `rotate` through timeline tracks instead of `<Transform>` or `<Morph>` wrappers.
 
-Animates spatial properties — position, scale, rotation, and opacity — between two states. Use `Transform` for any motion that moves or resizes an element.
+## Move an element
 
-### Props
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `from` | `{ translateX?, translateY?, scale?, rotate?, opacity? }` | Starting state |
-| `to` | `{ translateX?, translateY?, scale?, rotate?, opacity? }` | Ending state |
-| `duration` | `number` | Length of the animation in frames |
-| `easing` | `EasingFunction` | Easing curve (default: `linear`) |
-
-### Example
-
-```tsx
-<Transform
-  from={{ translateX: -100, opacity: 0 }}
-  to={{ translateX: 0, opacity: 1 }}
-  duration={30}
-  easing={easeOutCubic}
->
-  <Circle cx={200} cy={150} r={40} fill="#4f9eff" />
-</Transform>
+```ts
+timelines: {
+  slideIn: {
+    id: 'slideIn',
+    duration: 45,
+    tracks: [
+      { target: 'dot', property: 'translate', keyframes: [{ frame: 0, value: [-120, 0] }, { frame: 45, value: [0, 0], easing: 'easeOutCubic' }] },
+      { target: 'dot', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 20, value: 1 }] },
+    ],
+  },
+}
 ```
 
-## Morph
+## Rotate and scale
 
-Transitions visual properties — fill color, scale, and opacity — between two states. Use `Morph` when the element stays in place but changes appearance.
-
-### Props
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `from` | `{ fill?, scale?, opacity? }` | Starting visual state |
-| `to` | `{ fill?, scale?, opacity? }` | Ending visual state |
-| `duration` | `number` | Length of the animation in frames |
-| `easing` | `EasingFunction` | Easing curve (default: `linear`) |
-
-### Example
-
-```tsx
-<Morph
-  from={{ fill: "#ff6b6b", opacity: 0.5 }}
-  to={{ fill: "#4f9eff", opacity: 1 }}
-  duration={45}
-  easing={easeInOutQuad}
->
-  <Rect x={150} y={100} width={100} height={100} />
-</Morph>
+```ts
+tracks: [
+  { target: 'orbit', property: 'rotate', keyframes: [{ frame: 0, value: 0 }, { frame: 60, value: 360 }] },
+  { target: 'orbit', property: 'scale', keyframes: [{ frame: 0, value: 0.8 }, { frame: 60, value: 1.2 }] },
+]
 ```
 
-## Code Example
+## Change appearance
 
-<Tabs>
-  <TabItem label="React">
-    ```jsx
-    import { Player, Transform, Morph, Circle, Rect } from '@elucim/core';
+`fill` and `stroke` tracks can interpolate hex colors. Use semantic tokens for static theme-aware colors and hex values when a color transition must interpolate.
 
-    <Player width={500} height={250} fps={30} durationInFrames={90}>
-      <Transform
-        from={{ scale: 0.5, opacity: 0.3 }}
-        to={{ scale: 1.2, rotate: 360, opacity: 1 }}
-        duration={60}
-      >
-        <Circle cx={150} cy={125} r={40} stroke="#6c5ce7" strokeWidth={3} fill="rgba(108,92,231,0.2)" />
-      </Transform>
-      <Morph
-        from={{ fill: '#ff6b6b', opacity: 0.3 }}
-        to={{ fill: '#4ecdc4', scale: 1.3, opacity: 1 }}
-        duration={50}
-      >
-        <Rect x={310} y={85} width={80} height={80} stroke="#ff6b6b" strokeWidth={2} rx={6} />
-      </Morph>
-    </Player>
-    ```
-  </TabItem>
-  <TabItem label="DSL JSON">
-    ```json
-    {
-      "width": 500, "height": 250, "fps": 30, "durationInFrames": 90,
-      "children": [
-        {
-          "type": "circle", "cx": 150, "cy": 125, "r": 40,
-          "stroke": "#6c5ce7", "strokeWidth": 3, "fill": "rgba(108,92,231,0.2)",
-          "transform": {
-            "fromScale": 0.5, "toScale": 1.2,
-            "fromOpacity": 0.3, "toOpacity": 1,
-            "rotate": 360
-          }
-        },
-        {
-          "type": "rect", "x": 310, "y": 85, "width": 80, "height": 80,
-          "stroke": "#ff6b6b", "strokeWidth": 2, "rx": 6,
-          "morph": {
-            "fromColor": "#ff6b6b", "toColor": "#4ecdc4",
-            "fromOpacity": 0.3, "toOpacity": 1,
-            "fromScale": 1, "toScale": 1.3
-          }
-        }
-      ]
-    }
-    ```
-  </TabItem>
-</Tabs>
-
+```ts
+tracks: [
+  { target: 'card', property: 'fill', keyframes: [{ frame: 0, value: '#6c5ce7' }, { frame: 45, value: '#4ecdc4' }] },
+]
+```

@@ -1,9 +1,13 @@
-import React, { forwardRef, useRef, useImperativeHandle, useSyncExternalStore } from 'react';
+import React, { forwardRef, useImperativeHandle, useMemo, useRef, useSyncExternalStore } from 'react';
 import { validate } from '../validator/validate';
-import type { ElucimDocument } from '../schema/types';
-import type { ElucimV2Document } from '../v2/types';
-import { toRenderableV1 } from '../v2/migrate';
+import type { ElucimDocument as RenderableDocument } from '../schema/types';
+import type { ElucimV2Document as ElucimDocument } from '../v2/types';
+import { migrateV2ToV1, toRenderableV1 } from '../v2/migrate';
+import { getDocumentLinearDuration } from '../v2/duration';
+import { applyTimelineFrames, type ElucimV2TimelineFrameSelection } from '../v2/timeline';
+import { getInitialStateSnapshot, getStateMachineVisualFrames } from '../v2/stateMachine';
 import { renderRoot } from './renderElements';
+import { useStateMachineRuntime } from './useStateMachineRuntime';
 import {
   type ElucimTheme,
   type ImageResolverFn,
@@ -33,9 +37,8 @@ export interface DslRendererRef {
   /** Whether currently playing */
   isPlaying(): boolean;
 }
-
 export interface DslRendererProps {
-  dsl: ElucimDocument | ElucimV2Document;
+  dsl: ElucimDocument | RenderableDocument;
   className?: string;
   style?: React.CSSProperties;
   /**
@@ -160,17 +163,36 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
 ) {
   const playerRef = useRef<import('@elucim/core').PlayerRef>(null);
   const prefersDark = usePrefersDark();
+  const result = useMemo(() => validate(dsl), [dsl]);
+  const stateMachineRuntime = useStateMachineRuntime({ dsl, valid: result.valid, poster, loop, onPlayStateChange });
 
   useImperativeHandle(ref, () => ({
     getSvgElement: () => playerRef.current?.getSvgElement() ?? null,
-    seekToFrame: (f: number) => playerRef.current?.seekToFrame(f),
-    getTotalFrames: () => playerRef.current?.getTotalFrames() ?? 0,
-    play: () => playerRef.current?.play(),
-    pause: () => playerRef.current?.pause(),
-    isPlaying: () => playerRef.current?.isPlaying() ?? false,
-  }));
+    seekToFrame: (f: number) => {
+      if (stateMachineRuntime.enabled) {
+        stateMachineRuntime.seekToFrame(f);
+        return;
+      }
+      playerRef.current?.seekToFrame(f);
+    },
+    getTotalFrames: () => stateMachineRuntime.enabled ? stateMachineRuntime.getTotalFrames() : playerRef.current?.getTotalFrames() ?? 0,
+    play: () => {
+      if (stateMachineRuntime.enabled) {
+        stateMachineRuntime.play();
+        return;
+      }
+      playerRef.current?.play();
+    },
+    pause: () => {
+      if (stateMachineRuntime.enabled) {
+        stateMachineRuntime.pause();
+        return;
+      }
+      playerRef.current?.pause();
+    },
+    isPlaying: () => stateMachineRuntime.enabled ? stateMachineRuntime.isPlaying() : playerRef.current?.isPlaying() ?? false,
+  }), [stateMachineRuntime]);
 
-  const result = validate(dsl);
   if (!result.valid) {
     const filteredErrors = result.errors
       .filter(e => e.severity === 'error')
@@ -231,11 +253,13 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
       : themeWithCompatibilityAliases(theme),
   ) as React.CSSProperties;
 
-  const renderableDsl = toRenderableV1(dsl);
-  const posterOverrides = poster !== undefined ? resolvePoster(poster, renderableDsl) : undefined;
+  const posterRenderableDsl = poster !== undefined ? resolvePosterRenderableDsl(poster, dsl) : undefined;
+  const renderableDsl = stateMachineRuntime.renderableDsl ?? posterRenderableDsl ?? toRenderableV1(dsl);
+  const posterOverrides = poster !== undefined && posterRenderableDsl === undefined ? resolvePoster(poster, renderableDsl) : undefined;
+  const rootOverrides = stateMachineRuntime.enabled ? { frame: stateMachineRuntime.frameOverride } : posterOverrides;
 
   const content = renderRoot(renderableDsl.root, {
-    frame: posterOverrides?.frame,
+    frame: rootOverrides?.frame,
     playerRef,
     colorScheme: resolvedColorScheme,
     controls,
@@ -246,7 +270,12 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
   });
 
   const inner = (
-    <div className={className} style={{ ...schemeVars, ...themeVarsCss, ...style }} data-testid="dsl-root">
+    <div
+      className={className}
+      style={{ width: '100%', maxWidth: '100%', ...schemeVars, ...themeVarsCss, ...style }}
+      data-testid="dsl-root"
+      {...stateMachineRuntime.rootProps}
+    >
       <DslErrorBoundary onRenderError={onRenderError} fallback={fallback}>
         {content}
       </DslErrorBoundary>
@@ -258,7 +287,7 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
     : inner;
 });
 
-function resolvePoster(poster: 'first' | 'last' | number, dsl: ElucimDocument): { frame: number } {
+function resolvePoster(poster: 'first' | 'last' | number, dsl: RenderableDocument): { frame: number } {
   if (poster === 'first') return { frame: 0 };
   if (poster === 'last') {
     const root = dsl.root as unknown as Record<string, unknown>;
@@ -266,4 +295,37 @@ function resolvePoster(poster: 'first' | 'last' | number, dsl: ElucimDocument): 
     return { frame: Math.max(0, dur - 1) };
   }
   return { frame: poster };
+}
+
+function resolvePosterRenderableDsl(poster: 'first' | 'last' | number, dsl: ElucimDocument | RenderableDocument): RenderableDocument | undefined {
+  if (dsl.version !== '2.0') return undefined;
+  const frame = resolveV2PosterFrame(poster, dsl);
+  const frames = getV2PosterTimelineFrames(dsl, frame);
+  const posterDoc = frames.length > 0 ? applyTimelineFrames(dsl, frames) : dsl;
+  return migrateV2ToV1(posterDoc);
+}
+
+function resolveV2PosterFrame(poster: 'first' | 'last' | number, dsl: ElucimDocument): number {
+  if (poster === 'first') return 0;
+  if (poster === 'last') return getDocumentLinearDuration(dsl);
+  return Math.max(0, poster);
+}
+
+function getV2PosterTimelineFrames(dsl: ElucimDocument, frame: number): ElucimV2TimelineFrameSelection[] {
+  const machineId = dsl.defaultStateMachine;
+  if (machineId && dsl.stateMachines?.[machineId]) {
+    const snapshot = getInitialStateSnapshot(dsl, machineId);
+    return getStateMachineVisualFrames(dsl, machineId, {
+      statePath: [snapshot.stateId],
+      currentStateId: snapshot.stateId,
+      currentFrame: frame,
+      missingState: 'skip',
+      missingTimeline: 'skip',
+    });
+  }
+
+  return Object.entries(dsl.timelines ?? {}).map(([timelineId, timeline]) => ({
+    timelineId,
+    frame: Math.min(frame, timeline.duration),
+  }));
 }

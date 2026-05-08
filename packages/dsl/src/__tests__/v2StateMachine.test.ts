@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { getInitialStateSnapshot, getStateMachineVisualFrames, transitionStateMachine, validateV2, type ElucimV2Document } from '../index';
+import {
+  advanceStateMachineRunFrame,
+  dispatchStateMachineRunEvent,
+  getInitialStateSnapshot,
+  getStateMachineRunVisualFrames,
+  getStateMachineVisualFrames,
+  startStateMachineRun,
+  transitionStateMachine,
+  validateV2,
+  type ElucimDocument,
+} from '../index';
 
-const doc: ElucimV2Document = {
+const doc: ElucimDocument = {
   version: '2.0',
   scene: { type: 'player', width: 800, height: 600, children: ['title'] },
   elements: {
@@ -73,7 +83,7 @@ describe('v2 state machines', () => {
   });
 
   it('resolves Next targets that point back through Entry in snapshots', () => {
-    const throughEntry: ElucimV2Document = {
+    const throughEntry: ElucimDocument = {
       ...doc,
       stateMachines: {
         presentation: {
@@ -101,7 +111,7 @@ describe('v2 state machines', () => {
   });
 
   it('uses next transitions for automatic progression and terminal exit', () => {
-    const withExit: ElucimV2Document = {
+    const withExit: ElucimDocument = {
       ...doc,
       stateMachines: {
         presentation: {
@@ -312,7 +322,7 @@ describe('v2 state machines', () => {
   });
 
   it('matches keyed events by metadata when several keys share onKey', () => {
-    const keyed: ElucimV2Document = {
+    const keyed: ElucimDocument = {
       ...doc,
       stateMachines: {
         presentation: {
@@ -336,5 +346,58 @@ describe('v2 state machines', () => {
       { event: 'onKey', key: 'B', transitionId: 'key-b' },
     ]));
     expect(transitionStateMachine(keyed, 'presentation', 'idle', { name: 'onKey', key: 'Z' }).changed).toBe(false);
+  });
+
+  it('runs state machines from gated Entry events through automatic Next completion', () => {
+    const gated: ElucimDocument = {
+      ...doc,
+      stateMachines: {
+        presentation: {
+          ...doc.stateMachines!.presentation,
+          transitions: [
+            { id: 'entry-click', from: 'entry', to: 'idle', trigger: 'onClick' },
+            { id: 'idle-next', from: 'idle', to: 'entering', exitTime: 1 },
+          ],
+        },
+      },
+    };
+
+    const waiting = startStateMachineRun(gated, 'presentation');
+    expect(waiting).toMatchObject({ stateId: 'entry', playing: false, statePath: [] });
+    expect(getStateMachineRunVisualFrames(gated, waiting)).toEqual([
+      { timelineId: 'idle', frame: 0 },
+      { timelineId: 'intro', frame: 0 },
+      { timelineId: 'outro', frame: 0 },
+    ]);
+
+    const idle = dispatchStateMachineRunEvent(gated, waiting, 'onClick');
+    expect(idle).toMatchObject({ stateId: 'idle', previousStateId: 'entry', playing: true, changed: true });
+
+    const entering = advanceStateMachineRunFrame(gated, idle, 2);
+    expect(entering).toMatchObject({ stateId: 'entering', previousStateId: 'idle', event: 'complete', playing: true });
+  });
+
+  it('settles timeline-less states with Next transitions during state-machine runs', () => {
+    const noTimelineNext: ElucimDocument = {
+      ...doc,
+      stateMachines: {
+        presentation: {
+          ...doc.stateMachines!.presentation,
+          entry: 'visible',
+          transitions: [
+            { id: 'entry-start', from: 'entry', to: 'visible', trigger: 'onStart' },
+            { id: 'visible-next-exit', from: 'visible', to: 'exit', exitTime: 1 },
+          ],
+        },
+      },
+    };
+
+    expect(startStateMachineRun(noTimelineNext, 'presentation')).toMatchObject({
+      stateId: 'visible',
+      previousStateId: 'visible',
+      event: 'complete',
+      exited: true,
+      playing: false,
+    });
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { applyNudge, suggestDocumentNudges, validateV2, type ElucimV2Document } from '../index';
+import { applyNudge, suggestDocumentNudges, validateV2, type ElucimDocument } from '../index';
 
-const doc: ElucimV2Document = {
+const doc: ElucimDocument = {
   version: '2.0',
   scene: { type: 'player', width: 800, height: 600, children: ['title', 'metric'] },
   elements: {
@@ -14,7 +14,7 @@ describe('v2 agentic nudges', () => {
   it('suggests deterministic command-backed nudges', () => {
     const nudges = suggestDocumentNudges(doc);
 
-    expect(nudges.map(nudge => nudge.id)).toEqual(['mark-refined', 'normalize-root-layer-order', 'add-staggered-intro']);
+    expect(nudges.map(nudge => nudge.id)).toEqual(['mark-refined', 'add-staggered-intro']);
     expect(nudges.every(nudge => nudge.commands.length > 0)).toBe(true);
   });
 
@@ -27,12 +27,11 @@ describe('v2 agentic nudges', () => {
     expect(doc.timelines).toBeUndefined();
   });
 
-  it('can normalize metadata and root layer order through commands', () => {
+  it('can normalize metadata through commands', () => {
     const nudges = suggestDocumentNudges(doc).filter(nudge => nudge.id !== 'add-staggered-intro');
     const next = nudges.reduce((current, nudge) => applyNudge(current, nudge).document, doc);
 
     expect(next.metadata?.polishLevel).toBe('refined');
-    expect(next.elements.title.layout?.zIndex).toBe(0);
-    expect(next.elements.metric.layout?.zIndex).toBe(1);
+    expect(next.scene.children).toEqual(['title', 'metric']);
   });
 });

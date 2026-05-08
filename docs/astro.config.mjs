@@ -4,6 +4,15 @@ import react from '@astrojs/react';
 
 export default defineConfig({
   site: 'https://elucim.com',
+  vite: {
+    optimizeDeps: {
+      esbuildOptions: {
+        define: {
+          'process.env.NODE_ENV': '"development"',
+        },
+      },
+    },
+  },
   integrations: [
     starlight({
       title: 'Elucim',
@@ -45,7 +54,14 @@ export default defineConfig({
           tag: 'link',
           attrs: {
             rel: 'stylesheet',
-            href: 'https://cdn.jsdelivr.net/npm/katex@0.16.33/dist/katex.min.css',
+            href: '/vendor/katex/katex.min.css',
+          },
+        },
+        {
+          tag: 'script',
+          attrs: {
+            src: '/scripts/image-lightbox.js',
+            defer: true,
           },
         },
       ],
@@ -96,14 +112,14 @@ export default defineConfig({
           ],
         },
         {
-          label: 'DSL (JSON, YAML & Builder)',
+          label: 'DSL (JSON & YAML)',
           items: [
             { slug: 'dsl/overview' },
             { slug: 'dsl/renderer' },
             { slug: 'dsl/validation' },
-            { slug: 'dsl/builder-api' },
             { slug: 'dsl/themes' },
-            { slug: 'dsl/v2-agents' },
+            { slug: 'dsl/agent-documents' },
+            { slug: 'dsl/agent-api' },
           ],
         },
         {

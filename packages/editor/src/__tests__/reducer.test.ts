@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { editorReducer, findElementById, collectAllIds } from '../state/reducer';
 import { CANVAS_ID, createInitialState, createDefaultDocument } from '../state/types';
 import type { EditorState } from '../state/types';
-import type { ElucimDocument, CircleNode, GraphNode, MatrixNode, RectNode, LineNode, TextNode } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument, CircleNode, GraphNode, MatrixNode, RectNode, LineNode, TextNode } from '@elucim/dsl';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -385,9 +385,9 @@ describe('DUPLICATE_ELEMENTS', () => {
   });
 });
 
-// ─── Z-order ────────────────────────────────────────────────────────────────
+// ─── Layer order ────────────────────────────────────────────────────────────
 
-describe('z-order actions', () => {
+describe('layer order actions', () => {
   it('BRING_FORWARD moves element one step forward', () => {
     let state = stateWithElements(circle1, rect1, line1);
     state = editorReducer(state, { type: 'BRING_FORWARD', ids: ['c1'] });
@@ -421,6 +421,28 @@ describe('z-order actions', () => {
     state = editorReducer(state, { type: 'BRING_FORWARD', ids: ['r1'] });
     const ids = (state.document.root as any).children.map((c: any) => c.id);
     expect(ids).toEqual(['c1', 'r1']);
+  });
+
+  it('REORDER_ELEMENT moves nested siblings inside a group', () => {
+    const group = { type: 'group', id: 'g1', children: [circle1, rect1, line1] };
+    let state = stateWithElements(group);
+
+    state = editorReducer(state, { type: 'REORDER_ELEMENT', id: 'c1', newIndex: 2 });
+
+    const ids = ((state.document.root as any).children[0].children as any[]).map(c => c.id);
+    expect(ids).toEqual(['r1', 'l1', 'c1']);
+  });
+
+  it('order shortcuts operate within each selected element parent', () => {
+    const group = { type: 'group', id: 'g1', children: [circle1, rect1, line1] };
+    let state = stateWithElements(group, { type: 'text', id: 't1', content: 'Top', x: 0, y: 0 });
+
+    state = editorReducer(state, { type: 'BRING_TO_FRONT', ids: ['c1', 'g1'] });
+
+    const rootIds = (state.document.root as any).children.map((c: any) => c.id);
+    const groupIds = ((state.document.root as any).children.find((c: any) => c.id === 'g1').children as any[]).map(c => c.id);
+    expect(rootIds).toEqual(['t1', 'g1']);
+    expect(groupIds).toEqual(['r1', 'l1', 'c1']);
   });
 });
 

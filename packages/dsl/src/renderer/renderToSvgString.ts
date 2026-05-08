@@ -2,7 +2,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 import { renderRoot } from './renderElements';
 import { validate } from '../validator/validate';
-import type { ElucimDocument } from '../schema/types';
+import { toRenderableV1 } from '../v2/migrate';
+import type { ElucimDocument as RenderableDocument } from '../schema/types';
+import type { ElucimV2Document as ElucimDocument } from '../v2/types';
 
 export interface RenderToSvgStringOptions {
   width?: number;
@@ -17,7 +19,7 @@ export interface RenderToSvgStringOptions {
  * For 'player' roots, it converts to a 'scene' internally (no controls needed for static output).
  */
 export function renderToSvgString(
-  dsl: ElucimDocument,
+  dsl: ElucimDocument | RenderableDocument,
   frame: number,
   options?: RenderToSvgStringOptions,
 ): string {
@@ -29,8 +31,10 @@ export function renderToSvgString(
     );
   }
 
+  const renderable = toRenderableV1(dsl);
+
   // Clone the root and apply size overrides
-  const root = { ...dsl.root };
+  const root = { ...renderable.root };
   if (options?.width) root.width = options.width;
   if (options?.height) root.height = options.height;
 

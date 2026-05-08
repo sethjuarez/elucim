@@ -3,7 +3,6 @@ title: Axes & Function Plots
 description: Draw 2D coordinate systems and plot mathematical functions.
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
 import LiveDemo from '@components/LiveDemo.tsx';
 import { AxesDemo } from '@components/Demos.tsx';
 
@@ -41,44 +40,20 @@ import { AxesDemo } from '@components/Demos.tsx';
 
 ## Code Example
 
-<Tabs>
-  <TabItem label="React">
-    ```jsx
-    import { Player, Draw, Axes, FunctionPlot } from '@elucim/core';
-
-    <Player width={500} height={350} fps={30} durationInFrames={90}>
-      <Axes origin={[250, 200]} xRange={[-4, 4]} yRange={[-2, 3]} scale={50}
-            color="currentColor" labelColor="currentColor" showGrid />
-      <Draw duration={40}>
-        <FunctionPlot fn={(x) => Math.sin(x)} domain={[-4, 4]}
-                      origin={[250, 200]} scale={50} color="#6c5ce7" strokeWidth={2.5} />
-      </Draw>
-    </Player>
-    ```
-  </TabItem>
-  <TabItem label="DSL (JSON)">
-    ```json
-    {
-      "width": 500, "height": 350, "fps": 30, "durationInFrames": 90,
-      "children": [
-        {
-          "type": "axes",
-          "origin": [250, 200], "domain": [-4, 4], "range": [-2, 3], "scale": 50,
-          "showGrid": true
-        },
-        {
-          "type": "functionPlot",
-          "fn": "sin(x)", "domain": [-4, 4],
-          "origin": [250, 200], "scale": 50,
-          "color": "#6c5ce7", "strokeWidth": 2.5,
-          "draw": { "duration": 40 }
-        }
-      ]
-    }
-    ```
-  </TabItem>
-</Tabs>
-
+```ts
+elements: {
+  axes: {
+    id: 'axes',
+    type: 'axes',
+    props: { type: 'axes', origin: [250, 200], xRange: [-4, 4], yRange: [-2, 3], scale: 50, color: '$foreground', labelColor: '$foreground', showGrid: true },
+  },
+  sine: {
+    id: 'sine',
+    type: 'functionPlot',
+    props: { type: 'functionPlot', expression: 'sin(x)', domain: [-4, 4], origin: [250, 200], scale: 50, color: '$accent', strokeWidth: 2.5, opacity: 0 },
+  },
+}
+```
 :::tip
 Keep `origin` and `scale` identical on both `<Axes>` and `<FunctionPlot>` so the curve aligns with the grid.
 :::

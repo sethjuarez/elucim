@@ -164,7 +164,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         >
           {node.children.map((child, i) => renderElement(child, i))}
         </Group>
@@ -187,7 +186,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'circle':
@@ -201,7 +199,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'line':
@@ -216,7 +213,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'arrow':
@@ -231,7 +227,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'rect':
@@ -247,7 +242,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'polygon':
@@ -262,7 +256,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'text':
@@ -278,7 +271,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         >
           {node.content}
         </Text>
@@ -299,7 +291,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
 
@@ -318,7 +309,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'functionPlot': {
@@ -343,7 +333,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           opacity={node.opacity}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     }
@@ -360,7 +349,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'vectorField': {
@@ -385,7 +373,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     }
@@ -402,7 +389,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'graph':
@@ -417,7 +403,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'latex':
@@ -431,7 +416,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
     case 'barChart':
@@ -448,7 +432,6 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
-          zIndex={node.zIndex}
         />
       );
 

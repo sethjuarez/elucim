@@ -1,131 +1,95 @@
 ---
 title: Inspector & Properties
-description: Edit element and canvas properties with the contextual inspector panel.
+description: Edit canvas, element, hierarchy, motion, and polish properties in the current editor UI.
 ---
 
-The inspector is a contextual property panel that appears when you select an element on the canvas. It lets you edit any property — position, size, colors, text content, math expressions, and more.
+The inspector is the contextual property panel on the right side of the editor. It edits the selected canvas or element immediately, while timelines and state machines own animated changes over time.
 
-<img class="theme-img-dark" src="/images/editor/editor-element-selected.png" alt="Inspector showing Position, Style, Animation, and Transform sections for a selected rectangle" />
-<img class="theme-img-light" src="/images/editor/editor-element-selected-light.png" alt="Inspector showing Position, Style, Animation, and Transform sections for a selected rectangle (light mode)" />
+<img class="theme-img-dark" src="/images/editor/editor-element-selected.png" alt="Inspector showing selected element properties in dark mode" />
+<img class="theme-img-light" src="/images/editor/editor-element-selected-light.png" alt="Inspector showing selected element properties in light mode" />
 
-## How It Works
+## Selection behavior
 
-1. **Click an element** on the canvas — the inspector appears next to it
-2. **Edit any property** — changes apply immediately
-3. **Click away** or press **Escape** to dismiss
+| Selection | Inspector behavior |
+|-----------|--------------------|
+| **Canvas** | Shows scene dimensions, background, fps, and playback duration when applicable. |
+| **Single element** | Shows element-specific fields, position, style, transforms, and child/group details. |
+| **Multiple elements** | Shows multi-selection state and group actions. Arrangement actions are also available from the context menu. |
+| **Nothing selected** | Shows the empty selection state. |
 
-The inspector **auto-positions** to the right of the selected element, clamped to the viewport so it's always visible. You can also **drag** it anywhere, or **pin** it to keep it in place across selections.
+The right panel can be hidden, restored, and resized from the top bar. Canvas clicks select the canvas root; Escape clears selection.
 
-## Element Properties
+## Element fields
 
-Properties vary by element type. Here are the most common:
+Element-specific fields appear first so common edits are easy to reach:
 
-### Shapes
+| Element type | Common fields |
+|--------------|---------------|
+| Text | `content`, `fontSize`, `fontWeight`, `fill`, `textAnchor` |
+| LaTeX | expression/color/font sizing fields |
+| Rect/Image | `x`, `y`, `width`, `height` |
+| Circle | `cx`, `cy`, `r` |
+| Line/Arrow | `x1`, `y1`, `x2`, `y2`, stroke fields |
+| Graph/Bar Chart/Matrix | structured arrays edited with purpose-built array editors |
+| Group | child list, parent path, and ungroup action |
 
-| Property | Applies to | Description |
-|----------|-----------|-------------|
-| `cx`, `cy` | Circle | Center position |
-| `r` | Circle | Radius |
-| `x`, `y` | Rect, Text, Image | Top-left position |
-| `width`, `height` | Rect, Image | Dimensions |
-| `x1`, `y1`, `x2`, `y2` | Line, Arrow | Start and end points |
-| `fill` | All shapes | Fill color |
-| `stroke` | All shapes | Stroke color |
-| `strokeWidth` | All shapes | Stroke thickness |
-| `opacity` | All elements | Transparency (0–1) |
+The **Position**, **Style**, and **Transform** sections handle common spatial and visual properties. Transform fields map to the normalized element `layout` where possible, including rotation, rotation origin, scale, translate, and z-index.
 
-### Text & LaTeX
+## Canvas properties
 
-| Property | Description |
-|----------|-------------|
-| `content` | Text string |
-| `fontSize` | Font size in pixels |
-| `textAnchor` | Alignment: `start`, `middle`, `end` |
-| `expression` | LaTeX math expression string |
-| `color` | Text/LaTeX color |
-
-### Math Visualizations
-
-| Property | Applies to | Description |
-|----------|-----------|-------------|
-| `fn` | FunctionPlot | Math expression like `"sin(x)"` |
-| `domain` | Axes, FunctionPlot | X-axis range `[min, max]` |
-| `range` | Axes | Y-axis range `[min, max]` |
-| `scale` | Axes | Pixels per unit |
-| `to` | Vector | Endpoint `[x, y]` |
-| `values` | Matrix | 2D array of numbers |
-| `nodes`, `edges` | Graph | Graph structure |
-
-### Spatial Transforms
-
-All elements support these universal transform properties:
+Select the canvas to edit scene-level values:
 
 | Property | Description |
 |----------|-------------|
-| `rotation` | Rotation in degrees |
-| `rotationOrigin` | Center of rotation `[cx, cy]` |
-| `scale` | Uniform scale factor |
-| `translate` | Offset `[dx, dy]` |
-| `zIndex` | Stacking order (higher = on top) |
+| Width / Height | Logical SVG scene size. |
+| Background | Scene background color or token. |
+| FPS | Playback frame rate. |
+| Duration | Shown for legacy/linear playback contexts; normalized timeline duration belongs to timelines. |
 
-### Animation Properties
+For normalized v2 documents, timing should live in `timelines` and `stateMachines`, not in per-element wrapper props.
 
-| Property | Description |
-|----------|-------------|
-| `fadeIn` | Fade in over N frames |
-| `fadeOut` | Fade out over N frames |
-| `draw` | Progressive stroke drawing over N frames |
-| `easing` | Easing function name or configuration |
+## Motion editing boundary
 
-## Canvas Properties
+Use the inspector for an element's static starting state. Use the motion panel for animated changes:
 
-Click on **empty canvas space** to select the canvas itself. The inspector switches to show scene-level properties:
+| Motion concept | Where to edit |
+|----------------|---------------|
+| Timeline duration | Animate workspace, selected timeline details |
+| Tracks | Animate workspace |
+| Keyframes | Animate workspace details pane |
+| Easing | Animate workspace keyframe controls |
+| State machine states | State Machine workspace graph |
+| Transitions / triggers | State Machine workspace graph and details |
 
-| Property | Default | Description |
-|----------|---------|-------------|
-| `width` | 800 | Canvas width in pixels |
-| `height` | 600 | Canvas height in pixels |
-| `background` | `#0d0d1a` | Background color |
-| `fps` | 60 | Frames per second |
-| `durationInFrames` | 300 | Total animation length in frames |
+The inspector does not create wrapper animation props. Legacy documents that already contain wrapper nodes can still be inspected through the hierarchy, but new motion should be authored in timelines and state machines.
 
-This is how you configure the overall scene dimensions, background, and animation timing — just click the empty canvas and edit.
+## Hierarchy and nested selection
 
-## Inspector Behavior
+The left **Hierarchy** tab is the fastest way to inspect a dense scene. It shows root canvas, nested groups, generated IDs, element types, and semantic roles from normalized v2 data. Double-click a row to rename an element. If a selected element is inside a group, the inspector header shows its parent path and lets you jump back to the parent.
 
-### Smart Field Display
+## Image fields
 
-The **Animation**, **Transform**, and **Style** sections use smart field display — only properties with non-default values are shown by default. Click the **+ Add property** button at the bottom of each section to reveal additional fields:
+When `onBrowseImage` is provided, image fields include a browse button. A selected asset can store:
 
-- **Style** → Opacity (shown when ≠ 1)
-- **Animation** → Fade In, Fade Out, Draw, Easing
-- **Transform** → Rotation, Scale, Translate, Origin, Z-Index
+- `src` for direct URL/data URI rendering.
+- `ref` for host-managed asset lookup.
+- `displayName` for editor display.
+- `width` and `height` for initial sizing.
+- `alt` for future accessibility metadata.
 
-This keeps the inspector compact while making all properties discoverable.
+See [Image Assets](/editor/images/) for resolver integration.
 
-### Auto-Positioning
+## Context menu
 
-The inspector appears to the right of the selected element by default. If the element is near the right edge, it flips to the left side. The position is always clamped to stay within the viewport.
+Right-click the canvas or selected elements for operations that do not belong in every inspector state:
 
-### Pinning
+<img class="theme-img-dark" src="/images/editor/editor-context-menu.png" alt="Editor context menu in dark mode" />
+<img class="theme-img-light" src="/images/editor/editor-context-menu-light.png" alt="Editor context menu in light mode" />
 
-Click the **pin icon** on the inspector to lock its position. When pinned:
+The context menu includes group/ungroup, duplicate, copy, paste, delete, hierarchy order, align, distribute, select all, and deselect all.
 
-- The inspector stays in place when you select different elements
-- Drag it to your preferred location and pin it there
+## Next steps
 
-When unpinned, the inspector repositions itself next to each newly selected element.
-
-### Dragging
-
-Drag the inspector's **header bar** to reposition it anywhere on the canvas.
-
-## Multi-Selection
-
-When multiple elements are selected (via Shift+click or marquee), the inspector shows the **common properties** shared by all selected elements. Editing a property applies the change to all selected elements at once.
-
-## Next Steps
-
-- Back to the [Editor Overview](/editor/overview/) for the full feature tour
-- Customize colors with [Editor Theming](/editor/theming/)
-- See the full [Editor API Reference](/editor/api/)
+- Back to the [Editor Overview](/editor/overview/).
+- Customize colors with [Editor Theming](/editor/theming/).
+- See the [Editor API Reference](/editor/api/).

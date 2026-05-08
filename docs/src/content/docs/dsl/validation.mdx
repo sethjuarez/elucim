@@ -30,7 +30,7 @@ interface ValidationResult {
 }
 
 interface ValidationError {
-  path: string;       // JSON path to the issue, e.g. "root.children[0].type"
+  path: string;       // JSON path to the issue, e.g. "elements.title.props.content"
   message: string;    // Human-readable description
   severity: 'error' | 'warning';
 }
@@ -42,8 +42,8 @@ The `valid` field is `true` only when there are **no errors** (warnings are allo
 
 | Check | Severity | Example |
 |-------|----------|---------|
-| `version` field present and `'1.0'` | error | Missing or wrong version |
-| `root` node exists and has a valid type | error | No root, or unknown root type |
+| `version` field present and `'2.0'` | error | Missing or wrong version |
+| `scene` and `elements` are present | error | No scene, or missing element map |
 | All node `type` values are recognized | error | `"type": "sparkle"` |
 | Required fields per node type | error | `circle` missing `cx` |
 | Numeric props are numbers | error | `"r": "big"` |
@@ -58,25 +58,22 @@ import { validate } from '@elucim/dsl';
 
 const result = validate({
   version: '2.0',
-  root: {
+  scene: {
     type: 'player',
     width: 800,
     height: 600,
     fps: 30,
-    durationInFrames: 90,
-    children: [
-      { type: 'sparkle', cx: 100, cy: 100 },
-      { type: 'circle', r: 50 },
-    ],
+    children: ['sparkle'],
+  },
+  elements: {
+    sparkle: { id: 'sparkle', type: '', props: {} },
   },
 });
 
 console.log(result.valid); // false
 console.log(result.errors);
 // [
-//   { path: 'version', message: 'Expected version "1.0", got "2.0"', severity: 'error' },
-//   { path: 'root.children[0].type', message: 'Unknown node type "sparkle"', severity: 'error' },
-//   { path: 'root.children[1]', message: 'circle requires "cx" and "cy"', severity: 'error' },
+//   { path: 'elements.sparkle.type', message: 'Element type is required', severity: 'error' },
 // ]
 ```
 

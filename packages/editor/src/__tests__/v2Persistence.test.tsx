@@ -4,11 +4,11 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ElucimV2Document } from '@elucim/dsl';
+import type { ElucimDocument } from '@elucim/dsl';
 import { normalizeToV2, toRenderableV1, validateV2 } from '@elucim/dsl';
 import { ElucimEditor } from '../ElucimEditor';
 
-const v2Fixture: ElucimV2Document = {
+const v2Fixture: ElucimDocument = {
   version: '2.0',
   scene: { type: 'player', width: 800, height: 600, children: ['title', 'metric'] },
   elements: {
@@ -68,9 +68,9 @@ describe('v2 editor persistence', () => {
       title: 'Legacy visual',
       elements: [{ type: 'text', id: 'caption', text: 'Before' }],
     });
-    const onV2DocumentChange = vi.fn();
+    const onDocumentChange = vi.fn();
 
-    render(React.createElement(ElucimEditor, { initialDocument: normalized.document, onV2DocumentChange }));
+    render(React.createElement(ElucimEditor, { initialDocument: normalized.document, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
@@ -78,7 +78,7 @@ describe('v2 editor persistence', () => {
     fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'After' } });
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.elements.caption.props.content).toBe('After');
       expect(validateV2(latest).valid).toBe(true);
       expect(toRenderableV1(latest).root.children).toHaveLength(2);
@@ -86,13 +86,13 @@ describe('v2 editor persistence', () => {
   });
 
   it('preserves v2 timelines/state machines and updates timeline targets after ID rename', async () => {
-    const onV2DocumentChange = vi.fn();
-    const onV2CompatibilityWarnings = vi.fn();
+    const onDocumentChange = vi.fn();
+    const onCompatibilityWarnings = vi.fn();
 
     render(React.createElement(ElucimEditor, {
       initialDocument: v2Fixture,
-      onV2DocumentChange,
-      onV2CompatibilityWarnings,
+      onDocumentChange,
+      onCompatibilityWarnings,
     }));
 
     fireEvent.doubleClick(screen.getAllByText('title').at(-1)!);
@@ -101,18 +101,18 @@ describe('v2 editor persistence', () => {
     fireEvent.blur(screen.getByDisplayValue('hero-title'));
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.elements['hero-title'].intent?.role).toBe('title');
       expect(latest?.timelines?.intro.tracks[0].target).toBe('hero-title');
       expect(latest?.stateMachines?.deck.states.intro.timeline).toBe('intro');
       expect(validateV2(latest).valid).toBe(true);
     });
-    expect(onV2CompatibilityWarnings.mock.calls.flat().join('\n')).toContain('renamed to "hero-title"');
+    expect(onCompatibilityWarnings.mock.calls.flat().join('\n')).toContain('renamed to "hero-title"');
   });
 
   it('preserves v2-only element layout fields through editor round-trips', async () => {
-    const onV2DocumentChange = vi.fn();
-    const documentWithLayout: ElucimV2Document = {
+    const onDocumentChange = vi.fn();
+    const documentWithLayout: ElucimDocument = {
       ...v2Fixture,
       elements: {
         ...v2Fixture.elements,
@@ -124,7 +124,7 @@ describe('v2 editor persistence', () => {
       },
     };
 
-    render(React.createElement(ElucimEditor, { initialDocument: documentWithLayout, onV2DocumentChange }));
+    render(React.createElement(ElucimEditor, { initialDocument: documentWithLayout, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
@@ -132,7 +132,7 @@ describe('v2 editor persistence', () => {
     fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'Updated title' } });
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.elements.title.props.content).toBe('Updated title');
       expect(latest?.elements.title.layout).toMatchObject({ x: 100, y: 120, scale: 1.15, role: 'callout' });
       expect(validateV2(latest).valid).toBe(true);
@@ -140,14 +140,14 @@ describe('v2 editor persistence', () => {
   });
 
   it('keeps scene layout and legacy duration while committing dragged keyframes to the dropped frame', async () => {
-    const onV2DocumentChange = vi.fn();
+    const onDocumentChange = vi.fn();
 
     function ControlledEditor() {
-      const [document, setDocument] = React.useState<ElucimV2Document>(v2Fixture);
+      const [document, setDocument] = React.useState<ElucimDocument>(v2Fixture);
       return React.createElement(ElucimEditor, {
         initialDocument: document,
-        onV2DocumentChange: nextDocument => {
-          onV2DocumentChange(nextDocument);
+        onDocumentChange: nextDocument => {
+          onDocumentChange(nextDocument);
           setDocument(nextDocument);
         },
       });
@@ -158,16 +158,16 @@ describe('v2 editor persistence', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
     const sceneWidthInput = screen.getByLabelText('Width') as HTMLInputElement;
     fireEvent.change(sceneWidthInput, { target: { value: '1' } });
-    expect(onV2DocumentChange).not.toHaveBeenCalled();
+    expect(onDocumentChange).not.toHaveBeenCalled();
     fireEvent.change(sceneWidthInput, { target: { value: '900' } });
-    expect(onV2DocumentChange).not.toHaveBeenCalled();
+    expect(onDocumentChange).not.toHaveBeenCalled();
     fireEvent.blur(sceneWidthInput);
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.scene.width).toBe(900);
     });
-    onV2DocumentChange.mockClear();
+    onDocumentChange.mockClear();
 
     expect(screen.getByText('Duration is defined by timelines, state-machine preview, or export policy.')).toBeTruthy();
 
@@ -192,35 +192,35 @@ describe('v2 editor persistence', () => {
     fireEvent.pointerUp(keyframe, { clientX: 140 });
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect('durationInFrames' in (latest?.scene ?? {})).toBe(false);
       expect(latest?.timelines?.intro.tracks[0].keyframes[1].frame).toBe(14);
     });
   });
 
-  it('applies safe polish nudges through onV2DocumentChange', async () => {
-    const onV2DocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Fixture, onV2DocumentChange }));
+  it('applies safe polish nudges through onDocumentChange', async () => {
+    const onDocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, { initialDocument: v2Fixture, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
     fireEvent.click(screen.getByRole('button', { name: 'Apply nudge Mark document as refined' }));
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.metadata?.polishLevel).toBe('refined');
       expect(validateV2(latest).valid).toBe(true);
     });
   });
 
   it('lets users dismiss suggested nudges without changing the v2 document', () => {
-    const onV2DocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Fixture, onV2DocumentChange }));
+    const onDocumentChange = vi.fn();
+    render(React.createElement(ElucimEditor, { initialDocument: v2Fixture, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss nudge Mark document as refined' }));
 
     expect(screen.queryByRole('button', { name: 'Apply nudge Mark document as refined' })).toBeNull();
-    expect(onV2DocumentChange).not.toHaveBeenCalled();
+    expect(onDocumentChange).not.toHaveBeenCalled();
   });
 
   it('shows previewed nudge command results before applying', () => {
@@ -233,12 +233,12 @@ describe('v2 editor persistence', () => {
   });
 
   it('prunes deleted timeline references from states and transitions while keeping v2 valid', async () => {
-    const onV2DocumentChange = vi.fn();
-    const onV2CompatibilityWarnings = vi.fn();
+    const onDocumentChange = vi.fn();
+    const onCompatibilityWarnings = vi.fn();
     render(React.createElement(ElucimEditor, {
       initialDocument: v2Fixture,
-      onV2DocumentChange,
-      onV2CompatibilityWarnings,
+      onDocumentChange,
+      onCompatibilityWarnings,
     }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
@@ -246,13 +246,13 @@ describe('v2 editor persistence', () => {
     fireEvent.keyDown(document, { key: 'Delete' });
 
     await waitFor(() => {
-      const latest = onV2DocumentChange.mock.calls.at(-1)?.[0] as ElucimV2Document | undefined;
+      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.timelines?.intro).toBeUndefined();
       expect(latest?.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'intro', trigger: 'start' });
       expect(latest?.stateMachines?.deck.states.intro.timeline).toBeUndefined();
       expect(validateV2(latest).valid).toBe(true);
     });
-    const warnings = onV2CompatibilityWarnings.mock.calls.flat().join('\n');
+    const warnings = onCompatibilityWarnings.mock.calls.flat().join('\n');
     expect(warnings).toContain('references missing timeline "intro"');
   });
 });

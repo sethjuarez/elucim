@@ -1,89 +1,58 @@
 ---
-title: Draw & Write
-description: Progressively reveal strokes and text.
+title: Stroke & Text Reveals
+description: Reveal shapes and labels with explicit timeline tracks.
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { DrawDemo } from '@components/Demos.tsx';
-import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 <LiveDemo client:visible height="250px">
   <DrawDemo client:visible />
 </LiveDemo>
 
-## Draw
+Normalized documents do not use `Draw` or `Write` wrappers. Use timeline tracks over visible properties such as `opacity`, `stroke`, `fill`, `scale`, or `translate`. Stroke-dash reveal support can be modeled as element props plus a timeline once a target primitive exposes a timeline-safe dash property.
 
-Progressively reveals the stroke of a shape using `strokeDashoffset`. Works best with stroke-based shapes such as `Circle`, `Line`, `Arrow`, `Rect`, and `Polygon`.
+## Reveal a stroke-based shape
 
-### Props
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `duration` | `number` | Length of the animation in frames |
-| `children` | `ReactNode` | Stroke-based shapes to reveal |
-
-### Example
-
-```tsx
-<Draw duration={45}>
-  <Circle cx={200} cy={150} r={60} stroke="#4f9eff" strokeWidth={3} fill="none" />
-</Draw>
+```ts
+elements: {
+  orbit: {
+    id: 'orbit',
+    type: 'circle',
+    props: { type: 'circle', cx: 250, cy: 125, r: 60, stroke: '$accent', strokeWidth: 3, fill: 'none', opacity: 0 },
+  },
+},
+timelines: {
+  intro: {
+    id: 'intro',
+    duration: 40,
+    tracks: [
+      { target: 'orbit', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 40, value: 1 }] },
+    ],
+  },
+}
 ```
 
-## Write
+## Reveal text after the shape
 
-Reveals text with a combined opacity and scale animation.
-
-### Props
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `duration` | `number` | Length of the animation in frames |
-| `children` | `ReactNode` | `Text` elements to reveal |
-
-### Example
-
-```tsx
-<Write duration={30}>
-  <Text x={200} y={150} fontSize={24} fill="#fff">Hello</Text>
-</Write>
+```ts
+elements: {
+  label: {
+    id: 'label',
+    type: 'text',
+    props: { type: 'text', x: 250, y: 132, content: 'Draw', fill: '$accent', fontSize: 16, textAnchor: 'middle', opacity: 0 },
+  },
+},
+timelines: {
+  intro: {
+    id: 'intro',
+    duration: 60,
+    tracks: [
+      { target: 'orbit', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 40, value: 1 }] },
+      { target: 'label', property: 'opacity', keyframes: [{ frame: 30, value: 0 }, { frame: 60, value: 1 }] },
+    ],
+  },
+}
 ```
 
-## Code Example
-
-<Tabs>
-  <TabItem label="React">
-    ```jsx
-    import { Player, Draw, Write, Circle, Rect, Text } from '@elucim/core';
-
-    <Player width={500} height={250} fps={30} durationInFrames={90}>
-      <Draw duration={40}>
-        <Circle cx={125} cy={125} r={60} stroke="#6c5ce7" strokeWidth={3} fill="none" />
-      </Draw>
-      <Write duration={30}>
-        <Text x={125} y={130} fill="#6c5ce7" fontSize={16} textAnchor="middle">Draw</Text>
-      </Write>
-    </Player>
-    ```
-  </TabItem>
-  <TabItem label="DSL JSON">
-    ```json
-    {
-      "width": 500, "height": 250, "fps": 30, "durationInFrames": 90,
-      "children": [
-        {
-          "type": "circle", "cx": 125, "cy": 125, "r": 60,
-          "stroke": "#6c5ce7", "strokeWidth": 3, "fill": "none",
-          "draw": { "duration": 40 }
-        },
-        {
-          "type": "text", "x": 125, "y": 130, "content": "Draw",
-          "fill": "#6c5ce7", "fontSize": 16, "textAnchor": "middle",
-          "write": { "duration": 30 }
-        }
-      ]
-    }
-    ```
-  </TabItem>
-</Tabs>
-
+For generated scenes, prefer these explicit tracks so editors and agents can inspect, patch, and reorder motion without understanding React wrapper trees.

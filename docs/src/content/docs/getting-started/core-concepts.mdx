@@ -1,6 +1,6 @@
 ---
 title: Core Concepts
-description: Understand the building blocks — frames, sequences, the coordinate system, and how elements compose.
+description: Understand frames, timelines, state machines, the coordinate system, and how normalized elements compose.
 ---
 
 ## The Frame Model
@@ -56,51 +56,63 @@ For math primitives like `<Axes>`, you specify an `origin` point that becomes th
 
 ## Composition Model
 
-Elucim has three layers of composition:
+Normalized Elucim documents have three layers of composition:
 
 ### 1. Primitives
-The visual elements: `Circle`, `Line`, `Arrow`, `Rect`, `Text`, `Polygon`, `Axes`, `FunctionPlot`, `Vector`, `VectorField`, `Matrix`, `Graph`, `LaTeX`, `BarChart`.
+The visual elements: `circle`, `line`, `arrow`, `rect`, `text`, `polygon`, `axes`, `functionPlot`, `vector`, `vectorField`, `matrix`, `graph`, `latex`, `barChart`.
 
-All primitives accept **spatial transforms** (`rotation`, `scale`, `translate`) and **stacking** (`zIndex`) as props. See [Transforms & Composition](/getting-started/transforms/) for details.
+Elements are stored by stable ID in `elements`. Layout metadata such as `rotation`, `scale`, and `translate` lives in each element's `layout` object, while render-specific settings live in `props`. Sibling order in `scene.children` and group `children` arrays controls stacking.
 
-### 2. Animations
-Wrappers that animate their children: `FadeIn`, `FadeOut`, `Draw`, `Write`, `Transform`, `Morph`, `Stagger`, `Parallel`.
+### 2. Timelines
+Timelines animate element properties with explicit tracks and keyframes. Use timelines instead of React wrapper components for JSON/YAML documents.
 
-### 3. Timing
-- **`<Sequence from={N} durationInFrames={D}>`** — Offsets children to start at frame N
-- **`<Player>`** — Root container that drives the global frame counter
-- Multiple `Sequence` blocks run **concurrently** — they don't block each other
+### 3. State Machines
+State machines choose which timeline is active and how playback moves through Entry, states, transitions, and Exit. They can start automatically, wait for clicks/keys, reset, or auto-advance when a timeline completes.
 
 ### Composition Example
 
 ```tsx
-<Player width={800} height={600} fps={30} durationInFrames={120}>
-  {/* Layer 1: Background axes (immediate) */}
-  <Axes origin={[400, 300]} xRange={[-5, 5]} yRange={[-3, 3]} scale={50} />
+import { DslRenderer, type ElucimDocument } from '@elucim/dsl';
 
-  {/* Layer 2: Function appears at frame 20 */}
-  <Sequence from={20} durationInFrames={100}>
-    <Draw duration={40}>
-      <FunctionPlot fn={(x) => Math.sin(x)}
-                    domain={[-5, 5]} origin={[400, 300]} scale={50}
-                    color="#6c5ce7" />
-    </Draw>
-  </Sequence>
+const doc: ElucimDocument = {
+  version: '2.0',
+  scene: { type: 'player', width: 800, height: 600, children: ['axes', 'curve', 'label'] },
+  elements: {
+    axes: { id: 'axes', type: 'axes', props: { type: 'axes', origin: [400, 300], xRange: [-5, 5], yRange: [-3, 3], scale: 50 } },
+    curve: { id: 'curve', type: 'functionPlot', props: { type: 'functionPlot', expression: 'sin(x)', domain: [-5, 5], origin: [400, 300], scale: 50, stroke: '$accent', opacity: 0 } },
+    label: { id: 'label', type: 'latex', props: { type: 'latex', expression: 'f(x) = \\sin(x)', x: 600, y: 100, fontSize: 20, opacity: 0 } },
+  },
+  timelines: {
+    intro: {
+      id: 'intro',
+      duration: 65,
+      tracks: [
+        { target: 'curve', property: 'opacity', keyframes: [{ frame: 20, value: 0 }, { frame: 40, value: 1 }] },
+        { target: 'label', property: 'opacity', keyframes: [{ frame: 50, value: 0 }, { frame: 65, value: 1 }] },
+      ],
+    },
+  },
+  defaultStateMachine: 'main',
+  stateMachines: {
+    main: {
+      id: 'main',
+      entry: 'intro',
+      states: { intro: { timeline: 'intro' } },
+      transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+    },
+  },
+};
 
-  {/* Layer 3: Label at frame 50 */}
-  <Sequence from={50} durationInFrames={70}>
-    <FadeIn duration={15}>
-      <LaTeX expression="f(x) = \sin(x)" x={600} y={100} fontSize={20} />
-    </FadeIn>
-  </Sequence>
-</Player>
+export function SineScene() {
+  return <DslRenderer dsl={doc} />;
+}
 ```
 
 ## Hooks
 
-Two hooks let you create custom animated components:
+If you are hand-authoring React-only components, two core hooks let you create custom animated components:
 
-- **`useCurrentFrame()`** — Returns the current frame number (0 to durationInFrames-1)
+- **`useCurrentFrame()`** — Returns the current frame number for low-level React playback
 - **`interpolate(frame, inputRange, outputRange, options?)`** — Maps a frame to a value with easing
 
 ```tsx
@@ -119,6 +131,6 @@ function PulsingDot() {
 ## Next Steps
 
 - Browse [Primitives](/primitives/circle/) for all shape types
-- Read [Transforms & Composition](/getting-started/transforms/) for rotation, scale, zIndex, and grouping
-- Learn about [Animations](/animations/fade/) for motion effects
-- See [Advanced > Player](/advanced/player/) for full Player API
+- Read [Transforms & Composition](/getting-started/transforms/) for rotation, scale, hierarchy order, and grouping
+- Learn about [Agent Documents](/dsl/agent-documents/) for normalized timelines, state machines, and agent-friendly commands
+- See [Advanced > Player](/advanced/player/) for lower-level React playback APIs

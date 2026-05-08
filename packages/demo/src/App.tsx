@@ -34,10 +34,8 @@ import {
   easeOutElastic,
   spring,
 } from '@elucim/core';
-import { DslRenderer, deckDarkTheme, presentation } from '@elucim/dsl';
+import { DslRenderer } from '@elucim/dsl';
 import type { ElucimDocument, DslRendererRef } from '@elucim/dsl';
-import calculusExplained from '../../dsl/examples/calculus-explained.json';
-import agenticLoop from '../../dsl/examples/agentic-loop.json';
 
 // ─── Demo Scenes ────────────────────────────────────────────────────────────
 
@@ -854,228 +852,125 @@ function MorphDemo() {
 // ─── DSL Data ────────────────────────────────────────────────────────────────
 
 const helloCircleDsl: ElucimDocument = {
-  version: '1.0',
-  root: {
+  version: '2.0',
+  scene: {
     type: 'player',
-    width: 800, height: 400, fps: 30, durationInFrames: 90,
+    width: 800, height: 400, fps: 30,
     background: '#0d0d1a',
-    children: [
-      {
-        type: 'fadeIn', duration: 30,
-        children: [{
-          type: 'circle', cx: 400, cy: 200, r: 80,
-          fill: 'none', stroke: '#3b82f6', strokeWidth: 3, draw: 60, easing: 'easeInOutCubic',
-        }],
-      },
-      {
-        type: 'sequence', from: 30,
-        children: [{
-          type: 'fadeIn', duration: 30,
-          children: [{
-            type: 'text', x: 400, y: 330, content: 'Hello, DSL!',
-            fill: '#fff', fontSize: 28, textAnchor: 'middle',
-          }],
-        }],
-      },
-    ],
+    children: ['orb', 'label'],
+  },
+  elements: {
+    orb: { id: 'orb', type: 'circle', props: { type: 'circle', cx: 400, cy: 200, r: 80, fill: 'none', stroke: '#3b82f6', strokeWidth: 3, opacity: 1 } },
+    label: { id: 'label', type: 'text', props: { type: 'text', x: 400, y: 330, content: 'Hello, DSL!', fill: '#fff', fontSize: 28, textAnchor: 'middle', opacity: 1 } },
   },
 };
 
-const deckPolishDsl = presentation('NDC Talk Starter', deckDarkTheme, {
-  width: 960,
-  height: 540,
-  transition: 'fade',
-  transitionDuration: 10,
-  showHud: false,
-  showNotes: false,
-})
-  .slide('Opening', s => {
-    s.hero('From demo to deck', 'Elucim visuals as full-screen talk slides', { y: 210 });
-    s.callout('One generated visual = one slide-ready story beat.', { y: 398, width: 680 });
-  }, { notes: 'Open with the thesis: generated visuals should already feel presentation-ready.' })
-  .slide('Talk arc', s => {
-    s.title('Shape the talk as a sequence', { y: 82, fontSize: 34 });
-    s.subtitle('A simple structure keeps generated slides coherent', { y: 122 });
-    s.process(['Problem', 'Mental model', 'Demo', 'Takeaway'], { y: 230, width: 150, gap: 20 });
-    s.callout('Each slide does one job: anchor, explain, compare, or decide.', { y: 404, width: 720 });
-  }, { notes: 'Use the sketch rows to keep every visual tied to a single narrative beat.' })
-  .slide('Visual grammar', s => {
-    s.title('Use a small visual grammar', { y: 80, fontSize: 34 });
-    s.compare(
-      { title: 'Before', body: 'Dense + tiny + repeated' },
-      { title: 'After', body: 'Hero + semantic + clear' },
-      { y: 155, height: 178 },
-    );
-    s.metric('3-4', 'ideas per slide max', { x: 242, y: 370, width: 210, height: 110 });
-    s.metric('1', 'hero object', { x: 486, y: 370, width: 210, height: 110, accent: deckDarkTheme.secondary });
-    s.metric('0', 'decorative clutter', { x: 730, y: 370, width: 210, height: 110, accent: deckDarkTheme.tertiary });
-  }, { notes: 'This is the style bar for CutReady generation: less worksheet, more slide.' })
-  .slide('Iteration loop', s => {
-    s.title('Converge faster with evals', { y: 82, fontSize: 34 });
-    s.subtitle('Generate candidates, score the visuals, fold the winners back into prompts', { y: 122 });
-    s.process(['Sketch row', 'Prompt', 'Elucim JSON', 'Score', 'Revise'], { y: 250, width: 128, gap: 14 });
-    s.callout('Keep the feedback loop outside the talk; keep the winning visual inside the slide.', { y: 402, width: 760 });
-  }, { notes: 'The eval loop accelerates prompt convergence so talk prep is less manual.' })
-  .slide('Ready for NDC', s => {
-    s.hero('Ready for NDC', 'Generate, refine, present', { y: 190 });
-    s.metric('45 min', 'talk-ready flow', { x: 240, y: 330, width: 210, height: 120 });
-    s.metric('5 slides', 'starter arc', { x: 486, y: 330, width: 210, height: 120, accent: deckDarkTheme.secondary });
-    s.metric('1 path', 'sketch to stage', { x: 730, y: 330, width: 210, height: 120, accent: deckDarkTheme.tertiary });
-    s.callout('Next: fill this deck shape with your real CutReady NDC sketch rows.', { y: 470, width: 760 });
-  }, { notes: 'Close with the workflow: CutReady sketches become polished Elucim slides.' })
-  .build();
-
 const mathDemoDsl: ElucimDocument = {
-  version: '1.0',
-  root: {
+  version: '2.0',
+  scene: {
     type: 'player',
-    width: 800, height: 400, fps: 30, durationInFrames: 120,
+    width: 800, height: 400, fps: 30,
     background: '#0d0d1a',
-    children: [
-      { type: 'axes', domain: [-5, 5], range: [-2, 2], origin: [400, 200], scale: 60, showGrid: true, fadeIn: 20 },
-      {
-        type: 'sequence', from: 10,
-        children: [{
-          type: 'functionPlot', fn: 'sin(x)', domain: [-5, 5],
-          origin: [400, 200], scale: 60, color: '#4a9eff', draw: 60,
-        }],
-      },
-      {
-        type: 'sequence', from: 50,
-        children: [{
-          type: 'fadeIn', duration: 20,
-          children: [{
-            type: 'vector', from: [0, 0], to: [2, 1],
-            origin: [400, 200], scale: 60, color: '#ffe66d', label: 'v₁',
-          }],
-        }],
-      },
-    ],
+    children: ['axes', 'plot', 'vector'],
+  },
+  elements: {
+    axes: { id: 'axes', type: 'axes', props: { type: 'axes', domain: [-5, 5], range: [-2, 2], origin: [400, 200], scale: 60, showGrid: true } },
+    plot: { id: 'plot', type: 'functionPlot', props: { type: 'functionPlot', fn: 'sin(x)', domain: [-5, 5], origin: [400, 200], scale: 60, color: '#4a9eff' } },
+    vector: { id: 'vector', type: 'vector', props: { type: 'vector', from: [0, 0], to: [2, 1], origin: [400, 200], scale: 60, color: '#ffe66d', label: 'v1' } },
   },
 };
 
 const animatedSceneDsl: ElucimDocument = {
-  version: '1.0',
-  root: {
+  version: '2.0',
+  scene: {
     type: 'player',
-    width: 800, height: 400, fps: 30, durationInFrames: 120,
+    width: 800, height: 400, fps: 30,
     background: '#0d0d1a',
-    children: [
-      {
-        type: 'sequence', from: 0,
-        children: [{
-          type: 'stagger', staggerDelay: 8,
-          children: [
-            { type: 'circle', cx: 150, cy: 200, r: 30, fill: '#ef4444', fadeIn: 20 },
-            { type: 'circle', cx: 250, cy: 200, r: 30, fill: '#f97316', fadeIn: 20 },
-            { type: 'circle', cx: 350, cy: 200, r: 30, fill: '#eab308', fadeIn: 20 },
-            { type: 'circle', cx: 450, cy: 200, r: 30, fill: '#22c55e', fadeIn: 20 },
-            { type: 'circle', cx: 550, cy: 200, r: 30, fill: '#3b82f6', fadeIn: 20 },
-            { type: 'circle', cx: 650, cy: 200, r: 30, fill: '#8b5cf6', fadeIn: 20 },
-          ],
-        }],
-      },
-      {
-        type: 'sequence', from: 60,
-        children: [{
-          type: 'transform', duration: 60,
-          translate: { from: [0, 0], to: [200, 0] },
-          rotate: { from: 0, to: 360 },
-          children: [{
-            type: 'rect', x: 100, y: 300, width: 40, height: 40,
-            fill: '#8b5cf6', stroke: 'none',
-          }],
-        }],
-      },
-    ],
+    children: ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'box'],
+  },
+  elements: {
+    red: { id: 'red', type: 'circle', props: { type: 'circle', cx: 150, cy: 200, r: 30, fill: '#ef4444', opacity: 1 } },
+    orange: { id: 'orange', type: 'circle', props: { type: 'circle', cx: 250, cy: 200, r: 30, fill: '#f97316', opacity: 1 } },
+    yellow: { id: 'yellow', type: 'circle', props: { type: 'circle', cx: 350, cy: 200, r: 30, fill: '#eab308', opacity: 1 } },
+    green: { id: 'green', type: 'circle', props: { type: 'circle', cx: 450, cy: 200, r: 30, fill: '#22c55e', opacity: 1 } },
+    blue: { id: 'blue', type: 'circle', props: { type: 'circle', cx: 550, cy: 200, r: 30, fill: '#3b82f6', opacity: 1 } },
+    violet: { id: 'violet', type: 'circle', props: { type: 'circle', cx: 650, cy: 200, r: 30, fill: '#8b5cf6', opacity: 1 } },
+    box: { id: 'box', type: 'rect', props: { type: 'rect', x: 100, y: 300, width: 40, height: 40, fill: '#8b5cf6', stroke: 'none' } },
   },
 };
 
 const invalidDsl = {
-  version: '1.0',
-  root: {
-    type: 'scene',
-    // Missing durationInFrames
-    children: [
-      { type: 'circle', cx: 'not a number', cy: 100 },
-      { type: 'banana' },
-    ],
-  },
+  version: '2.0',
+  scene: { type: 'player', children: ['bad'] },
+  elements: { bad: { id: 'bad', type: '', props: {} } },
 };
 
 // ─── CutReady Integration Demos ──────────────────────────────────────────────
 
 const presetCardDsl: ElucimDocument = {
-  version: '1.0',
-  root: {
+  version: '2.0',
+  scene: {
     type: 'player',
     preset: 'card',
-    durationInFrames: 60,
     fps: 30,
-    children: [
-      { type: 'rect', x: 20, y: 20, width: 600, height: 320, fill: '#1a1a3e', rx: 12 },
-      { type: 'circle', cx: 320, cy: 180, r: 80, fill: '#4a9eff', opacity: 0.8 },
-      { type: 'text', content: 'Card Preset (640×360)', x: 320, y: 180, fontSize: 24, fill: '#fff', textAnchor: 'middle' },
-    ],
+    children: ['bg', 'circle', 'label'],
+  },
+  elements: {
+    bg: { id: 'bg', type: 'rect', props: { type: 'rect', x: 20, y: 20, width: 600, height: 320, fill: '#1a1a3e', rx: 12 } },
+    circle: { id: 'circle', type: 'circle', props: { type: 'circle', cx: 320, cy: 180, r: 80, fill: '#4a9eff', opacity: 0.8 } },
+    label: { id: 'label', type: 'text', props: { type: 'text', content: 'Card Preset (640x360)', x: 320, y: 180, fontSize: 24, fill: '#fff', textAnchor: 'middle' } },
   },
 };
 
 const presetSlideDsl: ElucimDocument = {
-  version: '1.0',
-  root: {
+  version: '2.0',
+  scene: {
     type: 'scene',
     preset: 'slide',
-    durationInFrames: 60,
     fps: 30,
-    children: [
-      { type: 'rect', x: 0, y: 0, width: 1280, height: 720, fill: '#0d0d2a' },
-      { type: 'circle', cx: 640, cy: 360, r: 150, fill: '#ff6b6b', opacity: 0.7 },
-      { type: 'text', content: 'Slide Preset (1280×720)', x: 640, y: 360, fontSize: 48, fill: '#fff', textAnchor: 'middle' },
-    ],
+    children: ['bg', 'circle', 'label'],
+  },
+  elements: {
+    bg: { id: 'bg', type: 'rect', props: { type: 'rect', x: 0, y: 0, width: 1280, height: 720, fill: '#0d0d2a' } },
+    circle: { id: 'circle', type: 'circle', props: { type: 'circle', cx: 640, cy: 360, r: 150, fill: '#ff6b6b', opacity: 0.7 } },
+    label: { id: 'label', type: 'text', props: { type: 'text', content: 'Slide Preset (1280x720)', x: 640, y: 360, fontSize: 48, fill: '#fff', textAnchor: 'middle' } },
   },
 };
 
 const presetSquareDsl: ElucimDocument = {
-  version: '1.0',
-  root: {
+  version: '2.0',
+  scene: {
     type: 'scene',
     preset: 'square',
-    durationInFrames: 60,
     fps: 30,
-    children: [
-      { type: 'rect', x: 0, y: 0, width: 600, height: 600, fill: '#1a2a1a' },
-      { type: 'circle', cx: 300, cy: 300, r: 120, fill: '#6bff6b', opacity: 0.7 },
-      { type: 'text', content: 'Square (600×600)', x: 300, y: 300, fontSize: 32, fill: '#fff', textAnchor: 'middle' },
-    ],
+    children: ['bg', 'circle', 'label'],
+  },
+  elements: {
+    bg: { id: 'bg', type: 'rect', props: { type: 'rect', x: 0, y: 0, width: 600, height: 600, fill: '#1a2a1a' } },
+    circle: { id: 'circle', type: 'circle', props: { type: 'circle', cx: 300, cy: 300, r: 120, fill: '#6bff6b', opacity: 0.7 } },
+    label: { id: 'label', type: 'text', props: { type: 'text', content: 'Square (600x600)', x: 300, y: 300, fontSize: 32, fill: '#fff', textAnchor: 'middle' } },
   },
 };
 
 const posterDsl: ElucimDocument = {
-  version: '1.0',
-  root: {
+  version: '2.0',
+  scene: {
     type: 'player',
     preset: 'card',
-    durationInFrames: 90,
     fps: 30,
-    children: [
-      { type: 'rect', x: 0, y: 0, width: 640, height: 360, fill: '#1a1a2e' },
-      { type: 'circle', cx: 320, cy: 180, r: 60, fill: '#ff9f43' },
-      { type: 'text', content: 'Poster Mode — Static Frame', x: 320, y: 180, fontSize: 20, fill: '#fff', textAnchor: 'middle' },
-    ],
+    children: ['bg', 'circle', 'label'],
+  },
+  elements: {
+    bg: { id: 'bg', type: 'rect', props: { type: 'rect', x: 0, y: 0, width: 640, height: 360, fill: '#1a1a2e' } },
+    circle: { id: 'circle', type: 'circle', props: { type: 'circle', cx: 320, cy: 180, r: 60, fill: '#ff9f43' } },
+    label: { id: 'label', type: 'text', props: { type: 'text', content: 'Poster Mode - Static Frame', x: 320, y: 180, fontSize: 20, fill: '#fff', textAnchor: 'middle' } },
   },
 };
 
 const richErrorDsl = {
-  version: '1.0',
-  root: {
-    type: 'scene',
-    preset: 'banana',
-    children: [
-      { type: 'circle', cx: 'NaN', cy: 100 },
-      { type: 'unknown_element' },
-      { type: 'rect', width: -10, height: -5 },
-    ],
-  },
+  version: '2.0',
+  scene: { type: 'player', preset: 'banana', children: ['bad'] },
+  elements: { bad: { id: 'bad', type: '', props: {} } },
 };
 
 function CutReadyRefDemo() {
@@ -1083,18 +978,18 @@ function CutReadyRefDemo() {
   const [info, setInfo] = React.useState('Click a button');
 
   const dsl: ElucimDocument = {
-    version: '1.0',
-    root: {
+    version: '2.0',
+    scene: {
       type: 'player',
       preset: 'card',
-      durationInFrames: 120,
       fps: 30,
       controls: true,
-      children: [
-        { type: 'rect', x: 0, y: 0, width: 640, height: 360, fill: '#0d0d2a' },
-        { type: 'circle', cx: 320, cy: 180, r: 80, fill: '#4a9eff', opacity: 0.8 },
-        { type: 'text', content: 'DslRendererRef Demo', x: 320, y: 180, fontSize: 22, fill: '#fff', textAnchor: 'middle' },
-      ],
+      children: ['bg', 'circle', 'label'],
+    },
+    elements: {
+      bg: { id: 'bg', type: 'rect', props: { type: 'rect', x: 0, y: 0, width: 640, height: 360, fill: '#0d0d2a' } },
+      circle: { id: 'circle', type: 'circle', props: { type: 'circle', cx: 320, cy: 180, r: 80, fill: '#4a9eff', opacity: 0.8 } },
+      label: { id: 'label', type: 'text', props: { type: 'text', content: 'DslRendererRef Demo', x: 320, y: 180, fontSize: 22, fill: '#fff', textAnchor: 'middle' } },
     },
   };
 
@@ -1313,32 +1208,6 @@ export function App() {
       <section id="dsl-error" style={{ marginTop: 24 }}>
         <h3 style={{ color: '#aaa', marginBottom: 8 }}>Error Handling (DSL)</h3>
         <DslRenderer dsl={invalidDsl as any} />
-      </section>
-
-      <section id="dsl-calculus" style={{ marginTop: 32 }}>
-        <h3 style={{ color: '#aaa', marginBottom: 8 }}>📐 The Calculus of Change — Full Presentation (DSL)</h3>
-        <p style={{ color: '#666', fontSize: 14, marginBottom: 12 }}>
-          9-slide animated presentation covering functions, derivatives, trig, vectors, vector fields, matrices, graphs, and Euler's identity — all from a single JSON document.
-        </p>
-        <DslRenderer dsl={calculusExplained as ElucimDocument} />
-      </section>
-
-      <section id="dsl-agentic" style={{ marginTop: 32 }}>
-        <h3 style={{ color: '#aaa', marginBottom: 8 }}>🤖 From Words to Agents — Full Presentation (DSL Builder)</h3>
-        <p style={{ color: '#666', fontSize: 14, marginBottom: 12 }}>
-          12-slide animated presentation covering tokenization, embeddings, attention, transformers, autoregressive generation, tool calling, and the agentic loop — built using the Elucim DSL Builder API.
-        </p>
-        <DslRenderer dsl={agenticLoop as ElucimDocument} />
-      </section>
-
-      <section id="dsl-deck-polish" style={{ marginTop: 32 }}>
-        <h3 style={{ color: '#aaa', marginBottom: 8 }}>✨ NDC Talk Starter — Deck Polish Helpers</h3>
-        <p style={{ color: '#666', fontSize: 14, marginBottom: 12 }}>
-          A five-slide starter deck that uses premium builder defaults for CutReady-style visuals where each diagram acts as a full slide.
-        </p>
-        <div data-testid="deck-polish-demo">
-          <DslRenderer dsl={deckPolishDsl as ElucimDocument} poster="last" />
-        </div>
       </section>
 
       <hr style={{ borderColor: '#333', margin: '32px 0' }} />

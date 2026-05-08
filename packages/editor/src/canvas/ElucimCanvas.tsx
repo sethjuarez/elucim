@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { Scene } from '@elucim/core';
 import { renderElement } from '@elucim/dsl';
-import type { ElucimDocument, ElementNode } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
 import { resolveColor, DARK_THEME, LIGHT_THEME, normalizeTheme, themeToVars, type ElucimTheme } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { CANVAS_ID, getElementId } from '../state/types';

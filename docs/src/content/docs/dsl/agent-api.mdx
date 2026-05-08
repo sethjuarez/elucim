@@ -1,0 +1,266 @@
+---
+title: Agent API Reference
+description: Agent-friendly guide to generating, validating, repairing, inspecting, and rendering Elucim JSON/YAML scenes.
+---
+
+This page is written for coding agents, LLM tools, and host apps that want generated diagrams to be reliable. If you are pointing an agent at Elucim, give it this page plus the user request.
+
+## Agent instruction card
+
+Copy this into an agent prompt when you want it to create or edit an Elucim scene:
+
+```md
+Create or modify an Elucim scene as a normalized `ElucimDocument`.
+
+Rules:
+- Use `version: "2.0"`.
+- Use stable element IDs. Sibling order in `scene.children` and `elements[id].children` is the stacking order; later siblings paint on top.
+- Put element visuals in `elements[id].props`; use `layout` for reusable spatial metadata.
+- Use semantic color tokens like `$background`, `$surface`, `$title`, `$subtitle`, `$accent`, `$border`, `$muted` when possible.
+- Do not use React wrapper animation syntax or legacy element types such as `fadeIn`, `draw`, `sequence`, `stagger`, or `parallel`.
+- Author motion with `timelines` and `stateMachines`.
+- Make a default state machine for playback when the scene has timelines.
+- Validate with `validateForAgent()`.
+- Repair timeline duration issues with `repairDocumentForAgent()`.
+- Check that motion actually changes with `sampleAnimationForAgent()`.
+- Check that the scene is visible and readable with `inspectSceneForAgent()`.
+- Return the final JSON/YAML document plus any validation or inspection warnings you could not fix.
+```
+
+## What to import
+
+```ts
+import {
+  addElement,
+  addRevealTimeline,
+  addTimeline,
+  applyAgentCommand,
+  applyAgentCommands,
+  applyNudge,
+  bringElementForward,
+  bringElementToFront,
+  createDocument,
+  createLoopingStateMachine,
+  createStateMachine,
+  diffDocuments,
+  evaluateSceneForAgent,
+  getElementOrder,
+  getTimelineBounds,
+  inspectSceneForAgent,
+  repairDocumentForAgent,
+  reorderElement,
+  sampleAnimationForAgent,
+  sendElementBackward,
+  sendElementToBack,
+  summarizeDocument,
+  suggestDocumentNudges,
+  updateElement,
+  validateForAgent,
+} from '@elucim/dsl/agent';
+```
+
+Use `@elucim/dsl/agent` for generation workflows. Use `@elucim/dsl/react` only when rendering in React:
+
+```tsx
+import { DslRenderer } from '@elucim/dsl/react';
+
+<DslRenderer dsl={doc} />;
+```
+
+## Recommended agent loop
+
+1. **Create** a normalized starter document with `createDocument()`.
+2. **Add** meaningful elements with stable IDs, roles, intent, and tokenized colors.
+3. **Order** siblings with `reorderElement()` or front/back helpers when overlap matters.
+4. **Animate** with `addTimeline()` or `addRevealTimeline()`.
+5. **Wire playback** with `createStateMachine()` or `createLoopingStateMachine()`.
+6. **Validate** with `validateForAgent()`.
+7. **Repair** conservative timeline mistakes with `repairDocumentForAgent()`.
+8. **Inspect** quality with `evaluateSceneForAgent()` and `inspectSceneForAgent()`.
+9. **Explain** remaining warnings and return the final document.
+
+```ts
+import {
+  addElement,
+  addRevealTimeline,
+  createDocument,
+  createLoopingStateMachine,
+  evaluateSceneForAgent,
+  inspectSceneForAgent,
+  repairDocumentForAgent,
+  validateForAgent,
+} from '@elucim/dsl/agent';
+
+let doc = createDocument({
+  preset: 'slide',
+  metadata: {
+    title: 'Cache hit rate',
+    intent: 'Show why a small cache improves request latency.',
+  },
+});
+
+doc = addElement(doc, {
+  id: 'title',
+  type: 'text',
+  role: 'title',
+  intent: { role: 'title', description: 'Name the takeaway', importance: 'primary' },
+  props: {
+    content: 'Small caches remove repeated work',
+    x: 640,
+    y: 96,
+    fill: '$title',
+    fontSize: 44,
+    textAnchor: 'middle',
+  },
+}).document;
+
+doc = addElement(doc, {
+  id: 'cache',
+  type: 'rect',
+  role: 'concept',
+  intent: { role: 'cache', description: 'The reusable local memory', importance: 'primary' },
+  props: {
+    x: 440,
+    y: 260,
+    width: 400,
+    height: 180,
+    rx: 24,
+    fill: '$surface',
+    stroke: '$accent',
+    strokeWidth: 3,
+    opacity: 0,
+  },
+}).document;
+
+doc = addRevealTimeline(doc, {
+  id: 'intro',
+  targets: ['title', 'cache'],
+  preset: 'staggeredFadeIn',
+  duration: 60,
+}).document;
+
+doc = createLoopingStateMachine(doc, { id: 'main', timelineId: 'intro' }).document;
+doc = repairDocumentForAgent(doc).document;
+
+const validation = validateForAgent(doc);
+const quality = evaluateSceneForAgent(doc);
+const inspection = inspectSceneForAgent(doc, { timelineId: 'intro' });
+```
+
+## Helper categories
+
+| Category | Helpers | Use |
+|----------|---------|-----|
+| Create/edit | `createDocument`, `addElement`, `updateElement`, `applyAgentCommand`, `applyAgentCommands` | Build and patch normalized documents without mutating inputs. |
+| Order | `getElementOrder`, `reorderElement`, `bringElementForward`, `sendElementBackward`, `bringElementToFront`, `sendElementToBack` | Change sibling order without adding z-index metadata. Later siblings paint on top. |
+| Timelines | `addTimeline`, `addRevealTimeline`, `getTimelineBounds`, `sampleAnimationForAgent` | Create explicit keyframe clips and prove they change properties. |
+| State machines | `createStateMachine`, `createLoopingStateMachine` | Wire timelines into runtime playback. |
+| Validation | `validateForAgent`, `repairDocumentForAgent` | Return structured errors, hints, conservative repairs, summaries, validation, and diffs. |
+| Quality | `evaluateSceneForAgent`, `inspectSceneForAgent` | Catch missing metadata, missing motion, blank frames, tiny scenes, off-canvas elements, zero-size elements, low contrast, and static timelines. |
+| Review | `summarizeDocument`, `diffDocuments`, `suggestDocumentNudges`, `applyNudge` | Give hosts/humans compact context, JSON-patch-shaped diffs, and deterministic polish options. |
+
+## Command surface
+
+`applyAgentCommands()` accepts this higher-level command union:
+
+```ts
+type AgentCommand =
+  | { op: 'addElement'; element: AgentElementSpec }
+  | { op: 'updateElement'; id: string; patch: AgentElementPatch }
+  | { op: 'moveElement'; id: string; layout: Partial<AgentLayout> }
+  | { op: 'deleteElement'; id: string }
+  | { op: 'reorderElement'; id: string; index: number }
+  | { op: 'bringElementForward'; id: string }
+  | { op: 'sendElementBackward'; id: string }
+  | { op: 'bringElementToFront'; id: string }
+  | { op: 'sendElementToBack'; id: string }
+  | { op: 'reparentElement'; id: string; parentId?: string; index?: number }
+  | { op: 'addTimeline'; timeline: AgentTimelineSpec }
+  | { op: 'addRevealTimeline'; timeline: AgentRevealTimelineSpec }
+  | { op: 'createStateMachine'; stateMachine: AgentStateMachineSpec }
+  | { op: 'updateMetadata'; metadata: Partial<AgentMetadata> }
+  | { op: 'applyNudge'; id: string };
+```
+
+Commands return `{ document, changed, summaries, validation }`. They are deterministic and pure; keep the returned `document`.
+
+## Scene inspection
+
+`inspectSceneForAgent()` is the agent's lightweight "can I see it?" check. It does not use a browser. It samples timeline frames, estimates element bounds, computes visible element count and occupied area, and reports agent-readable issues.
+
+```ts
+const report = inspectSceneForAgent(doc, {
+  timelineId: 'intro',
+  frames: [0, 30, 60],
+});
+
+if (report.issues.length > 0) {
+  console.table(report.issues.map(issue => ({
+    severity: issue.severity,
+    code: issue.code,
+    path: issue.path,
+    message: issue.message,
+  })));
+}
+```
+
+Issue codes include:
+
+| Code | Meaning |
+|------|---------|
+| `invalid-document` | Validation failed. Fix this before rendering. |
+| `no-visible-elements` | A sampled frame has elements but nothing visible in the scene. |
+| `tiny-scene` | Visible content occupies too little of the viewport. |
+| `crowded-scene` | Visible content fills nearly the whole viewport. |
+| `off-canvas-elements` | Elements have measurable bounds outside the scene. |
+| `zero-size-elements` | Elements have no measurable bounds. |
+| `low-contrast-elements` | Literal colors appear low contrast against literal background colors. |
+| `static-animation` | Sampled timeline frames do not change properties. |
+
+## Repair policy
+
+`repairDocumentForAgent()` is intentionally conservative. It currently extends timeline durations when keyframes exceed the declared duration and returns:
+
+```ts
+{
+  document: AgentDocument;
+  changed: boolean;
+  summaries: string[];
+  validation: AgentValidationResult;
+  diff: JsonPatchOperation[];
+}
+```
+
+Do not pretend it fixes every quality problem. Use `inspection.issues` and `validation.errors` to decide what the agent should fix next.
+
+## Output contract for agents
+
+When returning work to a user or host app, prefer this shape:
+
+```ts
+{
+  document: ElucimDocument;
+  validation: ReturnType<typeof validateForAgent>;
+  quality: ReturnType<typeof evaluateSceneForAgent>;
+  inspection: ReturnType<typeof inspectSceneForAgent>;
+  notes: string[];
+}
+```
+
+The document is the artifact. Validation, quality, inspection, and notes explain confidence and remaining risk.
+
+## Common mistakes to avoid
+
+- Do not create wrapper elements like `fadeIn`, `draw`, `stagger`, `parallel`, or `sequence`.
+- Do not put animation props such as `fadeIn`, `draw`, or `write` on elements.
+- Do not leave timelines without a state machine if the scene should play in a viewer.
+- Do not use unstable generated IDs if the user may ask for follow-up edits.
+- Do not rely on literal colors everywhere; prefer semantic tokens.
+- Do not stop at `validateForAgent()`; a valid scene can still be blank, tiny, static, or unreadable.
+
+## Related docs
+
+- [Agent documents](/dsl/agent-documents/) explains the normalized document model and state-machine semantics in more depth.
+- [Renderer](/dsl/renderer/) shows how hosts render the final document.
+- [Validation](/dsl/validation/) explains structured validation errors.
+- [Editor overview](/editor/overview/) shows how generated documents round-trip through the visual editor.

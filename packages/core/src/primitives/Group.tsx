@@ -10,7 +10,7 @@ export interface GroupProps extends AnimationProps, SpatialProps, BaseElementPro
 /**
  * Container that groups primitives as a single unit.
  * Applies shared transforms and animations to all children.
- * Sorts children by zIndex for stacking order control.
+ * Renders children in sibling order; later children paint on top.
  * Renders as an SVG <g> element.
  */
 export function Group({

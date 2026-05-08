@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { exportToJson, importFromJson } from '../utils/io';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument } from '@elucim/dsl';
 
 const validDoc: ElucimDocument = {
   version: '1.0',

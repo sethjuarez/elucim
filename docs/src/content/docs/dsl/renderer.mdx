@@ -3,7 +3,7 @@ title: DslRenderer Component
 description: Render an ElucimDocument JSON object as a live React component.
 ---
 
-The `<DslRenderer>` component takes an `ElucimDocument` and renders it as a fully interactive Elucim scene or presentation — no JSX authoring required. Documents can be authored as JSON objects or parsed from YAML with [`fromYaml()`](/dsl/overview/#yaml).
+The `<DslRenderer>` component takes an `ElucimDocument` and renders it as a fully interactive Elucim scene — no JSX authoring required. Documents can be authored as JSON objects or parsed from YAML with [`fromYaml()`](/dsl/overview/#yaml).
 
 ## Props
 
@@ -15,9 +15,9 @@ The `<DslRenderer>` component takes an `ElucimDocument` and renders it as a full
 | `theme` | `ElucimTheme` | — | Unified content theme. Inject CSS custom properties for theming. Values can be hex, named colors, or `var()` references. Same type used by `ElucimEditor`. |
 | `colorScheme` | `'light' \| 'dark' \| 'auto'` | — | Semantic token resolution: injects light or dark CSS variables |
 | `poster` | `'first' \| 'last' \| number` | — | Render a static frame instead of an interactive player |
-| `controls` | `boolean` | — | Override the document's `controls` setting (Player root only) |
-| `autoPlay` | `boolean` | — | Override the document's `autoPlay` setting (Player root only) |
-| `loop` | `boolean` | — | Override the document's `loop` setting (Player root only) |
+| `controls` | `boolean` | — | Override the document's `controls` setting (player scene only) |
+| `autoPlay` | `boolean` | — | Override the document's `autoPlay` setting (player scene only) |
+| `loop` | `boolean` | — | Override the document's `loop` setting (player scene only) |
 | `fitToContainer` | `boolean` | `false` | When true, scene fills parent width and scales proportionally |
 | `onPlayStateChange` | `(playing: boolean) => void` | — | Called when playback starts or stops |
 | `onRenderError` | `(error: Error) => void` | — | Called when a React render error occurs inside the scene tree |
@@ -32,23 +32,37 @@ import { DslRenderer } from '@elucim/dsl';
 import type { ElucimDocument } from '@elucim/dsl';
 
 const doc: ElucimDocument = {
-  version: '1.0',
-  root: {
+  version: '2.0',
+  scene: {
     type: 'player',
     width: 800,
     height: 600,
     fps: 30,
-    durationInFrames: 90,
     background: '#0a0a1e',
-    children: [
-      {
-        type: 'fadeIn',
-        duration: 30,
-        children: [
-          { type: 'circle', cx: 400, cy: 300, r: 60, stroke: '#4fc3f7', strokeWidth: 3 },
-        ],
-      },
-    ],
+    children: ['orb'],
+  },
+  elements: {
+    orb: {
+      id: 'orb',
+      type: 'circle',
+      props: { type: 'circle', cx: 400, cy: 300, r: 60, stroke: '$accent', strokeWidth: 3, opacity: 0 },
+    },
+  },
+  timelines: {
+    intro: {
+      id: 'intro',
+      duration: 30,
+      tracks: [{ target: 'orb', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+    },
+  },
+  defaultStateMachine: 'main',
+  stateMachines: {
+    main: {
+      id: 'main',
+      entry: 'intro',
+      states: { intro: { timeline: 'intro' } },
+      transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+    },
   },
 };
 
@@ -113,18 +127,18 @@ Presets provide shorthand dimensions so you don't have to remember exact pixel v
 
 ```json
 {
-  "version": "1.0",
-  "root": {
+  "version": "2.0",
+  "scene": {
     "type": "player",
     "preset": "card",
-    "durationInFrames": 60,
-    "children": [...]
-  }
+    "children": ["title"]
+  },
+  "elements": { "...": "..." }
 }
 ```
 
 :::tip
-Explicit `width`/`height` on the root node override preset values.
+Explicit `width`/`height` on `scene` override preset values.
 :::
 
 ## Loading from a JSON File
@@ -171,7 +185,7 @@ Errors are grouped by node with a collapsible raw JSON view for debugging.
 
 ```tsx
 // Invalid document — missing required "version" field
-<DslRenderer dsl={{ root: { type: 'player' } } as any} />
+<DslRenderer dsl={{ version: '2.0', elements: {} } as any} />
 // → Renders an error message describing what's wrong
 ```
 
@@ -288,17 +302,6 @@ function MyComponent() {
 
 Error and validation UIs use semantic CSS custom properties (`--elucim-error`, `--elucim-warning`, `--elucim-surface`) with hardcoded fallbacks. This means error displays automatically adapt to your theme while remaining readable without one.
 
-## Presentations
-
-If the root node is a `presentation`, the renderer outputs a full slide deck with navigation, transitions, and optional presenter notes — all driven by the JSON:
-
-```tsx
-import { DslRenderer } from '@elucim/dsl';
-import presentation from './calculus-explained.json';
-
-<DslRenderer dsl={presentation} className="my-deck" />
-```
-
 :::tip
-Combine `DslRenderer` with the [Builder API](/dsl/builder-api/) to generate documents in TypeScript and render them without manually writing JSON.
+Combine `DslRenderer` with agent-generated JSON/YAML to render normalized documents without writing React scene code.
 :::

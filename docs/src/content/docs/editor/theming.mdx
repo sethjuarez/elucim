@@ -1,23 +1,26 @@
 ---
 title: Editor Theming
-description: Customize editor colors with CSS custom properties and design tokens.
+description: Customize editor chrome and scene content with design tokens, CSS custom properties, and light/dark mode.
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
+The editor has two related theme layers:
 
-The Elucim editor uses **CSS custom properties** (design tokens) for all UI chrome colors. Every color in the toolbar, inspector, timeline, and canvas overlay is driven by tokens — making the editor fully themeable.
+| Layer | Prop | Purpose |
+|-------|------|---------|
+| **Content theme** | `theme` | The `ElucimTheme` used by rendered scene content. The editor derives chrome tokens from it. |
+| **Editor chrome** | `editorTheme` | Explicit overrides for toolbar, docks, inspector, timeline, graph, inputs, borders, and shadows. |
 
-## Quick Theme Override
+Use `theme` when you want the scene and editor to share one visual language. Use `editorTheme` when you only want to override the editor UI.
 
-Pass a `theme` prop to `<ElucimEditor>` with your color overrides:
+## Quick chrome override
 
 ```tsx
 import { ElucimEditor } from '@elucim/editor';
 
-function App() {
+export function App() {
   return (
     <ElucimEditor
-      theme={{
+      editorTheme={{
         accent: '#e040fb',
         bg: '#1e1e2e',
         surface: '#181825',
@@ -30,210 +33,146 @@ function App() {
 }
 ```
 
-You only need to override the tokens you want to change — all others keep their defaults.
+Bare names such as `accent` are expanded to CSS variables such as `--elucim-editor-accent`.
 
-## Available Tokens
+## Light mode
 
-| Token | Default | Description |
-|-------|---------|-------------|
-| `accent` | `#4a9eff` | Primary accent — selection highlights, active buttons |
-| `bg` | `#1a1a2e` | Editor background |
-| `surface` | `#12122a` | Deeper surface (minimap, nested panels) |
-| `panel` | `rgba(22,22,42,0.93)` | Floating panel backgrounds |
-| `chrome` | `rgba(15,23,42,0.8)` | UI chrome — toolbar, timeline |
-| `fg` | `#e0e0e0` | Primary foreground text |
-| `text-secondary` | `#94a3b8` | Secondary text (labels) |
-| `text-muted` | `#64748b` | Muted text (placeholders) |
-| `text-disabled` | `#475569` | Disabled text |
-| `border` | `#334155` | Panel borders, dividers |
-| `border-subtle` | `#1e293b` | Subtle separators |
-| `input-bg` | `#0f172a` | Input field backgrounds |
-| `success` | `#34d399` | Success indicators |
-| `info` | `#4fc3f7` | Info indicators |
-| `error` | `#f87171` | Error indicators |
-
-## Token Naming
-
-Tokens accept either **bare names** or **full CSS variable names**:
-
-```tsx
-// These are equivalent:
-theme={{ accent: '#e040fb' }}
-theme={{ '--elucim-editor-accent': '#e040fb' }}
-```
-
-All tokens resolve to CSS custom properties with the `--elucim-editor-` prefix.
-
-## Theme Presets
-
-### Dark (Default)
-
-The editor ships with a dark theme inspired by VS Code's dark modern palette. No configuration needed.
-
-![Dark theme (default)](/images/editor/editor-overview-dark.png)
-
-### Light
-
-Pass `{ 'color-scheme': 'light' }` in the editor theme to switch to light mode:
-
-```tsx
-<ElucimEditor editorTheme={{ 'color-scheme': 'light' }} />
-```
-
-![Light theme](/images/editor/editor-overview-light.png)
-
-### Catppuccin Mocha
-
-<Tabs syncKey="theme-preset">
-  <TabItem label="Catppuccin Mocha">
-```tsx
-<ElucimEditor
-  theme={{
-    accent: '#cba6f7',
-    bg: '#1e1e2e',
-    surface: '#181825',
-    panel: 'rgba(30,30,46,0.93)',
-    chrome: 'rgba(24,24,37,0.8)',
-    fg: '#cdd6f4',
-    'text-secondary': '#a6adc8',
-    'text-muted': '#6c7086',
-    border: '#45475a',
-    'border-subtle': '#313244',
-    'input-bg': '#11111b',
-    success: '#a6e3a1',
-    error: '#f38ba8',
-  }}
-/>
-```
-  </TabItem>
-  <TabItem label="Nord">
-```tsx
-<ElucimEditor
-  theme={{
-    accent: '#88c0d0',
-    bg: '#2e3440',
-    surface: '#242933',
-    panel: 'rgba(46,52,64,0.93)',
-    chrome: 'rgba(59,66,82,0.8)',
-    fg: '#eceff4',
-    'text-secondary': '#d8dee9',
-    'text-muted': '#81a1c1',
-    border: '#4c566a',
-    'border-subtle': '#3b4252',
-    'input-bg': '#242933',
-    success: '#a3be8c',
-    error: '#bf616a',
-  }}
-/>
-```
-  </TabItem>
-</Tabs>
-
-## Programmatic Token Access
-
-Use the token helpers to build custom UI that matches the editor theme:
-
-### `v(token)` — CSS Variable Reference
-
-Returns a `var(--token, fallback)` string for use in inline styles:
-
-```tsx
-import { v } from '@elucim/editor';
-
-const style = {
-  color: v('--elucim-editor-accent'),
-  // → 'var(--elucim-editor-accent, #4a9eff)'
-
-  borderColor: v('--elucim-editor-border'),
-  // → 'var(--elucim-editor-border, #334155)'
-};
-```
-
-### `buildThemeVars(overrides)` — Generate CSS Variable Object
-
-Merges user overrides with defaults:
-
-```tsx
-import { buildThemeVars } from '@elucim/editor';
-
-const vars = buildThemeVars({ accent: '#e040fb', bg: '#1e1e2e' });
-// → {
-//   '--elucim-editor-accent': '#e040fb',
-//   '--elucim-editor-bg': '#1e1e2e',
-//   '--elucim-editor-surface': '#12122a',
-//   ... (all other defaults)
-// }
-```
-
-### `EDITOR_TOKENS` — Token Defaults
-
-The full token registry:
-
-```tsx
-import { EDITOR_TOKENS } from '@elucim/editor';
-// { '--elucim-editor-accent': '#4a9eff', '--elucim-editor-bg': '#1a1a2e', ... }
-```
-
-### `EDITOR_TOKENS_LIGHT` — Light Mode Defaults
-
-Light-mode token registry. When you pass `{ 'color-scheme': 'light' }` in the theme, `buildThemeVars()` uses these as the base instead of the dark defaults:
-
-```tsx
-import { EDITOR_TOKENS_LIGHT } from '@elucim/editor';
-// { '--elucim-editor-accent': '#2563eb', '--elucim-editor-bg': '#f1f5f9', ... }
-```
-
-You can also use `EDITOR_TOKENS_LIGHT` to build a fully custom light theme:
+Pass `color-scheme: 'light'` through `editorTheme` to use light defaults:
 
 ```tsx
 <ElucimEditor
-  theme={{ 'color-scheme': 'light', accent: '#e040fb' }}
+  editorTheme={{ 'color-scheme': 'light' }}
   style={{ width: '100vw', height: '100vh' }}
 />
 ```
 
-### `makeRotateCursor(color)` — Themed Rotation Cursor
+<img class="theme-img-dark" src="/images/editor/editor-overview-dark.png" alt="Editor dark mode token smoke test" />
+<img class="theme-img-light" src="/images/editor/editor-overview-light.png" alt="Editor light mode token smoke test" />
 
-Generates an SVG data-URL cursor for the rotation handle. CSS custom properties can't be used inside `url()` data URIs, so this function takes a resolved color value:
+## Unified content + chrome theme
+
+Pass the same `ElucimTheme` you use with `<DslRenderer>`. The editor maps content tokens to chrome tokens with `deriveEditorTheme()`.
 
 ```tsx
-import { makeRotateCursor } from '@elucim/editor';
+import { DslRenderer } from '@elucim/dsl/react';
+import { ElucimEditor } from '@elucim/editor';
+import type { ElucimTheme } from '@elucim/core';
 
-const cursor = makeRotateCursor('#e040fb');
-// → 'url("data:image/svg+xml,...") 12 12, pointer'
+const theme: ElucimTheme = {
+  background: '#0f172a',
+  surface: '#1e293b',
+  foreground: '#e2e8f0',
+  title: '#f8fafc',
+  subtitle: '#94a3b8',
+  muted: '#64748b',
+  accent: '#38bdf8',
+  primary: '#38bdf8',
+  border: '#334155',
+  success: '#34d399',
+  error: '#fb7185',
+};
+
+<DslRenderer dsl={doc} theme={theme} colorScheme="dark" />;
+<ElucimEditor initialDocument={doc} theme={theme} />;
 ```
 
-## Semi-Transparent Variants
+Use `editorTheme` on top when chrome needs a local override:
 
-The editor uses `color-mix()` for translucent versions of tokens. Use the same technique in custom components:
-
-```css
-/* 20% accent with 80% transparent */
-background: color-mix(in srgb, var(--elucim-editor-accent) 20%, transparent);
-
-/* 50% border */
-border-color: color-mix(in srgb, var(--elucim-editor-border) 50%, transparent);
+```tsx
+<ElucimEditor
+  initialDocument={doc}
+  theme={theme}
+  editorTheme={{ accent: '#ff6b35' }}
+/>
 ```
 
-:::tip
-You can't append hex alpha to a `var()` reference (e.g., `var(--accent)33` is invalid CSS). Use `color-mix()` instead for semi-transparent token variants.
-:::
+## Token defaults
 
-## Using Tokens in Your Own CSS
+| Token | Dark default | Light default | Role |
+|-------|--------------|---------------|------|
+| `accent` | `#4a9eff` | `#2563eb` | Selection, active tabs, focus rings, key actions |
+| `bg` | `#1a1a2e` | `#f1f5f9` | Outer editor background |
+| `surface` | `#12122a` | `#ffffff` | Docks, panels, graph surfaces |
+| `panel` | `rgba(22, 22, 42, 0.93)` | `rgba(255, 255, 255, 0.95)` | Floating/overlay panel surfaces |
+| `chrome` | `rgba(15, 23, 42, 0.8)` | `rgba(241, 245, 249, 0.9)` | Timeline and toolbar chrome |
+| `fg` | `#e0e0e0` | `#1e293b` | Primary text |
+| `text-secondary` | `#94a3b8` | `#334155` | Labels and secondary text |
+| `text-muted` | `#64748b` | `#64748b` | Hints, empty states, low-emphasis metadata |
+| `text-disabled` | `#475569` | `#94a3b8` | Disabled controls |
+| `border` | `#334155` | `#e2e8f0` | Primary separators and panel borders |
+| `border-subtle` | `#1e293b` | `#f1f5f9` | Low-emphasis dividers |
+| `input-bg` | `#0f172a` | `#ffffff` | Inputs and compact data editors |
+| `success` | `#34d399` | `#34d399` | Positive status and text/math type accents |
+| `info` | `#4fc3f7` | `#4fc3f7` | Informational status |
+| `error` | `#f87171` | `#f87171` | Errors and destructive feedback |
 
-Since the editor sets CSS custom properties on its root element, you can use them anywhere:
+The editor also exposes sizing, spacing, radius, shadow, duration, and easing tokens:
+
+```ts
+--elucim-editor-input-height
+--elucim-editor-font-xs
+--elucim-editor-font-sm
+--elucim-editor-radius-sm
+--elucim-editor-space-xs
+--elucim-editor-space-sm
+--elucim-editor-shadow-panel
+--elucim-editor-shadow-dropdown
+--elucim-editor-duration-fast
+--elucim-editor-duration-normal
+--elucim-editor-easing-default
+```
+
+## Token helpers
+
+```tsx
+import {
+  EDITOR_TOKENS,
+  EDITOR_TOKENS_LIGHT,
+  buildThemeVars,
+  deriveEditorTheme,
+  makeRotateCursor,
+  v,
+} from '@elucim/editor';
+```
+
+| Helper | Use |
+|--------|-----|
+| `v(token, scheme?)` | Return `var(--token, fallback)` for inline styles. |
+| `buildThemeVars(overrides)` | Merge dark/light defaults with overrides and return CSS custom properties. |
+| `deriveEditorTheme(contentTheme, scheme)` | Map an `ElucimTheme` to editor chrome tokens. |
+| `makeRotateCursor(color)` | Generate the themed SVG cursor used by rotation handles. |
+| `EDITOR_TOKENS` | Dark-mode token registry. |
+| `EDITOR_TOKENS_LIGHT` | Light-mode token registry. |
+
+## Semi-transparent variants
+
+Use `color-mix()` with token references instead of appending alpha to CSS variables:
 
 ```css
-.my-custom-panel {
-  background: var(--elucim-editor-panel);
-  color: var(--elucim-editor-fg);
-  border: 1px solid var(--elucim-editor-border);
-  border-radius: 8px;
+.custom-panel {
+  background: color-mix(in srgb, var(--elucim-editor-surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--elucim-editor-border) 70%, transparent);
 }
 ```
 
-## Next Steps
+This is the same approach used by panel, tab, selection, and graph controls.
 
-- Back to the [Editor Overview](/editor/overview/)
-- Learn about the [Inspector & Properties](/editor/inspector/)
-- See the full [Editor API Reference](/editor/api/)
+## Design-token smoke testing
+
+When you change editor tokens, inspect both color schemes with dense scenes that show:
+
+- top workspace tabs and panel toggles,
+- left hierarchy/create dock,
+- selected canvas content,
+- inspector form fields,
+- timeline tracks and keyframes,
+- state-machine graph surfaces when relevant,
+- context menus and overlay controls.
+
+The light and dark screenshots on this page are generated from the editor playground and are intended to catch token regressions such as weak contrast, invisible borders, washed-out inputs, or panel surfaces blending into the canvas.
+
+## Next steps
+
+- Back to the [Editor Overview](/editor/overview/).
+- Learn about the [Inspector & Properties](/editor/inspector/).
+- See the [Editor API Reference](/editor/api/).

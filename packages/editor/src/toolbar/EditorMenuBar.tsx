@@ -2,7 +2,7 @@ import React, { useCallback, useState, useRef } from 'react';
 import { useEditorState } from '../state/EditorProvider';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument } from '@elucim/dsl';
 import { importFromJson } from '../utils/io';
 
 const SEMANTIC_TOKENS = [

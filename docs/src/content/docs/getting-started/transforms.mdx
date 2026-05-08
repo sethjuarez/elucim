@@ -1,13 +1,12 @@
 ---
 title: Transforms & Composition
-description: How rotation, scale, translate, z-index, and Group compose uniformly across all primitives.
+description: How rotation, scale, translate, hierarchy order, and Group compose uniformly across all primitives.
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
 import { TransformsDemo } from '@components/Demos.tsx';
-import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Every primitive in Elucim accepts the same set of spatial and animation props. This uniform model means you learn the pattern once and apply it everywhere.
+Every normalized Elucim element separates what it draws (`props`) from how it is placed (`layout`). This keeps static composition inspectable and lets timelines/state machines own motion.
 
 <LiveDemo client:visible height="300px">
   <TransformsDemo client:visible />
@@ -15,54 +14,55 @@ Every primitive in Elucim accepts the same set of spatial and animation props. T
 
 ## The Prop Model
 
-Every element accepts three categories of props:
+Every element has three main categories:
 
 | Category | Controls | Examples |
 |----------|----------|----------|
-| **Primitive** | What to draw | `cx`, `cy`, `r`, `fill`, `stroke` |
-| **Spatial** | Where / how | `rotation`, `scale`, `translate` |
-| **Animation** | When | `fadeIn`, `fadeOut`, `draw`, `easing` |
+| **Primitive props** | What to draw | `cx`, `cy`, `r`, `fill`, `stroke` |
+| **Layout** | Where / how | `rotation`, `scale`, `translate` |
+| **Timelines** | When values change | `opacity`, `translate`, `scale`, `rotate`, `fill`, `stroke` tracks |
 
-These compose freely on a single element:
+These compose on a single normalized element:
 
-```tsx
-<Circle
-  cx={200} cy={150} r={50}           // primitive — what
-  rotation={45} translate={[10, 0]}  // spatial — where
-  fadeIn={20} easing="easeInOut"     // animation — when
-  stroke="#6c5ce7" fill="none"
-/>
+```ts
+{
+  id: 'orbit',
+  type: 'circle',
+  layout: { rotation: 45, translate: [10, 0] },
+  props: { type: 'circle', cx: 200, cy: 150, r: 50, stroke: '$accent', fill: 'none' },
+}
 ```
 
 ## Spatial Transforms
 
-All primitives (and `<Group>`) accept these spatial props via the shared `SpatialProps` interface.
+All normalized elements can use these spatial fields in `layout`.
 
 ### `rotation`
 
 Rotation in degrees. By default the element rotates around its own center.
 
-```tsx
-<Rect x={100} y={50} width={120} height={80} rotation={30} stroke="#6c5ce7" fill="none" />
+```ts
+{ layout: { rotation: 30 }, props: { type: 'rect', x: 100, y: 50, width: 120, height: 80, stroke: '$accent', fill: 'none' } }
 ```
 
 ### `rotationOrigin`
 
 Override the pivot point with an `[x, y]` coordinate:
 
-```tsx
-<Rect x={100} y={50} width={120} height={80}
-      rotation={45} rotationOrigin={[100, 50]}
-      stroke="#6c5ce7" fill="none" />
+```ts
+{
+  layout: { rotation: 45, rotationOrigin: [100, 50] },
+  props: { type: 'rect', x: 100, y: 50, width: 120, height: 80, stroke: '$accent', fill: 'none' },
+}
 ```
 
 ### `scale`
 
 A uniform number or an `[sx, sy]` pair. Values are unitless multipliers (1 = normal size).
 
-```tsx
-<Circle cx={200} cy={150} r={40} scale={1.5} stroke="#e17055" fill="none" />
-<Circle cx={200} cy={150} r={40} scale={[2, 0.5]} stroke="#00b894" fill="none" />
+```ts
+{ layout: { scale: 1.5 }, props: { type: 'circle', cx: 200, cy: 150, r: 40, stroke: '$secondary', fill: 'none' } }
+{ layout: { scale: [2, 0.5] }, props: { type: 'circle', cx: 200, cy: 150, r: 40, stroke: '$success', fill: 'none' } }
 ```
 
 :::note
@@ -73,67 +73,59 @@ A uniform number or an `[sx, sy]` pair. Values are unitless multipliers (1 = nor
 
 An `[dx, dy]` pixel offset applied before rotation and scale:
 
-```tsx
-<Circle cx={100} cy={100} r={30} translate={[50, 20]} stroke="#fdcb6e" fill="none" />
+```ts
+{ layout: { translate: [50, 20] }, props: { type: 'circle', cx: 100, cy: 100, r: 30, stroke: '$warning', fill: 'none' } }
 ```
 
-## Stacking with zIndex
+## Stacking with hierarchy order
 
-SVG follows the **painter's model** by default — elements declared later in JSX paint on top of earlier ones. The `zIndex` prop overrides this:
+SVG follows the **painter's model**: siblings declared later paint on top of earlier siblings. In normalized documents, that means order in `scene.children` and each group element's `children` array is the stacking order.
 
-```tsx
-<Player width={300} height={200} fps={30} durationInFrames={60}>
-  {/* Declared first, but renders on top because of zIndex */}
-  <Circle cx={130} cy={100} r={50} fill="#6c5ce7" zIndex={2} />
-  {/* Declared second, but renders behind */}
-  <Rect x={100} y={60} width={100} height={80} fill="#00b894" zIndex={1} />
-</Player>
+```ts
+scene: { type: 'player', width: 800, height: 600, children: ['card', 'circle'] },
+elements: {
+  card: { id: 'card', type: 'rect', props: { type: 'rect', x: 100, y: 60, width: 100, height: 80, fill: '$success' } },
+  circle: { id: 'circle', type: 'circle', props: { type: 'circle', cx: 130, cy: 100, r: 50, fill: '$accent' } },
+}
 ```
 
 Key rules:
-- Default `zIndex` is **0**
-- Higher values render later (on top)
-- Ties preserve **document order** (stable sort)
-- Works on children of `<Scene>` and `<Group>`
+- Later siblings render later (on top)
+- Root stacking is controlled by `scene.children`
+- Group stacking is controlled by that group's `children`
+- Move elements up/down in the editor hierarchy, or use agent order commands, to change stacking
 
 ## Grouping
 
-`<Group>` is a container that applies transforms and animations to all its children as a single unit.
+`group` is a container that applies layout transforms to all its children as a single unit.
 
-```tsx
-<Group rotation={15} translate={[50, 0]} fadeIn={20}>
-  <Rect x={100} y={50} width={200} height={150} stroke="#6c5ce7" fill="none" />
-  <Circle cx={200} cy={125} r={40} stroke="#e17055" fill="none" />
-</Group>
+```ts
+elements: {
+  card: { id: 'card', type: 'group', layout: { rotation: 15, translate: [50, 0] }, children: ['box', 'dot'], props: { type: 'group' } },
+  box: { id: 'box', type: 'rect', parentId: 'card', props: { type: 'rect', x: 100, y: 50, width: 200, height: 150, stroke: '$accent', fill: 'none' } },
+  dot: { id: 'dot', type: 'circle', parentId: 'card', props: { type: 'circle', cx: 200, cy: 125, r: 40, stroke: '$secondary', fill: 'none' } },
+}
 ```
 
 What this does:
 - **Rotate a group** → rotates everything inside
-- **FadeIn on a group** → fades in everything together
 - **Groups can nest** — transforms compose through the hierarchy
-- **Groups sort their own children by `zIndex`** — each group creates its own stacking context
+- **Groups stack their own children by order** — each group creates its own stacking context
 
 ## Static vs Animated Transforms
 
-The spatial props described above are **static** — they set a fixed transform for the element's lifetime. For animated transforms (interpolating between two states over time), use the `<Transform>` animation wrapper:
+The spatial fields described above are **static**. For animated transforms, create timeline tracks over `translate`, `scale`, or `rotate`:
 
-<Tabs syncKey="transform-style">
-  <TabItem label="Static (prop)">
-    ```tsx
-    // Fixed 45° rotation — no animation
-    <Circle cx={100} cy={100} r={50} rotation={45}
-            stroke="#6c5ce7" fill="none" />
-    ```
-  </TabItem>
-  <TabItem label="Animated (Transform)">
-    ```tsx
-    // Animates from 0° to 360° over 60 frames
-    <Transform rotate={{ from: 0, to: 360 }} duration={60}>
-      <Circle cx={100} cy={100} r={50}
-              stroke="#6c5ce7" fill="none" />
-    </Transform>
-    ```
-  </TabItem>
-</Tabs>
+```ts
+timelines: {
+  spin: {
+    id: 'spin',
+    duration: 60,
+    tracks: [
+      { target: 'orbit', property: 'rotate', keyframes: [{ frame: 0, value: 0 }, { frame: 60, value: 360 }] },
+    ],
+  },
+}
+```
 
-Use static transforms for layout positioning, and `<Transform>` when you need motion. See [Transform & Morph](/animations/transform/) for the full animation API.
+Use `layout` for initial positioning and timelines for motion.

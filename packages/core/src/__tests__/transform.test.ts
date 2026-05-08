@@ -76,7 +76,7 @@ describe('buildTransform', () => {
 });
 
 describe('sortByZIndex', () => {
-  it('preserves order when all same zIndex', () => {
+  it('preserves sibling order', () => {
     const children = [
       React.createElement('circle', { key: 'a', r: 1 }),
       React.createElement('rect', { key: 'b', width: 2 }),
@@ -89,16 +89,16 @@ describe('sortByZIndex', () => {
     expect((sorted[2] as React.ReactElement).type).toBe('line');
   });
 
-  it('sorts higher zIndex later', () => {
+  it('ignores zIndex so document order controls stacking', () => {
     const children = [
       React.createElement('circle', { key: 'a', zIndex: 3 }),
       React.createElement('rect', { key: 'b', zIndex: 1 }),
       React.createElement('line', { key: 'c', zIndex: 2 }),
     ];
     const sorted = sortByZIndex(children);
-    expect((sorted[0] as React.ReactElement).type).toBe('rect');
-    expect((sorted[1] as React.ReactElement).type).toBe('line');
-    expect((sorted[2] as React.ReactElement).type).toBe('circle');
+    expect((sorted[0] as React.ReactElement).type).toBe('circle');
+    expect((sorted[1] as React.ReactElement).type).toBe('rect');
+    expect((sorted[2] as React.ReactElement).type).toBe('line');
   });
 
   it('handles empty children', () => {
@@ -113,19 +113,18 @@ describe('sortByZIndex', () => {
       React.createElement('rect', { key: 'b', zIndex: 0 }),
     ];
     const sorted = sortByZIndex(children);
-    // null is filtered by React.Children.toArray; text + elements remain
-    // Non-elements get zIndex 0, so they sort alongside zIndex-0 elements
+    // null is filtered by React.Children.toArray; text + elements remain in order.
     expect(sorted.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('treats missing zIndex as 0', () => {
+  it('does not move elements with zIndex ahead of elements without zIndex', () => {
     const children = [
       React.createElement('circle', { key: 'a', zIndex: 1 }),
-      React.createElement('rect', { key: 'b' }), // no zIndex → 0
+      React.createElement('rect', { key: 'b' }),
     ];
     const sorted = sortByZIndex(children);
-    expect((sorted[0] as React.ReactElement).type).toBe('rect');
-    expect((sorted[1] as React.ReactElement).type).toBe('circle');
+    expect((sorted[0] as React.ReactElement).type).toBe('circle');
+    expect((sorted[1] as React.ReactElement).type).toBe('rect');
   });
 });
 

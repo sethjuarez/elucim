@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { applyCommand, applyTimelineFrame, applyTimelineFrames, evaluateTimeline, migrateV2ToV1, validateV2, type ElucimV2Document } from '../index';
+import { applyCommand, applyTimelineFrame, applyTimelineFrames, evaluateTimeline, migrateV2ToV1, validateV2, type ElucimDocument } from '../index';
 
-const doc: ElucimV2Document = {
+const doc: ElucimDocument = {
   version: '2.0',
   scene: { type: 'player', width: 800, height: 600, children: ['title'] },
   elements: {

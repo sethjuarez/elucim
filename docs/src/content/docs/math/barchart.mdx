@@ -3,7 +3,6 @@ title: BarChart
 description: Render animated bar charts for data visualization scenes.
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
 import LiveDemo from '@components/LiveDemo.tsx';
 import { BarChartDemo } from '@components/Demos.tsx';
 
@@ -32,48 +31,24 @@ The `<BarChart>` primitive draws a vertical bar chart from an array of labeled v
 
 ## Code Example
 
-<Tabs>
-  <TabItem label="React">
-    ```jsx
-    import { Player, FadeIn, BarChart } from '@elucim/core';
-
-    <Player width={500} height={300} fps={30} durationInFrames={60}>
-      <FadeIn duration={25}>
-        <BarChart
-          bars={[
-            { label: 'Paris', value: 0.92, color: '#6c5ce7' },
-            { label: 'Lyon', value: 0.03, color: '#a29bfe' },
-            { label: 'Berlin', value: 0.015, color: '#81ecec' },
-          ]}
-          x={50} y={30} width={400} height={230}
-          labelColor="currentColor" showValues valueFormat="percent" maxValue={1}
-        />
-      </FadeIn>
-    </Player>
-    ```
-  </TabItem>
-  <TabItem label="DSL (JSON)">
-    ```json
-    {
-      "width": 500, "height": 300, "fps": 30, "durationInFrames": 60,
-      "children": [
-        {
-          "type": "barChart",
-          "bars": [
-            { "label": "Paris", "value": 0.92, "color": "#6c5ce7" },
-            { "label": "Lyon", "value": 0.03, "color": "#a29bfe" },
-            { "label": "Berlin", "value": 0.015, "color": "#81ecec" }
-          ],
-          "x": 50, "y": 30, "width": 400, "height": 230,
-          "showValues": true, "valueFormat": "percent", "maxValue": 1,
-          "fadeIn": { "duration": 25 }
-        }
-      ]
-    }
-    ```
-  </TabItem>
-</Tabs>
-
+```ts
+elements: {
+  cities: {
+    id: 'cities',
+    type: 'barChart',
+    props: {
+      type: 'barChart',
+      bars: [
+        { label: 'Paris', value: 0.92, color: '#6c5ce7' },
+        { label: 'Lyon', value: 0.03, color: '#a29bfe' },
+        { label: 'Berlin', value: 0.015, color: '#81ecec' },
+      ],
+      x: 50, y: 30, width: 400, height: 230,
+      labelColor: '$foreground', showValues: true, valueFormat: 'percent', maxValue: 1,
+    },
+  },
+}
+```
 :::tip
 Set a per-bar `color` to highlight specific values, or use the global `barColor` for a uniform look.
 :::

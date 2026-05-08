@@ -1,4 +1,4 @@
-import type { ElucimDocument, ElementNode, SceneNode, PlayerNode } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument, ElementNode, SceneNode, PlayerNode } from '@elucim/dsl';
 
 // ─── Editor State ──────────────────────────────────────────────────────────
 
@@ -174,6 +174,7 @@ export function isUndoableAction(action: EditorAction): boolean {
     case 'UNGROUP':
     case 'WRAP_IN_ANIMATION':
     case 'UNWRAP_ANIMATION':
+    case 'REORDER_ELEMENT':
     case 'BRING_FORWARD':
     case 'SEND_BACKWARD':
     case 'BRING_TO_FRONT':

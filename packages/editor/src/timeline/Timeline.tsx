@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState } from 'react';
-import { DEFAULT_LINEAR_DURATION_IN_FRAMES, getMaxTimelineDuration, getStateMachineVisualFrames, type ElementNode, type ElucimV2Document, type ElucimV2StateMachine, type ElucimV2Timeline, type ElucimV2TimelineFrameSelection, type ElucimV2Transition } from '@elucim/dsl';
+import { DEFAULT_LINEAR_DURATION_IN_FRAMES, getMaxTimelineDuration, getStateMachineVisualFrames, type ElementNode, type ElucimDocument, type ElucimV2StateMachine, type ElucimV2Timeline, type ElucimV2TimelineFrameSelection, type ElucimV2Transition } from '@elucim/dsl';
 import { BaseEdge, EdgeLabelRenderer, Handle, MarkerType, Position, ReactFlow, applyNodeChanges, getSmoothStepPath, type Edge, type EdgeProps, type Node, type NodeMouseHandler, type NodeProps, type OnConnect, type OnNodeDrag, type OnNodesChange, type ReactFlowInstance, type Viewport as ReactFlowViewport } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorState } from '../state/EditorProvider';
@@ -12,7 +12,7 @@ import { startRafDrag } from '../interactions/rafDrag';
 export interface TimelineProps {
   className?: string;
   style?: React.CSSProperties;
-  v2Document?: ElucimV2Document;
+  v2Document?: ElucimDocument;
   v2Timelines?: Record<string, ElucimV2Timeline>;
   onV2TimelinesChange?: (timelines: Record<string, ElucimV2Timeline> | undefined) => void;
   v2StateMachines?: Record<string, ElucimV2StateMachine>;
@@ -1076,7 +1076,7 @@ function TimelineClipRows({
   onPreviewEvent,
 }: {
   clips: ElucimV2Timeline[];
-  v2Document?: ElucimV2Document;
+  v2Document?: ElucimDocument;
   durationInFrames: number;
   onKeyframeClick: (frame: number) => void;
   onTimelineChange?: (timeline: ElucimV2Timeline) => void;

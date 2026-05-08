@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { applyCommand, diffDocuments, summarizeDocument, validateForAgent } from '../index';
-import type { ElucimV2Document } from '../index';
+import type { ElucimDocument } from '../index';
 
-const doc: ElucimV2Document = {
+const doc: ElucimDocument = {
   version: '2.0',
   scene: { type: 'player', width: 800, height: 600, children: ['title'] },
   elements: {

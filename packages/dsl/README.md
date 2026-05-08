@@ -1,11 +1,11 @@
 # @elucim/dsl
 
-> Declarative JSON/YAML DSL for animated visualizations — perfect for AI agents.
+> Normalized JSON/YAML documents for animated Elucim scenes — designed for agents, editors, and content pipelines.
 
 [![npm version](https://img.shields.io/npm/v/@elucim/dsl)](https://www.npmjs.com/package/@elucim/dsl)
 [![license](https://img.shields.io/npm/l/@elucim/dsl)](https://github.com/sethjuarez/elucim/blob/main/LICENSE)
 
-`@elucim/dsl` lets you describe animated diagrams as JSON or YAML documents. An AI agent (or any code) produces a document conforming to the schema, and the `<DslRenderer>` component renders it as a fully interactive [Elucim](https://www.npmjs.com/package/@elucim/core) visualization — no React knowledge required.
+`@elucim/dsl` lets you describe animated diagrams as data. A public `ElucimDocument` is the normalized single-scene shape: `version: '2.0'`, `scene`, an ID-keyed `elements` registry, optional `timelines`, optional `stateMachines`, and optional `metadata`. The `<DslRenderer>` component renders these documents as interactive [Elucim](https://www.npmjs.com/package/@elucim/core) visuals — no React authoring required.
 
 ## Install
 
@@ -24,25 +24,55 @@ import { DslRenderer } from '@elucim/dsl';
 import type { ElucimDocument } from '@elucim/dsl';
 
 const myDiagram: ElucimDocument = {
-  version: '1.0',
-  root: {
+  version: '2.0',
+  scene: {
     type: 'player',
     width: 800,
     height: 600,
     fps: 30,
-    durationInFrames: 90,
     background: '#0d0d1a',
-    children: [
-      {
+    children: ['orbit'],
+  },
+  elements: {
+    orbit: {
+      id: 'orbit',
+      type: 'circle',
+      props: {
         type: 'circle',
         cx: 400,
         cy: 300,
         r: 100,
         stroke: '#3b82f6',
         strokeWidth: 3,
-        draw: 60,
+        fill: 'none',
+        opacity: 0,
       },
-    ],
+    },
+  },
+  timelines: {
+    intro: {
+      id: 'intro',
+      duration: 60,
+      tracks: [
+        {
+          target: 'orbit',
+          property: 'opacity',
+          keyframes: [
+            { frame: 0, value: 0 },
+            { frame: 60, value: 1, easing: 'easeOutCubic' },
+          ],
+        },
+      ],
+    },
+  },
+  defaultStateMachine: 'main',
+  stateMachines: {
+    main: {
+      id: 'main',
+      entry: 'intro',
+      states: { intro: { timeline: 'intro' } },
+      transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+    },
   },
 };
 
@@ -57,22 +87,46 @@ function App() {
 import { DslRenderer, fromYaml } from '@elucim/dsl';
 
 const yaml = `
-version: "1.0"
-root:
+version: "2.0"
+scene:
   type: player
   width: 800
   height: 600
   fps: 30
-  durationInFrames: 90
   background: "#0d0d1a"
-  children:
-    - type: circle
+  children: [orbit]
+elements:
+  orbit:
+    id: orbit
+    type: circle
+    props:
+      type: circle
       cx: 400
       cy: 300
       r: 100
       stroke: "#3b82f6"
       strokeWidth: 3
-      draw: 60
+      fill: none
+      opacity: 0
+timelines:
+  intro:
+    id: intro
+    duration: 60
+    tracks:
+      - target: orbit
+        property: opacity
+        keyframes:
+          - { frame: 0, value: 0 }
+          - { frame: 60, value: 1, easing: easeOutCubic }
+defaultStateMachine: main
+stateMachines:
+  main:
+    id: main
+    entry: intro
+    states:
+      intro: { timeline: intro }
+    transitions:
+      - { id: entry-start, from: entry, to: intro, trigger: onStart }
 `;
 
 const myDiagram = fromYaml(yaml);
@@ -86,21 +140,21 @@ function App() {
 
 ### `<DslRenderer dsl={doc} />`
 
-Validates the DSL document and renders it as React components. If validation fails, displays error messages.
+Validates a normalized document and renders it as React components. If validation fails, it displays error messages instead of crashing.
 
 **Props:**
-- `dsl: ElucimDocument` — The DSL document to render
+- `dsl: ElucimDocument` — The normalized document to render
 - `className?: string` — CSS class for the wrapper div
 - `style?: CSSProperties` — Inline styles for the wrapper div
-- `theme?: ElucimTheme` — Custom color tokens as CSS custom properties (e.g. `{ foreground: '#fff', background: '#000' }`)
-- `colorScheme?: 'light' | 'dark' | 'auto'` — Inject light/dark theme variables automatically. `'auto'` detects from `prefers-color-scheme`. DSL docs using `$token` syntax adapt automatically.
-- `poster?: 'first' | 'last' | number` — Render a static frame instead of interactive player
+- `theme?: ElucimTheme` — Custom color tokens as CSS custom properties
+- `colorScheme?: 'light' | 'dark' | 'auto'` — Inject light/dark theme variables automatically
+- `poster?: 'first' | 'last' | number` — Render a static frame instead of interactive playback
 - `onError?: (errors: Array<{ path: string; message: string }>) => void` — Callback for validation errors
 - `ref?: React.Ref<DslRendererRef>` — Imperative handle for programmatic control
 
 ### `validate(doc: unknown): ValidationResult`
 
-Validates a DSL document without rendering it.
+Validates a document without rendering it.
 
 ```ts
 import { validate } from '@elucim/dsl';
@@ -108,41 +162,13 @@ import { validate } from '@elucim/dsl';
 const result = validate(myDoc);
 if (!result.valid) {
   console.log(result.errors);
-  // [{ path: 'root.children[0].cx', message: 'Required numeric field "cx"...', severity: 'error' }]
+  // [{ path: 'elements.orbit.props.cx', message: 'Required numeric field "cx"...', severity: 'error' }]
 }
 ```
 
-### V2 agent documents
-
-V2 documents are a normalized, ID-addressable authoring format for agents and host apps such as CutReady. The v1 renderer/editor remains supported; v2 can be validated, migrated, patched with commands, previewed through timeline/state helpers, and converted back to v1 for the current editor/render path.
-
-```ts
-import {
-  applyCommand,
-  migrateV1ToV2,
-  migrateV2ToV1,
-  suggestDocumentNudges,
-  validateForAgent,
-} from '@elucim/dsl';
-
-const v2 = migrateV1ToV2(existingV1Doc);
-const validation = validateForAgent(v2);
-
-const changed = applyCommand(v2, {
-  op: 'updateElement',
-  id: 'headline',
-  patch: { props: { content: 'Updated headline' } },
-});
-
-const nudges = suggestDocumentNudges(changed.document);
-const editorDoc = migrateV2ToV1(changed.document);
-```
-
-The v2 surface is intentionally LLM-agnostic. Agents can generate the first 80% of a layout, then host apps can call deterministic Elucim commands, validation, summaries, diffs, timeline previews, state transitions, and nudges for controlled refinement.
-
 ### `fromYaml(input: string): ElucimDocument`
 
-Parse a YAML string into a validated `ElucimDocument`. Uses JSON-compatible schema to avoid YAML-specific type coercions (e.g., `on` stays as a string instead of becoming `true`).
+Parses a YAML string into a validated `ElucimDocument`. It uses a JSON-compatible schema so YAML values such as `on`, `yes`, and `NO` stay as strings instead of being coerced to booleans.
 
 ```ts
 import { fromYaml, ElucimYamlError } from '@elucim/dsl';
@@ -153,289 +179,212 @@ try {
 } catch (e) {
   if (e instanceof ElucimYamlError) {
     console.error(e.message);
-    // Structured validation errors (empty for parse failures)
     console.error(e.validationErrors);
   }
 }
 ```
 
-Throws `ElucimYamlError` if YAML parsing fails or the document is invalid. The error includes a `validationErrors` array with structured error details for validation failures.
-
 ### `renderToSvgString(doc, frame, options?)`
 
-Renders a DSL document to an SVG string without a browser DOM — useful for server-side rendering, thumbnails, and static export.
+Renders a document to an SVG string without a browser DOM — useful for server-side rendering, thumbnails, and static export.
 
 ```ts
 import { renderToSvgString } from '@elucim/dsl';
 const svg = renderToSvgString(myDoc, 0);
 ```
 
-Uses `react-dom/server` under the hood. Validates the DSL and throws on invalid input.
+### Agent authoring helpers
+
+`@elucim/dsl/agent` provides a small, deterministic toolkit for LLM and host workflows. It creates normalized documents, applies higher-level commands, generates explicit timeline/state-machine structures, and returns agent-readable quality reports.
+
+```ts
+import {
+  applyAgentCommands,
+  createDocument,
+  evaluateSceneForAgent,
+  inspectSceneForAgent,
+  repairDocumentForAgent,
+  sampleAnimationForAgent,
+} from '@elucim/dsl/agent';
+
+const doc = applyAgentCommands(createDocument({
+  preset: 'slide',
+  metadata: { title: 'Slope intuition' },
+}), [
+  {
+    op: 'addElement',
+    element: {
+      id: 'title',
+      type: 'text',
+      role: 'title',
+      intent: { purpose: 'Introduce the core concept' },
+      layout: { x: 96, y: 96 },
+      props: { content: 'Slope as local change', fill: '$title' },
+    },
+  },
+  { op: 'addRevealTimeline', timeline: { id: 'intro', targets: ['title'], preset: 'fadeIn' } },
+  { op: 'createStateMachine', stateMachine: { id: 'main', timelineId: 'intro', start: 'onStart' } },
+]).document;
+
+const report = evaluateSceneForAgent(doc);
+const repaired = repairDocumentForAgent(doc);
+const animation = sampleAnimationForAgent(repaired.document, 'intro');
+const inspection = inspectSceneForAgent(repaired.document, { timelineId: 'intro' });
+```
+
+The agent helpers intentionally produce timelines and state machines rather than wrapper animation props. Use them when you want an LLM to make targeted scene edits without memorizing the full document schema. Diagnostic helpers such as `getTimelineBounds()`, `repairDocumentForAgent()`, `sampleAnimationForAgent()`, `inspectSceneForAgent()`, and `createLoopingStateMachine()` help agents detect timeline mistakes, auto-extend too-short timeline durations, prove that properties change over sampled frames, catch tiny/off-canvas/low-contrast scenes, and wire a generated timeline into live playback.
 
 ### `DslRendererRef`
 
-Imperative handle exposed via `ref` on `<DslRenderer>`. Methods:
+Imperative handle exposed via `ref` on `<DslRenderer>`:
 
 - `getSvgElement()` — Returns the underlying `SVGSVGElement`
 - `seekToFrame(frame)` — Jump to a specific frame
-- `getTotalFrames()` — Total frame count of the document
+- `getTotalFrames()` — Total frame count for the current playback surface
 - `play()` / `pause()` — Control playback
-- `isPlaying()` — Whether the animation is currently playing
+- `isPlaying()` — Whether playback is active
 
-### `compileExpression(expr: string)`
+### Math expressions
 
-Compile a math expression string into a callable function.
-
-```ts
-import { compileExpression } from '@elucim/dsl';
-
-const fn = compileExpression('sin(x) * 2');
-fn({ x: Math.PI / 2 }); // → 2
-```
-
-### `compileVectorExpression(expr: string)`
-
-Compile a vector field expression returning `[number, number]`.
-
-```ts
-import { compileVectorExpression } from '@elucim/dsl';
-
-const fn = compileVectorExpression('[-y, x]');
-fn({ x: 1, y: 2 }); // → [-2, 1]
-```
+`compileExpression(expr: string)` and `compileVectorExpression(expr: string)` compile safe math strings for function plots and vector fields. The evaluator supports arithmetic, common trig/log functions, constants (`PI`, `E`, `TAU`), and variables (`x`, or `x`/`y` for vector fields). It does not use arbitrary JavaScript evaluation.
 
 ## Document Schema
 
-Every document has this structure:
+Every public document uses this normalized structure:
 
-```json
-{
-  "version": "1.0",
-  "root": { "type": "scene|player|presentation", ... }
+```ts
+interface ElucimDocument {
+  $schema?: string;
+  version: '2.0';
+  scene: ElucimScene;
+  elements: Record<string, ElucimElement>;
+  timelines?: Record<string, ElucimTimeline>;
+  stateMachines?: Record<string, ElucimStateMachine>;
+  defaultStateMachine?: string;
+  metadata?: ElucimMetadata;
 }
 ```
 
-### Root Types
+### `scene`
 
-| Type | Description |
-|------|-------------|
-| `scene` | Raw SVG scene (needs external frame control) |
-| `player` | Interactive player with controls, scrub bar, play/pause |
-| `presentation` | Slide-based presentation with transitions |
+The scene defines the render surface and top-level element order.
 
-All root types accept an optional `preset` field: `'card'` (640×360), `'slide'` (1280×720), `'square'` (600×600). When set, `width` and `height` are derived from the preset automatically.
+| Field | Description |
+|-------|-------------|
+| `type` | Usually `player` for interactive playback or `scene` for host-controlled rendering |
+| `width` / `height` | Scene dimensions in pixels |
+| `preset` | Optional shorthand: `card` (640×360), `slide` (1280×720), or `square` (600×600) |
+| `fps` | Frames per second for timelines |
+| `background` | Background color or semantic token |
+| `children` | Ordered array of top-level element IDs |
 
-### Element Types
+Presentation and slide-deck composition is host-level React composition with `@elucim/core` components such as `<Presentation>` and `<Slide>`, not a DSL root shape.
 
-#### Primitives
-| Type | Required Props | Description |
-|------|---------------|-------------|
-| `circle` | `cx`, `cy`, `r` | SVG circle |
-| `line` | `x1`, `y1`, `x2`, `y2` | SVG line |
-| `arrow` | `x1`, `y1`, `x2`, `y2` | Line with arrowhead |
-| `rect` | `x`, `y`, `width`, `height` | Rectangle |
-| `polygon` | `points` (array of [x,y]) | Polygon/polyline |
-| `bezierCurve` | `x1`, `y1`, `cx1`, `cy1`, `x2`, `y2` | Quadratic/cubic Bezier curve |
-| `text` | `x`, `y`, `content` | Text element |
-| `image` | `src`, `x`, `y`, `width`, `height` | Embed external images (PNG, SVG, etc.) |
-| `barChart` | `bars` | Animated bar chart with labels and colors |
+### `elements`
 
-#### Math Visualizations
-| Type | Required Props | Description |
-|------|---------------|-------------|
-| `axes` | — | Coordinate axes with grid/ticks |
-| `functionPlot` | `fn` (expression) | Plot a function like `"sin(x)"` |
-| `vector` | `to` ([x,y]) | Mathematical vector with label |
-| `vectorField` | `fn` (vector expr) | Grid of arrows like `"[-y, x]"` |
-| `matrix` | `values` (2D array) | Matrix with brackets |
-| `graph` | `nodes`, `edges` | Graph theory visualization |
-| `latex` | `expression`, `x`, `y` | LaTeX rendered via KaTeX |
+Elements are keyed by stable ID. Each element includes its `id`, `type`, optional layout/metadata, and a `props` object for render properties.
 
-#### Animation Wrappers
-| Type | Key Props | Description |
-|------|----------|-------------|
-| `fadeIn` | `duration`, `easing` | Fade children in |
-| `fadeOut` | `duration`, `easing` | Fade children out |
-| `draw` | `duration`, `easing` | Progressive stroke drawing |
-| `write` | `duration`, `easing` | Stroke draw + fill fade |
-| `transform` | `translate`, `scale`, `rotate`, `opacity` | Animate position/scale/rotation |
-| `morph` | `fromColor`, `toColor`, `fromScale`, `toScale` | Color/scale morphing |
-| `stagger` | `staggerDelay` | Sequential delayed children |
-| `parallel` | — | Children animate simultaneously |
+Supported primitives include `circle`, `line`, `arrow`, `rect`, `polygon`, `bezierCurve`, `text`, `image`, `group`, and `barChart`.
 
-#### Structural
-| Type | Key Props | Description |
-|------|----------|-------------|
-| `sequence` | `from`, `durationInFrames` | Time-offset wrapper |
-| `group` | `children` | Logical grouping with shared transforms (rotation, scale, translate) and zIndex sorting of children |
+Supported math/data elements include `axes`, `functionPlot`, `vector`, `vectorField`, `matrix`, `graph`, and `latex`.
 
-### Inline Animation Props
+### `timelines`
 
-All primitives support these optional animation props directly:
-- `fadeIn?: number` — Fade in over N frames
-- `fadeOut?: number` — Fade out over N frames
-- `draw?: number` — Progressive stroke draw over N frames
-- `easing?: string | { type, ... }` — Easing function
+Timelines contain explicit property tracks and keyframes. Use timelines instead of wrapper animation nodes.
 
-### Spatial Transform Props
+```json
+{
+  "intro": {
+    "id": "intro",
+    "duration": 45,
+    "tracks": [
+      {
+        "target": "title",
+        "property": "opacity",
+        "keyframes": [
+          { "frame": 0, "value": 0 },
+          { "frame": 45, "value": 1 }
+        ]
+      }
+    ]
+  }
+}
+```
 
-All primitives and groups support these optional spatial transform props:
-- `rotation?: number` — Rotate element in degrees
-- `rotationOrigin?: [number, number]` — Center of rotation [cx, cy]
-- `scale?: number` — Uniform scale factor
-- `translate?: [number, number]` — Offset [dx, dy]
-- `zIndex?: number` — Stacking order (higher renders on top)
+Common animated properties include `opacity`, `translate`, `scale`, `rotate`, `fill`, and `stroke`.
 
-### Easing
+### `stateMachines`
 
-**Named easings:** `linear`, `easeInQuad`, `easeOutQuad`, `easeInOutQuad`, `easeInCubic`, `easeOutCubic`, `easeInOutCubic`, `easeInQuart`, `easeOutQuart`, `easeInOutQuart`, `easeInSine`, `easeOutSine`, `easeInOutSine`, `easeInExpo`, `easeOutExpo`, `easeInOutExpo`, `easeInBack`, `easeOutBack`, `easeOutElastic`, `easeOutBounce`
+State machines connect timelines into interactive flows. Use them for entry animation, click/key-driven transitions, reset behavior, or auto-advancing states.
 
-**Spring:** `{ "type": "spring", "stiffness": 100, "damping": 10, "mass": 1 }`
-
-**Cubic Bezier:** `{ "type": "cubicBezier", "x1": 0.25, "y1": 0.1, "x2": 0.25, "y2": 1 }`
-
-### Math Expressions
-
-Used in `functionPlot.fn` and `vectorField.fn`. Safe evaluation — no `eval()`.
-
-**Operators:** `+`, `-`, `*`, `/`, `^` (power), unary `-`
-
-**Functions:** `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sqrt`, `abs`, `log`, `ln`, `exp`, `floor`, `ceil`, `round`, `min`, `max`, `sign`, `pow`
-
-**Constants:** `PI`, `E`, `TAU`
-
-**Variables:** `x` (FunctionPlot), `x` and `y` (VectorField)
-
-**Examples:**
-- `"sin(x)"` — Sine wave
-- `"x^2 - 1"` — Parabola
-- `"exp(-(x^2) / 2)"` — Gaussian
-- `"[-y, x]"` — Rotation vector field
-- `"[sin(y), cos(x)]"` — Wave vector field
+```json
+{
+  "main": {
+    "id": "main",
+    "entry": "intro",
+    "states": {
+      "intro": { "timeline": "intro" },
+      "focus": { "timeline": "focus" }
+    },
+    "transitions": [
+      { "id": "entry-start", "from": "entry", "to": "intro", "trigger": "onStart" },
+      { "id": "intro-next", "from": "intro", "to": "focus", "exitTime": 1 }
+    ]
+  }
+}
+```
 
 ## Semantic Color Tokens
 
-Use `$token` syntax in your DSL documents to create theme-adaptive visualizations:
+Use `$token` syntax in color fields to create theme-adaptive visualizations. Tokens resolve to CSS custom properties at render time.
 
 ```json
 {
-  "type": "player",
-  "background": "$background",
-  "children": [
-    { "type": "text", "x": 400, "y": 300, "content": "Hello", "fill": "$foreground" },
-    { "type": "circle", "cx": 200, "cy": 200, "r": 50, "stroke": "$accent" }
-  ]
+  "version": "2.0",
+  "scene": { "type": "player", "preset": "card", "background": "$background", "children": ["label"] },
+  "elements": {
+    "label": {
+      "id": "label",
+      "type": "text",
+      "props": { "type": "text", "x": 320, "y": 180, "content": "Hello", "fill": "$foreground", "textAnchor": "middle" }
+    }
+  }
 }
 ```
 
-Or equivalently in YAML:
+Available tokens include `$foreground`, `$background`, `$title`, `$subtitle`, `$muted`, `$primary`, `$secondary`, `$tertiary`, `$success`, `$warning`, `$error`, `$surface`, `$border`, and `$accent`.
 
-```yaml
-type: player
-background: "$background"
-children:
-  - type: text
-    x: 400
-    y: 300
-    content: Hello
-    fill: "$foreground"
-  - type: circle
-    cx: 200
-    cy: 200
-    r: 50
-    stroke: "$accent"
-```
-
-**Available tokens:**
-
-| Token | Dark default | Light default | Usage |
-|-------|-------------|---------------|-------|
-| `$foreground` | `#c8d6e5` | `#334155` | Body text |
-| `$background` | `#0a0a1e` | `#f8fafc` | Slide/scene background |
-| `$title` | `#e0e7ff` | `#1e293b` | Heading text (brighter than foreground) |
-| `$subtitle` | `#94a3b8` | `#64748b` | Secondary/subtitle text |
-| `$muted` | `#64748b` | `#94a3b8` | Annotations, faint text |
-| `$primary` | `#4fc3f7` | `#2563eb` | Primary accent |
-| `$secondary` | `#a78bfa` | `#7c3aed` | Secondary accent |
-| `$tertiary` | `#f472b6` | `#db2777` | Tertiary accent |
-| `$success` | `#34d399` | `#16a34a` | Positive / success |
-| `$warning` | `#fbbf24` | `#d97706` | Warning / highlight |
-| `$error` | `#f87171` | `#dc2626` | Error / negative |
-| `$surface` | `#1e293b` | `#f8fafc` | Panel backgrounds |
-| `$border` | `#334155` | `#334155` | Borders, grid lines |
-| `$accent` | `#4fc3f7` | `#2563eb` | Alias for primary |
-
-Tokens resolve to CSS custom properties (`$background` → `var(--elucim-background, #0a0a1e)`). Pair with `colorScheme` to auto-adapt:
-
-```tsx
-<DslRenderer dsl={doc} colorScheme="auto" />
-```
-
-| colorScheme | Behavior |
-|-------------|----------|
-| `'dark'` | Injects dark palette variables |
-| `'light'` | Injects light palette variables |
-| `'auto'` | Detects `prefers-color-scheme` media query |
-| _(omitted)_ | Tokens fall back to built-in defaults (dark) |
-
-You can also override individual tokens with the `theme` prop:
+Pair tokens with `colorScheme` or `theme`:
 
 ```tsx
 <DslRenderer dsl={doc} colorScheme="auto" theme={{ accent: '#ff6600' }} />
 ```
 
-## Examples
-
-See the [`examples/`](./examples/) directory:
-- `hello-circle.json` — Minimal animated circle
-- `math-demo.json` — Axes, function plot, vector, LaTeX
-- `animated-scene.json` — FadeIn, Draw, Transform, Stagger, Morph
-- `presentation.json` — Multi-slide presentation
-- `full-showcase.json` — Every feature in one document
-
 ## For AI Agents
 
 When instructing an LLM to create Elucim diagrams:
 
-1. **Ask it to produce JSON** matching the `ElucimDocument` schema
-2. **Set `version: "1.0"`** as the first field
-3. **Choose a root type**: `player` for interactive, `scene` for embedded, `presentation` for slides
-4. **Use `sequence` nodes** to control timing (offsets in frames)
-5. **Wrap elements in animation nodes** (`fadeIn`, `draw`, `stagger`) for entrance effects
-6. **Use math expression strings** for function plots and vector fields
+1. Ask it to produce JSON matching the normalized `ElucimDocument` schema.
+2. Set `version: "2.0"` and include exactly one `scene` plus an ID-keyed `elements` object.
+3. Use stable, semantic element IDs (`title`, `axis-x`, `curve-sine`) so later edits can target specific objects.
+4. Put motion in `timelines` with explicit tracks/keyframes; do not generate wrapper animation nodes.
+5. Use `stateMachines` for entry, click/key, reset, and auto-advance behavior.
+6. Use math expression strings for function plots and vector fields.
+7. Use semantic color tokens (`$accent`, `$foreground`, `$background`) when the host theme should control colors.
+
+Useful APIs for agent and host workflows include `createDocument`, `applyAgentCommands`, `addRevealTimeline`, `createStateMachine`, `evaluateSceneForAgent`, `validateForAgent`, `summarizeDocument`, `diffDocuments`, and `suggestDocumentNudges` from `@elucim/dsl/agent`, plus low-level preview helpers such as `applyTimelineFrame` and `transitionStateMachine` from `@elucim/dsl`.
 
 **Tips:**
-- Use `poster` on `<DslRenderer>` to show a static preview frame before playback starts
-- Use `renderToSvgString(doc, frame)` to generate SVG previews server-side — ideal for thumbnails and social cards
+- Use `poster` on `<DslRenderer>` to show a static preview frame before playback starts.
+- Use `renderToSvgString(doc, frame)` to generate SVG previews server-side for thumbnails and social cards.
 
 Example prompt:
-> "Create an Elucim DSL JSON document that shows a coordinate system with sin(x) and cos(x) plotted, 
-> with the sin curve drawing first, then the cos curve drawing 30 frames later, 
-> and a LaTeX label fading in at the end."
-
-## Fluent Builder API
-
-Build presentations programmatically with a chainable TypeScript API:
-
-```tsx
-import { presentation, darkTheme } from '@elucim/dsl';
-
-const doc = presentation(darkTheme)
-  .size(1920, 1080)
-  .transition('fade', 500)
-  .slide('Welcome', (s) => {
-    s.title('Hello World');
-  })
-  .slide('Math', (s) => {
-    s.latex('e^{i\\pi} + 1 = 0', { x: 960, y: 500, fontSize: 48, color: '#fdcb6e' });
-  })
-  .build();
-```
+> "Create an Elucim DSL JSON document with `version: \"2.0\"`, a single player scene, stable element IDs for axes and two function plots, an intro timeline that draws the sine curve before the cosine curve, and a state machine that starts the intro on load."
 
 ## Related
 
-- **[@elucim/core](https://www.npmjs.com/package/@elucim/core)** — The React rendering engine (peer dependency)
-- **[@elucim/editor](https://www.npmjs.com/package/@elucim/editor)** — Visual canvas editor for Elucim animations
+- **[@elucim/core](https://www.npmjs.com/package/@elucim/core)** — React rendering engine and component APIs
+- **[@elucim/editor](https://www.npmjs.com/package/@elucim/editor)** — Visual canvas editor for normalized Elucim documents
 - **[Elucim Docs](https://elucim.com)** — Full docs with live interactive examples
 
 ## License

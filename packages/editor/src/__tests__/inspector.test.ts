@@ -386,7 +386,7 @@ describe('inspector animation updates', () => {
     expect(el.fadeOut).toBe(15);
   });
 
-  it('adds animation property fields from the dropdown menu', async () => {
+  it('does not expose legacy wrapper animation controls in the inspector', async () => {
     function SelectElement() {
       const { dispatch } = useEditorState();
       useEffect(() => {
@@ -409,11 +409,9 @@ describe('inspector animation updates', () => {
       ),
     );
 
-    const addButtons = await screen.findAllByRole('button', { name: /\+ Add property/ });
-    fireEvent.click(addButtons[0]);
-    fireEvent.pointerDown(await screen.findByRole('menuitem', { name: 'Fade In' }));
-
-    expect(await screen.findByLabelText('Fade In')).toBeTruthy();
+    expect(await screen.findByText('Rect — r1')).toBeTruthy();
+    expect(screen.queryByLabelText('Animate With')).toBeNull();
+    expect(screen.queryByText('Fade In')).toBeNull();
   });
 });
 
@@ -425,13 +423,6 @@ describe('inspector transform updates', () => {
     state = editorReducer(state, { type: 'UPDATE_ELEMENT', id: 'r1', changes: { rotation: 45 } as any });
     const el = findElementById(state.document.root, 'r1')!.element as any;
     expect(el.rotation).toBe(45);
-  });
-
-  it('sets zIndex', () => {
-    let state = stateWith(rect);
-    state = editorReducer(state, { type: 'UPDATE_ELEMENT', id: 'r1', changes: { zIndex: 5 } as any });
-    const el = findElementById(state.document.root, 'r1')!.element as any;
-    expect(el.zIndex).toBe(5);
   });
 
   it('adds transform property fields from the dropdown menu', async () => {
@@ -462,6 +453,7 @@ describe('inspector transform updates', () => {
     fireEvent.pointerDown(await screen.findByRole('menuitem', { name: 'Rotation' }));
 
     expect(await screen.findByLabelText('Rotation')).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: 'Z-Index' })).toBeNull();
   });
 });
 

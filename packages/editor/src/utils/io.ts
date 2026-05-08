@@ -1,4 +1,4 @@
-import type { ElucimDocument, ElucimV2Document } from '@elucim/dsl';
+import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
 import { migrateV2ToV1, validate } from '@elucim/dsl';
 
 export interface ExportOptions {
@@ -8,13 +8,13 @@ export interface ExportOptions {
 /**
  * Export an ElucimDocument to a JSON string.
  */
-export function exportToJson(document: ElucimDocument, options: ExportOptions = {}): string {
+export function exportToJson(document: RenderableDocument, options: ExportOptions = {}): string {
   const { pretty = true } = options;
   return JSON.stringify(document, null, pretty ? 2 : undefined);
 }
 
 export interface ImportResult {
-  document: ElucimDocument | null;
+  document: RenderableDocument | null;
   errors: string[];
 }
 
@@ -38,7 +38,7 @@ export function importFromJson(json: string): ImportResult {
           errors: result.errors.map(e => `${e.path}: ${e.message}`),
         };
       }
-      return { document: migrateV2ToV1(parsed as ElucimV2Document), errors: [] };
+      return { document: migrateV2ToV1(parsed as ElucimDocument), errors: [] };
     }
     if (parsed.version !== '1.0') {
       return { document: null, errors: [`Unknown version: ${parsed.version}. Expected "1.0" or "2.0"`] };
@@ -47,7 +47,7 @@ export function importFromJson(json: string): ImportResult {
       return { document: null, errors: ['Missing "root" property'] };
     }
 
-    const doc = parsed as ElucimDocument;
+    const doc = parsed as RenderableDocument;
 
     // Run DSL validator
     const result = validate(doc);
@@ -67,7 +67,7 @@ export function importFromJson(json: string): ImportResult {
 /**
  * Download a document as a .json file in the browser.
  */
-export function downloadAsJson(doc: ElucimDocument, filename = 'elucim-scene.json'): void {
+export function downloadAsJson(doc: RenderableDocument, filename = 'elucim-scene.json'): void {
   const json = exportToJson(doc);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

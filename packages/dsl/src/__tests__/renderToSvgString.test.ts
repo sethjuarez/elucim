@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderToSvgString } from '../renderer/renderToSvgString';
+import type { ElucimDocument } from '../index';
 
 const doc = {
   version: '1.0' as const,
@@ -42,5 +43,29 @@ describe('renderToSvgString', () => {
   it('accepts width/height overrides via options', () => {
     const svg = renderToSvgString(doc as any, 0, { width: 800, height: 600 });
     expect(svg).toContain('<svg');
+  });
+
+  it('renders canonical normalized documents', () => {
+    const normalized: ElucimDocument = {
+      version: '2.0',
+      scene: {
+        type: 'scene',
+        width: 400,
+        height: 300,
+        children: ['circle'],
+      },
+      elements: {
+        circle: {
+          id: 'circle',
+          type: 'circle',
+          props: { type: 'circle', cx: 200, cy: 150, r: 50, fill: '#ff0000' },
+        },
+      },
+    };
+
+    const svg = renderToSvgString(normalized, 0);
+
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('<circle');
   });
 });

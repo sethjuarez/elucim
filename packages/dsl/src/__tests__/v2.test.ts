@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { getDocumentLinearDuration, migrateV1ToV2, migrateV2ToV1, normalizeToV2, resolveExportFrameCount, toRenderableV1, validate, validateV2 } from '../index';
-import type { ElucimDocument, ElucimV2Document } from '../index';
+import type { ElucimDocument, RenderableDocument } from '../index';
 
 describe('Elucim v2 document foundation', () => {
   it('validates a minimal normalized v2 document', () => {
-    const doc: ElucimV2Document = {
+    const doc: ElucimDocument = {
       version: '2.0',
       scene: { type: 'player', width: 1920, height: 1080, children: ['title'] },
       elements: {
@@ -24,7 +24,7 @@ describe('Elucim v2 document foundation', () => {
   });
 
   it('does not require canvas duration for v2 scene layout', () => {
-    const doc: ElucimV2Document = {
+    const doc: ElucimDocument = {
       version: '2.0',
       scene: { type: 'scene', width: 800, height: 600, children: ['title'] },
       elements: {
@@ -41,7 +41,7 @@ describe('Elucim v2 document foundation', () => {
   });
 
   it('requires explicit export policies instead of canvas duration for fixed machine output', () => {
-    const doc: ElucimV2Document = {
+    const doc: ElucimDocument = {
       version: '2.0',
       scene: { type: 'player', children: ['title'] },
       elements: {
@@ -84,8 +84,31 @@ describe('Elucim v2 document foundation', () => {
     });
   });
 
+  it('rejects legacy wrapper animation syntax in normalized v2 documents', () => {
+    const result = validateV2({
+      version: '2.0',
+      scene: { type: 'player', children: ['title', 'intro'] },
+      elements: {
+        title: { id: 'title', type: 'text', props: { content: 'Hello', fadeIn: 20 } },
+        intro: { id: 'intro', type: 'fadeIn', props: { type: 'fadeIn' } },
+      },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual({
+      path: 'elements.title.props.fadeIn',
+      message: 'Legacy animation prop "fadeIn" is not part of v2. Use timeline tracks and keyframes instead.',
+      severity: 'error',
+    });
+    expect(result.errors).toContainEqual({
+      path: 'elements.intro.type',
+      message: 'Legacy wrapper element "fadeIn" is not part of v2. Use timelines and state machines for motion.',
+      severity: 'error',
+    });
+  });
+
   it('migrates a v1 player into normalized v2 elements with stable IDs', () => {
-    const v1: ElucimDocument = {
+    const v1: RenderableDocument = {
       version: '1.0',
       root: {
         type: 'player',
@@ -117,7 +140,7 @@ describe('Elucim v2 document foundation', () => {
   });
 
   it('deduplicates repeated v1 IDs during migration', () => {
-    const v1: ElucimDocument = {
+    const v1: RenderableDocument = {
       version: '1.0',
       root: {
         type: 'scene',
@@ -188,5 +211,35 @@ describe('Elucim v2 document foundation', () => {
     expect(v1.version).toBe('1.0');
     expect(v1.root.type).toBe('player');
     expect(validate(v1).valid).toBe(true);
+  });
+
+  it('applies default state-machine start frames in the renderable v1 bridge', () => {
+    const v1 = toRenderableV1({
+      version: '2.0',
+      scene: { type: 'player', children: ['title'] },
+      elements: {
+        title: { id: 'title', type: 'text', props: { type: 'text', content: 'Hello', opacity: 1 } },
+      },
+      timelines: {
+        intro: {
+          id: 'intro',
+          duration: 30,
+          tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+        },
+      },
+      defaultStateMachine: 'deck',
+      stateMachines: {
+        deck: {
+          id: 'deck',
+          entry: 'idle',
+          states: { idle: { timeline: 'intro' } },
+          transitions: [{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }],
+        },
+      },
+    });
+
+    expect(v1.root.type).toBe('player');
+    if (v1.root.type !== 'player') throw new Error('Expected player root');
+    expect(v1.root.children[0]).toMatchObject({ id: 'title', opacity: 0 });
   });
 });

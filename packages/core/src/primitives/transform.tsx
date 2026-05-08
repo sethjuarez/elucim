@@ -20,7 +20,7 @@ export interface SpatialProps {
  * Base props shared by all elements (primitives, groups, images).
  */
 export interface BaseElementProps {
-  /** Controls rendering order. Higher values render on top. Default: 0 */
+  /** @deprecated Stacking now follows sibling order; later siblings render on top. */
   zIndex?: number;
   /** Optional identifier */
   id?: string;
@@ -81,15 +81,9 @@ export function withTransform(
 }
 
 /**
- * Sort React children by their zIndex prop (stable sort, default 0).
- * Used by Scene and Group to implement stacking order.
+ * Returns React children in sibling order.
+ * @deprecated Use document/JSX order directly; zIndex is ignored for stacking.
  */
 export function sortByZIndex(children: React.ReactNode): React.ReactNode[] {
-  const arr = React.Children.toArray(children);
-  // Stable sort: elements with same zIndex preserve document order
-  return arr.sort((a, b) => {
-    const aZ = React.isValidElement(a) ? ((a.props as BaseElementProps).zIndex ?? 0) : 0;
-    const bZ = React.isValidElement(b) ? ((b.props as BaseElementProps).zIndex ?? 0) : 0;
-    return aZ - bZ;
-  });
+  return React.Children.toArray(children);
 }
