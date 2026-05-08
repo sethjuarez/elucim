@@ -1,5 +1,19 @@
 # @elucim/core
 
+## [0.16.0](https://github.com/sethjuarez/elucim/compare/core-v0.15.0...core-v0.16.0) (2026-05-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* Scene stacking now follows sibling/document order instead of zIndex. Use hierarchy drag/drop or agent order helpers to change layer order.
+
+### Features
+
+* add presentation polish foundation ([3cbc1cb](https://github.com/sethjuarez/elucim/commit/3cbc1cb031b31d4c564f6c59edbac58d59c88385))
+* add v2 agent integration helpers ([d3fd748](https://github.com/sethjuarez/elucim/commit/d3fd748bd4efc02fd7ce137fe41352b550387eca))
+* make hierarchy order canonical ([acd8664](https://github.com/sethjuarez/elucim/commit/acd8664ff0b7ed1f4e20e0d4048a748ee23eb0d3))
+* refine v2 state machine preview ([6800e69](https://github.com/sethjuarez/elucim/commit/6800e691c9da465662b49ad3fab5b3bf01b017e4))
+
 ## [0.15.0](https://github.com/sethjuarez/elucim/compare/core-v0.14.1...core-v0.15.0) (2026-04-23)
 
 
