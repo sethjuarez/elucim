@@ -1,5 +1,22 @@
 # @elucim/dsl
 
+## [0.19.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.18.0...dsl-v0.19.0) (2026-05-08)
+
+
+### Features
+
+* add full composite helper set ([e3fda14](https://github.com/sethjuarez/elucim/commit/e3fda14ed868b5264cc01a9f8e9a919505d2c14a))
+* add semantic composite helpers ([255d9ef](https://github.com/sethjuarez/elucim/commit/255d9efb8bf48755ffc1e16cdc444f8e017c3c76))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.19.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.19.0
+
 ## [0.18.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.17.0...dsl-v0.18.0) (2026-05-08)
 
 
