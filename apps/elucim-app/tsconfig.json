@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@elucim/core": ["../../packages/core/src/index.ts"],
+      "@elucim/dsl": ["../../packages/dsl/src/index.ts"],
+      "@elucim/editor": ["../../packages/editor/src/index.ts"]
+    }
+  },
+  "include": ["src", "../../packages/core/src", "../../packages/dsl/src", "../../packages/editor/src"],
+  "exclude": [
+    "../../packages/**/src/**/__tests__/**",
+    "../../packages/**/src/**/*.test.ts",
+    "../../packages/**/src/**/*.test.tsx"
+  ]
+}

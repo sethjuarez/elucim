@@ -8,6 +8,9 @@ playwright-report/
 screenshots/
 *.png
 !docs/public/images/**/*.png
+!apps/elucim-app/src-tauri/icons/**/*.png
+apps/*/src-tauri/target/
+apps/*/src-tauri/gen/
 *.local
 .env
 .env.*

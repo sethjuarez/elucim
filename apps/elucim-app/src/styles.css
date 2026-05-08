@@ -1,0 +1,118 @@
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-titlebar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(160px, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 12px;
+  background: #111827;
+  border-bottom: 1px solid #263244;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.app-logo {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+.app-name {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.app-file {
+  max-width: 38vw;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.app-actions button {
+  min-height: 26px;
+  padding: 3px 10px;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  background: #172033;
+  color: #e2e8f0;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.app-actions button:hover:not(:disabled) {
+  border-color: #6c5ce7;
+}
+
+.app-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.app-status {
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 11px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-warnings {
+  padding: 6px 12px;
+  background: #422006;
+  border-bottom: 1px solid #854d0e;
+  color: #fde68a;
+  font-size: 11px;
+}
+
+.app-editor {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}

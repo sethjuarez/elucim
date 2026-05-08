@@ -1,0 +1,115 @@
+name: Release Elucim App
+
+on:
+  push:
+    tags:
+      - 'elucim-app-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag, for example elucim-app-v0.1.0'
+        required: true
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          VERSION="${TAG#elucim-app-v}"
+          if [ "$VERSION" = "$TAG" ]; then
+            echo "Tag must use the elucim-app-v* format" >&2
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: resolve
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-24.04
+            args: ''
+            rust_targets: ''
+          - platform: windows-latest
+            args: ''
+            rust_targets: ''
+
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 45
+    env:
+      SCCACHE_GHA_ENABLED: 'true'
+      RUSTC_WRAPPER: sccache
+      TAURI_UPDATER_PUBKEY: ${{ secrets.TAURI_UPDATER_PUBKEY }}
+      ELUCIM_ENABLE_UPDATER: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-24.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - name: Configure sccache
+        uses: mozilla-actions/sccache-action@v0.0.7
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare release metadata
+        run: node apps/elucim-app/scripts/prepare-release.mjs ${{ needs.resolve.outputs.version }}
+
+      - name: Validate app
+        run: |
+          pnpm --filter @elucim/core build
+          pnpm --filter @elucim/dsl build
+          pnpm --filter @elucim/editor build
+          pnpm --filter elucim-app lint
+          pnpm --filter elucim-app test
+
+      - name: Build and upload Tauri release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/elucim-app
+          tagName: ${{ needs.resolve.outputs.tag }}
+          releaseName: 'Elucim App ${{ needs.resolve.outputs.version }}'
+          releaseBody: 'Desktop Elucim App release.'
+          releaseDraft: true
+          updaterJsonPreferNsis: true
+          args: ${{ matrix.args }}
