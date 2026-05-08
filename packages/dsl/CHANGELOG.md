@@ -1,5 +1,35 @@
 # @elucim/dsl
 
+## [0.16.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.15.0...dsl-v0.16.0) (2026-05-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* Scene stacking now follows sibling/document order instead of zIndex. Use hierarchy drag/drop or agent order helpers to change layer order.
+
+### Features
+
+* add presentation polish foundation ([3cbc1cb](https://github.com/sethjuarez/elucim/commit/3cbc1cb031b31d4c564f6c59edbac58d59c88385))
+* add v2 agent integration helpers ([d3fd748](https://github.com/sethjuarez/elucim/commit/d3fd748bd4efc02fd7ce137fe41352b550387eca))
+* **editor:** harden motion authoring ([2ad110e](https://github.com/sethjuarez/elucim/commit/2ad110ee885cfa9a878acb1c6c8998f34c908d72))
+* make hierarchy order canonical ([acd8664](https://github.com/sethjuarez/elucim/commit/acd8664ff0b7ed1f4e20e0d4048a748ee23eb0d3))
+* refine v2 state machine preview ([6800e69](https://github.com/sethjuarez/elucim/commit/6800e691c9da465662b49ad3fab5b3bf01b017e4))
+
+
+### Bug Fixes
+
+* harden state machine preview cleanup ([67a2ebb](https://github.com/sethjuarez/elucim/commit/67a2ebba961bca51d57cad4f433c267c9d483f7a))
+* preserve inherited DSL theme variables ([d581f9d](https://github.com/sethjuarez/elucim/commit/d581f9d907aa023b740aad3135e78f1e2a58aa4e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.16.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.16.0
+
 ## [0.15.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.14.1...dsl-v0.15.0) (2026-04-23)
 
 

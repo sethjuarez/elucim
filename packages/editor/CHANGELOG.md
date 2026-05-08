@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.16.0](https://github.com/sethjuarez/elucim/compare/editor-v0.15.0...editor-v0.16.0) (2026-05-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* Scene stacking now follows sibling/document order instead of zIndex. Use hierarchy drag/drop or agent order helpers to change layer order.
+
+### Features
+
+* add inspector group child selection ([31c0a9f](https://github.com/sethjuarez/elucim/commit/31c0a9faf487cd77953d7a3e419a2c98c06efcf3))
+* add presentation polish foundation ([3cbc1cb](https://github.com/sethjuarez/elucim/commit/3cbc1cb031b31d4c564f6c59edbac58d59c88385))
+* add presentation-ready editor templates ([cd13282](https://github.com/sethjuarez/elucim/commit/cd1328261f289b34f50e1b529f39888410d73ab2))
+* add progressive editor workspaces ([a14417a](https://github.com/sethjuarez/elucim/commit/a14417adb192040d052a6f95fc5edae5a87ba814))
+* add v2 agent integration helpers ([d3fd748](https://github.com/sethjuarez/elucim/commit/d3fd748bd4efc02fd7ce137fe41352b550387eca))
+* **editor:** harden motion authoring ([2ad110e](https://github.com/sethjuarez/elucim/commit/2ad110ee885cfa9a878acb1c6c8998f34c908d72))
+* expand v2 timeline and state authoring ([53f28a8](https://github.com/sethjuarez/elucim/commit/53f28a81afd897f12a4830831e7d7b9cd6e1e736))
+* harden v2 editor semantics ([8562b63](https://github.com/sethjuarez/elucim/commit/8562b63d65084cabe15b6f8833ac4ac93734daa6))
+* improve v2 editor persistence ([4b16f7f](https://github.com/sethjuarez/elucim/commit/4b16f7f213e1cb631f73ebdb44d4311342afb7cf))
+* make hierarchy order canonical ([acd8664](https://github.com/sethjuarez/elucim/commit/acd8664ff0b7ed1f4e20e0d4048a748ee23eb0d3))
+* refine v2 nudge review ([a061b7d](https://github.com/sethjuarez/elucim/commit/a061b7dc52ed568886f0ffdd365e8e64319340c6))
+* refine v2 state machine preview ([6800e69](https://github.com/sethjuarez/elucim/commit/6800e691c9da465662b49ad3fab5b3bf01b017e4))
+
+
+### Bug Fixes
+
+* harden state machine preview cleanup ([67a2ebb](https://github.com/sethjuarez/elucim/commit/67a2ebba961bca51d57cad4f433c267c9d483f7a))
+* keep editor focused for delete shortcuts ([3afa469](https://github.com/sethjuarez/elucim/commit/3afa469a0b6d03956436f037af95fb3860ea9eb8))
+* keep timeline authoring demo-compatible ([d5ec7ff](https://github.com/sethjuarez/elucim/commit/d5ec7ffd3d8d8661426a01b6ff4bbab598d7bdb9))
+* preserve array color token values ([1bcc90b](https://github.com/sethjuarez/elucim/commit/1bcc90ba4bdc9342e86327259ebb5ee0c4e14716))
+* preserve editor template token semantics ([3618dc3](https://github.com/sethjuarez/elucim/commit/3618dc366bfa4f3f8ca76395d3d6cba2f762b7a0))
+* preserve inspector semantic color tokens ([9880ebd](https://github.com/sethjuarez/elucim/commit/9880ebd140436e4b041efe83ec1b4b508557ea75))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.16.0
+    * @elucim/dsl bumped to 0.16.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.16.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.16.0
+
 ## [0.15.0](https://github.com/sethjuarez/elucim/compare/editor-v0.14.1...editor-v0.15.0) (2026-04-23)
 
 
