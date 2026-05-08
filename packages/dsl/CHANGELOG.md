@@ -1,5 +1,26 @@
 # @elucim/dsl
 
+## [0.17.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.16.0...dsl-v0.17.0) (2026-05-08)
+
+
+### Features
+
+* add deterministic diagram polish ([c397402](https://github.com/sethjuarez/elucim/commit/c397402a0e037a301a76cf98a7b63e77429a652a))
+
+
+### Bug Fixes
+
+* remove v2 nudge API naming ([b81dbe1](https://github.com/sethjuarez/elucim/commit/b81dbe17879449c0ab45c792644d942a04a48971))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.17.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.17.0
+
 ## [0.16.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.15.0...dsl-v0.16.0) (2026-05-08)
 
 
