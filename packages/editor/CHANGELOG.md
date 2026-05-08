@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.18.0](https://github.com/sethjuarez/elucim/compare/editor-v0.17.0...editor-v0.18.0) (2026-05-08)
+
+
+### Features
+
+* add semantic layout polish ([fd291d1](https://github.com/sethjuarez/elucim/commit/fd291d13ea0708ff7a3e3f4455e7cfcab99e7442))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.18.0
+    * @elucim/dsl bumped to 0.18.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.18.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.18.0
+
 ## [0.17.0](https://github.com/sethjuarez/elucim/compare/editor-v0.16.0...editor-v0.17.0) (2026-05-08)
 
 

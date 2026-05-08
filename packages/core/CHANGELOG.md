@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.18.0](https://github.com/sethjuarez/elucim/compare/core-v0.17.0...core-v0.18.0) (2026-05-08)
+
+
+### Features
+
+* add semantic layout polish ([fd291d1](https://github.com/sethjuarez/elucim/commit/fd291d13ea0708ff7a3e3f4455e7cfcab99e7442))
+
 ## [0.17.0](https://github.com/sethjuarez/elucim/compare/core-v0.16.0...core-v0.17.0) (2026-05-08)
 
 
