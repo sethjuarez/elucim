@@ -74,6 +74,6 @@ jobs:
         if: ${{ needs.release-please.outputs.editor_release == 'true' }}
         run: pnpm --filter @elucim/editor publish --access public --no-git-checks --provenance
 
-      - name: Publish elucim CLI
+      - name: Publish @elucim/cli
         if: ${{ needs.release-please.outputs.cli_release == 'true' || (github.event_name == 'workflow_dispatch' && inputs.package == 'cli') }}
-        run: pnpm --filter elucim publish --access public --no-git-checks --provenance
+        run: pnpm --filter @elucim/cli publish --access public --no-git-checks --provenance

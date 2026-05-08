@@ -87,7 +87,7 @@ Render with `<DslRenderer dsl={doc} />`. Validate with `validate(doc)`. Parse YA
 
 When generating Elucim diagrams, use the normalized `ElucimDocument` shape and run deterministic polish before returning the result.
 
-- If working from a shell, use `npx elucim ops --json` to discover the CLI and code-backed agent operations. Then use `npx elucim validate`, `inspect`, `nudges`, `polish`, and `layout` to interrogate and improve documents without writing ad hoc scripts.
+- If working from a shell, use `npx @elucim/cli ops --json` to discover the CLI and code-backed agent operations. Then use `npx @elucim/cli validate`, `inspect`, `nudges`, `polish`, and `layout` to interrogate and improve documents without writing ad hoc scripts. Global installs expose the shorter `elucim` binary.
 - Use `evaluateSceneForAgent(doc)` from `@elucim/dsl/agent`; inspect `report.polish` for category scores and diagnostics.
 - Use `analyzePolish(doc)` from `@elucim/dsl` for direct polish analysis.
 - Use `inspectPolishHeuristics(doc)` when you need the raw evidence behind the score: bounds, intersections, off-canvas overflow, text sizing, colors, graph crossings/overlaps, connector continuations, and semantic relationships.
