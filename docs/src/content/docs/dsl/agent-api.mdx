@@ -25,7 +25,8 @@ Rules:
 - Check that motion actually changes with `sampleAnimationForAgent()`.
 - Check that the scene is visible and readable with `inspectSceneForAgent()`.
 - Check polish with `evaluateSceneForAgent().polish` or `analyzePolish()`.
-- Add explicit relationship metadata (`target`, `flowFrom`, `flowTo`, `relationship`, `group`, `rank`) when element placement should communicate a flow or explanation.
+- Add explicit relationship metadata (`intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, `intent.group`) plus layout hints such as `layout.rank` and `layout.locked` when element placement should communicate a flow or explanation.
+- Prefer composite helpers for common diagram structures instead of assembling raw rectangles and text by hand.
 - Apply `safe` nudges automatically; treat `review` nudges as human/editor-review changes.
 - Return the final JSON/YAML document plus any validation or inspection warnings you could not fix.
 ```
@@ -65,7 +66,19 @@ import {
 
 import {
   analyzePolish,
+  createAutoLayoutGroupPreset,
+  createBadgePreset,
+  createBoundaryPreset,
   createCalloutCardPreset,
+  createCardGridPreset,
+  createComparisonTablePreset,
+  createConnectorPreset,
+  createDecisionNodePreset,
+  createProgressiveRevealGroupPreset,
+  createQueueStackPreset,
+  createStepCardPreset,
+  createTextBlockPreset,
+  createTimelineRoadmapPreset,
   suggestSemanticLayoutNudges,
 } from '@elucim/dsl';
 ```
@@ -191,7 +204,7 @@ const semanticLayoutNudges = await suggestSemanticLayoutNudges(doc);
 | Review | `summarizeDocument`, `diffDocuments`, `suggestDocumentNudges`, `applyNudge` | Give hosts/humans compact context, JSON-patch-shaped diffs, and deterministic polish options. |
 | Semantic layout | `suggestSemanticLayoutNudges` | Use ELK as a review-only layout solver for explicit agent-authored relationships between ordinary elements. |
 | Operation catalog | `getAgentOperationCatalog` | Return the authoring, validation, inspection, polish, and layout operations a host can pass to an agent/tool planner. |
-| Presets | `createCalloutCardPreset` | Start from semantic, theme-tokenized explanatory building blocks instead of raw shapes. |
+| Presets | `createCalloutCardPreset`, `createConnectorPreset`, `createTextBlockPreset`, `createStepCardPreset`, `createCardGridPreset`, `createDecisionNodePreset`, `createBoundaryPreset`, `createBadgePreset`, `createQueueStackPreset`, `createTimelineRoadmapPreset`, `createComparisonTablePreset`, `createAutoLayoutGroupPreset`, `createProgressiveRevealGroupPreset` | Start from semantic, theme-tokenized explanatory building blocks instead of raw shapes. |
 
 ## Command surface
 
@@ -288,19 +301,45 @@ Nudge confidence matters:
 - Apply `safe` nudges automatically when the user asked for a polished result. These are low-risk changes such as strengthening title hierarchy or fixing tiny text.
 - Surface `review` nudges for confirmation or editor review. Graph layout nudges can move many nodes even though they preserve the graph structure.
 
-For explanatory structure, prefer semantic presets:
+For explanatory structure, prefer semantic presets. They emit ordinary editable v2 elements, groups, and timelines, not opaque custom schema nodes.
 
 ```ts
-const calloutElements = createCalloutCardPreset({
-  id: 'key-insight',
+const step = createStepCardPreset({
+  id: 'draft',
   x: 80,
-  y: 420,
-  title: 'Key insight',
-  body: 'Use a callout when the diagram needs an explicit takeaway.',
+  y: 120,
+  title: 'Draft',
+  body: 'Start with semantic structure.',
+  index: 1,
+});
+
+const review = createStepCardPreset({
+  id: 'review',
+  x: 360,
+  y: 120,
+  title: 'Review',
+  body: 'Polish and adjust in the editor.',
+  index: 2,
+});
+
+const connector = createConnectorPreset({
+  id: 'draft-to-review',
+  from: { id: 'draft', bounds: { x: 80, y: 120, width: 220, height: 140 } },
+  to: { id: 'review', bounds: { x: 360, y: 120, width: 220, height: 140 } },
+  label: 'then',
+  lineStyle: 'dashed',
+  endCap: 'arrow',
 });
 ```
 
 Use semantic roles and intent (`role: "title"`, `role: "callout"`, `intent.importance: "primary" | "secondary" | "supporting"`) plus theme tokens (`$title`, `$surface`, `$primary`, `$muted`) so polish can preserve meaning while improving presentation.
+
+The focused CLI exposes the most common composites for file-based workflows:
+
+```bash
+npx @elucim/cli add-step-card diagram.elc --id draft --x 80 --y 120 --title "Draft" --body "Semantic card" --out diagram.elc --json
+npx @elucim/cli add-connector diagram.elc --id draft-to-review --from draft --to review --line-style dashed --start-cap dot --end-cap arrow --out diagram.elc --json
+```
 
 ### Semantic ELK layout
 

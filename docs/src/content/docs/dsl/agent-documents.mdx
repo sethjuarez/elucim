@@ -65,7 +65,7 @@ const doc = applyAgentCommands(createDocument({
       id: 'headline',
       type: 'text',
       role: 'title',
-      intent: { purpose: 'Introduce the takeaway' },
+      intent: { role: 'title', description: 'Introduce the takeaway', importance: 'primary' },
       layout: { x: 120, y: 120 },
       props: { content: 'Slope is local change', fill: '$title' },
     },
@@ -212,9 +212,54 @@ const polished = safeNudges.reduce((current, nudge) => applyNudge(current, nudge
 const polish = analyzePolish(polished);
 ```
 
-Polish analysis returns category scores and diagnostics for layout, hierarchy, readability, contrast, graph readability, explanatory structure, and motion. Current nudges cover safe metadata/readability/title hierarchy polish, a reviewable timeline-based intro clip, and reviewable layered graph layout for graph elements. This gives agents a simple workflow: generate the 80% layout, ask Elucim for refinements, apply safe command-backed nudges, and explain review nudges that should be confirmed by a human or opened in the editor.
+Polish analysis returns category scores and diagnostics for layout, hierarchy, readability, contrast, graph readability, explanatory structure, and motion. Current nudges cover safe metadata/readability/title hierarchy polish, a reviewable timeline-based intro clip, reviewable layered graph layout for graph elements, semantic ELK layout for relationship-rich ordinary elements, and smoother connector continuations. This gives agents a simple workflow: generate the 80% layout, ask Elucim for refinements, apply safe command-backed nudges, and explain review nudges that should be confirmed by a human or opened in the editor.
 
 For broader explanatory scenes, agents should author explicit semantic relationships such as `intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, and `layout.rank`. Hosts can then call `suggestSemanticLayoutNudges(doc)` to get an ELK-backed review nudge that arranges ordinary elements from those relationships and writes the result back as normal document coordinates. Use `layout.locked: true` for elements that should not move. Agents can call `inspectPolishHeuristics(doc)` to interrogate the raw layout and quality evidence, including element intersections, graph crossings, literal colors, text sizing, overflow, connector continuations, and semantic relationships.
 
 Hosts that expose Elucim tools to agents can call `getAgentOperationCatalog()` from `@elucim/dsl/agent` and pass those operation descriptors alongside the document so the agent can plan against the real code-backed ops instead of prose-only instructions.
+
+## Composite helpers and connectors
+
+Use composite helpers when an agent needs polished explanatory structure but the user still needs editable pieces in the editor. These helpers emit normal v2 groups/primitives and optional timelines:
+
+```ts
+import {
+  createCardGridPreset,
+  createConnectorPreset,
+  createDecisionNodePreset,
+  createProgressiveRevealGroupPreset,
+  createTimelineRoadmapPreset,
+} from '@elucim/dsl';
+
+const grid = createCardGridPreset({
+  id: 'pipeline',
+  x: 80,
+  y: 140,
+  columns: 3,
+  items: [
+    { id: 'draft', title: 'Draft', body: 'Generate a structured first pass.' },
+    { id: 'review', title: 'Review', body: 'Inspect layout and wording.' },
+    { id: 'publish', title: 'Publish', body: 'Ship a polished document.' },
+  ],
+});
+
+const connector = createConnectorPreset({
+  id: 'draft-to-review',
+  from: { id: 'draft', bounds: { x: 80, y: 140, width: 260, height: 150 } },
+  to: { id: 'review', bounds: { x: 372, y: 140, width: 260, height: 150 } },
+  label: 'then',
+  lineStyle: 'dashed',
+  startCap: 'dot',
+  endCap: 'arrow',
+});
+```
+
+`createConnectorPreset()` writes `intent.flowFrom`, `intent.flowTo`, and `intent.relationship`, so semantic layout can use connectors as virtual ELK edges while keeping the persisted document editable. Straight `line` and smooth `bezierCurve` connectors both support `lineStyle`, `startCap`, `endCap`, `strokeLinecap`, and `strokeLinejoin`.
+
+For shell workflows, use the CLI shortcuts for the most common composites:
+
+```bash
+npx @elucim/cli add-card-grid diagram.elc --id pipeline --x 80 --y 140 --items-json '[{"id":"draft","title":"Draft","body":"Generate"},{"id":"review","title":"Review","body":"Inspect"}]' --out diagram.elc --json
+npx @elucim/cli add-connector diagram.elc --id draft-to-review --from draft --to review --line-style dashed --start-cap dot --end-cap arrow --out diagram.elc --json
+```
 

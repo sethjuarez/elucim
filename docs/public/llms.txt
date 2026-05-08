@@ -5,7 +5,9 @@
 ## Packages
 
 - `@elucim/core`: React components for animated visualizations — primitives, animations, Player, Presentation, hooks, easing, export
-- `@elucim/dsl`: JSON/YAML DSL schema, DslRenderer component, validator, fluent Builder API, and themes for declarative/AI-generated content
+- `@elucim/dsl`: Normalized JSON/YAML document model, DslRenderer component, validator, agent operations, polish nudges, semantic layout, composite helpers, and themes for declarative/AI-generated content
+- `@elucim/editor`: Visual editor for normalized Elucim documents
+- `@elucim/cli`: Agent-friendly CLI for validating, inspecting, polishing, laying out, and adding composites to `.elc` documents
 
 ## Core Concepts
 
@@ -23,7 +25,7 @@ Elucim is frame-based. A `Player` defines `fps` and `durationInFrames`, wrapping
 - `Rect`: Rectangle. Props: `x`, `y`, `width`, `height`, `rx`, `stroke`, `fill`
 - `Line`: Line segment or straight connector. Props: `x1`, `y1`, `x2`, `y2`, `stroke`, `strokeWidth`, `lineStyle`, `startCap`, `endCap`
 - `BezierCurve`: Smooth connector/path. Props: `x1`, `y1`, `cx1`, `cy1`, `cx2`, `cy2`, `x2`, `y2`, `stroke`, `strokeWidth`, `lineStyle`, `startCap`, `endCap`
-- `Text`: SVG text. Props: `x`, `y`, `fill`, `fontSize`, `textAnchor`, `fontWeight`
+- `Text`: SVG text. Props: `x`, `y`, `content`, `fill`, `fontSize`, `textAnchor`, `fontWeight`
 - `Polygon`: Arbitrary polygon. Props: `points` (array of [x,y])
 
 ### Math Visualizations
@@ -66,22 +68,74 @@ Generators: `spring({ stiffness, damping, mass })`, `cubicBezier(x1, y1, x2, y2)
 
 ## DSL
 
-The DSL allows declarative animation definitions in JSON or YAML:
+The public DSL shape for new documents is the normalized v2 `ElucimDocument`: `version: "2.0"`, a single `scene`, an ID-keyed `elements` registry, optional `timelines`, optional `stateMachines`, and optional `metadata`. Legacy v1 render-tree documents with `version: "1.0"` and `root` are still migratable, but agents should not author new documents in that shape.
+
+Do not put `durationInFrames` on a v2 `scene`. In v2, timelines, state machines, and explicit export policies own time.
 
 ```json
 {
-  "version": "1.0",
-  "root": {
+  "version": "2.0",
+  "metadata": {
+    "title": "Orbit reveal",
+    "intent": "Explain a central orbit with a deterministic intro animation",
+    "polishLevel": "draft"
+  },
+  "scene": {
     "type": "player",
-    "width": 800, "height": 600, "fps": 30, "durationInFrames": 90,
-    "children": [
-      { "type": "circle", "cx": 400, "cy": 300, "r": 80, "stroke": "#6c5ce7", "draw": 60 }
-    ]
+    "width": 800,
+    "height": 600,
+    "fps": 30,
+    "background": "#0d0d1a",
+    "children": ["orbit"]
+  },
+  "elements": {
+    "orbit": {
+      "id": "orbit",
+      "type": "circle",
+      "role": "primary",
+      "layout": { "x": 300, "y": 200, "width": 200, "height": 200 },
+      "intent": { "importance": "primary", "generated": true },
+      "props": {
+        "type": "circle",
+        "cx": 400,
+        "cy": 300,
+        "r": 80,
+        "stroke": "$primary",
+        "strokeWidth": 4,
+        "fill": "none",
+        "opacity": 0
+      }
+    }
+  },
+  "timelines": {
+    "intro": {
+      "id": "intro",
+      "duration": 90,
+      "tracks": [
+        {
+          "target": "orbit",
+          "property": "opacity",
+          "keyframes": [
+            { "frame": 0, "value": 0 },
+            { "frame": 20, "value": 1, "easing": "easeOutCubic" }
+          ]
+        }
+      ]
+    }
+  },
+  "defaultStateMachine": "main",
+  "stateMachines": {
+    "main": {
+      "id": "main",
+      "entry": "intro",
+      "states": { "intro": { "timeline": "intro" } },
+      "transitions": [{ "id": "entry-start", "from": "entry", "to": "intro", "trigger": "onStart" }]
+    }
   }
 }
 ```
 
-Render with `<DslRenderer dsl={doc} />`. Validate with `validate(doc)`. Parse YAML with `fromYaml(yamlString)`. Math expressions in `functionPlot.fn` use safe evaluation (sin, cos, sqrt, etc.).
+Render with `<DslRenderer dsl={doc} />`. Validate with `validate(doc)` or `validateV2(doc)`. Parse YAML with `fromYaml(yamlString)`. Convert legacy inputs with `normalizeToV2(doc)` when needed. Math expressions in `functionPlot` props use safe evaluation (sin, cos, sqrt, etc.).
 
 ### Agent diagram polish
 
@@ -105,16 +159,28 @@ When generating Elucim diagrams, use the normalized `ElucimDocument` shape and r
 - Surface the `smooth-connector-continuations` review nudge when straight connectors should read as smoother directional Bezier continuations.
 - Hosts can call `getAgentOperationCatalog()` from `@elucim/dsl/agent` to pass agents the concrete authoring, validation, inspection, polish, and layout operations available in code.
 
-### Builder API
+### Agent authoring APIs
 
 ```typescript
-import { presentation, darkTheme } from '@elucim/dsl';
+import { addElement, createDocument, validateForAgent } from '@elucim/dsl/agent';
 
-const doc = presentation(darkTheme)
-  .size(1920, 1080)
-  .transition('fade', 500)
-  .slide('Welcome', (s) => { s.title('Hello World'); })
-  .build();
+const base = createDocument({
+  width: 800,
+  height: 600,
+  fps: 30,
+  metadata: { title: 'Agent draft', polishLevel: 'draft' },
+});
+
+const { document } = addElement(base, {
+  id: 'title',
+  type: 'text',
+  role: 'title',
+  layout: { x: 80, y: 96, width: 640, height: 64 },
+  intent: { importance: 'primary', generated: true },
+  props: { type: 'text', x: 80, y: 96, content: 'Hello Elucim', fill: '$title', fontSize: 40 },
+});
+
+const result = validateForAgent(document);
 ```
 
 ## Docs
@@ -126,7 +192,8 @@ const doc = presentation(darkTheme)
 - [Presentation Mode](https://elucim.com/advanced/presentation/)
 - [Hooks Reference](https://elucim.com/advanced/hooks/)
 - [DSL Overview](https://elucim.com/dsl/overview/)
-- [Builder API](https://elucim.com/dsl/builder-api/)
+- [Agent API](https://elucim.com/dsl/agent-api/)
+- [DSL Validation](https://elucim.com/dsl/validation/)
 
 ## Examples
 
@@ -138,5 +205,4 @@ const doc = presentation(darkTheme)
 
 - [Animation Easing Reference](https://elucim.com/animations/easing/): Full easing function gallery
 - [Export / Video](https://elucim.com/advanced/export/): Render animations to WebM/MP4
-- [DSL Validation](https://elucim.com/dsl/validation/): Schema validation details
-- [DSL Themes](https://elucim.com/dsl/themes/): Built-in dark/light themes for Builder API
+- [DSL Themes](https://elucim.com/dsl/themes/): Theme tokens for DslRenderer and ElucimEditor
