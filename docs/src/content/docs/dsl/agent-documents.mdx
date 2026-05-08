@@ -263,3 +263,60 @@ npx @elucim/cli add-card-grid diagram.elc --id pipeline --x 80 --y 140 --items-j
 npx @elucim/cli add-connector diagram.elc --id draft-to-review --from draft --to review --line-style dashed --start-cap dot --end-cap arrow --out diagram.elc --json
 ```
 
+## Semantic motion
+
+Agents should describe motion in beats and semantic verbs, then let Elucim compile those intents to v2 timelines/state machines. This is safer than asking a model to hand-compute every keyframe.
+
+```ts
+import {
+  createAutoStaggerTimeline,
+  createReducedMotionDocument,
+  createSemanticMotionTimeline,
+  createStateSnapshotMotion,
+  holdFinalFrame,
+  lintMotion,
+  planMotionBeats,
+  previewBeatDiffs,
+} from '@elucim/dsl';
+
+const beats = planMotionBeats({ seconds: 12, fps: 30, beatCount: 4 });
+
+const reveal = createSemanticMotionTimeline(doc, {
+  id: 'intro-flow',
+  preset: 'revealFlow',
+  targets: ['draft', 'review', 'publish'],
+  duration: beats[0].duration,
+});
+
+const handoff = createSemanticMotionTimeline(doc, {
+  id: 'draft-to-review',
+  preset: 'handoff',
+  from: 'draft',
+  to: 'review',
+  connectorId: 'draft-to-review',
+});
+
+const stagger = createAutoStaggerTimeline(doc, {
+  id: 'ranked-reveal',
+  group: 'pipeline',
+  orderBy: 'rank',
+});
+
+const animated = { ...doc, timelines: { [reveal.id]: reveal, [handoff.id]: handoff, [stagger.id]: stagger } };
+const lint = lintMotion(animated, { requireReducedMotion: true });
+const diffs = previewBeatDiffs(animated, { timelineId: reveal.id, beats });
+const fallback = createReducedMotionDocument(animated, { mode: 'minimal' });
+const poster = holdFinalFrame(animated, { timelineId: reveal.id });
+```
+
+Use `revealFlow`, `emphasizeDecision`, `tracePath`, `loopOnce`, `handoff`, `drainQueue`, and `compareBeforeAfter` as the first motion vocabulary. `createStateSnapshotMotion()` turns named states into timelines plus a state machine, and `holdFinalFrame()` creates static poster/final-state documents. `lintMotion()` flags blank first frames, too-fast transitions, simultaneous overload, hidden labels, flashing, excessive motion, static timelines, and missing reduced-motion fallbacks. `previewBeatDiffs()` gives agents a before/after summary of what appears, disappears, moves, or changes at each beat.
+
+The CLI mirrors the same workflow:
+
+```bash
+npx @elucim/cli add-beat diagram.elc --id intro-flow --preset revealFlow --targets draft,review,publish --out diagram.elc --json
+npx @elucim/cli animate-flow diagram.elc --id draft-handoff --from draft --to review --connector draft-to-review --out diagram.elc --json
+npx @elucim/cli sample-beats diagram.elc --timeline intro-flow --beats 4 --json
+npx @elucim/cli hold-final diagram.elc --timeline intro-flow --out poster.elc --json
+npx @elucim/cli reduced-motion diagram.elc --mode minimal --out reduced.elc --json
+```

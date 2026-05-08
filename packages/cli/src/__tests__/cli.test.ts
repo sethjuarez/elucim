@@ -68,8 +68,10 @@ describe('elucim CLI', () => {
     const payload = JSON.parse(output.stdout());
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('inspect');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('add-connector');
+    expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('sample-beats');
     expect(payload.agentOperations.map((operation: { name: string }) => operation.name)).toContain('inspectPolishHeuristics');
     expect(payload.agentOperations.map((operation: { name: string }) => operation.name)).toContain('createStepCardPreset');
+    expect(payload.agentOperations.map((operation: { name: string }) => operation.name)).toContain('createSemanticMotionTimeline');
   });
 
   it('validates documents with structured JSON', async () => {
@@ -166,6 +168,75 @@ describe('elucim CLI', () => {
         endCap: 'arrow',
         strokeWidth: 4,
       });
+    });
+  });
+
+  it('adds semantic motion beats and samples beat diffs', async () => {
+    await withTempDoc(flowDoc, async (file, dir) => {
+      const out = join(dir, 'motion.elc');
+      const output = capture();
+      const addCode = await runCli([
+        'add-beat',
+        file,
+        '--id', 'intro-flow',
+        '--preset', 'revealFlow',
+        '--targets', 'start,end',
+        '--duration', '48',
+        '--out', out,
+        '--json',
+      ], output.io);
+
+      expect(addCode).toBe(0);
+      const next = JSON.parse(await readFile(out, 'utf8'));
+      expect(next.timelines['intro-flow'].tracks.map((track: { target: string }) => track.target)).toContain('start');
+
+      const sample = capture();
+      const sampleCode = await runCli(['sample-beats', out, '--timeline', 'intro-flow', '--beats', '3', '--json'], sample.io);
+
+      expect(sampleCode).toBe(0);
+      const payload = JSON.parse(sample.stdout());
+      expect(payload.preview.length).toBe(3);
+      expect(payload.lint.score).toBeGreaterThan(0);
+    });
+  });
+
+  it('creates reduced-motion and final-frame outputs from CLI motion commands', async () => {
+    await withTempDoc({
+      ...flowDoc,
+      elements: {
+        ...flowDoc.elements,
+        start: { ...flowDoc.elements.start, props: { ...flowDoc.elements.start.props, opacity: 0 } },
+      },
+      timelines: {
+        intro: {
+          id: 'intro',
+          duration: 24,
+          tracks: [{ target: 'start', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 24, value: 1 }] }],
+        },
+      },
+    }, async (file, dir) => {
+      const reducedOut = join(dir, 'reduced.elc');
+      const finalOut = join(dir, 'final.elc');
+      const reduced = capture();
+      const final = capture();
+
+      expect(await runCli(['reduced-motion', file, '--mode', 'minimal', '--max-duration', '12', '--out', reducedOut, '--json'], reduced.io)).toBe(0);
+      expect(await runCli(['hold-final', file, '--timeline', 'intro', '--out', finalOut, '--json'], final.io)).toBe(0);
+
+      const reducedDoc = JSON.parse(await readFile(reducedOut, 'utf8'));
+      const finalDoc = JSON.parse(await readFile(finalOut, 'utf8'));
+      expect(reducedDoc.timelines.intro.duration).toBe(12);
+      expect(finalDoc.elements.start.props.opacity).toBe(1);
+    });
+  });
+
+  it('reports missing export-frame timelines directly', async () => {
+    await withTempDoc(flowDoc, async file => {
+      const output = capture();
+      const code = await runCli(['export-frames', file, '--timeline', 'missing', '--json'], output.io);
+
+      expect(code).toBe(1);
+      expect(JSON.parse(output.stderr()).error).toBe('Timeline "missing" does not exist.');
     });
   });
 });

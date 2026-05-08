@@ -47,6 +47,22 @@ import {
 } from './v2/semanticLayout';
 import { applyTimelineFrame } from './v2/timeline';
 import {
+  createAutoStaggerTimeline,
+  createReducedMotionDocument,
+  createSemanticMotionTimeline,
+  createStateSnapshotMotion,
+  holdFinalFrame,
+  lintMotion,
+  planMotionBeats,
+  previewBeatDiffs,
+  type ElucimAutoStaggerMotionSpec,
+  type ElucimBeatPreviewOptions,
+  type ElucimMotionBeatPlanSpec,
+  type ElucimReducedMotionOptions,
+  type ElucimSemanticMotionPresetSpec,
+  type ElucimStateSnapshotMotionSpec,
+} from './v2/motion';
+import {
   diffDocuments,
   summarizeDocument,
   validateForAgent,
@@ -66,7 +82,7 @@ export type AgentAnimatableProperty = ElucimV2AnimatableProperty;
 export type AgentKeyframe = ElucimV2Keyframe;
 export type AgentNudge = ElucimDocumentNudge;
 
-export type AgentOperationKind = 'author' | 'validate' | 'inspect' | 'polish' | 'layout';
+export type AgentOperationKind = 'author' | 'validate' | 'inspect' | 'polish' | 'layout' | 'motion';
 
 export interface AgentOperationDescriptor {
   name: string;
@@ -90,6 +106,14 @@ const AGENT_OPERATION_CATALOG: readonly AgentOperationDescriptor[] = [
   { name: 'createComparisonTablePreset', kind: 'author', async: false, description: 'Create an editable matrix/comparison table from rows and columns.' },
   { name: 'createAutoLayoutGroupPreset', kind: 'author', async: false, description: 'Create an editable group that positions supplied elements in row, column, grid, or stack order.' },
   { name: 'createProgressiveRevealGroupPreset', kind: 'author', async: false, description: 'Create an editable group plus staggered opacity timeline for progressive reveal sequencing.' },
+  { name: 'planMotionBeats', kind: 'motion', async: false, description: 'Plan named narration beats/chapters from a frame or seconds budget.' },
+  { name: 'createSemanticMotionTimeline', kind: 'motion', async: false, description: 'Compile semantic motion verbs such as revealFlow, tracePath, handoff, and compareBeforeAfter into ordinary v2 timeline tracks.' },
+  { name: 'createAutoStaggerTimeline', kind: 'motion', async: false, description: 'Reveal or pulse ranked/grouped elements without hand-computing keyframe offsets.' },
+  { name: 'createStateSnapshotMotion', kind: 'motion', async: false, description: 'Compile named visual states such as idle/thinking/toolRunning/blocked/done into timelines and a state machine.' },
+  { name: 'lintMotion', kind: 'motion', async: false, description: 'Detect blank first frames, too-fast transitions, simultaneous overload, hidden labels, flashing, and excessive motion.' },
+  { name: 'previewBeatDiffs', kind: 'motion', async: false, description: 'Return agent-readable summaries of what appears, moves, disappears, or changes at each beat.' },
+  { name: 'createReducedMotionDocument', kind: 'motion', async: false, description: 'Generate a static or minimal-motion fallback from the same semantic motion intent.' },
+  { name: 'holdFinalFrame', kind: 'motion', async: false, description: 'Flatten a document to the final frame of a selected timeline for static previews.' },
   { name: 'updateElement', kind: 'author', async: false, description: 'Patch element props, layout, role, intent, parent, or children without mutating the document.' },
   { name: 'applyAgentCommands', kind: 'author', async: false, description: 'Apply a batch of high-level authoring commands and return summaries plus validation.' },
   { name: 'validateForAgent', kind: 'validate', async: false, description: 'Validate document structure and references with agent-readable errors and warnings.' },
@@ -346,8 +370,10 @@ export interface AgentSceneInspectionReport {
 export {
   applyNudge,
   createAutoLayoutGroupPreset,
+  createAutoStaggerTimeline,
   createBadgePreset,
   createBoundaryPreset,
+  createReducedMotionDocument,
   diffDocuments,
   planSemanticLayout,
   createCardGridPreset,
@@ -356,10 +382,16 @@ export {
   createDecisionNodePreset,
   createProgressiveRevealGroupPreset,
   createQueueStackPreset,
+  createSemanticMotionTimeline,
+  createStateSnapshotMotion,
+  holdFinalFrame,
   createTimelineRoadmapPreset,
   createStepCardPreset,
   createTextBlockPreset,
   inspectPolishHeuristics,
+  lintMotion,
+  planMotionBeats,
+  previewBeatDiffs,
   suggestDocumentNudges,
   suggestSemanticLayoutNudges,
   summarizeDocument,
@@ -379,6 +411,12 @@ export {
   type ElucimTextBlockPresetSpec,
   type ElucimSemanticLayoutOptions,
   type ElucimSemanticLayoutPlan,
+  type ElucimAutoStaggerMotionSpec,
+  type ElucimBeatPreviewOptions,
+  type ElucimMotionBeatPlanSpec,
+  type ElucimReducedMotionOptions,
+  type ElucimSemanticMotionPresetSpec,
+  type ElucimStateSnapshotMotionSpec,
   type JsonPatchOperation,
 };
 

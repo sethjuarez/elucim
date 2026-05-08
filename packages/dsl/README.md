@@ -312,6 +312,53 @@ const supportingElements = [
 ];
 ```
 
+### Semantic motion for agents
+
+Use semantic motion helpers when an agent knows the intent of the animation but should not hand-author every keyframe. These helpers compile to ordinary v2 timelines/state machines, so the result remains editable and renderer-independent.
+
+```ts
+import {
+  createAutoStaggerTimeline,
+  createReducedMotionDocument,
+  createSemanticMotionTimeline,
+  createStateSnapshotMotion,
+  holdFinalFrame,
+  lintMotion,
+  planMotionBeats,
+  previewBeatDiffs,
+} from '@elucim/dsl';
+
+const beats = planMotionBeats({ seconds: 12, fps: 30, beatCount: 4 });
+
+const intro = createSemanticMotionTimeline(doc, {
+  id: 'intro-flow',
+  preset: 'revealFlow',
+  group: 'steps',
+  duration: beats[0].duration,
+});
+
+const handoff = createSemanticMotionTimeline(doc, {
+  id: 'draft-to-review-motion',
+  preset: 'handoff',
+  from: 'draft',
+  to: 'review',
+  connectorId: 'draft-to-review',
+});
+
+const rankedReveal = createAutoStaggerTimeline(doc, {
+  id: 'ranked-reveal',
+  group: 'steps',
+  orderBy: 'rank',
+});
+
+const lint = lintMotion({ ...doc, timelines: { intro, handoff, rankedReveal } });
+const preview = previewBeatDiffs({ ...doc, timelines: { intro } }, { timelineId: 'intro-flow', beats });
+const reduced = createReducedMotionDocument({ ...doc, timelines: { intro } }, { mode: 'minimal' });
+const poster = holdFinalFrame({ ...doc, timelines: { intro } }, { timelineId: 'intro-flow' });
+```
+
+Supported semantic presets are `revealFlow`, `emphasizeDecision`, `tracePath`, `loopOnce`, `handoff`, `drainQueue`, and `compareBeforeAfter`. `createStateSnapshotMotion()` turns named visual states into timelines plus a state machine, while `holdFinalFrame()` creates static poster/final-state documents. `lintMotion()` checks blank first frames, too-fast transitions, simultaneous overload, hidden labels, flashing, excessive motion, and reduced-motion readiness. `previewBeatDiffs()` returns agent-readable beat summaries describing what appears, disappears, moves, or changes.
+
 Agent guidance:
 
 - Prefer semantic roles and intent (`role: 'title'`, `role: 'callout'`, `intent.importance: 'primary' | 'secondary' | 'supporting'`) so polish can preserve explanatory meaning.
@@ -322,6 +369,7 @@ Agent guidance:
 - Run `suggestDocumentNudges()` after drafting. Apply `safe` nudges automatically; present `review` nudges, especially graph layout changes, for review.
 - Use `inspectPolishHeuristics()` when an agent needs the raw evidence behind the aggregate score: element bounds, intersections, off-canvas overflow, text sizing, literal colors, graph crossings/overlaps, connector continuations, and semantic relationships.
 - Present `smooth-connector-continuations` as a review nudge when straight line/arrow connectors should become editable Bezier curves with rounded caps and smoother directionality.
+- Prefer semantic motion helpers over raw keyframes for common beats: reveal a flow, emphasize a decision, trace a connector, hand off between steps, drain a queue, compare before/after, and create reduced-motion fallbacks.
 - For graph elements, provide stable node IDs and `edges`; the layered graph nudge rewrites node coordinates while keeping the graph editable.
 - Use `getAgentOperationCatalog()` when a host or CLI needs to pass the available authoring, validation, inspection, polish, and layout operations to an agent.
 

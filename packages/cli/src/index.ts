@@ -5,21 +5,33 @@ import { extname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
   applyNudge,
+  applyTimelineFrame,
   collectElementBounds,
+  createAutoStaggerTimeline,
   createCardGridPreset,
   createConnectorPreset,
+  createReducedMotionDocument,
+  createSemanticMotionTimeline,
   createStepCardPreset,
   createTextBlockPreset,
   diffDocuments,
   fromYaml,
+  holdFinalFrame,
   inspectPolishHeuristics,
+  lintMotion,
   normalizeToV2,
+  planMotionBeats,
+  previewBeatDiffs,
   suggestDocumentNudges,
   suggestSemanticLayoutNudges,
   validateForAgent,
+  type ElucimBeatPreviewOptions,
   type ElucimDocument,
   type ElucimDocumentNudge,
+  type ElucimMotionBeat,
+  type ElucimSemanticMotionPreset,
   type ElucimV2Element,
+  type ElucimV2Timeline,
 } from '@elucim/dsl';
 import {
   evaluateSceneForAgent,
@@ -97,6 +109,41 @@ const COMMANDS = [
     usage: 'elucim add-card-grid <file> --id <id> --x 80 --y 120 --items-json \'[...]\' --out <file> --json',
     description: 'Add an editable grid of step cards from JSON item specs.',
   },
+  {
+    name: 'add-beat',
+    usage: 'elucim add-beat <file> --id intro --preset revealFlow --targets a,b,c --duration 60 --out <file> --json',
+    description: 'Compile a semantic animation beat into an ordinary v2 timeline.',
+  },
+  {
+    name: 'animate-flow',
+    usage: 'elucim animate-flow <file> --id data-flow --from a --to b --connector a-to-b --out <file> --json',
+    description: 'Animate a relationship or connector using semantic flow motion.',
+  },
+  {
+    name: 'reveal-group',
+    usage: 'elucim reveal-group <file> --id reveal-steps --group steps --order-by rank --out <file> --json',
+    description: 'Auto-stagger a group/rank/document-ordered set of elements.',
+  },
+  {
+    name: 'hold-final',
+    usage: 'elucim hold-final <file> --timeline intro --out poster.elc --json',
+    description: 'Flatten a document to a selected timeline final frame for static previews.',
+  },
+  {
+    name: 'reduced-motion',
+    usage: 'elucim reduced-motion <file> --mode static --out reduced.elc --json',
+    description: 'Generate a static or minimal-motion fallback document.',
+  },
+  {
+    name: 'sample-beats',
+    usage: 'elucim sample-beats <file> --timeline intro --beats 4 --json',
+    description: 'Return motion lint and beat-level before/after summaries.',
+  },
+  {
+    name: 'export-frames',
+    usage: 'elucim export-frames <file> --timeline intro --frames 0,30,60 --json',
+    description: 'Return selected frame documents for lightweight preview/export workflows.',
+  },
 ] as const;
 
 export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<number> {
@@ -130,6 +177,20 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
         return await addStepCardCommand(args, io);
       case 'add-card-grid':
         return await addCardGridCommand(args, io);
+      case 'add-beat':
+        return await addBeatCommand(args, io);
+      case 'animate-flow':
+        return await animateFlowCommand(args, io);
+      case 'reveal-group':
+        return await revealGroupCommand(args, io);
+      case 'hold-final':
+        return await holdFinalCommand(args, io);
+      case 'reduced-motion':
+        return await reducedMotionCommand(args, io);
+      case 'sample-beats':
+        return await sampleBeatsCommand(args, io);
+      case 'export-frames':
+        return await exportFramesCommand(args, io);
       default:
         writeError(args, io, `Unknown command "${args.command}". Run "elucim ops --json" to discover commands.`);
         return 2;
@@ -388,6 +449,137 @@ async function addCardGridCommand(args: ParsedArgs, io: CliIo): Promise<number> 
   return 0;
 }
 
+async function addBeatCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const before = loaded.document;
+  const timeline = createSemanticMotionTimeline(before, {
+    id: requiredFlag(args, 'id'),
+    preset: semanticPreset(args),
+    targets: targetList(args),
+    group: flagValue(args, 'group'),
+    duration: optionalNumberFlag(args, 'duration'),
+    stagger: optionalNumberFlag(args, 'stagger'),
+    reducedMotion: hasFlag(args, 'reduced-motion'),
+  });
+  const document = upsertTimelineDocument(before, timeline);
+  const outputPath = await maybeWriteDocument(args, loaded.path, document);
+  writeTimelineOutput(args, io, 'add-beat', loaded.path, outputPath, before, document, timeline);
+  return 0;
+}
+
+async function animateFlowCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const before = loaded.document;
+  const from = requiredFlag(args, 'from');
+  const to = requiredFlag(args, 'to');
+  const connectorId = flagValue(args, 'connector');
+  const timeline = createSemanticMotionTimeline(before, {
+    id: requiredFlag(args, 'id'),
+    preset: (flagValue(args, 'preset') as ElucimSemanticMotionPreset | undefined) ?? (connectorId ? 'tracePath' : 'handoff'),
+    from,
+    to,
+    connectorId,
+    duration: optionalNumberFlag(args, 'duration'),
+    reducedMotion: hasFlag(args, 'reduced-motion'),
+  });
+  const document = upsertTimelineDocument(before, timeline);
+  const outputPath = await maybeWriteDocument(args, loaded.path, document);
+  writeTimelineOutput(args, io, 'animate-flow', loaded.path, outputPath, before, document, timeline);
+  return 0;
+}
+
+async function revealGroupCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const before = loaded.document;
+  const timeline = createAutoStaggerTimeline(before, {
+    id: requiredFlag(args, 'id'),
+    targets: targetList(args),
+    group: flagValue(args, 'group'),
+    duration: optionalNumberFlag(args, 'duration'),
+    stagger: optionalNumberFlag(args, 'stagger'),
+    orderBy: orderBy(args),
+  });
+  const document = upsertTimelineDocument(before, timeline);
+  const outputPath = await maybeWriteDocument(args, loaded.path, document);
+  writeTimelineOutput(args, io, 'reveal-group', loaded.path, outputPath, before, document, timeline);
+  return 0;
+}
+
+async function holdFinalCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const before = loaded.document;
+  const document = holdFinalFrame(before, flagValue(args, 'timeline'));
+  const outputPath = await maybeWriteDocument(args, loaded.path, document);
+  writeOutput(args, io, {
+    command: 'hold-final',
+    file: loaded.path,
+    outputPath,
+    diff: diffDocuments(before, document),
+    document: shouldIncludeDocument(args) ? document : undefined,
+  });
+  return 0;
+}
+
+async function reducedMotionCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const before = loaded.document;
+  const document = createReducedMotionDocument(before, {
+    mode: reducedMotionMode(args),
+    poster: flagValue(args, 'poster') === 'first' ? 'first' : 'last',
+    maxDuration: optionalNumberFlag(args, 'max-duration'),
+  });
+  const outputPath = await maybeWriteDocument(args, loaded.path, document);
+  writeOutput(args, io, {
+    command: 'reduced-motion',
+    file: loaded.path,
+    outputPath,
+    diff: diffDocuments(before, document),
+    document: shouldIncludeDocument(args) ? document : undefined,
+  });
+  return 0;
+}
+
+async function sampleBeatsCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const timelineId = requiredFlag(args, 'timeline');
+  const beats = beatPlan(args, loaded.document.timelines?.[timelineId]?.duration);
+  const previewOptions: ElucimBeatPreviewOptions = { timelineId, beats };
+  const lint = lintMotion(loaded.document, { requireReducedMotion: hasFlag(args, 'require-reduced-motion') });
+  const preview = previewBeatDiffs(loaded.document, previewOptions);
+  writeOutput(args, io, {
+    command: 'sample-beats',
+    file: loaded.path,
+    timelineId,
+    beats,
+    lint,
+    preview,
+  });
+  return lint.valid ? 0 : 1;
+}
+
+async function exportFramesCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const timelineId = requiredFlag(args, 'timeline');
+  const timeline = loaded.document.timelines?.[timelineId];
+  if (!timeline) throw new Error(`Timeline "${timelineId}" does not exist.`);
+  const frames = frameList(args, timeline.duration);
+  const documents = frames.map(frame => ({ frame, document: applyTimelineFrame(loaded.document, timelineId, frame) }));
+  writeOutput(args, io, {
+    command: 'export-frames',
+    file: loaded.path,
+    timelineId,
+    frames,
+    documents: shouldIncludeDocument(args) ? documents : undefined,
+    summaries: documents.map(({ frame, document }) => ({
+      frame,
+      visibleElementIds: Object.values(document.elements)
+        .filter(element => (typeof element.props.opacity === 'number' ? element.props.opacity : 1) > 0.01)
+        .map(element => element.id),
+    })),
+  });
+  return 0;
+}
+
 async function collectNudges(doc: ElucimDocument, args: ParsedArgs): Promise<ElucimDocumentNudge[]> {
   const nudges = [...suggestDocumentNudges(doc)];
   if (hasFlag(args, 'semantic-layout')) {
@@ -549,6 +741,75 @@ function connectorCap(args: ParsedArgs, name: string) {
   throw new Error(`--${name} must be none, arrow, or dot.`);
 }
 
+function semanticPreset(args: ParsedArgs): ElucimSemanticMotionPreset {
+  const value = flagValue(args, 'preset') ?? 'revealFlow';
+  if (
+    value === 'revealFlow'
+    || value === 'emphasizeDecision'
+    || value === 'tracePath'
+    || value === 'loopOnce'
+    || value === 'handoff'
+    || value === 'drainQueue'
+    || value === 'compareBeforeAfter'
+  ) return value;
+  throw new Error('--preset must be revealFlow, emphasizeDecision, tracePath, loopOnce, handoff, drainQueue, or compareBeforeAfter.');
+}
+
+function targetList(args: ParsedArgs): string[] | undefined {
+  const value = flagValue(args, 'targets');
+  return value ? value.split(',').map(item => item.trim()).filter(Boolean) : undefined;
+}
+
+function orderBy(args: ParsedArgs): 'document' | 'rank' | 'group' | undefined {
+  const value = flagValue(args, 'order-by');
+  if (value === undefined) return undefined;
+  if (value === 'document' || value === 'rank' || value === 'group') return value;
+  throw new Error('--order-by must be document, rank, or group.');
+}
+
+function reducedMotionMode(args: ParsedArgs): 'static' | 'minimal' | undefined {
+  const value = flagValue(args, 'mode');
+  if (value === undefined) return undefined;
+  if (value === 'static' || value === 'minimal') return value;
+  throw new Error('--mode must be static or minimal.');
+}
+
+function beatPlan(args: ParsedArgs, fallbackDuration = 120): ElucimMotionBeat[] {
+  const raw = flagValue(args, 'beats-json');
+  if (raw) {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) throw new Error('--beats-json must be a JSON array.');
+    return parsed as ElucimMotionBeat[];
+  }
+  return planMotionBeats({
+    totalFrames: optionalNumberFlag(args, 'duration') ?? fallbackDuration,
+    seconds: optionalNumberFlag(args, 'seconds'),
+    fps: optionalNumberFlag(args, 'fps'),
+    beatCount: optionalNumberFlag(args, 'beats'),
+  });
+}
+
+function frameList(args: ParsedArgs, fallbackDuration = 120): number[] {
+  const value = flagValue(args, 'frames');
+  if (!value) return [0, Math.round(fallbackDuration / 2), fallbackDuration];
+  const frames = value.split(',').map(item => Number(item.trim()));
+  if (frames.some(frame => !Number.isFinite(frame) || frame < 0)) throw new Error('--frames must be a comma-separated list of non-negative numbers.');
+  return [...new Set(frames.map(frame => Math.round(frame)))].sort((a, b) => a - b);
+}
+
+function upsertTimelineDocument(doc: ElucimDocument, timeline: ElucimV2Timeline): ElucimDocument {
+  const next = {
+    ...doc,
+    timelines: { ...doc.timelines, [timeline.id]: timeline },
+  };
+  const validation = validateForAgent(next);
+  if (!validation.valid) {
+    const messages = validation.errors.map(error => `${error.path}: ${error.message}`).join('; ');
+    throw new Error(`Motion timeline produced an invalid document: ${messages}`);
+  }
+  return next;
+}
+
 function addCompositeElements(doc: ElucimDocument, elements: ElucimV2Element[]): ElucimDocument {
   const existing = new Set(Object.keys(doc.elements));
   const duplicate = elements.find(element => existing.has(element.id));
@@ -589,6 +850,27 @@ function writeCompositeOutput(
     file,
     outputPath,
     added: elements.map(element => element.id),
+    diff: diffDocuments(before, document),
+    document: shouldIncludeDocument(args) ? document : undefined,
+  });
+}
+
+function writeTimelineOutput(
+  args: ParsedArgs,
+  io: CliIo,
+  command: string,
+  file: string,
+  outputPath: string | undefined,
+  before: ElucimDocument,
+  document: ElucimDocument,
+  timeline: ElucimV2Timeline,
+) {
+  writeOutput(args, io, {
+    command,
+    file,
+    outputPath,
+    timeline,
+    lint: lintMotion(document),
     diff: diffDocuments(before, document),
     document: shouldIncludeDocument(args) ? document : undefined,
   });

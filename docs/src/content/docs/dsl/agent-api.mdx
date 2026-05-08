@@ -44,15 +44,23 @@ import {
   bringElementForward,
   bringElementToFront,
   createDocument,
+  createAutoStaggerTimeline,
   createLoopingStateMachine,
+  createReducedMotionDocument,
+  createSemanticMotionTimeline,
+  createStateSnapshotMotion,
   createStateMachine,
   diffDocuments,
   evaluateSceneForAgent,
   getAgentOperationCatalog,
   getElementOrder,
   getTimelineBounds,
+  holdFinalFrame,
+  lintMotion,
   inspectPolishHeuristics,
   inspectSceneForAgent,
+  planMotionBeats,
+  previewBeatDiffs,
   repairDocumentForAgent,
   reorderElement,
   sampleAnimationForAgent,
@@ -102,6 +110,8 @@ npx @elucim/cli inspect diagram.elc --json
 npx @elucim/cli nudges diagram.elc --semantic-layout --json
 npx @elucim/cli polish diagram.elc --apply-safe --out polished.elc --json
 npx @elucim/cli layout diagram.elc --out laid-out.elc --json
+npx @elucim/cli add-beat diagram.elc --id intro-flow --preset revealFlow --targets a,b,c --out diagram.elc --json
+npx @elucim/cli sample-beats diagram.elc --timeline intro-flow --beats 4 --json
 ```
 
 `ops --json` returns the CLI command catalog and the same code-backed agent operation catalog exposed by `getAgentOperationCatalog()`. If installed globally, the binary is still `elucim`.
@@ -198,6 +208,7 @@ const semanticLayoutNudges = await suggestSemanticLayoutNudges(doc);
 | Create/edit | `createDocument`, `addElement`, `updateElement`, `applyAgentCommand`, `applyAgentCommands` | Build and patch normalized documents without mutating inputs. |
 | Order | `getElementOrder`, `reorderElement`, `bringElementForward`, `sendElementBackward`, `bringElementToFront`, `sendElementToBack` | Change sibling order without adding z-index metadata. Later siblings paint on top. |
 | Timelines | `addTimeline`, `addRevealTimeline`, `getTimelineBounds`, `sampleAnimationForAgent` | Create explicit keyframe clips and prove they change properties. |
+| Semantic motion | `planMotionBeats`, `createSemanticMotionTimeline`, `createAutoStaggerTimeline`, `createStateSnapshotMotion`, `lintMotion`, `previewBeatDiffs`, `createReducedMotionDocument`, `holdFinalFrame` | Compile intent-level verbs and narration beats into ordinary v2 timelines/state machines, then verify readability and accessibility. |
 | State machines | `createStateMachine`, `createLoopingStateMachine` | Wire timelines into runtime playback. |
 | Validation | `validateForAgent`, `repairDocumentForAgent` | Return structured errors, hints, conservative repairs, summaries, validation, and diffs. |
 | Quality | `evaluateSceneForAgent`, `inspectSceneForAgent`, `analyzePolish`, `inspectPolishHeuristics` | Catch missing metadata, missing motion, blank frames, tiny scenes, off-canvas elements, zero-size elements, low contrast, graph readability issues, weak hierarchy, and static timelines. `inspectPolishHeuristics` exposes the raw evidence behind the score: bounds, intersections, overflow, text, colors, graph details, connector continuations, and semantic relationships. |
@@ -340,6 +351,44 @@ The focused CLI exposes the most common composites for file-based workflows:
 npx @elucim/cli add-step-card diagram.elc --id draft --x 80 --y 120 --title "Draft" --body "Semantic card" --out diagram.elc --json
 npx @elucim/cli add-connector diagram.elc --id draft-to-review --from draft --to review --line-style dashed --start-cap dot --end-cap arrow --out diagram.elc --json
 ```
+
+### Semantic motion and beat verification
+
+Agents should prefer semantic motion verbs over hand-authored keyframes for common explanatory beats. The helpers still emit ordinary timelines and state machines.
+
+```ts
+const beats = planMotionBeats({
+  seconds: 12,
+  fps: 30,
+  beats: [
+    { id: 'intro', role: 'intro', targets: ['title'] },
+    { id: 'context', role: 'context', targets: ['draft', 'review'] },
+    { id: 'feedback', role: 'feedback', targets: ['draft-to-review'] },
+    { id: 'takeaway', role: 'takeaway', targets: ['summary'] },
+  ],
+});
+
+const timeline = createSemanticMotionTimeline(doc, {
+  id: 'feedback-loop',
+  preset: 'revealFlow',
+  targets: ['draft', 'review', 'summary'],
+  duration: 90,
+});
+
+const handoff = createSemanticMotionTimeline(doc, {
+  id: 'draft-to-review-handoff',
+  preset: 'handoff',
+  from: 'draft',
+  to: 'review',
+  connectorId: 'draft-to-review',
+});
+
+const motionLint = lintMotion({ ...doc, timelines: { [timeline.id]: timeline, [handoff.id]: handoff } });
+const beatDiffs = previewBeatDiffs({ ...doc, timelines: { [timeline.id]: timeline } }, { timelineId: timeline.id, beats });
+const reduced = createReducedMotionDocument({ ...doc, timelines: { [timeline.id]: timeline } }, { mode: 'minimal' });
+```
+
+Preset names are `revealFlow`, `emphasizeDecision`, `tracePath`, `loopOnce`, `handoff`, `drainQueue`, and `compareBeforeAfter`. Motion lint reports blank first frames, too-fast transitions, simultaneous overload, hidden labels, flashing, excessive motion, static timelines, and missing reduced-motion fallbacks. Beat diffs summarize what appears, disappears, moves, or changes at each named beat.
 
 ### Semantic ELK layout
 

@@ -165,6 +165,32 @@ export {
   type ElucimSemanticLayoutOptions,
   type ElucimSemanticLayoutPlan,
 } from './v2/semanticLayout';
+export {
+  createAutoStaggerTimeline,
+  createReducedMotionDocument,
+  createSemanticMotionTimeline,
+  createStateSnapshotMotion,
+  holdFinalFrame,
+  lintMotion,
+  planMotionBeats,
+  previewBeatDiffs,
+  type ElucimAutoStaggerMotionSpec,
+  type ElucimBeatPreviewDiff,
+  type ElucimBeatPreviewOptions,
+  type ElucimMotionBeat,
+  type ElucimMotionBeatPlanSpec,
+  type ElucimMotionBeatRole,
+  type ElucimMotionLintCode,
+  type ElucimMotionLintIssue,
+  type ElucimMotionLintOptions,
+  type ElucimMotionLintReport,
+  type ElucimReducedMotionOptions,
+  type ElucimSemanticMotionPreset,
+  type ElucimSemanticMotionPresetSpec,
+  type ElucimStateSnapshot,
+  type ElucimStateSnapshotMotion,
+  type ElucimStateSnapshotMotionSpec,
+} from './v2/motion';
 
 // Math expression evaluator
 export {
