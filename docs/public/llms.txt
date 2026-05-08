@@ -83,6 +83,19 @@ The DSL allows declarative animation definitions in JSON or YAML:
 
 Render with `<DslRenderer dsl={doc} />`. Validate with `validate(doc)`. Parse YAML with `fromYaml(yamlString)`. Math expressions in `functionPlot.fn` use safe evaluation (sin, cos, sqrt, etc.).
 
+### Agent diagram polish
+
+When generating Elucim diagrams, use the normalized `ElucimDocument` shape and run deterministic polish before returning the result.
+
+- Use `evaluateSceneForAgent(doc)` from `@elucim/dsl/agent`; inspect `report.polish` for category scores and diagnostics.
+- Use `analyzePolish(doc)` from `@elucim/dsl` for direct polish analysis.
+- Use `suggestDocumentNudges(doc)` and `applyNudge(doc, nudge)` to make command-backed, previewable fixes.
+- Apply `nudge.confidence === "safe"` nudges automatically. Treat `review` nudges as user/editor-review changes, especially graph layout.
+- Use semantic roles and intent: `role: "title"`, `role: "callout"`, `intent.importance: "primary" | "secondary" | "supporting"`.
+- Use semantic color tokens (`$title`, `$surface`, `$primary`, `$muted`) instead of many literal colors.
+- For graph diagrams, provide stable node IDs and edges; the layered graph nudge can rewrite node `x`/`y` coordinates while preserving editability.
+- Prefer helper presets such as `createCalloutCardPreset()` for explanatory callouts instead of assembling raw rectangles and text from scratch.
+
 ### Builder API
 
 ```typescript

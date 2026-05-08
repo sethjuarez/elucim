@@ -2,6 +2,7 @@ import type { ElucimV2Command } from './commands';
 import { applyCommand } from './commands';
 import { getDocumentLinearDuration } from './duration';
 import type { ElucimV2Document } from './types';
+import { analyzePolish, graphNeedsLayout, layoutGraphElementLayered, POLISH_MIN_TEXT_SIZE, POLISH_TARGET_TITLE_SIZE, type ElucimPolishCategory } from './polish';
 
 export interface ElucimV2Nudge {
   id: string;
@@ -9,6 +10,7 @@ export interface ElucimV2Nudge {
   description: string;
   commands: ElucimV2Command[];
   confidence: 'safe' | 'review';
+  category?: ElucimPolishCategory;
 }
 
 export interface ElucimV2NudgeResult {
@@ -24,6 +26,7 @@ export function suggestDocumentNudges(doc: ElucimV2Document): ElucimV2Nudge[] {
       title: 'Mark document as refined',
       description: 'Set metadata.polishLevel to refined so hosts can distinguish draft agent output from polished Elucim output.',
       confidence: 'safe',
+      category: 'structure',
       commands: [{ op: 'updateMetadata', metadata: { polishLevel: 'refined' } }],
     });
   }
@@ -38,9 +41,32 @@ export function suggestDocumentNudges(doc: ElucimV2Document): ElucimV2Nudge[] {
         title: 'Add staggered intro clip',
         description: 'Create a simple opacity timeline for top-level elements so generated slides feel presentation-ready by default.',
         confidence: 'review',
+        category: 'motion',
         commands: [{ op: 'upsertTimeline', timeline }],
       });
     }
+  }
+  const report = analyzePolish(doc);
+  const safePolish = buildSafePolishNudge(doc);
+  if (safePolish && report.diagnostics.some(diagnostic => diagnostic.suggestedNudgeId === safePolish.id)) {
+    nudges.push(safePolish);
+  }
+  const titleNudge = buildTitleHierarchyNudge(doc);
+  if (titleNudge && report.diagnostics.some(diagnostic => diagnostic.suggestedNudgeId === titleNudge.id)) {
+    nudges.push(titleNudge);
+  }
+  for (const element of Object.values(doc.elements)) {
+    if (!graphNeedsLayout(element)) continue;
+    const nextNodes = layoutGraphElementLayered(element);
+    if (!nextNodes) continue;
+    nudges.push({
+      id: `layout-graph-${element.id}`,
+      title: `Apply layered layout to ${element.id}`,
+      description: 'Use a Mermaid-inspired layered graph layout to reduce crossings, separate nodes, and make flow direction clearer.',
+      confidence: 'review',
+      category: 'graph',
+      commands: [{ op: 'updateElement', id: element.id, patch: { props: { nodes: nextNodes } } }],
+    });
   }
 
   return nudges;
@@ -55,6 +81,51 @@ export function applyNudge(doc: ElucimV2Document, nudge: ElucimV2Nudge): ElucimV
     summaries.push(result.summary);
   }
   return { document: current, summaries };
+}
+
+function buildSafePolishNudge(doc: ElucimV2Document): ElucimV2Nudge | undefined {
+  const commands: ElucimV2Command[] = [];
+  for (const element of Object.values(doc.elements)) {
+    if ((element.type === 'text' || element.props.type === 'text') && typeof element.props.fontSize === 'number' && element.props.fontSize < POLISH_MIN_TEXT_SIZE) {
+      commands.push({ op: 'updateElement', id: element.id, patch: { props: { fontSize: POLISH_MIN_TEXT_SIZE } } });
+    }
+  }
+  if (commands.length === 0) return undefined;
+  return {
+    id: 'polish-text-readability',
+    title: 'Improve safe readability defaults',
+    description: 'Apply low-risk readability fixes such as bringing very small labels up to a readable minimum.',
+    confidence: 'safe',
+    category: 'readability',
+    commands,
+  };
+}
+
+function buildTitleHierarchyNudge(doc: ElucimV2Document): ElucimV2Nudge | undefined {
+  const title = Object.values(doc.elements).find(element => (element.type === 'text' || element.props.type === 'text')
+    && (element.role === 'title' || element.intent?.role === 'title' || /title|headline|heading/i.test(element.id)))
+    ?? Object.values(doc.elements).find(element => element.type === 'text' || element.props.type === 'text');
+  if (!title) return undefined;
+  const fontSize = typeof title.props.fontSize === 'number' ? title.props.fontSize : 24;
+  const needsProps = fontSize < 34 || title.props.fill !== '$title';
+  const needsIntent = title.intent?.importance !== 'primary' || title.intent?.role !== 'title';
+  if (!needsProps && !needsIntent && title.role === 'title') return undefined;
+  return {
+    id: 'polish-title-hierarchy',
+    title: 'Strengthen title hierarchy',
+    description: 'Make the primary text read as a title with stronger size, semantic color, and intent metadata.',
+    confidence: 'safe',
+    category: 'hierarchy',
+    commands: [{
+      op: 'updateElement',
+      id: title.id,
+      patch: {
+        role: 'title',
+        intent: { ...title.intent, role: 'title', importance: 'primary' },
+        props: { fontSize: Math.max(fontSize, POLISH_TARGET_TITLE_SIZE), fill: '$title' },
+      },
+    }],
+  };
 }
 
 function buildIntroTimeline(doc: ElucimV2Document, rootChildren: string[]) {

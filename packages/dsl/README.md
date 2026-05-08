@@ -234,6 +234,39 @@ const inspection = inspectSceneForAgent(repaired.document, { timelineId: 'intro'
 
 The agent helpers intentionally produce timelines and state machines rather than wrapper animation props. Use them when you want an LLM to make targeted scene edits without memorizing the full document schema. Diagnostic helpers such as `getTimelineBounds()`, `repairDocumentForAgent()`, `sampleAnimationForAgent()`, `inspectSceneForAgent()`, and `createLoopingStateMachine()` help agents detect timeline mistakes, auto-extend too-short timeline durations, prove that properties change over sampled frames, catch tiny/off-canvas/low-contrast scenes, and wire a generated timeline into live playback.
 
+### Diagram polish for agents
+
+Generated diagrams should be checked with the deterministic polish APIs before handing them to a user. `evaluateSceneForAgent()` includes `report.polish`, and the same analysis is available directly as `analyzePolish(doc)`. The report returns category scores plus diagnostics for layout, hierarchy, readability, contrast, graph readability, explanatory structure, and motion.
+
+```ts
+import {
+  analyzePolish,
+  applyNudge,
+  createCalloutCardPreset,
+  suggestDocumentNudges,
+} from '@elucim/dsl';
+
+const polish = analyzePolish(doc);
+const nudges = suggestDocumentNudges(doc);
+const safe = nudges.filter(nudge => nudge.confidence === 'safe');
+const polished = safe.reduce((current, nudge) => applyNudge(current, nudge).document, doc);
+
+const calloutElements = createCalloutCardPreset({
+  id: 'key-insight',
+  x: 80,
+  y: 420,
+  title: 'Key insight',
+  body: 'A semantic, token-based callout gives agents a polished starting point.',
+});
+```
+
+Agent guidance:
+
+- Prefer semantic roles and intent (`role: 'title'`, `role: 'callout'`, `intent.importance: 'primary' | 'secondary' | 'supporting'`) so polish can preserve explanatory meaning.
+- Use theme tokens such as `$title`, `$surface`, `$primary`, and `$muted` instead of one-off literal colors unless a specific color is necessary.
+- Run `suggestDocumentNudges()` after drafting. Apply `safe` nudges automatically; present `review` nudges, especially graph layout changes, for review.
+- For graph elements, provide stable node IDs and `edges`; the layered graph nudge rewrites node coordinates while keeping the graph editable.
+
 ### `DslRendererRef`
 
 Imperative handle exposed via `ref` on `<DslRenderer>`:

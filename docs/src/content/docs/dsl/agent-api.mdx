@@ -24,6 +24,8 @@ Rules:
 - Repair timeline duration issues with `repairDocumentForAgent()`.
 - Check that motion actually changes with `sampleAnimationForAgent()`.
 - Check that the scene is visible and readable with `inspectSceneForAgent()`.
+- Check polish with `evaluateSceneForAgent().polish` or `analyzePolish()`.
+- Apply `safe` nudges automatically; treat `review` nudges as human/editor-review changes.
 - Return the final JSON/YAML document plus any validation or inspection warnings you could not fix.
 ```
 
@@ -57,6 +59,11 @@ import {
   updateElement,
   validateForAgent,
 } from '@elucim/dsl/agent';
+
+import {
+  analyzePolish,
+  createCalloutCardPreset,
+} from '@elucim/dsl';
 ```
 
 Use `@elucim/dsl/agent` for generation workflows. Use `@elucim/dsl/react` only when rendering in React:
@@ -77,7 +84,8 @@ import { DslRenderer } from '@elucim/dsl/react';
 6. **Validate** with `validateForAgent()`.
 7. **Repair** conservative timeline mistakes with `repairDocumentForAgent()`.
 8. **Inspect** quality with `evaluateSceneForAgent()` and `inspectSceneForAgent()`.
-9. **Explain** remaining warnings and return the final document.
+9. **Polish** with `report.polish`, `suggestDocumentNudges()`, and `applyNudge()`.
+10. **Explain** remaining warnings and return the final document.
 
 ```ts
 import {
@@ -145,6 +153,8 @@ doc = repairDocumentForAgent(doc).document;
 const validation = validateForAgent(doc);
 const quality = evaluateSceneForAgent(doc);
 const inspection = inspectSceneForAgent(doc, { timelineId: 'intro' });
+const safeNudges = quality.nudges.filter(nudge => nudge.confidence === 'safe');
+doc = safeNudges.reduce((current, nudge) => applyNudge(current, nudge).document, doc);
 ```
 
 ## Helper categories
@@ -156,8 +166,9 @@ const inspection = inspectSceneForAgent(doc, { timelineId: 'intro' });
 | Timelines | `addTimeline`, `addRevealTimeline`, `getTimelineBounds`, `sampleAnimationForAgent` | Create explicit keyframe clips and prove they change properties. |
 | State machines | `createStateMachine`, `createLoopingStateMachine` | Wire timelines into runtime playback. |
 | Validation | `validateForAgent`, `repairDocumentForAgent` | Return structured errors, hints, conservative repairs, summaries, validation, and diffs. |
-| Quality | `evaluateSceneForAgent`, `inspectSceneForAgent` | Catch missing metadata, missing motion, blank frames, tiny scenes, off-canvas elements, zero-size elements, low contrast, and static timelines. |
+| Quality | `evaluateSceneForAgent`, `inspectSceneForAgent`, `analyzePolish` | Catch missing metadata, missing motion, blank frames, tiny scenes, off-canvas elements, zero-size elements, low contrast, graph readability issues, weak hierarchy, and static timelines. |
 | Review | `summarizeDocument`, `diffDocuments`, `suggestDocumentNudges`, `applyNudge` | Give hosts/humans compact context, JSON-patch-shaped diffs, and deterministic polish options. |
+| Presets | `createCalloutCardPreset` | Start from semantic, theme-tokenized explanatory building blocks instead of raw shapes. |
 
 ## Command surface
 
@@ -216,6 +227,57 @@ Issue codes include:
 | `zero-size-elements` | Elements have no measurable bounds. |
 | `low-contrast-elements` | Literal colors appear low contrast against literal background colors. |
 | `static-animation` | Sampled timeline frames do not change properties. |
+
+## Diagram polish
+
+Polish is deterministic. Elucim does not ask an LLM to judge aesthetics; it scores inspectable document signals and suggests command-backed nudges that agents, hosts, or the editor can preview.
+
+```ts
+import {
+  analyzePolish,
+  applyNudge,
+  createCalloutCardPreset,
+  suggestDocumentNudges,
+} from '@elucim/dsl';
+
+const polish = analyzePolish(doc);
+const nudges = suggestDocumentNudges(doc);
+const safe = nudges.filter(nudge => nudge.confidence === 'safe');
+doc = safe.reduce((current, nudge) => applyNudge(current, nudge).document, doc);
+```
+
+`evaluateSceneForAgent(doc)` also includes `quality.polish`, so agents can return one quality object with validation, issues, nudges, summary, and polish diagnostics.
+
+Polish categories include:
+
+| Category | What it checks |
+|----------|----------------|
+| `layout` | Off-canvas elements and measurable overlaps. |
+| `hierarchy` | Whether the title/primary text is visually and semantically dominant. |
+| `readability` | Very small text. |
+| `contrast` | Overuse of literal colors instead of semantic tokens. |
+| `graph` | Graph node overlaps and edge crossings. |
+| `structure` | Missing document title or intent metadata. |
+| `motion` | Missing reveal/intro motion for generated scenes. |
+
+Nudge confidence matters:
+
+- Apply `safe` nudges automatically when the user asked for a polished result. These are low-risk changes such as strengthening title hierarchy or fixing tiny text.
+- Surface `review` nudges for confirmation or editor review. Graph layout nudges can move many nodes even though they preserve the graph structure.
+
+For explanatory structure, prefer semantic presets:
+
+```ts
+const calloutElements = createCalloutCardPreset({
+  id: 'key-insight',
+  x: 80,
+  y: 420,
+  title: 'Key insight',
+  body: 'Use a callout when the diagram needs an explicit takeaway.',
+});
+```
+
+Use semantic roles and intent (`role: "title"`, `role: "callout"`, `intent.importance: "primary" | "secondary" | "supporting"`) plus theme tokens (`$title`, `$surface`, `$primary`, `$muted`) so polish can preserve meaning while improving presentation.
 
 ## Repair policy
 

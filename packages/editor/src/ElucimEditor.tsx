@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { RenderableDocument, ElucimDocument, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2TimelineFrameSelection } from '@elucim/dsl';
-import { applyNudge, applyTimelineFrames, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, validate, validateV2 } from '@elucim/dsl';
+import { analyzePolish, applyNudge, applyTimelineFrames, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, validate, validateV2 } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider } from './state/EditorProvider';
@@ -763,6 +763,7 @@ function StateMachinePanel({ v2Document, onDocumentChange }: { v2Document?: Eluc
   const nudgeCandidates = useMemo(() => currentV2Document
     ? suggestDocumentNudges(currentV2Document).filter(nudge => !dismissedNudgeIds.has(nudge.id))
     : [], [currentV2Document, dismissedNudgeIds]);
+  const polishReport = useMemo(() => currentV2Document ? analyzePolish(currentV2Document) : undefined, [currentV2Document]);
   const nudgePreviews = useMemo(() => {
     if (!currentV2Document) return new Map<string, string[]>();
     const entries: Array<[string, string[]]> = nudgeCandidates.map(nudge => {
@@ -884,6 +885,40 @@ function StateMachinePanel({ v2Document, onDocumentChange }: { v2Document?: Eluc
         </div>
       )}
 
+      {v2Document && polishReport && (
+        <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'baseline' }}>
+            <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+              Polish score
+            </div>
+            <strong style={{ color: polishReport.score.overall >= 85 ? v('--elucim-editor-success') : v('--elucim-editor-warning') }}>
+              {polishReport.score.overall}
+            </strong>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 4, color: v('--elucim-editor-text-secondary'), fontSize: 10 }}>
+            <span>Layout {polishReport.score.layout}</span>
+            <span>Hierarchy {polishReport.score.hierarchy}</span>
+            <span>Readability {polishReport.score.readability}</span>
+            <span>Graph {polishReport.score.graph}</span>
+            <span>Structure {polishReport.score.structure}</span>
+            <span>Motion {polishReport.score.motion}</span>
+          </div>
+          {polishReport.diagnostics.length > 0 ? (
+            <ul style={{ margin: 0, paddingLeft: 16, color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
+              {polishReport.diagnostics.slice(0, 5).map(diagnostic => (
+                <li key={diagnostic.id}>
+                  <strong>{diagnostic.category}</strong>: {diagnostic.message}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div style={{ color: v('--elucim-editor-text-secondary'), lineHeight: 1.4 }}>
+              No polish diagnostics found.
+            </div>
+          )}
+        </div>
+      )}
+
       {v2Document && nudgeCandidates.length > 0 && (
         <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
@@ -893,7 +928,9 @@ function StateMachinePanel({ v2Document, onDocumentChange }: { v2Document?: Eluc
             <div key={nudge.id} style={{ display: 'grid', gap: 4, padding: 6, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 5 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                 <strong style={{ color: v('--elucim-editor-fg') }}>{nudge.title}</strong>
-                <span style={{ color: nudge.confidence === 'safe' ? v('--elucim-editor-success') : v('--elucim-editor-warning') }}>{nudge.confidence}</span>
+                <span style={{ color: nudge.confidence === 'safe' ? v('--elucim-editor-success') : v('--elucim-editor-warning') }}>
+                  {nudge.category ? `${nudge.category} / ` : ''}{nudge.confidence}
+                </span>
               </div>
               <div style={{ color: v('--elucim-editor-text-secondary'), lineHeight: 1.35 }}>{nudge.description}</div>
               <ul style={{ margin: 0, paddingLeft: 16, color: v('--elucim-editor-text-muted'), fontSize: 10, lineHeight: 1.35 }}>

@@ -93,6 +93,21 @@ export {
   type ElucimV2Nudge,
   type ElucimV2NudgeResult,
 } from './v2/nudges';
+export {
+  analyzePolish,
+  collectElementBounds,
+  createCalloutCardPreset,
+  layoutGraphLayered,
+  type ElucimCalloutCardPresetSpec,
+  type ElucimPresetElement,
+  type ElucimPolishCategory,
+  type ElucimPolishDiagnostic,
+  type ElucimPolishReport,
+  type ElucimPolishScore,
+  type ElucimPolishSeverity,
+  type ElucimGraphEdgeLayout,
+  type ElucimGraphNodeLayout,
+} from './v2/polish';
 
 // Math expression evaluator
 export {

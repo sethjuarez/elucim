@@ -12,6 +12,7 @@ import type {
 import type { ElucimDocument } from './index';
 import { applyCommand, type ElucimV2Command, type ElucimV2CommandResult } from './v2/commands';
 import { applyNudge, suggestDocumentNudges, type ElucimV2Nudge } from './v2/nudges';
+import { analyzePolish, type ElucimPolishReport } from './v2/polish';
 import { applyTimelineFrame } from './v2/timeline';
 import {
   diffDocuments,
@@ -162,6 +163,7 @@ export interface AgentQualityReport {
   validation: AgentValidationResult;
   summary?: AgentDocumentSummary;
   nudges: ElucimV2Nudge[];
+  polish?: ElucimPolishReport;
 }
 
 export interface AgentTimelineTrackBounds {
@@ -558,6 +560,7 @@ export function evaluateSceneForAgent(doc: AgentDocument): AgentQualityReport {
     issues,
     validation,
     summary: validation.valid ? summarizeDocument(doc) : undefined,
+    polish: validation.valid ? analyzePolish(doc) : undefined,
     nudges: validation.valid ? suggestDocumentNudges(doc) : [],
   };
 }

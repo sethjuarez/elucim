@@ -116,6 +116,8 @@ describe('agent authoring API', () => {
     expect(report.issues.map(issue => issue.code)).toContain('missing-metadata');
     expect(report.summary?.elementCount).toBe(1);
     expect(report.nudges.length).toBeGreaterThan(0);
+    expect(report.polish?.score.overall).toBeLessThan(100);
+    expect(report.polish?.diagnostics.map(diagnostic => diagnostic.id)).toContain('missing-intent');
   });
 
   it('throws when timelines target missing elements', () => {

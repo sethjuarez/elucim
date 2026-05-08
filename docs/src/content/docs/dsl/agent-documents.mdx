@@ -204,11 +204,13 @@ Editor graph positions are optional metadata under `layout`: `layout.entry` stor
 Elucim does not call an LLM. Host apps such as CutReady can ask Elucim for deterministic nudges, show them to an agent or human, and apply the exact command list:
 
 ```ts
-import { applyNudge, suggestDocumentNudges } from '@elucim/dsl/agent';
+import { analyzePolish, applyNudge, suggestDocumentNudges } from '@elucim/dsl';
 
 const nudges = suggestDocumentNudges(doc);
-const polished = applyNudge(doc, nudges[0]).document;
+const safeNudges = nudges.filter(nudge => nudge.confidence === 'safe');
+const polished = safeNudges.reduce((current, nudge) => applyNudge(current, nudge).document, doc);
+const polish = analyzePolish(polished);
 ```
 
-Initial nudges cover safe metadata polish and a reviewable timeline-based intro clip. This gives agents a simple workflow: generate the 80% layout, ask Elucim for refinements, then apply or explain the chosen command-backed nudges.
+Polish analysis returns category scores and diagnostics for layout, hierarchy, readability, contrast, graph readability, explanatory structure, and motion. Current nudges cover safe metadata/readability/title hierarchy polish, a reviewable timeline-based intro clip, and reviewable layered graph layout for graph elements. This gives agents a simple workflow: generate the 80% layout, ask Elucim for refinements, apply safe command-backed nudges, and explain review nudges that should be confirmed by a human or opened in the editor.
 
