@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.19.0](https://github.com/sethjuarez/elucim/compare/core-v0.18.0...core-v0.19.0) (2026-05-08)
+
+
+### Features
+
+* add full composite helper set ([e3fda14](https://github.com/sethjuarez/elucim/commit/e3fda14ed868b5264cc01a9f8e9a919505d2c14a))
+
 ## [0.18.0](https://github.com/sethjuarez/elucim/compare/core-v0.17.0...core-v0.18.0) (2026-05-08)
 
 
