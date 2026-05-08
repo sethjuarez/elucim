@@ -3,6 +3,15 @@ name: Release
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to publish manually
+        required: true
+        default: cli
+        type: choice
+        options:
+          - cli
 
 permissions:
   contents: write
@@ -20,6 +29,7 @@ jobs:
       core_release: ${{ steps.release.outputs['packages/core--release_created'] }}
       dsl_release: ${{ steps.release.outputs['packages/dsl--release_created'] }}
       editor_release: ${{ steps.release.outputs['packages/editor--release_created'] }}
+      cli_release: ${{ steps.release.outputs['packages/cli--release_created'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -30,7 +40,7 @@ jobs:
 
   publish:
     needs: release-please
-    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    if: ${{ needs.release-please.outputs.releases_created == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -63,3 +73,7 @@ jobs:
       - name: Publish @elucim/editor
         if: ${{ needs.release-please.outputs.editor_release == 'true' }}
         run: pnpm --filter @elucim/editor publish --access public --no-git-checks --provenance
+
+      - name: Publish elucim CLI
+        if: ${{ needs.release-please.outputs.cli_release == 'true' || (github.event_name == 'workflow_dispatch' && inputs.package == 'cli') }}
+        run: pnpm --filter elucim publish --access public --no-git-checks --provenance
