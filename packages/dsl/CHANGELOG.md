@@ -1,5 +1,21 @@
 # @elucim/dsl
 
+## [0.20.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.19.0...dsl-v0.20.0) (2026-05-08)
+
+
+### Features
+
+* add semantic motion helpers ([4de0b5f](https://github.com/sethjuarez/elucim/commit/4de0b5f4eb162c58776c20e2316d42d4fcd2d944))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.20.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.20.0
+
 ## [0.19.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.18.0...dsl-v0.19.0) (2026-05-08)
 
 
