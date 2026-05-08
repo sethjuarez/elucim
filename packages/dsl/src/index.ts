@@ -90,8 +90,8 @@ export {
 export {
   suggestDocumentNudges,
   applyNudge,
-  type ElucimV2Nudge,
-  type ElucimV2NudgeResult,
+  type ElucimDocumentNudge,
+  type ElucimDocumentNudgeResult,
 } from './v2/nudges';
 export {
   analyzePolish,

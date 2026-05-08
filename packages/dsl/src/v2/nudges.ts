@@ -4,7 +4,7 @@ import { getDocumentLinearDuration } from './duration';
 import type { ElucimV2Document } from './types';
 import { analyzePolish, graphNeedsLayout, layoutGraphElementLayered, POLISH_MIN_TEXT_SIZE, POLISH_TARGET_TITLE_SIZE, type ElucimPolishCategory } from './polish';
 
-export interface ElucimV2Nudge {
+export interface ElucimDocumentNudge {
   id: string;
   title: string;
   description: string;
@@ -13,13 +13,13 @@ export interface ElucimV2Nudge {
   category?: ElucimPolishCategory;
 }
 
-export interface ElucimV2NudgeResult {
+export interface ElucimDocumentNudgeResult {
   document: ElucimV2Document;
   summaries: string[];
 }
 
-export function suggestDocumentNudges(doc: ElucimV2Document): ElucimV2Nudge[] {
-  const nudges: ElucimV2Nudge[] = [];
+export function suggestDocumentNudges(doc: ElucimV2Document): ElucimDocumentNudge[] {
+  const nudges: ElucimDocumentNudge[] = [];
   if (doc.metadata?.polishLevel !== 'refined' && doc.metadata?.polishLevel !== 'final') {
     nudges.push({
       id: 'mark-refined',
@@ -72,7 +72,7 @@ export function suggestDocumentNudges(doc: ElucimV2Document): ElucimV2Nudge[] {
   return nudges;
 }
 
-export function applyNudge(doc: ElucimV2Document, nudge: ElucimV2Nudge): ElucimV2NudgeResult {
+export function applyNudge(doc: ElucimV2Document, nudge: ElucimDocumentNudge): ElucimDocumentNudgeResult {
   let current = doc;
   const summaries: string[] = [];
   for (const command of nudge.commands) {
@@ -83,7 +83,7 @@ export function applyNudge(doc: ElucimV2Document, nudge: ElucimV2Nudge): ElucimV
   return { document: current, summaries };
 }
 
-function buildSafePolishNudge(doc: ElucimV2Document): ElucimV2Nudge | undefined {
+function buildSafePolishNudge(doc: ElucimV2Document): ElucimDocumentNudge | undefined {
   const commands: ElucimV2Command[] = [];
   for (const element of Object.values(doc.elements)) {
     if ((element.type === 'text' || element.props.type === 'text') && typeof element.props.fontSize === 'number' && element.props.fontSize < POLISH_MIN_TEXT_SIZE) {
@@ -101,7 +101,7 @@ function buildSafePolishNudge(doc: ElucimV2Document): ElucimV2Nudge | undefined 
   };
 }
 
-function buildTitleHierarchyNudge(doc: ElucimV2Document): ElucimV2Nudge | undefined {
+function buildTitleHierarchyNudge(doc: ElucimV2Document): ElucimDocumentNudge | undefined {
   const title = Object.values(doc.elements).find(element => (element.type === 'text' || element.props.type === 'text')
     && (element.role === 'title' || element.intent?.role === 'title' || /title|headline|heading/i.test(element.id)))
     ?? Object.values(doc.elements).find(element => element.type === 'text' || element.props.type === 'text');

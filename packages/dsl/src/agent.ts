@@ -11,7 +11,7 @@ import type {
 } from './v2/types';
 import type { ElucimDocument } from './index';
 import { applyCommand, type ElucimV2Command, type ElucimV2CommandResult } from './v2/commands';
-import { applyNudge, suggestDocumentNudges, type ElucimV2Nudge } from './v2/nudges';
+import { applyNudge, suggestDocumentNudges, type ElucimDocumentNudge } from './v2/nudges';
 import { analyzePolish, type ElucimPolishReport } from './v2/polish';
 import { applyTimelineFrame } from './v2/timeline';
 import {
@@ -32,7 +32,7 @@ export type AgentIntent = NonNullable<AgentDocument['elements'][string]['intent'
 export type AgentLayout = NonNullable<AgentDocument['elements'][string]['layout']>;
 export type AgentAnimatableProperty = ElucimV2AnimatableProperty;
 export type AgentKeyframe = ElucimV2Keyframe;
-export type AgentNudge = ElucimV2Nudge;
+export type AgentNudge = ElucimDocumentNudge;
 
 export interface AgentElementPatch {
   type?: string;
@@ -162,7 +162,7 @@ export interface AgentQualityReport {
   issues: AgentQualityIssue[];
   validation: AgentValidationResult;
   summary?: AgentDocumentSummary;
-  nudges: ElucimV2Nudge[];
+  nudges: ElucimDocumentNudge[];
   polish?: ElucimPolishReport;
 }
 
