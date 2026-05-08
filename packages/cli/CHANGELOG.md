@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.20.0](https://github.com/sethjuarez/elucim/compare/cli-v0.19.0...cli-v0.20.0) (2026-05-08)
+
+
+### Features
+
+* add semantic motion helpers ([4de0b5f](https://github.com/sethjuarez/elucim/commit/4de0b5f4eb162c58776c20e2316d42d4fcd2d944))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/dsl bumped to 0.20.0
+
 ## [0.19.0](https://github.com/sethjuarez/elucim/compare/cli-v0.18.0...cli-v0.19.0) (2026-05-08)
 
 
