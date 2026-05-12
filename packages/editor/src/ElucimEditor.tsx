@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import type { RenderableDocument, ElucimDocument, ElucimTimelineFrameSelection } from '@elucim/dsl';
-import { applyTimelineFrames, createRenderableDocument } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider, useEditorState } from './state/EditorProvider';
@@ -13,11 +12,14 @@ import { LeftDock } from './dock/LeftDock';
 import { PanelShell } from './panels/PanelShell';
 import { buildThemeVars, deriveEditorTheme, v } from './theme/tokens';
 import { startRafDrag } from './interactions/rafDrag';
-import { createDocumentFromEditorState, normalizeInitialDocument } from './document/documentCompatibility';
+import { normalizeInitialDocument } from './document/documentCompatibility';
+import { DocumentChangeEmitter, InitialDocumentModelSync, resolveInitialFrame, resolvePreviewDocument, type ElucimEditorChangeDetails } from './document/documentLifecycle';
 import { CollapsedPanelRail } from './chrome/CollapsedPanelRail';
 import { PanelResizeHandle } from './chrome/PanelResizeHandle';
 import { PanelToggle } from './chrome/PanelToggle';
 import { WorkspaceTab } from './chrome/WorkspaceTab';
+
+export type { ElucimEditorChangeDetails } from './document/documentLifecycle';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
@@ -57,68 +59,6 @@ export interface ElucimEditorProps {
   style?: React.CSSProperties;
 }
 
-export interface ElucimEditorChangeDetails {
-  changedFormat: boolean;
-  warnings: string[];
-}
-
-/** Emits canonical document changes from internal editor state. */
-function DocumentChangeEmitter({
-  onChange,
-  onWarnings,
-}: {
-  onChange?: (doc: ElucimDocument, details: ElucimEditorChangeDetails) => void;
-  onWarnings?: (warnings: string[]) => void;
-}) {
-  const { state, dispatch } = useEditorState();
-  const doc = state.document;
-  const sourceDocument = state.canonicalDocument;
-  const cbRef = useRef(onChange);
-  const previousDocRef = useRef(doc);
-  const previousWarningsRef = useRef('');
-  cbRef.current = onChange;
-  const isFirst = useRef(true);
-
-  useEffect(() => {
-    if (isFirst.current) { isFirst.current = false; return; }
-    const docChanged = previousDocRef.current !== doc;
-    previousDocRef.current = doc;
-    const result = sourceDocument
-      ? { document: sourceDocument, warnings: state.compatibilityWarnings }
-      : { document: createDocumentFromEditorState(doc), warnings: [] };
-    const details: ElucimEditorChangeDetails = {
-      changedFormat: docChanged,
-      warnings: result.warnings,
-    };
-    if (docChanged) {
-      dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.document, warnings: result.warnings });
-      cbRef.current?.(result.document, details);
-    }
-    const warningKey = result.warnings.join('\n');
-    if (warningKey !== previousWarningsRef.current) {
-      previousWarningsRef.current = warningKey;
-      onWarnings?.(result.warnings);
-    }
-  }, [dispatch, doc, onWarnings, sourceDocument, state.compatibilityWarnings]);
-
-  return null;
-}
-
-function InitialDocumentModelSync({
-  document,
-  lastEmittedDocumentRef,
-}: {
-  document?: ElucimDocument;
-  lastEmittedDocumentRef: React.MutableRefObject<ElucimDocument | undefined>;
-}) {
-  const { dispatch } = useEditorState();
-  useEffect(() => {
-    if (document === lastEmittedDocumentRef.current) return;
-    dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [], syncProjection: true });
-  }, [dispatch, document, lastEmittedDocumentRef]);
-  return null;
-}
-
 /**
  * A visual editor for creating and editing Elucim animated scenes.
  * Persistent shell with hierarchy, stage, inspector, and timeline.
@@ -135,9 +75,7 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
     onCompatibilityWarnings?.(warnings);
   };
   // Resolve 'last' to the actual final frame number
-  const resolvedFrame = initialFrame === 'last'
-    ? Math.max(0, ((normalizedInitialDocument?.root as any)?.durationInFrames ?? 1) - 1)
-    : initialFrame;
+  const resolvedFrame = resolveInitialFrame(initialFrame, normalizedInitialDocument);
 
   let inner = (
     <EditorErrorBoundary>
@@ -223,12 +161,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
     onDocumentChange?.(document);
   };
   const liveDocument = activeDocument;
-  const previewDocument = useMemo(() => {
-    if (!liveDocument || !previewTimelineFrames?.length) return undefined;
-    const renderableFrames = previewTimelineFrames.filter(frame => liveDocument.timelines?.[frame.timelineId]);
-    if (renderableFrames.length === 0) return undefined;
-    return createRenderableDocument(applyTimelineFrames(liveDocument, renderableFrames));
-  }, [previewTimelineFrames, liveDocument]);
+  const previewDocument = useMemo(() => resolvePreviewDocument(liveDocument, previewTimelineFrames), [previewTimelineFrames, liveDocument]);
   const selectWorkspace = (nextWorkspace: EditorWorkspace) => {
     if (nextWorkspace !== 'animate' && state.isPlaying) {
       dispatch({ type: 'SET_PLAYING', playing: false });

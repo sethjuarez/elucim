@@ -1,23 +1,13 @@
 import { describe, it, expect } from 'vitest';
+import type { ElucimDocument, RenderableDocument as RenderableEditorDocument } from '@elucim/dsl';
 import { createInitialState, createDefaultDocument } from '../state/types';
-import type { RenderableDocument as ElucimDocument } from '@elucim/dsl';
+import { resolveInitialFrame, resolvePreviewDocument } from '../document/documentLifecycle';
 
 // ─── initialFrame="last" resolution ────────────────────────────────────────
 
 describe('initialFrame="last" resolution', () => {
-  // This tests the same logic used in ElucimEditor to resolve 'last'
-  function resolveInitialFrame(
-    initialFrame: number | 'last' | undefined,
-    doc?: ElucimDocument,
-  ): number | undefined {
-    if (initialFrame === 'last') {
-      return Math.max(0, ((doc?.root as any)?.durationInFrames ?? 1) - 1);
-    }
-    return initialFrame;
-  }
-
   it('resolves "last" to durationInFrames - 1', () => {
-    const doc: ElucimDocument = {
+    const doc: RenderableEditorDocument = {
       version: '1.0',
       root: {
         type: 'player',
@@ -31,7 +21,7 @@ describe('initialFrame="last" resolution', () => {
   });
 
   it('resolves "last" to 0 when durationInFrames is 1', () => {
-    const doc: ElucimDocument = {
+    const doc: RenderableEditorDocument = {
       version: '1.0',
       root: {
         type: 'player',
@@ -62,7 +52,7 @@ describe('initialFrame="last" resolution', () => {
 
 describe('createInitialState with initialFrame', () => {
   it('sets currentFrame from initialFrame parameter', () => {
-    const doc: ElucimDocument = {
+    const doc: RenderableEditorDocument = {
       version: '1.0',
       root: {
         type: 'player',
@@ -89,5 +79,40 @@ describe('default toolbar position', () => {
     const state = createInitialState(createDefaultDocument());
     expect(state.toolbarPosition.x).toBeGreaterThanOrEqual(20);
     expect(state.toolbarPosition.y).toBeGreaterThanOrEqual(20);
+  });
+});
+
+describe('preview document resolution', () => {
+  const document: ElucimDocument = {
+    version: '2.0',
+    scene: { type: 'player', width: 800, height: 600, children: ['card'] },
+    elements: {
+      card: {
+        id: 'card',
+        type: 'rect',
+        props: { type: 'rect', x: 0, y: 0, width: 100, height: 60, opacity: 0 },
+      },
+    },
+    timelines: {
+      intro: {
+        id: 'intro',
+        duration: 30,
+        tracks: [{ target: 'card', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+      },
+    },
+  };
+
+  it('returns undefined without a live document or valid preview frames', () => {
+    expect(resolvePreviewDocument(undefined, [{ timelineId: 'intro', frame: 30 }])).toBeUndefined();
+    expect(resolvePreviewDocument(document, undefined)).toBeUndefined();
+    expect(resolvePreviewDocument(document, [{ timelineId: 'missing', frame: 30 }])).toBeUndefined();
+  });
+
+  it('applies valid preview timeline frames and returns a renderable projection', () => {
+    const preview = resolvePreviewDocument(document, [{ timelineId: 'intro', frame: 30 }]);
+    const card = preview?.root.children[0] as { opacity?: number };
+
+    expect(preview?.version).toBe('1.0');
+    expect(card.opacity).toBe(1);
   });
 });
