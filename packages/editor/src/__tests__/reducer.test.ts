@@ -20,6 +20,50 @@ function stateWithElements(...elements: any[]): EditorState {
   return createInitialState(doc);
 }
 
+function stateWithCanonicalDocument(): EditorState {
+  const renderableDoc: ElucimDocument = {
+    version: '1.0',
+    root: {
+      type: 'player',
+      width: 800,
+      height: 600,
+      durationInFrames: 120,
+      children: [circle1, rect1],
+    },
+  };
+  const canonicalDocument: CanonicalElucimDocument = {
+    version: '2.0',
+    metadata: { title: 'Canonical editor state' },
+    scene: { type: 'player', width: 800, height: 600, children: ['c1', 'r1'] },
+    elements: {
+      c1: {
+        id: 'c1',
+        type: 'circle',
+        intent: { role: 'source' },
+        props: { type: 'circle', cx: 100, cy: 100, r: 50 },
+      },
+      r1: {
+        id: 'r1',
+        type: 'rect',
+        props: { type: 'rect', x: 50, y: 50, width: 100, height: 80 },
+      },
+    },
+    timelines: {
+      intro: { id: 'intro', duration: 30, tracks: [{ target: 'c1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }] },
+    },
+    stateMachines: {
+      presentation: {
+        id: 'presentation',
+        entry: 'intro',
+        states: { intro: { timeline: 'intro' } },
+        transitions: [{ id: 'entry-intro', from: 'entry', to: 'intro', trigger: 'onStart' }],
+      },
+    },
+    defaultStateMachine: 'presentation',
+  };
+  return createInitialState(renderableDoc, undefined, canonicalDocument);
+}
+
 const circle1: CircleNode = { type: 'circle', id: 'c1', cx: 100, cy: 100, r: 50 };
 const circle2: CircleNode = { type: 'circle', id: 'c2', cx: 300, cy: 200, r: 30 };
 const rect1: RectNode = { type: 'rect', id: 'r1', x: 50, y: 50, width: 100, height: 80 };
@@ -168,6 +212,71 @@ describe('document mutation actions', () => {
     const root = next.document.root as any;
     expect(root.children).toHaveLength(1);
     expect(root.children[0].id).toBe('c1');
+  });
+
+  it('ADD_ELEMENT updates canonical elements and scene order', () => {
+    const next = editorReducer(stateWithCanonicalDocument(), {
+      type: 'ADD_ELEMENT',
+      element: { type: 'text', id: 'label', content: 'Hello', x: 120, y: 140 },
+    });
+
+    expect(next.canonicalDocument?.scene.children).toEqual(['c1', 'r1', 'label']);
+    expect(next.canonicalDocument?.elements.label).toMatchObject({
+      id: 'label',
+      type: 'text',
+      props: expect.objectContaining({ type: 'text', content: 'Hello', x: 120, y: 140 }),
+    });
+    expect(next.canonicalDocument?.metadata?.title).toBe('Canonical editor state');
+    expect(next.canonicalDocument?.defaultStateMachine).toBe('presentation');
+  });
+
+  it('UPDATE_ELEMENT updates canonical props while preserving intent', () => {
+    const next = editorReducer(stateWithCanonicalDocument(), {
+      type: 'UPDATE_ELEMENT',
+      id: 'c1',
+      changes: { r: 75, fill: '$primary' } as any,
+    });
+
+    expect(next.canonicalDocument?.elements.c1.intent).toEqual({ role: 'source' });
+    expect(next.canonicalDocument?.elements.c1.props).toMatchObject({ r: 75, fill: '$primary' });
+    expect(next.canonicalDocument?.timelines?.intro.tracks[0].target).toBe('c1');
+  });
+
+  it('DELETE_ELEMENTS prunes canonical elements and dependent motion references', () => {
+    const next = editorReducer(stateWithCanonicalDocument(), {
+      type: 'DELETE_ELEMENTS',
+      ids: ['c1'],
+    });
+
+    expect(next.canonicalDocument?.scene.children).toEqual(['r1']);
+    expect(next.canonicalDocument?.elements.c1).toBeUndefined();
+    expect(next.canonicalDocument?.timelines?.intro).toBeUndefined();
+    expect(next.canonicalDocument?.stateMachines?.presentation.states.intro.timeline).toBeUndefined();
+    expect(next.canonicalDocument?.defaultStateMachine).toBe('presentation');
+  });
+
+  it('RENAME_ELEMENT retargets canonical timeline tracks', () => {
+    const next = editorReducer(stateWithCanonicalDocument(), {
+      type: 'RENAME_ELEMENT',
+      id: 'c1',
+      newId: 'source-circle',
+    });
+
+    expect(next.canonicalDocument?.scene.children).toEqual(['source-circle', 'r1']);
+    expect(next.canonicalDocument?.elements.c1).toBeUndefined();
+    expect(next.canonicalDocument?.elements['source-circle'].intent).toEqual({ role: 'source' });
+    expect(next.canonicalDocument?.timelines?.intro.tracks[0].target).toBe('source-circle');
+  });
+
+  it('REORDER_ELEMENT reorders canonical scene children without retargeting motion', () => {
+    const next = editorReducer(stateWithCanonicalDocument(), {
+      type: 'REORDER_ELEMENT',
+      id: 'r1',
+      newIndex: 0,
+    });
+
+    expect(next.canonicalDocument?.scene.children).toEqual(['r1', 'c1']);
+    expect(next.canonicalDocument?.timelines?.intro.tracks[0].target).toBe('c1');
   });
 
   it('SET_CANONICAL_DOCUMENT updates canonical state without replacing the canvas projection', () => {

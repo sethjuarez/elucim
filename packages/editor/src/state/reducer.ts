@@ -1,4 +1,5 @@
-import type { RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
+import type { ElucimDocument as CanonicalElucimDocument, ElucimStateMachine, ElucimTimeline, RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
+import { migrateV1ToV2 } from '@elucim/dsl';
 import type { EditorState, EditorAction, AlignDirection, DistributeDirection, AnimationWrapperType } from './types';
 import { CANVAS_ID } from './types';
 import { getElementId, isUndoableAction } from './types';
@@ -10,6 +11,105 @@ const MAX_HISTORY = 50;
 
 function cloneDoc(doc: ElucimDocument): ElucimDocument {
   return JSON.parse(JSON.stringify(doc));
+}
+
+function syncCanonicalFromProjection(
+  state: EditorState,
+  document: ElucimDocument,
+  options: { idMap?: Map<string, string>; removedIds?: Set<string>; warnings?: string[] } = {},
+): EditorState {
+  if (!state.canonicalDocument) return { ...state, document };
+  const migrated = migrateV1ToV2(document);
+  const source = state.canonicalDocument;
+  const elementIds = new Set(Object.keys(migrated.elements));
+  const reverseIdMap = new Map([...options.idMap?.entries() ?? []].map(([from, to]) => [to, from]));
+  const elements: CanonicalElucimDocument['elements'] = {};
+  for (const [id, element] of Object.entries(migrated.elements)) {
+    const sourceElement = source.elements[reverseIdMap.get(id) ?? id];
+    elements[id] = sourceElement
+      ? {
+        ...element,
+        role: sourceElement.role ?? element.role,
+        intent: sourceElement.intent ? { ...sourceElement.intent, ...element.intent } : element.intent,
+        layout: sourceElement.layout || element.layout
+          ? { ...sourceElement.layout, ...element.layout }
+          : element.layout,
+      }
+      : element;
+  }
+  const warnings = [...(options.warnings ?? [])];
+  const timelineResult = syncCanonicalTimelines(source.timelines, elementIds, options.idMap, options.removedIds);
+  warnings.push(...timelineResult.warnings);
+  const timelines = timelineResult.timelines;
+  const stateMachineResult = syncCanonicalStateMachines(source.stateMachines, timelines ? new Set(Object.keys(timelines)) : new Set());
+  warnings.push(...stateMachineResult.warnings);
+  const stateMachines = stateMachineResult.stateMachines;
+  return {
+    ...state,
+    document,
+    canonicalDocument: {
+      ...migrated,
+      $schema: source.$schema ?? migrated.$schema,
+      scene: {
+        ...source.scene,
+        type: migrated.scene.type,
+        width: migrated.scene.width,
+        height: migrated.scene.height,
+        background: migrated.scene.background ?? source.scene.background,
+        children: migrated.scene.children,
+      },
+      elements,
+      metadata: source.metadata,
+      ...(timelines ? { timelines } : {}),
+      ...(stateMachines ? { stateMachines } : {}),
+      ...(source.defaultStateMachine && stateMachines?.[source.defaultStateMachine]
+        ? { defaultStateMachine: source.defaultStateMachine }
+        : {}),
+    },
+    compatibilityWarnings: warnings,
+  };
+}
+
+function syncCanonicalTimelines(
+  timelines: Record<string, ElucimTimeline> | undefined,
+  elementIds: Set<string>,
+  idMap?: Map<string, string>,
+  removedIds?: Set<string>,
+): { timelines?: Record<string, ElucimTimeline>; warnings: string[] } {
+  if (!timelines) return { warnings: [] };
+  const warnings: string[] = [];
+  const nextTimelines: Record<string, ElucimTimeline> = {};
+  for (const [id, timeline] of Object.entries(timelines)) {
+    const tracks = timeline.tracks
+      .map(track => ({ ...track, target: idMap?.get(track.target) ?? track.target }))
+      .filter(track => elementIds.has(track.target) && !removedIds?.has(track.target));
+    if (tracks.length < timeline.tracks.length) {
+      warnings.push(`Timeline "${id}" has ${timeline.tracks.length - tracks.length} track(s) targeting missing elements and will be omitted from document output.`);
+    }
+    if (tracks.length > 0) nextTimelines[id] = { ...timeline, tracks };
+  }
+  return { timelines: Object.keys(nextTimelines).length > 0 ? nextTimelines : undefined, warnings };
+}
+
+function syncCanonicalStateMachines(
+  stateMachines: Record<string, ElucimStateMachine> | undefined,
+  timelineIds: Set<string>,
+): { stateMachines?: Record<string, ElucimStateMachine>; warnings: string[] } {
+  if (!stateMachines) return { warnings: [] };
+  const warnings: string[] = [];
+  const nextMachines: Record<string, ElucimStateMachine> = {};
+  for (const [id, machine] of Object.entries(stateMachines)) {
+    nextMachines[id] = {
+      ...machine,
+      states: Object.fromEntries(Object.entries(machine.states).map(([stateId, state]) => [
+        stateId,
+        state.timeline && !timelineIds.has(state.timeline)
+          ? (warnings.push(`State "${stateId}" in machine "${id}" references missing timeline "${state.timeline}" and will lose that timeline link.`), { ...state, timeline: undefined })
+          : state,
+      ])),
+    };
+  }
+  return { stateMachines: Object.keys(nextMachines).length > 0 ? nextMachines : undefined, warnings };
 }
 
 // ─── Tree traversal helpers ────────────────────────────────────────────────
@@ -484,13 +584,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const loc = findElementById(doc.root, action.id);
       if (!loc || !loc.parent) return state;
       loc.parent[loc.index] = { ...loc.element, ...action.changes } as ElementNode;
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'UPDATE_CANVAS': {
       const doc = cloneDoc(state.document);
       Object.assign(doc.root, action.changes);
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'ADD_ELEMENT': {
@@ -499,7 +599,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if ('children' in root && Array.isArray(root.children)) {
         root.children.push(action.element);
       }
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'DELETE_ELEMENTS': {
@@ -511,8 +611,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         }
       }
       return {
-        ...state,
-        document: doc,
+        ...syncCanonicalFromProjection(state, doc, { removedIds: new Set(action.ids) }),
         selectedIds: state.selectedIds.filter(id => !action.ids.includes(id)),
       };
     }
@@ -532,7 +631,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           if (cloneId) newIds.push(cloneId);
         }
       }
-      return { ...state, document: doc, selectedIds: newIds.length > 0 ? newIds : state.selectedIds };
+      return { ...syncCanonicalFromProjection(state, doc), selectedIds: newIds.length > 0 ? newIds : state.selectedIds };
     }
 
     case 'MOVE_ELEMENT': {
@@ -547,7 +646,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           loc.parent[loc.index] = applyMove(loc.element, action.dx, action.dy);
         }
       }
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'MOVE_GRAPH_NODE': {
@@ -565,7 +664,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         y: Math.round(graph.nodes[nodeIdx].y + action.dy),
       };
       loc.parent[loc.index] = graph;
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'RESIZE_ELEMENT': {
@@ -581,7 +680,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         dy = d;
       }
       loc.parent[loc.index] = applyResize(loc.element, action.handle, dx, dy);
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'ROTATE_ELEMENT': {
@@ -591,7 +690,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const el = loc.element as any;
       const current = el.rotation ?? 0;
       loc.parent[loc.index] = { ...el, rotation: current + action.angleDeg } as ElementNode;
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'GROUP_ELEMENTS': {
@@ -620,7 +719,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         children: elements,
       };
       parent.splice(indices[0], 0, groupNode as ElementNode);
-      return { ...state, document: doc, selectedIds: [groupNode.id] };
+      return { ...syncCanonicalFromProjection(state, doc), selectedIds: [groupNode.id] };
     }
 
     case 'UNGROUP': {
@@ -634,7 +733,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const childIds = group.children
         .map((c: any) => c.id)
         .filter((id: string | undefined): id is string => !!id);
-      return { ...state, document: doc, selectedIds: childIds };
+      return { ...syncCanonicalFromProjection(state, doc, { removedIds: new Set([action.id]) }), selectedIds: childIds };
     }
 
     case 'WRAP_IN_ANIMATION': {
@@ -644,7 +743,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const wrapper = createAnimationWrapper(action.wrapper, loc.element);
       loc.parent[loc.index] = wrapper;
       const selectedId = `${loc.parentPath}.${wrapper.type}[${loc.index}]`;
-      return { ...state, document: doc, selectedIds: [selectedId] };
+      return { ...syncCanonicalFromProjection(state, doc), selectedIds: [selectedId] };
     }
 
     case 'UNWRAP_ANIMATION': {
@@ -656,7 +755,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       loc.parent.splice(loc.index, 1, ...children);
       const selectedIds = children
         .map((child, childIndex) => getElementId(child, loc.index + childIndex, loc.parentPath));
-      return { ...state, document: doc, selectedIds };
+      return { ...syncCanonicalFromProjection(state, doc), selectedIds };
     }
 
     case 'RENAME_ELEMENT': {
@@ -666,7 +765,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       loc.parent[loc.index] = { ...loc.element, id: action.newId } as ElementNode;
       // Update selectedIds if the renamed element was selected
       const selectedIds = state.selectedIds.map(id => id === action.id ? action.newId : id);
-      return { ...state, document: doc, selectedIds };
+      return {
+        ...syncCanonicalFromProjection(state, doc, {
+          idMap: new Map([[action.id, action.newId]]),
+          warnings: [`Element "${action.id}" was renamed to "${action.newId}"; timeline references were updated.`],
+        }),
+        selectedIds,
+      };
     }
 
     case 'REORDER_ELEMENT': {
@@ -677,7 +782,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (newIdx === loc.index) return state;
       const [removed] = loc.parent.splice(loc.index, 1);
       loc.parent.splice(newIdx, 0, removed);
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'SET_VIEWPORT':
@@ -724,7 +829,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           }
         }
       }
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'SEND_BACKWARD': {
@@ -739,7 +844,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           }
         }
       }
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'BRING_TO_FRONT': {
@@ -753,7 +858,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         }
         parent.push(...removed);
       }
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     case 'SEND_TO_BACK': {
@@ -767,7 +872,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         }
         parent.unshift(...removed);
       }
-      return { ...state, document: doc };
+      return syncCanonicalFromProjection(state, doc);
     }
 
     // ─── Alignment & distribution ────────────────────────────────────────
@@ -860,7 +965,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const prev = state.past[state.past.length - 1];
       return {
         ...state,
-        document: prev,
+        ...syncCanonicalFromProjection(state, prev),
         past: state.past.slice(0, -1),
         future: [cloneDoc(state.document), ...state.future].slice(0, MAX_HISTORY),
         selectedIds: [],
@@ -872,7 +977,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       const next = state.future[0];
       return {
         ...state,
-        document: next,
+        ...syncCanonicalFromProjection(state, next),
         past: [...state.past, cloneDoc(state.document)].slice(-MAX_HISTORY),
         future: state.future.slice(1),
         selectedIds: [],
