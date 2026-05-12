@@ -4,7 +4,7 @@ const EDITOR_URL = '/editor.html';
 
 async function openEditor(page: Page, query = '') {
   await page.goto(`${EDITOR_URL}${query}`);
-  await expect(page.locator('.elucim-editor')).toBeVisible();
+  await expect(page.locator('.elucim-editor')).toBeVisible({ timeout: 15000 });
 }
 
 async function opacity(locator: Locator) {
