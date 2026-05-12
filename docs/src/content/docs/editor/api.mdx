@@ -24,12 +24,12 @@ interface ElucimEditorProps {
 
 | Prop | Description |
 |------|-------------|
-| `initialDocument` | Starting document. Normalized v2 `ElucimDocument` is the public authoring path; legacy/renderable documents are accepted for compatibility. |
+| `initialDocument` | Starting document. `ElucimDocument` is the public authoring path; renderable documents are accepted for compatibility. |
 | `initialFrame` | Starting frame, or `'last'` to open at the final linear frame. |
 | `theme` | Shared content `ElucimTheme`; editor chrome is derived from it. |
 | `editorTheme` | Editor chrome token overrides. Accepts bare names or full CSS variable names. |
-| `onDocumentChange` | Called after edits with normalized v2 output and compatibility details. Skips initial mount. |
-| `onCompatibilityWarnings` | Called when normalized output has warnings such as renamed IDs, pruned timelines, or invalid v2 output. |
+| `onDocumentChange` | Called after edits with Elucim Document output and compatibility details. Skips initial mount. |
+| `onCompatibilityWarnings` | Called when document output has warnings such as renamed IDs, pruned timelines, or invalid restored output. |
 | `onBrowseImage` | Opens a host-provided image picker from image fields. |
 | `imageResolver` | Resolves opaque image refs in editor preview. |
 | `className` / `style` | Root editor container styling. |
@@ -68,7 +68,7 @@ interface ElucimEditorLayoutProps {
   editorTheme?: Record<string, string>;
   className?: string;
   style?: React.CSSProperties;
-  v2Document?: ElucimDocument;
+  document?: ElucimDocument;
   onDocumentChange?: (document: ElucimDocument) => void;
 }
 ```
@@ -82,7 +82,7 @@ function CustomSaveButton() {
 }
 
 <EditorProvider initialDocument={doc}>
-  <ElucimEditorLayout v2Document={doc} onDocumentChange={setDoc} />
+  <ElucimEditorLayout document={doc} onDocumentChange={setDoc} />
   <CustomSaveButton />
 </EditorProvider>;
 ```

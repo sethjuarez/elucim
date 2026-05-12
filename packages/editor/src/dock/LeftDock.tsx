@@ -37,7 +37,7 @@ export function LeftDock({ document, onDocumentChange, preferredTab }: { documen
         <DockTab label="Create" selected={tab === 'create'} onClick={() => setTab('create')} />
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-        {tab === 'create' ? <Toolbar /> : <HierarchyPanel v2Document={document} />}
+        {tab === 'create' ? <Toolbar /> : <HierarchyPanel document={document} />}
       </div>
     </section>
   );
