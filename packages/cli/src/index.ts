@@ -169,6 +169,44 @@ const COMMANDS = [
   },
 ] as const;
 
+type CliCommandName = (typeof COMMANDS)[number]['name'];
+
+interface CliCommandExample {
+  description: string;
+  argv: string[];
+}
+
+const COMMAND_EXAMPLES: Record<CliCommandName, readonly CliCommandExample[]> = {
+  ops: [{ description: 'Discover available CLI and code-backed agent operations.', argv: ['ops', '--json'] }],
+  validate: [{ description: 'Validate an Elucim Document before and after edits.', argv: ['validate', 'diagram.elc', '--json'] }],
+  inspect: [{ description: 'Summarize document quality and agent-readable polish issues.', argv: ['inspect', 'diagram.elc', '--json'] }],
+  nudges: [{ description: 'List deterministic and semantic layout improvement suggestions.', argv: ['nudges', 'diagram.elc', '--semantic-layout', '--json'] }],
+  polish: [{ description: 'Apply safe deterministic improvements and write a new document.', argv: ['polish', 'diagram.elc', '--apply-safe', '--out', 'polished.elc', '--json'] }],
+  layout: [{ description: 'Apply the best available semantic layout suggestion.', argv: ['layout', 'diagram.elc', '--out', 'laid-out.elc', '--json'] }],
+  'add-connector': [{ description: 'Connect two existing Objects using a semantic connector.', argv: ['add-connector', 'diagram.elc', '--id', 'a-to-b', '--from', 'a', '--to', 'b', '--end-cap', 'arrow', '--out', 'connected.elc', '--json'] }],
+  'add-element': [{ description: 'Place a single Object with explicit SVG props.', argv: ['add-element', 'diagram.elc', '--id', 'card', '--type', 'rect', '--props-json', '{"x":80,"y":120,"width":160,"height":90,"fill":"$surface"}', '--out', 'with-card.elc', '--json'] }],
+  'update-element': [{ description: 'Patch props or layout for an existing Object.', argv: ['update-element', 'diagram.elc', '--id', 'card', '--props-json', '{"fill":"$primary"}', '--out', 'updated.elc', '--json'] }],
+  'delete-element': [{ description: 'Remove an Object and prune document references through validation.', argv: ['delete-element', 'diagram.elc', '--id', 'card', '--out', 'without-card.elc', '--json'] }],
+  'add-text-block': [{ description: 'Create editable wrapped text from one body string.', argv: ['add-text-block', 'diagram.elc', '--id', 'summary', '--x', '80', '--y', '120', '--width', '320', '--text', 'Explain the idea clearly.', '--out', 'text.elc', '--json'] }],
+  'add-step-card': [{ description: 'Create a tokenized editable step card.', argv: ['add-step-card', 'diagram.elc', '--id', 'step-1', '--x', '80', '--y', '120', '--title', 'Plan', '--body', 'Pick the first action.', '--out', 'step.elc', '--json'] }],
+  'add-card-grid': [{ description: 'Create multiple ordered cards from JSON item specs.', argv: ['add-card-grid', 'diagram.elc', '--id', 'steps', '--x', '80', '--y', '120', '--items-json', '[{"title":"One","body":"Start"}]', '--out', 'grid.elc', '--json'] }],
+  'add-beat': [{ description: 'Compile semantic motion into an ordinary timeline.', argv: ['add-beat', 'diagram.elc', '--id', 'intro', '--preset', 'revealFlow', '--targets', 'step-1', '--duration', '48', '--out', 'motion.elc', '--json'] }],
+  'create-state-machine': [{ description: 'Make a timeline playable by embedding it in the default state machine.', argv: ['create-state-machine', 'motion.elc', '--timeline', 'intro', '--id', 'presentation', '--start', 'onStart', '--exit-to', 'exit', '--out', 'playable.elc', '--json'] }],
+  'animate-flow': [{ description: 'Animate a relationship or connector between Objects.', argv: ['animate-flow', 'diagram.elc', '--id', 'flow', '--from', 'a', '--to', 'b', '--connector', 'a-to-b', '--out', 'flow.elc', '--json'] }],
+  'reveal-group': [{ description: 'Reveal a group or ranked set of Objects in a stable order.', argv: ['reveal-group', 'diagram.elc', '--id', 'reveal-steps', '--group', 'steps', '--order-by', 'rank', '--out', 'revealed.elc', '--json'] }],
+  'hold-final': [{ description: 'Flatten a timeline to its final frame for static preview.', argv: ['hold-final', 'diagram.elc', '--timeline', 'intro', '--out', 'poster.elc', '--json'] }],
+  'reduced-motion': [{ description: 'Generate a static or minimal-motion accessibility fallback.', argv: ['reduced-motion', 'diagram.elc', '--mode', 'minimal', '--out', 'reduced.elc', '--json'] }],
+  'sample-beats': [{ description: 'Preview what changes across sampled points in a timeline.', argv: ['sample-beats', 'diagram.elc', '--timeline', 'intro', '--beats', '4', '--json'] }],
+  'export-frames': [{ description: 'Return selected frame documents for inspection or rendering.', argv: ['export-frames', 'diagram.elc', '--timeline', 'intro', '--frames', '0,24,48', '--json'] }],
+};
+
+function commandCatalog() {
+  return COMMANDS.map(command => ({
+    ...command,
+    examples: COMMAND_EXAMPLES[command.name],
+  }));
+}
+
 export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<number> {
   const args = parseArgs(argv);
   try {
@@ -236,7 +274,7 @@ function helpPayload() {
   return {
     name: 'elucim',
     description: 'Agent-discoverable CLI for Elucim documents.',
-    commands: COMMANDS,
+    commands: commandCatalog(),
   };
 }
 
@@ -245,12 +283,26 @@ function opsPayload() {
     cli: {
       name: 'elucim',
       version: readPackageVersion(),
-      commands: COMMANDS,
+      commands: commandCatalog(),
       commonFlags: [
         { name: '--json', description: 'Emit structured JSON.' },
         { name: '--compact', description: 'Emit compact JSON without indentation.' },
         { name: '--out <file>', description: 'Write an updated document to a file.' },
         { name: '--in-place', description: 'Write an updated document back to the input file.' },
+      ],
+      recommendedWorkflows: [
+        {
+          goal: 'Author a playable animated Elucim Document',
+          commands: ['add-element', 'add-beat', 'create-state-machine', 'validate', 'export-frames'],
+        },
+        {
+          goal: 'Improve an existing Elucim Document safely',
+          commands: ['inspect', 'nudges', 'polish', 'validate'],
+        },
+        {
+          goal: 'Round-trip editor-friendly Objects',
+          commands: ['add-element', 'update-element', 'delete-element', 'validate'],
+        },
       ],
     },
     agentOperations: getAgentOperationCatalog(),
