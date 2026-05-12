@@ -594,8 +594,14 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'DESELECT_ALL':
       return state.selectedIds.length === 0 ? state : { ...state, selectedIds: [] };
 
-    case 'SET_DOCUMENT':
-      return { ...state, document: action.document, selectedIds: [] };
+    case 'IMPORT_RENDERABLE_DOCUMENT':
+      return {
+        ...state,
+        document: action.document,
+        canonicalDocument: migrateV1ToV2(action.document),
+        compatibilityWarnings: [],
+        selectedIds: [],
+      };
 
     case 'SET_CANONICAL_DOCUMENT':
       if (action.document && action.syncProjection) {

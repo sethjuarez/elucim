@@ -171,13 +171,15 @@ describe('add element + undo', () => {
 // ─── Preset resize ─────────────────────────────────────────────────────────
 
 describe('preset resize', () => {
-  it('changes scene dimensions via SET_DOCUMENT', () => {
+  it('changes scene dimensions via compatibility document import', () => {
     let state = createInitialState();
     const doc = JSON.parse(JSON.stringify(state.document));
     doc.root.width = 1280;
     doc.root.height = 720;
-    state = editorReducer(state, { type: 'SET_DOCUMENT', document: doc });
+    state = editorReducer(state, { type: 'IMPORT_RENDERABLE_DOCUMENT', document: doc });
     expect((state.document.root as any).width).toBe(1280);
     expect((state.document.root as any).height).toBe(720);
+    expect(state.canonicalDocument?.scene.width).toBe(1280);
+    expect(state.canonicalDocument?.scene.height).toBe(720);
   });
 });
