@@ -1,6 +1,7 @@
 import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { runCli } from '../index';
 
@@ -59,6 +60,12 @@ const flowDoc = {
   },
 };
 
+const fixtureDir = fileURLToPath(new URL('../../fixtures/agent/', import.meta.url));
+const agentFixtures = [
+  'concept-card.elc',
+  'animated-state-machine.elc',
+] as const;
+
 describe('elucim CLI', () => {
   it('exposes a discoverable operation catalog', async () => {
     const output = capture();
@@ -94,6 +101,30 @@ describe('elucim CLI', () => {
       expect(code).toBe(0);
       expect(JSON.parse(output.stdout()).validation.valid).toBe(true);
     });
+  });
+
+  it('ships valid copyable agent fixtures', async () => {
+    for (const fixture of agentFixtures) {
+      const file = join(fixtureDir, fixture);
+      const validate = capture();
+      const inspect = capture();
+
+      expect(await runCli(['validate', file, '--json'], validate.io)).toBe(0);
+      expect(JSON.parse(validate.stdout()).validation.valid).toBe(true);
+
+      expect(await runCli(['inspect', file, '--json'], inspect.io)).toBe(0);
+      expect(JSON.parse(inspect.stdout()).summary.elementCount).toBeGreaterThan(0);
+    }
+
+    const frames = capture();
+    expect(await runCli([
+      'export-frames',
+      join(fixtureDir, 'animated-state-machine.elc'),
+      '--timeline', 'intro',
+      '--frames', '0,24,48',
+      '--json',
+    ], frames.io)).toBe(0);
+    expect(JSON.parse(frames.stdout()).summaries).toHaveLength(3);
   });
 
   it('inspects raw heuristics', async () => {
