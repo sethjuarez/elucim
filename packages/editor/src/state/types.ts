@@ -74,7 +74,7 @@ export type EditorAction =
   | { type: 'SELECT_ADD'; id: string }
   | { type: 'SELECT_TOGGLE'; id: string }
   | { type: 'DESELECT_ALL' }
-  | { type: 'SET_DOCUMENT'; document: ElucimDocument }
+  | { type: 'IMPORT_RENDERABLE_DOCUMENT'; document: ElucimDocument }
   | { type: 'SET_CANONICAL_DOCUMENT'; document?: CanonicalElucimDocument; warnings?: string[]; syncProjection?: boolean }
   | { type: 'UPDATE_ELEMENT'; id: string; changes: Partial<ElementNode> }
   | { type: 'UPDATE_CANVAS'; changes: Record<string, any> }
@@ -182,7 +182,7 @@ export function isUndoableAction(action: EditorAction): boolean {
     case 'MOVE_ELEMENT':
     case 'RESIZE_ELEMENT':
     case 'ROTATE_ELEMENT':
-    case 'SET_DOCUMENT':
+    case 'IMPORT_RENDERABLE_DOCUMENT':
     case 'GROUP_ELEMENTS':
     case 'UNGROUP':
     case 'WRAP_IN_ANIMATION':

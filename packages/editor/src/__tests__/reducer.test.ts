@@ -555,14 +555,16 @@ describe('document mutation actions', () => {
     expect(root.children[1].x).toBe(50); // rect unchanged
   });
 
-  it('SET_DOCUMENT replaces the entire document', () => {
+  it('IMPORT_RENDERABLE_DOCUMENT replaces the projection and creates canonical state', () => {
     const state = stateWithElements(circle1);
     const newDoc: ElucimDocument = {
       version: '1.0',
       root: { type: 'player', width: 400, height: 300, durationInFrames: 60, children: [rect1] },
     };
-    const next = editorReducer(state, { type: 'SET_DOCUMENT', document: newDoc });
+    const next = editorReducer(state, { type: 'IMPORT_RENDERABLE_DOCUMENT', document: newDoc });
     expect((next.document.root as any).children[0].id).toBe('r1');
+    expect(next.canonicalDocument?.version).toBe('2.0');
+    expect(next.canonicalDocument?.scene.children).toEqual(['r1']);
     expect(next.selectedIds).toEqual([]);
   });
 });

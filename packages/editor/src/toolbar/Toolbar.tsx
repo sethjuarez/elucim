@@ -163,7 +163,7 @@ export function Toolbar({ className, style }: ToolbarProps) {
       if (result.canonicalDocument) {
         dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.canonicalDocument, syncProjection: true });
       } else if (result.document) {
-        dispatch({ type: 'SET_DOCUMENT', document: result.document });
+        dispatch({ type: 'IMPORT_RENDERABLE_DOCUMENT', document: result.document });
       }
     };
     reader.readAsText(file);

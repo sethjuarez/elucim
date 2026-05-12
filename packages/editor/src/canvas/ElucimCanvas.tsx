@@ -373,7 +373,7 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
     if (result.canonicalDocument) {
       dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.canonicalDocument, syncProjection: true });
     } else if (result.document) {
-      dispatch({ type: 'SET_DOCUMENT', document: result.document });
+      dispatch({ type: 'IMPORT_RENDERABLE_DOCUMENT', document: result.document });
     }
   }, [dispatch]);
 
