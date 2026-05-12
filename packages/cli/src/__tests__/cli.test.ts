@@ -67,6 +67,8 @@ describe('elucim CLI', () => {
     expect(code).toBe(0);
     const payload = JSON.parse(output.stdout());
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('inspect');
+    expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('add-element');
+    expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('update-element');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('add-connector');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('sample-beats');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('create-state-machine');
@@ -121,6 +123,87 @@ describe('elucim CLI', () => {
       const next = JSON.parse(await readFile(file, 'utf8'));
       expect(next.elements.title.props.fontSize).toBe(40);
       expect(await readdir(dir)).toEqual(['diagram.elc']);
+    });
+  });
+
+  it('adds, updates, and deletes arbitrary Objects from the CLI', async () => {
+    await withTempDoc({
+      version: '2.0',
+      scene: { type: 'player', width: 640, height: 360, children: [] },
+      elements: {},
+    }, async (file, dir) => {
+      const withObject = join(dir, 'with-object.elc');
+      const updated = join(dir, 'updated.elc');
+      const deleted = join(dir, 'deleted.elc');
+      const add = capture();
+      const update = capture();
+      const remove = capture();
+
+      expect(await runCli([
+        'add-element',
+        file,
+        '--id', 'agent-rect',
+        '--type', 'rect',
+        '--props-json', '{"x":80,"y":90,"width":160,"height":80,"fill":"$primary","opacity":0}',
+        '--layout-json', '{"x":80,"y":90,"width":160,"height":80}',
+        '--role', 'object',
+        '--intent-json', '{"purpose":"Show the concept container"}',
+        '--out', withObject,
+        '--json',
+      ], add.io)).toBe(0);
+      expect(JSON.parse(add.stdout()).validation.valid).toBe(true);
+
+      expect(await runCli([
+        'update-element',
+        withObject,
+        '--id', 'agent-rect',
+        '--props-json', '{"fill":"$secondary","opacity":1}',
+        '--layout-json', '{"x":96,"y":110,"width":180,"height":96}',
+        '--out', updated,
+        '--json',
+      ], update.io)).toBe(0);
+      const updatedDoc = JSON.parse(await readFile(updated, 'utf8'));
+      expect(updatedDoc.scene.children).toContain('agent-rect');
+      expect(updatedDoc.elements['agent-rect']).toMatchObject({
+        type: 'rect',
+        role: 'object',
+        intent: { purpose: 'Show the concept container' },
+        layout: { x: 96, y: 110, width: 180, height: 96 },
+        props: expect.objectContaining({ type: 'rect', fill: '$secondary', opacity: 1 }),
+      });
+
+      expect(await runCli(['delete-element', updated, '--id', 'agent-rect', '--out', deleted, '--json'], remove.io)).toBe(0);
+      const deletedDoc = JSON.parse(await readFile(deleted, 'utf8'));
+      expect(deletedDoc.scene.children).not.toContain('agent-rect');
+      expect(deletedDoc.elements['agent-rect']).toBeUndefined();
+    });
+  });
+
+  it('reports JSON flag context and does not write invalid Object updates', async () => {
+    await withTempDoc({
+      version: '2.0',
+      scene: { type: 'player', width: 640, height: 360, children: [] },
+      elements: {},
+    }, async (file, dir) => {
+      const invalidJson = capture();
+      const invalidDoc = capture();
+      const out = join(dir, 'invalid.elc');
+
+      expect(await runCli(['add-element', file, '--id', 'bad', '--type', 'rect', '--props-json', '{"x":}', '--json'], invalidJson.io)).toBe(1);
+      expect(JSON.parse(invalidJson.stderr()).error).toContain('Invalid JSON for --props-json');
+
+      expect(await runCli([
+        'add-element',
+        file,
+        '--id', 'bad-group',
+        '--type', 'group',
+        '--children-json', '["missing-child"]',
+        '--out', out,
+        '--json',
+      ], invalidDoc.io)).toBe(1);
+      const payload = JSON.parse(invalidDoc.stdout());
+      expect(payload.validation.valid).toBe(false);
+      await expect(readFile(out, 'utf8')).rejects.toThrow();
     });
   });
 

@@ -38,6 +38,8 @@ import {
   evaluateSceneForAgent,
   getAgentOperationCatalog,
   summarizeDocument,
+  type AgentElementPatch,
+  type AgentElementSpec,
 } from '@elucim/dsl/agent';
 
 export interface CliIo {
@@ -94,6 +96,21 @@ const COMMANDS = [
     name: 'add-connector',
     usage: 'elucim add-connector <file> --id <id> --from <id> --to <id> --line-style dashed --end-cap arrow --out <file> --json',
     description: 'Add an editable semantic connector between existing elements, then write the updated document.',
+  },
+  {
+    name: 'add-element',
+    usage: 'elucim add-element <file> --id shape --type rect --props-json \'{"x":80,"y":120,"width":160,"height":90}\' --out <file> --json',
+    description: 'Place an arbitrary Object into an Elucim Document using JSON props, layout, role, and intent.',
+  },
+  {
+    name: 'update-element',
+    usage: 'elucim update-element <file> --id shape --props-json \'{"fill":"$primary"}\' --out <file> --json',
+    description: 'Update an existing Object with JSON props, layout, role, intent, parent, or children.',
+  },
+  {
+    name: 'delete-element',
+    usage: 'elucim delete-element <file> --id shape --out <file> --json',
+    description: 'Remove an Object from an Elucim Document.',
   },
   {
     name: 'add-text-block',
@@ -175,6 +192,12 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
         return await polishCommand(args, io);
       case 'layout':
         return await layoutCommand(args, io);
+      case 'add-element':
+        return await addElementCommand(args, io);
+      case 'update-element':
+        return await updateElementCommand(args, io);
+      case 'delete-element':
+        return await deleteElementCommand(args, io);
       case 'add-connector':
         return await addConnectorCommand(args, io);
       case 'add-text-block':
@@ -346,6 +369,66 @@ async function layoutCommand(args: ParsedArgs, io: CliIo): Promise<number> {
     diff: diffDocuments(before, result.document),
     document: shouldIncludeDocument(args) ? result.document : undefined,
   });
+  return 0;
+}
+
+async function addElementCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const before = loaded.document;
+  const element: AgentElementSpec = {
+    id: requiredFlag(args, 'id'),
+    type: requiredFlag(args, 'type'),
+    props: jsonObjectFlag(args, 'props-json') ?? {},
+    layout: jsonObjectFlag(args, 'layout-json') as AgentElementSpec['layout'],
+    role: flagValue(args, 'role'),
+    intent: jsonObjectFlag(args, 'intent-json') as AgentElementSpec['intent'],
+    parentId: flagValue(args, 'parent'),
+    index: optionalNumberFlag(args, 'index'),
+    children: jsonStringArrayFlag(args, 'children-json'),
+  };
+  const result = applyAgentCommands(before, [{ op: 'addElement', element }]);
+  if (!result.validation.valid) {
+    writeAgentCommandOutput(args, io, 'add-element', loaded.path, undefined, before, result);
+    return 1;
+  }
+  const outputPath = await maybeWriteDocument(args, loaded.path, result.document);
+  writeAgentCommandOutput(args, io, 'add-element', loaded.path, outputPath, before, result);
+  return 0;
+}
+
+async function updateElementCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const before = loaded.document;
+  const patch: AgentElementPatch = {};
+  const props = jsonObjectFlag(args, 'props-json');
+  const layout = jsonObjectFlag(args, 'layout-json');
+  const intent = jsonObjectFlag(args, 'intent-json');
+  if (props) patch.props = props;
+  if (layout) patch.layout = layout as AgentElementPatch['layout'];
+  if (intent) patch.intent = intent as AgentElementPatch['intent'];
+  if (hasFlag(args, 'role')) patch.role = requiredFlag(args, 'role');
+  if (hasFlag(args, 'parent')) patch.parentId = requiredFlag(args, 'parent');
+  if (hasFlag(args, 'children-json')) patch.children = jsonStringArrayFlag(args, 'children-json');
+  const result = applyAgentCommands(before, [{ op: 'updateElement', id: requiredFlag(args, 'id'), patch }]);
+  if (!result.validation.valid) {
+    writeAgentCommandOutput(args, io, 'update-element', loaded.path, undefined, before, result);
+    return 1;
+  }
+  const outputPath = await maybeWriteDocument(args, loaded.path, result.document);
+  writeAgentCommandOutput(args, io, 'update-element', loaded.path, outputPath, before, result);
+  return 0;
+}
+
+async function deleteElementCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const before = loaded.document;
+  const result = applyAgentCommands(before, [{ op: 'deleteElement', id: requiredFlag(args, 'id') }]);
+  if (!result.validation.valid) {
+    writeAgentCommandOutput(args, io, 'delete-element', loaded.path, undefined, before, result);
+    return 1;
+  }
+  const outputPath = await maybeWriteDocument(args, loaded.path, result.document);
+  writeAgentCommandOutput(args, io, 'delete-element', loaded.path, outputPath, before, result);
   return 0;
 }
 
@@ -861,6 +944,36 @@ function frameList(args: ParsedArgs, fallbackDuration = 120): number[] {
   return [...new Set(frames.map(frame => Math.round(frame)))].sort((a, b) => a - b);
 }
 
+function jsonObjectFlag(args: ParsedArgs, name: string): Record<string, unknown> | undefined {
+  const value = flagValue(args, name);
+  if (value === undefined) return undefined;
+  const parsed = parseJsonFlag(args, name);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(`--${name} must be a JSON object.`);
+  }
+  return parsed as Record<string, unknown>;
+}
+
+function jsonStringArrayFlag(args: ParsedArgs, name: string): string[] | undefined {
+  const value = flagValue(args, name);
+  if (value === undefined) return undefined;
+  const parsed = parseJsonFlag(args, name);
+  if (!Array.isArray(parsed) || parsed.some(item => typeof item !== 'string')) {
+    throw new Error(`--${name} must be a JSON array of strings.`);
+  }
+  return parsed;
+}
+
+function parseJsonFlag(args: ParsedArgs, name: string): unknown {
+  const value = requiredFlag(args, name);
+  try {
+    return JSON.parse(value) as unknown;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid JSON for --${name}: ${message}`);
+  }
+}
+
 function upsertTimelineDocument(doc: ElucimDocument, timeline: ElucimTimeline): ElucimDocument {
   const next = {
     ...doc,
@@ -897,6 +1010,27 @@ function addCompositeElements(doc: ElucimDocument, elements: ElucimElement[]): E
     throw new Error(`Composite produced an invalid document: ${messages}`);
   }
   return next;
+}
+
+function writeAgentCommandOutput(
+  args: ParsedArgs,
+  io: CliIo,
+  command: string,
+  file: string,
+  outputPath: string | undefined,
+  before: ElucimDocument,
+  result: ReturnType<typeof applyAgentCommands>,
+) {
+  writeOutput(args, io, {
+    command,
+    file,
+    outputPath,
+    changed: result.changed,
+    summaries: result.summaries,
+    validation: result.validation,
+    diff: diffDocuments(before, result.document),
+    document: shouldIncludeDocument(args) ? result.document : undefined,
+  });
 }
 
 function writeCompositeOutput(

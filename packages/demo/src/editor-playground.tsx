@@ -1,8 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ElucimEditor } from '@elucim/editor';
-import { getDocumentLinearDuration } from '@elucim/dsl';
+import { getDocumentLinearDuration, validateDocument } from '@elucim/dsl';
 import type { ElucimDocument } from '@elucim/dsl';
+
+declare global {
+  interface Window {
+    __elucimEditor?: {
+      getDocument: () => ElucimDocument;
+    };
+  }
+}
 
 /**
  * Pre-populated normalized document with several elements for visual testing.
@@ -78,17 +86,42 @@ function createDemoDocument(isLight: boolean): ElucimDocument {
   };
 }
 
+function readDocumentFromStorage(params: URLSearchParams): ElucimDocument | undefined {
+  if (params.get('document') !== 'localStorage') return undefined;
+  const key = params.get('docKey') ?? 'elucim-editor-document';
+  const raw = window.localStorage.getItem(key);
+  if (!raw) return undefined;
+  const parsed = JSON.parse(raw) as ElucimDocument;
+  const validation = validateDocument(parsed);
+  if (!validation.valid) {
+    throw new Error(`Invalid stored editor document: ${validation.errors.map(error => `${error.path}: ${error.message}`).join('; ')}`);
+  }
+  return parsed;
+}
+
 function App() {
   const params = new URLSearchParams(window.location.search);
   const isLight = params.get('theme') === 'light';
+  const documentMode = params.get('document');
+  const docKey = params.get('docKey');
   const initialDoc = React.useMemo(() => {
-    return createDemoDocument(isLight);
-  }, [isLight]);
+    return readDocumentFromStorage(params) ?? createDemoDocument(isLight);
+  }, [documentMode, docKey, isLight]);
   const [doc, setDoc] = React.useState<ElucimDocument>(initialDoc);
 
   React.useEffect(() => {
     setDoc(initialDoc);
   }, [initialDoc]);
+
+  React.useEffect(() => {
+    if (documentMode !== 'localStorage') return;
+    window.__elucimEditor = {
+      getDocument: () => doc,
+    };
+    return () => {
+      delete window.__elucimEditor;
+    };
+  }, [doc, documentMode]);
 
   const lastFrame = getDocumentLinearDuration(doc) - 1;
   return (
