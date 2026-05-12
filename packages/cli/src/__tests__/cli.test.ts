@@ -72,6 +72,13 @@ describe('elucim CLI', () => {
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('add-connector');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('sample-beats');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('create-state-machine');
+    expect(payload.cli.commands.every((command: { examples: unknown[] }) => command.examples.length > 0)).toBe(true);
+    expect(payload.cli.commands.find((command: { name: string }) => command.name === 'create-state-machine').examples[0].argv)
+      .toEqual(expect.arrayContaining(['create-state-machine', '--timeline', '--id']));
+    expect(payload.cli.recommendedWorkflows).toContainEqual(expect.objectContaining({
+      goal: 'Author a playable animated Elucim Document',
+      commands: expect.arrayContaining(['add-element', 'add-beat', 'create-state-machine', 'validate', 'export-frames']),
+    }));
     expect(payload.agentOperations.map((operation: { name: string }) => operation.name)).toContain('inspectPolishHeuristics');
     expect(payload.agentOperations.map((operation: { name: string }) => operation.name)).toContain('createStepCardPreset');
     expect(payload.agentOperations.map((operation: { name: string }) => operation.name)).toContain('createSemanticMotionTimeline');
