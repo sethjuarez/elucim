@@ -108,7 +108,7 @@ describe('importFromJson', () => {
     expect(result.errors[0]).toContain('Missing "root"');
   });
 
-  it('imports v2 documents through the v1 editor compatibility adapter', () => {
+  it('imports canonical Elucim Documents through the editor projection adapter', () => {
     const result = importFromJson(JSON.stringify(canonicalDoc));
 
     expect(result.errors).toHaveLength(0);

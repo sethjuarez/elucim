@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { RenderableDocument, ElucimDocument, ElucimTimelineFrameSelection } from '@elucim/dsl';
-import { applyTimelineFrames, migrateV2ToV1 } from '@elucim/dsl';
+import { applyTimelineFrames, migrateV2ToV1 as toRenderableDocument } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider, useEditorState } from './state/EditorProvider';
@@ -13,7 +13,7 @@ import { LeftDock } from './dock/LeftDock';
 import { PanelShell } from './panels/PanelShell';
 import { buildThemeVars, deriveEditorTheme, v } from './theme/tokens';
 import { startRafDrag } from './interactions/rafDrag';
-import { createDocumentFromEditorState, normalizeInitialDocument } from './document/documentBridge';
+import { createDocumentFromEditorState, normalizeInitialDocument } from './document/documentCompatibility';
 import { CollapsedPanelRail } from './chrome/CollapsedPanelRail';
 import { PanelResizeHandle } from './chrome/PanelResizeHandle';
 import { PanelToggle } from './chrome/PanelToggle';
@@ -62,8 +62,8 @@ export interface ElucimEditorChangeDetails {
   warnings: string[];
 }
 
-/** Bridges internal editor state to external document change callbacks. */
-function DocumentBridge({
+/** Emits canonical document changes from internal editor state. */
+function DocumentChangeEmitter({
   onChange,
   onWarnings,
 }: {
@@ -143,7 +143,7 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
     <EditorErrorBoundary>
       <EditorProvider initialDocument={normalizedInitialDocument} initialCanonicalDocument={initialDocumentModel} initialFrame={resolvedFrame}>
         <InitialDocumentModelSync document={initialDocumentModel} lastEmittedDocumentRef={lastEmittedDocumentModel} />
-        <DocumentBridge onChange={handleDocumentChange} onWarnings={handleCompatibilityWarnings} />
+        <DocumentChangeEmitter onChange={handleDocumentChange} onWarnings={handleCompatibilityWarnings} />
         <ElucimEditorLayout theme={theme} editorTheme={editorTheme} className={className} style={style} onDocumentChange={document => handleDocumentChange(document, { changedFormat: false, warnings: [] })} />
       </EditorProvider>
     </EditorErrorBoundary>
@@ -166,8 +166,6 @@ export interface ElucimEditorLayoutProps {
   style?: React.CSSProperties;
   /** Canonical Elucim Document model used by timeline and state-machine panels. */
   document?: ElucimDocument;
-  /** @deprecated Use `document` instead. */
-  v2Document?: ElucimDocument;
   onDocumentChange?: (document: ElucimDocument) => void;
 }
 
@@ -191,9 +189,9 @@ function clampPanelSize(value: number, min: number, max: number): number {
  * custom composition (e.g. adding panels inside the editor context) while
  * keeping the standard editor shell, scrollbar styles, and theme injection.
  */
-export function ElucimEditorLayout({ theme, editorTheme, className, style, document: documentModel, v2Document, onDocumentChange }: ElucimEditorLayoutProps) {
+export function ElucimEditorLayout({ theme, editorTheme, className, style, document: documentModel, onDocumentChange }: ElucimEditorLayoutProps) {
   const { state, dispatch } = useEditorState();
-  const activeDocument = documentModel ?? v2Document ?? state.canonicalDocument;
+  const activeDocument = documentModel ?? state.canonicalDocument;
   const [workspace, setWorkspace] = useState<EditorWorkspace>(() => activeDocument ? 'animate' : 'design');
   const [previewTimelineFrames, setPreviewTimelineFrames] = useState<ElucimTimelineFrameSelection[] | undefined>(undefined);
   const [stateMachinePreviewActive, setStateMachinePreviewActive] = useState(false);
@@ -229,7 +227,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
     if (!liveDocument || !previewTimelineFrames?.length) return undefined;
     const renderableFrames = previewTimelineFrames.filter(frame => liveDocument.timelines?.[frame.timelineId]);
     if (renderableFrames.length === 0) return undefined;
-    return migrateV2ToV1(applyTimelineFrames(liveDocument, renderableFrames));
+    return toRenderableDocument(applyTimelineFrames(liveDocument, renderableFrames));
   }, [previewTimelineFrames, liveDocument]);
   const selectWorkspace = (nextWorkspace: EditorWorkspace) => {
     if (nextWorkspace !== 'animate' && state.isPlaying) {

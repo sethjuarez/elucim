@@ -137,7 +137,7 @@ describe('StateMachinePanel', () => {
     expect(onDocumentChange).not.toHaveBeenCalled();
   });
 
-  it('edits v2 metadata and selected element intent without losing v2 extras', async () => {
+  it('edits canonical metadata and selected element intent without losing document extras', async () => {
     const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
@@ -158,7 +158,7 @@ describe('StateMachinePanel', () => {
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].elements.title.intent.role).toBe('hero'));
   });
 
-  it('surfaces warnings for lossy v2 compatibility output', () => {
+  it('surfaces warnings for lossy canonical compatibility output', () => {
     render(React.createElement(ElucimEditor, {
       initialDocument: {
         ...documentModel,

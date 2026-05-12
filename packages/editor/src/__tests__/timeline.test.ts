@@ -144,7 +144,7 @@ describe('selection via timeline track', () => {
   });
 });
 
-describe('v2 timeline clip rows', () => {
+describe('canonical timeline clip rows', () => {
   beforeEach(() => {
     globalThis.ResizeObserver = class ResizeObserver {
       observe() {}
@@ -154,7 +154,7 @@ describe('v2 timeline clip rows', () => {
     globalThis.CSS = { escape: (value: string) => value } as any;
   });
 
-  it('renders v2 clip tracks and lets keyframes scrub the playhead', async () => {
+  it('renders canonical clip tracks and lets keyframes scrub the playhead', async () => {
     let latestFrame = 0;
 
     function CaptureFrame() {
@@ -176,7 +176,7 @@ describe('v2 timeline clip rows', () => {
         },
         React.createElement(CaptureFrame),
         React.createElement(Timeline, {
-          v2Timelines: {
+          timelines: {
             intro: {
               id: 'intro',
               duration: 30,
@@ -196,7 +196,7 @@ describe('v2 timeline clip rows', () => {
     await waitFor(() => expect(latestFrame).toBe(30));
   });
 
-  it('adds and edits simple v2 timeline clips', async () => {
+  it('adds and edits simple canonical timeline clips', async () => {
     let latestTimelines: any;
 
     render(
@@ -209,8 +209,8 @@ describe('v2 timeline clip rows', () => {
           },
         },
         React.createElement(Timeline, {
-          v2Timelines: {},
-          onV2TimelinesChange: timelines => {
+          timelines: {},
+          onTimelinesChange: timelines => {
             latestTimelines = timelines;
           },
         }),
@@ -238,8 +238,8 @@ describe('v2 timeline clip rows', () => {
         },
       },
       React.createElement(Timeline, {
-        v2Timelines: latestTimelines,
-        onV2TimelinesChange: timelines => {
+        timelines: latestTimelines,
+        onTimelinesChange: timelines => {
           latestTimelines = timelines;
         },
       }),
@@ -273,7 +273,7 @@ describe('v2 timeline clip rows', () => {
     await waitFor(() => expect(latestTimelines.intro.tracks).toHaveLength(1));
   });
 
-  it('renames v2 timelines and updates state machine timeline references', async () => {
+  it('renames canonical timelines and updates state machine timeline references', async () => {
     let latestTimelines: any = {
       focus: {
         id: 'focus',
@@ -316,15 +316,15 @@ describe('v2 timeline clip rows', () => {
         },
       },
       React.createElement(Timeline, {
-        v2Timelines: latestTimelines,
-        v2StateMachines: latestMachines,
-        onV2TimelinesChange: timelines => {
+        timelines: latestTimelines,
+        stateMachines: latestMachines,
+        onTimelinesChange: timelines => {
           latestTimelines = timelines;
         },
-        onV2StateMachinesChange: stateMachines => {
+        onStateMachinesChange: stateMachines => {
           latestMachines = stateMachines;
         },
-        onV2MotionChange: (timelines, stateMachines) => {
+        onMotionChange: (timelines, stateMachines) => {
           latestTimelines = timelines;
           latestMachines = stateMachines;
         },
@@ -385,8 +385,8 @@ describe('v2 timeline clip rows', () => {
           },
         },
         React.createElement(Timeline, {
-          v2Timelines: latestTimelines,
-          v2StateMachines: latestMachines,
+          timelines: latestTimelines,
+          stateMachines: latestMachines,
           preferredMotionType: 'stateMachine',
           onActiveTimelineChange,
         }),
@@ -415,7 +415,7 @@ describe('v2 timeline clip rows', () => {
           },
         },
         React.createElement(Timeline, {
-          v2Timelines: {
+          timelines: {
             idle: {
               id: 'idle',
               duration: 30,
@@ -427,7 +427,7 @@ describe('v2 timeline clip rows', () => {
               tracks: [{ target: 'r1', property: 'scale', keyframes: [{ frame: 0, value: 0.8 }, { frame: 20, value: 1 }] }],
             },
           },
-          v2StateMachines: {
+          stateMachines: {
             walkthrough: {
               id: 'walkthrough',
               entry: 'idle',
@@ -477,7 +477,7 @@ describe('v2 timeline clip rows', () => {
         },
         React.createElement(CapturePlaying),
         React.createElement(Timeline, {
-          v2Timelines: {
+          timelines: {
             intro: {
               id: 'intro',
               duration: 30,
@@ -486,7 +486,7 @@ describe('v2 timeline clip rows', () => {
               ],
             },
           },
-          v2StateMachines: {
+          stateMachines: {
             walkthrough: {
               id: 'walkthrough',
               entry: 'idle',
@@ -527,7 +527,7 @@ describe('v2 timeline clip rows', () => {
         },
         React.createElement(CapturePlaying),
         React.createElement(Timeline, {
-          v2Timelines: {
+          timelines: {
             intro: {
               id: 'intro',
               duration: 30,
@@ -536,7 +536,7 @@ describe('v2 timeline clip rows', () => {
               ],
             },
           },
-          v2StateMachines: {
+          stateMachines: {
             walkthrough: {
               id: 'walkthrough',
               entry: 'idle',
@@ -557,7 +557,7 @@ describe('v2 timeline clip rows', () => {
     expect(screen.getByTitle('Play')).toBeTruthy();
   });
 
-  it('drags v2 keyframes to a new frame without crossing neighbors', async () => {
+  it('drags canonical keyframes to a new frame without crossing neighbors', async () => {
     let latestFrame = 0;
     let latestTimelines: any = {
       intro: {
@@ -587,8 +587,8 @@ describe('v2 timeline clip rows', () => {
       },
       React.createElement(CaptureFrame),
       React.createElement(Timeline, {
-        v2Timelines: latestTimelines,
-        onV2TimelinesChange: timelines => {
+        timelines: latestTimelines,
+        onTimelinesChange: timelines => {
           latestTimelines = timelines;
         },
       }),
@@ -620,7 +620,7 @@ describe('v2 timeline clip rows', () => {
     expect(latestFrame).toBe(0);
   });
 
-  it('keeps a dragged v2 keyframe anchored to the grabbed point', async () => {
+  it('keeps a dragged canonical keyframe anchored to the grabbed point', async () => {
     let latestTimelines: any = {
       intro: {
         id: 'intro',
@@ -641,8 +641,8 @@ describe('v2 timeline clip rows', () => {
           },
         },
         React.createElement(Timeline, {
-          v2Timelines: latestTimelines,
-          onV2TimelinesChange: timelines => {
+          timelines: latestTimelines,
+          onTimelinesChange: timelines => {
             latestTimelines = timelines;
           },
         }),
@@ -670,7 +670,7 @@ describe('v2 timeline clip rows', () => {
     await waitFor(() => expect(latestTimelines.intro.tracks[0].keyframes[1].frame).toBe(30));
   });
 
-  it('clears state-machine references when deleting a v2 timeline', async () => {
+  it('clears state-machine references when deleting a canonical timeline', async () => {
     let latestTimelines: any = {
       focus: {
         id: 'focus',
@@ -714,15 +714,15 @@ describe('v2 timeline clip rows', () => {
           },
         },
         React.createElement(Timeline, {
-          v2Timelines: latestTimelines,
-          v2StateMachines: latestMachines,
-          onV2TimelinesChange: timelines => {
+          timelines: latestTimelines,
+          stateMachines: latestMachines,
+          onTimelinesChange: timelines => {
             latestTimelines = timelines;
           },
-          onV2StateMachinesChange: stateMachines => {
+          onStateMachinesChange: stateMachines => {
             latestMachines = stateMachines;
           },
-          onV2MotionChange: (timelines, stateMachines) => {
+          onMotionChange: (timelines, stateMachines) => {
             latestTimelines = timelines;
             latestMachines = stateMachines;
           },
@@ -738,7 +738,7 @@ describe('v2 timeline clip rows', () => {
     expect(latestMachines.walkthrough.transitions[1]).toMatchObject({ from: 'focused', to: 'idle', exitTime: 1 });
   });
 
-  it('renames v2 timelines from the motion list on double click', async () => {
+  it('renames canonical timelines from the motion list on double click', async () => {
     let latestTimelines: any = {
       intro: {
         id: 'intro',
@@ -759,8 +759,8 @@ describe('v2 timeline clip rows', () => {
           },
         },
         React.createElement(Timeline, {
-          v2Timelines: latestTimelines,
-          onV2TimelinesChange: timelines => {
+          timelines: latestTimelines,
+          onTimelinesChange: timelines => {
             latestTimelines = timelines;
           },
         }),
@@ -776,7 +776,7 @@ describe('v2 timeline clip rows', () => {
     expect(latestTimelines.intro).toBeUndefined();
   });
 
-  it('adds a blank v2 timeline for the selected or first element', async () => {
+  it('adds a blank canonical timeline for the selected or first element', async () => {
     let latestTimelines: any;
 
     render(
@@ -789,8 +789,8 @@ describe('v2 timeline clip rows', () => {
           },
         },
         React.createElement(Timeline, {
-          v2Timelines: {},
-          onV2TimelinesChange: timelines => {
+          timelines: {},
+          onTimelinesChange: timelines => {
             latestTimelines = timelines;
           },
         }),
