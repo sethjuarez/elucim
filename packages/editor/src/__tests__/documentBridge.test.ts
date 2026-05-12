@@ -217,7 +217,66 @@ describe('editor document bridge', () => {
     const idMap = mapSourceIdsToRestoredIds(sourceDocument, restored);
 
     expect(idMap.has('title')).toBe(false);
-    expect(idMap.get('metric')).toBe('metric-copy');
+    expect(idMap.get('metric')).toBe('metric');
+  });
+
+  it('does not retarget timelines when a new element is inserted before an existing one', () => {
+    const result = restoreDocumentFromEditorState(editorDocument(
+      { type: 'rect', id: 'new-card', x: 10, y: 20, width: 80, height: 40 },
+      { type: 'text', id: 'title', content: 'After' },
+      { type: 'text', id: 'metric', content: '42%' },
+    ), sourceDocument);
+
+    expect(validateDocument(result.document).valid).toBe(true);
+    expect(result.document.scene.children).toEqual(['new-card', 'title', 'metric']);
+    expect(result.document.timelines?.intro.tracks[0].target).toBe('title');
+    expect(result.warnings).not.toContain('Element "title" was renamed to "new-card"; timeline references were updated.');
+  });
+
+  it('does not retarget timelines when existing elements are reordered', () => {
+    const result = restoreDocumentFromEditorState(editorDocument(
+      { type: 'text', id: 'metric', content: '42%' },
+      { type: 'text', id: 'title', content: 'After' },
+    ), sourceDocument);
+
+    expect(validateDocument(result.document).valid).toBe(true);
+    expect(result.document.scene.children).toEqual(['metric', 'title']);
+    expect(result.document.timelines?.intro.tracks[0].target).toBe('title');
+  });
+
+  it('still infers nested renames under exact parent IDs', () => {
+    const sourceWithGroup: ElucimDocument = {
+      ...sourceDocument,
+      scene: { ...sourceDocument.scene, children: ['group'] },
+      elements: {
+        group: {
+          id: 'group',
+          type: 'group',
+          children: ['title'],
+          props: { type: 'group' },
+        },
+        title: sourceDocument.elements.title,
+      },
+      timelines: {
+        intro: {
+          id: 'intro',
+          duration: 30,
+          tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+        },
+      },
+      stateMachines: undefined,
+      defaultStateMachine: undefined,
+    };
+    const restored = createDocumentFromEditorState(editorDocument({
+      type: 'group',
+      id: 'group',
+      children: [{ type: 'text', id: 'hero-title', content: 'After' }],
+    }));
+
+    const idMap = mapSourceIdsToRestoredIds(sourceWithGroup, restored);
+
+    expect(idMap.get('group')).toBe('group');
+    expect(idMap.get('title')).toBe('hero-title');
   });
 
   it('fails loudly when restore source is not a canonical Elucim Document', () => {
