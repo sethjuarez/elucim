@@ -1,5 +1,5 @@
 import type { ElucimDocument as CanonicalElucimDocument, ElucimStateMachine, ElucimTimeline, RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
-import { migrateV1ToV2 } from '@elucim/dsl';
+import { migrateV1ToV2, migrateV2ToV1 } from '@elucim/dsl';
 import type { EditorState, EditorAction, AlignDirection, DistributeDirection, AnimationWrapperType } from './types';
 import { CANVAS_ID } from './types';
 import { getElementId, isUndoableAction } from './types';
@@ -11,6 +11,10 @@ const MAX_HISTORY = 50;
 
 function cloneDoc(doc: ElucimDocument): ElucimDocument {
   return JSON.parse(JSON.stringify(doc));
+}
+
+function documentsEqual(left: ElucimDocument, right: ElucimDocument): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function syncCanonicalFromProjection(
@@ -574,9 +578,10 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
 
     case 'SET_CANONICAL_DOCUMENT':
       if (action.document && action.syncProjection) {
+        const projectedDocument = migrateV2ToV1(action.document);
         return syncCanonicalFromProjection(
           { ...state, canonicalDocument: action.document, compatibilityWarnings: action.warnings ?? [] },
-          state.document,
+          documentsEqual(projectedDocument, state.document) ? state.document : projectedDocument,
           { warnings: action.warnings },
         );
       }
