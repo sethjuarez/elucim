@@ -18,6 +18,10 @@ import { CANVAS_ID } from './state/types';
 import { buildThemeVars, deriveEditorTheme, v } from './theme/tokens';
 import { startRafDrag } from './interactions/rafDrag';
 import { createDocumentFromEditorState, normalizeInitialDocument, restoreDocumentFromEditorState } from './document/documentBridge';
+import { CollapsedPanelRail } from './chrome/CollapsedPanelRail';
+import { PanelResizeHandle } from './chrome/PanelResizeHandle';
+import { PanelToggle } from './chrome/PanelToggle';
+import { WorkspaceTab } from './chrome/WorkspaceTab';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
@@ -449,127 +453,6 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
         </div>
       )}
     </div>
-  );
-}
-
-function WorkspaceTab({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-label={`${label} workspace`}
-      aria-selected={selected}
-      onClick={onClick}
-      style={{
-        height: 22,
-        border: `1px solid ${selected ? v('--elucim-editor-accent') : v('--elucim-editor-border')}`,
-        borderRadius: 999,
-        background: selected ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 16%, transparent)` : 'transparent',
-        color: selected ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
-        cursor: 'pointer',
-        fontSize: 10,
-        fontWeight: 700,
-        padding: '0 9px',
-      }}
-    >
-      {label}
-    </button>
-  );
-}
-
-function PanelToggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      style={{
-        height: 22,
-        border: `1px solid ${active ? v('--elucim-editor-border') : v('--elucim-editor-border-subtle')}`,
-        borderRadius: 4,
-        background: active ? 'transparent' : v('--elucim-editor-input-bg'),
-        color: active ? v('--elucim-editor-text-secondary') : v('--elucim-editor-text-muted'),
-        cursor: 'pointer',
-        fontSize: 10,
-        padding: '0 7px',
-      }}
-    >
-      {active ? `Hide ${label}` : `Show ${label}`}
-    </button>
-  );
-}
-
-function PanelResizeHandle({
-  side,
-  label,
-  onPointerDown,
-}: {
-  side: 'left' | 'right' | 'top';
-  label: string;
-  onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
-}) {
-  const horizontal = side === 'top';
-  return (
-    <div
-      role="separator"
-      aria-label={label}
-      onPointerDown={onPointerDown}
-      style={{
-        position: 'absolute',
-        ...(side === 'left' ? { left: -3, top: 0, bottom: 0, width: 6 } : {}),
-        ...(side === 'right' ? { right: -3, top: 0, bottom: 0, width: 6 } : {}),
-        ...(side === 'top' ? { left: 0, right: 0, top: -3, height: 6 } : {}),
-        zIndex: 5,
-        cursor: horizontal ? 'ns-resize' : 'ew-resize',
-        background: 'transparent',
-      }}
-    />
-  );
-}
-
-function CollapsedPanelRail({
-  leftVisible,
-  rightVisible,
-  timelineVisible,
-  onShowLeft,
-  onShowRight,
-  onShowTimeline,
-}: {
-  leftVisible: boolean;
-  rightVisible: boolean;
-  timelineVisible: boolean;
-  onShowLeft: () => void;
-  onShowRight: () => void;
-  onShowTimeline: () => void;
-}) {
-  if (leftVisible && rightVisible && timelineVisible) return null;
-  return (
-    <div style={{ position: 'absolute', left: 10, top: 10, zIndex: 20, display: 'flex', gap: 6 }}>
-      {!leftVisible && <RailButton label="Show left panel" onClick={onShowLeft} />}
-      {!rightVisible && <RailButton label="Show inspector" onClick={onShowRight} />}
-      {!timelineVisible && <RailButton label="Show timeline" onClick={onShowTimeline} />}
-    </div>
-  );
-}
-
-function RailButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        border: `1px solid ${v('--elucim-editor-border')}`,
-        borderRadius: 999,
-        background: `color-mix(in srgb, ${v('--elucim-editor-surface')} 92%, transparent)`,
-        color: v('--elucim-editor-fg'),
-        cursor: 'pointer',
-        fontSize: 10,
-        padding: '4px 8px',
-        boxShadow: v('--elucim-editor-shadow-dropdown'),
-      }}
-    >
-      {label}
-    </button>
   );
 }
 
