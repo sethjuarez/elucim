@@ -69,7 +69,7 @@ export type EditorAction =
   | { type: 'SELECT_TOGGLE'; id: string }
   | { type: 'DESELECT_ALL' }
   | { type: 'SET_DOCUMENT'; document: ElucimDocument }
-  | { type: 'SET_CANONICAL_DOCUMENT'; document?: CanonicalElucimDocument; warnings?: string[] }
+  | { type: 'SET_CANONICAL_DOCUMENT'; document?: CanonicalElucimDocument; warnings?: string[]; syncProjection?: boolean }
   | { type: 'UPDATE_ELEMENT'; id: string; changes: Partial<ElementNode> }
   | { type: 'UPDATE_CANVAS'; changes: Record<string, any> }
   | { type: 'ADD_ELEMENT'; element: ElementNode; parentPath?: string }

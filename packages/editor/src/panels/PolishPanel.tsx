@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ElucimDocument, ElucimDocumentNudge } from '@elucim/dsl';
 import { analyzePolish, applyNudge, suggestDocumentNudges, suggestSemanticLayoutNudges } from '@elucim/dsl';
-import { restoreDocumentFromEditorState } from '../document/documentBridge';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
 import { CANVAS_ID } from '../state/types';
@@ -12,8 +11,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
   const selectedId = state.selectedIds.length === 1 && state.selectedIds[0] !== CANVAS_ID ? state.selectedIds[0] : null;
   const selected = selectedId ? findElementById(state.document.root, selectedId)?.element : null;
   const selectedLabel = selectedId && selected ? (('id' in selected && selected.id) ? selected.id : selectedId) : null;
-  const documentCompatibility = useMemo(() => document ? restoreDocumentFromEditorState(state.document, document) : undefined, [state.document, document]);
-  const currentDocument = documentCompatibility?.document ?? document;
+  const currentDocument = state.canonicalDocument ?? document;
   const selectedDocumentElement = selectedId && currentDocument ? currentDocument.elements[selectedId] : undefined;
   const machineIds = Object.keys(currentDocument?.stateMachines ?? {});
   const [dismissedNudgeIds, setDismissedNudgeIds] = useState<Set<string>>(() => new Set());
@@ -66,7 +64,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
     return new Map(entries);
   }, [currentDocument, nudgeCandidates]);
   const updateDocument = (updater: (document: ElucimDocument) => ElucimDocument) => {
-    const baseDocument = documentCompatibility?.document ?? document;
+    const baseDocument = currentDocument;
     if (!baseDocument) return;
     onDocumentChange?.(updater(baseDocument));
   };
@@ -93,7 +91,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
   };
 
   const applyEditorNudge = (nudgeId: string) => {
-    const baseDocument = documentCompatibility?.document ?? document;
+    const baseDocument = currentDocument;
     const nudge = nudgeCandidates.find(candidate => candidate.id === nudgeId);
     if (!baseDocument || !nudge) return;
     onDocumentChange?.(applyNudge(baseDocument, nudge).document);
@@ -332,10 +330,10 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
         </div>
       )}
 
-      {documentCompatibility && documentCompatibility.warnings.length > 0 && (
+      {state.compatibilityWarnings.length > 0 && (
         <div role="status" style={{ padding: 8, border: `1px solid ${v('--elucim-editor-warning')}`, borderRadius: 6, background: `color-mix(in srgb, ${v('--elucim-editor-warning')} 10%, transparent)`, color: v('--elucim-editor-warning'), lineHeight: 1.4 }}>
           <div style={{ fontWeight: 700, marginBottom: 4 }}>Document compatibility warnings</div>
-          {documentCompatibility.warnings.map(warning => <div key={warning}>{warning}</div>)}
+          {state.compatibilityWarnings.map(warning => <div key={warning}>{warning}</div>)}
         </div>
       )}
 

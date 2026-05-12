@@ -13,7 +13,7 @@ import { LeftDock } from './dock/LeftDock';
 import { PanelShell } from './panels/PanelShell';
 import { buildThemeVars, deriveEditorTheme, v } from './theme/tokens';
 import { startRafDrag } from './interactions/rafDrag';
-import { createDocumentFromEditorState, normalizeInitialDocument, restoreDocumentFromEditorState } from './document/documentBridge';
+import { createDocumentFromEditorState, normalizeInitialDocument } from './document/documentBridge';
 import { CollapsedPanelRail } from './chrome/CollapsedPanelRail';
 import { PanelResizeHandle } from './chrome/PanelResizeHandle';
 import { PanelToggle } from './chrome/PanelToggle';
@@ -114,7 +114,7 @@ function InitialDocumentModelSync({
   const { dispatch } = useEditorState();
   useEffect(() => {
     if (document === lastEmittedDocumentRef.current) return;
-    dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [] });
+    dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [], syncProjection: true });
   }, [dispatch, document, lastEmittedDocumentRef]);
   return null;
 }
@@ -224,10 +224,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
     dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [] });
     onDocumentChange?.(document);
   };
-  const liveDocument = useMemo(() => {
-    if (!activeDocument) return undefined;
-    return restoreDocumentFromEditorState(state.document, activeDocument).document;
-  }, [activeDocument, state.document]);
+  const liveDocument = activeDocument;
   const previewDocument = useMemo(() => {
     if (!liveDocument || !previewTimelineFrames?.length) return undefined;
     const renderableFrames = previewTimelineFrames.filter(frame => liveDocument.timelines?.[frame.timelineId]);
