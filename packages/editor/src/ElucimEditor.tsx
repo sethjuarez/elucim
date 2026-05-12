@@ -3,7 +3,7 @@ import type { RenderableDocument, ElucimDocument, ElucimTimelineFrameSelection }
 import { applyTimelineFrames, migrateV2ToV1 } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
-import { EditorProvider, useEditorDocument, useEditorState } from './state/EditorProvider';
+import { EditorProvider, useEditorState } from './state/EditorProvider';
 import { ImagePickerProvider, type BrowseImageFn } from './image/ImagePickerProvider';
 import { ElucimCanvas } from './canvas/ElucimCanvas';
 import { Inspector } from './inspector/Inspector';
@@ -66,16 +66,15 @@ export interface ElucimEditorChangeDetails {
 function DocumentBridge({
   onChange,
   onWarnings,
-  document: documentModel,
 }: {
   onChange?: (doc: ElucimDocument, details: ElucimEditorChangeDetails) => void;
   onWarnings?: (warnings: string[]) => void;
-  document?: ElucimDocument;
 }) {
-  const doc = useEditorDocument();
+  const { state, dispatch } = useEditorState();
+  const doc = state.document;
+  const sourceDocument = state.canonicalDocument;
   const cbRef = useRef(onChange);
   const previousDocRef = useRef(doc);
-  const previousDocumentModelRef = useRef(documentModel);
   const previousWarningsRef = useRef('');
   cbRef.current = onChange;
   const isFirst = useRef(true);
@@ -83,17 +82,16 @@ function DocumentBridge({
   useEffect(() => {
     if (isFirst.current) { isFirst.current = false; return; }
     const docChanged = previousDocRef.current !== doc;
-    const documentModelChanged = previousDocumentModelRef.current !== documentModel;
     previousDocRef.current = doc;
-    previousDocumentModelRef.current = documentModel;
-    const result = documentModel
-      ? restoreDocumentFromEditorState(doc, documentModel)
+    const result = sourceDocument
+      ? restoreDocumentFromEditorState(doc, sourceDocument)
       : { document: createDocumentFromEditorState(doc), warnings: [] };
     const details: ElucimEditorChangeDetails = {
       changedFormat: docChanged,
       warnings: result.warnings,
     };
-    if (docChanged || documentModelChanged) {
+    if (docChanged) {
+      dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.document, warnings: result.warnings });
       cbRef.current?.(result.document, details);
     }
     const warningKey = result.warnings.join('\n');
@@ -101,8 +99,23 @@ function DocumentBridge({
       previousWarningsRef.current = warningKey;
       onWarnings?.(result.warnings);
     }
-  }, [doc, documentModel, onWarnings]);
+  }, [dispatch, doc, onWarnings]);
 
+  return null;
+}
+
+function InitialDocumentModelSync({
+  document,
+  lastEmittedDocumentRef,
+}: {
+  document?: ElucimDocument;
+  lastEmittedDocumentRef: React.MutableRefObject<ElucimDocument | undefined>;
+}) {
+  const { dispatch } = useEditorState();
+  useEffect(() => {
+    if (document === lastEmittedDocumentRef.current) return;
+    dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [] });
+  }, [dispatch, document, lastEmittedDocumentRef]);
   return null;
 }
 
@@ -113,12 +126,7 @@ function DocumentBridge({
 export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange, onCompatibilityWarnings, onBrowseImage, imageResolver }: ElucimEditorProps) {
   const normalizedInitialDocument = useMemo(() => normalizeInitialDocument(initialDocument), [initialDocument]);
   const initialDocumentModel = initialDocument?.version === '2.0' ? initialDocument : undefined;
-  const [documentModel, setDocumentModel] = useState<ElucimDocument | undefined>(initialDocumentModel);
   const lastEmittedDocumentModel = useRef<ElucimDocument | undefined>(undefined);
-  useEffect(() => {
-    if (initialDocumentModel && initialDocumentModel === lastEmittedDocumentModel.current) return;
-    setDocumentModel(initialDocumentModel);
-  }, [initialDocumentModel]);
   const handleDocumentChange = (document: ElucimDocument, details: ElucimEditorChangeDetails) => {
     lastEmittedDocumentModel.current = document;
     onDocumentChange?.(document, details);
@@ -133,9 +141,10 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
 
   let inner = (
     <EditorErrorBoundary>
-      <EditorProvider initialDocument={normalizedInitialDocument} initialFrame={resolvedFrame}>
-        <DocumentBridge onChange={handleDocumentChange} onWarnings={handleCompatibilityWarnings} document={documentModel} />
-        <ElucimEditorLayout theme={theme} editorTheme={editorTheme} className={className} style={style} document={documentModel} onDocumentChange={setDocumentModel} />
+      <EditorProvider initialDocument={normalizedInitialDocument} initialCanonicalDocument={initialDocumentModel} initialFrame={resolvedFrame}>
+        <InitialDocumentModelSync document={initialDocumentModel} lastEmittedDocumentRef={lastEmittedDocumentModel} />
+        <DocumentBridge onChange={handleDocumentChange} onWarnings={handleCompatibilityWarnings} />
+        <ElucimEditorLayout theme={theme} editorTheme={editorTheme} className={className} style={style} onDocumentChange={document => handleDocumentChange(document, { changedFormat: false, warnings: [] })} />
       </EditorProvider>
     </EditorErrorBoundary>
   );
@@ -183,8 +192,8 @@ function clampPanelSize(value: number, min: number, max: number): number {
  * keeping the standard editor shell, scrollbar styles, and theme injection.
  */
 export function ElucimEditorLayout({ theme, editorTheme, className, style, document: documentModel, v2Document, onDocumentChange }: ElucimEditorLayoutProps) {
-  const activeDocument = documentModel ?? v2Document;
   const { state, dispatch } = useEditorState();
+  const activeDocument = documentModel ?? v2Document ?? state.canonicalDocument;
   const [workspace, setWorkspace] = useState<EditorWorkspace>(() => activeDocument ? 'animate' : 'design');
   const [previewTimelineFrames, setPreviewTimelineFrames] = useState<ElucimTimelineFrameSelection[] | undefined>(undefined);
   const [stateMachinePreviewActive, setStateMachinePreviewActive] = useState(false);
@@ -211,6 +220,10 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
   const colorScheme = merged['--elucim-editor-color-scheme'] || merged['color-scheme'] || colorSchemeHint;
   const preferredLeftTab = workspace === 'polish' ? 'polish' : workspace === 'design' ? 'objects' : undefined;
   const stateMachineWorkspaceActive = workspace === 'states' && timelineVisible;
+  const commitDocumentChange = (document: ElucimDocument) => {
+    dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [] });
+    onDocumentChange?.(document);
+  };
   const liveDocument = useMemo(() => {
     if (!activeDocument) return undefined;
     return restoreDocumentFromEditorState(state.document, activeDocument).document;
@@ -369,7 +382,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
             position: 'relative',
           }}
         >
-          {leftVisible && <LeftDock document={activeDocument} onDocumentChange={onDocumentChange} preferredTab={preferredLeftTab} />}
+          {leftVisible && <LeftDock document={activeDocument} onDocumentChange={commitDocumentChange} preferredTab={preferredLeftTab} />}
           {leftVisible && <PanelResizeHandle side="right" label="Resize left panel" onPointerDown={startSideResize('left')} />}
         </aside>
 
@@ -435,10 +448,10 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
             style={{ height: '100%', borderTop: 'none' }}
             document={liveDocument}
             timelines={liveDocument?.timelines}
-            onTimelinesChange={liveDocument && onDocumentChange ? timelines => onDocumentChange({ ...liveDocument, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
+            onTimelinesChange={liveDocument ? timelines => commitDocumentChange({ ...liveDocument, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
             stateMachines={liveDocument?.stateMachines}
-            onStateMachinesChange={liveDocument && onDocumentChange ? stateMachines => onDocumentChange({ ...liveDocument, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) }) : undefined}
-            onMotionChange={liveDocument && onDocumentChange ? (timelines, stateMachines) => onDocumentChange({
+            onStateMachinesChange={liveDocument ? stateMachines => commitDocumentChange({ ...liveDocument, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) }) : undefined}
+            onMotionChange={liveDocument ? (timelines, stateMachines) => commitDocumentChange({
               ...liveDocument,
               ...(timelines ? { timelines } : { timelines: undefined }),
               ...(stateMachines ? { stateMachines } : { stateMachines: undefined }),

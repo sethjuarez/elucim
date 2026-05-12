@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useMemo, type Dispatch, type ReactNode } from 'react';
-import type { RenderableDocument as ElucimDocument } from '@elucim/dsl';
+import type { ElucimDocument as CanonicalElucimDocument, RenderableDocument as ElucimDocument } from '@elucim/dsl';
 import type { EditorState, EditorAction } from './types';
 import { createInitialState } from './types';
 import { editorReducer } from './reducer';
@@ -18,16 +18,18 @@ const EditorContext = createContext<EditorContextValue | null>(null);
 export interface EditorProviderProps {
   /** Initial document to edit. If not provided, creates an empty player scene. */
   initialDocument?: ElucimDocument;
+  /** Initial canonical Elucim Document carried while editor internals still render through a projection. */
+  initialCanonicalDocument?: CanonicalElucimDocument;
   /** Initial animation frame (e.g. durationInFrames - 1 to show all fadeIn elements). */
   initialFrame?: number;
   children: ReactNode;
 }
 
-export function EditorProvider({ initialDocument, initialFrame, children }: EditorProviderProps) {
+export function EditorProvider({ initialDocument, initialCanonicalDocument, initialFrame, children }: EditorProviderProps) {
   const [state, dispatch] = useReducer(
     editorReducer,
-    { doc: initialDocument, frame: initialFrame },
-    ({ doc, frame }) => createInitialState(doc, frame),
+    { doc: initialDocument, canonicalDoc: initialCanonicalDocument, frame: initialFrame },
+    ({ doc, canonicalDoc, frame }) => createInitialState(doc, frame, canonicalDoc),
   );
 
   const value = useMemo(() => ({ state, dispatch }), [state, dispatch]);
@@ -53,6 +55,11 @@ export function useEditorState(): EditorContextValue {
 export function useEditorDocument(): ElucimDocument {
   const { state } = useEditorState();
   return state.document;
+}
+
+export function useEditorCanonicalDocument(): CanonicalElucimDocument | undefined {
+  const { state } = useEditorState();
+  return state.canonicalDocument;
 }
 
 export function useEditorSelection(): string[] {
