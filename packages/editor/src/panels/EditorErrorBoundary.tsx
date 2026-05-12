@@ -55,7 +55,7 @@ export class EditorErrorBoundary extends React.Component<Props, State> {
               borderRadius: 6,
               border: 'none',
               background: v('--elucim-editor-accent'),
-              color: '#fff',
+              color: v('--elucim-editor-on-accent'),
               cursor: 'pointer',
               fontSize: 13,
               fontWeight: 600,

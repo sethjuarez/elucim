@@ -28,7 +28,7 @@
   display: grid;
   place-items: center;
   padding: clamp(1rem, 4vw, 3rem);
-  background: rgba(2, 6, 23, 0.86);
+  background: var(--elucim-docs-lightbox-bg);
   backdrop-filter: blur(8px);
   cursor: zoom-out;
 }
@@ -47,13 +47,13 @@
   max-height: calc(92vh - 3rem);
   object-fit: contain;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--elucim-docs-lightbox-border);
+  box-shadow: var(--elucim-docs-lightbox-shadow);
   background: var(--sl-color-black);
 }
 
 .docs-image-lightbox__caption {
-  color: #e5e7eb;
+  color: var(--elucim-docs-lightbox-caption);
   font-size: 0.875rem;
   line-height: 1.4;
   text-align: center;
@@ -65,10 +65,10 @@
   right: 1rem;
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid var(--elucim-docs-lightbox-button-border);
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.9);
-  color: #fff;
+  background: var(--elucim-docs-lightbox-button-bg);
+  color: var(--elucim-docs-lightbox-button-fg);
   cursor: pointer;
   font-size: 1.5rem;
   line-height: 1;
@@ -77,7 +77,7 @@
 .docs-image-lightbox__close:hover,
 .docs-image-lightbox__close:focus-visible {
   border-color: var(--sl-color-accent-high);
-  background: rgba(30, 41, 59, 0.95);
+  background: var(--elucim-docs-lightbox-button-hover-bg);
 }
 
 .docs-image-lightbox-open {
@@ -89,6 +89,18 @@
   --sl-color-accent-low: #1a1a3a;
   --sl-color-accent: #6c5ce7;
   --sl-color-accent-high: #a29bfe;
+  --elucim-docs-lightbox-bg: rgba(2, 6, 23, 0.86);
+  --elucim-docs-lightbox-border: rgba(255, 255, 255, 0.18);
+  --elucim-docs-lightbox-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  --elucim-docs-lightbox-caption: #e5e7eb;
+  --elucim-docs-lightbox-button-bg: rgba(15, 23, 42, 0.9);
+  --elucim-docs-lightbox-button-hover-bg: rgba(30, 41, 59, 0.95);
+  --elucim-docs-lightbox-button-border: rgba(255, 255, 255, 0.22);
+  --elucim-docs-lightbox-button-fg: #ffffff;
+  --elucim-docs-card-bg-dark: rgba(255,255,255,0.03);
+  --elucim-docs-card-border-dark: rgba(255,255,255,0.08);
+  --elucim-docs-install-bg-dark: rgba(255,255,255,0.04);
+  --elucim-docs-install-border-dark: rgba(255,255,255,0.1);
   --sl-font-system: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --sl-font-system-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
@@ -139,8 +151,8 @@
 }
 
 [data-theme='dark'] .install-pill pre {
-  background: rgba(255,255,255,0.04) !important;
-  border-color: rgba(255,255,255,0.1) !important;
+  background: var(--elucim-docs-install-bg-dark) !important;
+  border-color: var(--elucim-docs-install-border-dark) !important;
 }
 
 /* Hide copy button inside the pill */
@@ -183,8 +195,8 @@
 }
 
 [data-theme='dark'] .feature {
-  background: rgba(255,255,255,0.03);
-  border-color: rgba(255,255,255,0.08);
+  background: var(--elucim-docs-card-bg-dark);
+  border-color: var(--elucim-docs-card-border-dark);
 }
 
 [data-theme='dark'] .feature:hover {

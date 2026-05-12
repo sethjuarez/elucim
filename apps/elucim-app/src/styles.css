@@ -6,9 +6,23 @@ body,
   margin: 0;
 }
 
+:root {
+  --elucim-app-bg: #0f172a;
+  --elucim-app-fg: #e2e8f0;
+  --elucim-app-titlebar-bg: #111827;
+  --elucim-app-border-subtle: #263244;
+  --elucim-app-text-muted: #94a3b8;
+  --elucim-app-border: #334155;
+  --elucim-app-button-bg: #172033;
+  --elucim-app-accent: #6c5ce7;
+  --elucim-app-warning-bg: #422006;
+  --elucim-app-warning-border: #854d0e;
+  --elucim-app-warning-fg: #fde68a;
+}
+
 body {
-  background: #0f172a;
-  color: #e2e8f0;
+  background: var(--elucim-app-bg);
+  color: var(--elucim-app-fg);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -33,8 +47,8 @@ button {
   gap: 12px;
   min-height: 48px;
   padding: 0 12px;
-  background: #111827;
-  border-bottom: 1px solid #263244;
+  background: var(--elucim-app-titlebar-bg);
+  border-bottom: 1px solid var(--elucim-app-border-subtle);
 }
 
 .app-brand {
@@ -59,7 +73,7 @@ button {
 .app-file {
   max-width: 38vw;
   overflow: hidden;
-  color: #94a3b8;
+  color: var(--elucim-app-text-muted);
   font-size: 11px;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -76,17 +90,17 @@ button {
 .app-actions button {
   min-height: 26px;
   padding: 3px 10px;
-  border: 1px solid #334155;
+  border: 1px solid var(--elucim-app-border);
   border-radius: 999px;
-  background: #172033;
-  color: #e2e8f0;
+  background: var(--elucim-app-button-bg);
+  color: var(--elucim-app-fg);
   cursor: pointer;
   font-size: 11px;
   font-weight: 700;
 }
 
 .app-actions button:hover:not(:disabled) {
-  border-color: #6c5ce7;
+  border-color: var(--elucim-app-accent);
 }
 
 .app-actions button:disabled {
@@ -96,7 +110,7 @@ button {
 
 .app-status {
   overflow: hidden;
-  color: #94a3b8;
+  color: var(--elucim-app-text-muted);
   font-size: 11px;
   text-align: right;
   text-overflow: ellipsis;
@@ -105,9 +119,9 @@ button {
 
 .app-warnings {
   padding: 6px 12px;
-  background: #422006;
-  border-bottom: 1px solid #854d0e;
-  color: #fde68a;
+  background: var(--elucim-app-warning-bg);
+  border-bottom: 1px solid var(--elucim-app-warning-border);
+  color: var(--elucim-app-warning-fg);
   font-size: 11px;
 }
 

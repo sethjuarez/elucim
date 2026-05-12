@@ -55,7 +55,7 @@ export function SelectionOverlay({ selections }: SelectionOverlayProps) {
                 y={handle.y - HANDLE_SIZE / 2}
                 width={HANDLE_SIZE}
                 height={HANDLE_SIZE}
-                fill="#fff"
+                fill={v('--elucim-editor-handle-fill')}
                 stroke={v('--elucim-editor-accent')}
                 strokeWidth={1.5}
                 rx={1}
@@ -79,7 +79,7 @@ export function SelectionOverlay({ selections }: SelectionOverlayProps) {
               cx={bounds.x + bounds.width / 2}
               cy={bounds.y - ROTATION_ARM}
               r={HANDLE_SIZE / 2}
-              fill="#fff"
+              fill={v('--elucim-editor-handle-fill')}
               stroke={v('--elucim-editor-accent')}
               strokeWidth={1.5}
               style={{ pointerEvents: 'all', cursor: ROTATE_CURSOR }}
