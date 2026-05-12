@@ -208,7 +208,7 @@ const semanticLayoutNudges = await suggestSemanticLayoutNudges(doc);
 | Create/edit | `createDocument`, `addElement`, `updateElement`, `applyAgentCommand`, `applyAgentCommands` | Build and patch normalized documents without mutating inputs. |
 | Order | `getElementOrder`, `reorderElement`, `bringElementForward`, `sendElementBackward`, `bringElementToFront`, `sendElementToBack` | Change sibling order without adding z-index metadata. Later siblings paint on top. |
 | Timelines | `addTimeline`, `addRevealTimeline`, `getTimelineBounds`, `sampleAnimationForAgent` | Create explicit keyframe clips and prove they change properties. |
-| Semantic motion | `planMotionBeats`, `createSemanticMotionTimeline`, `createAutoStaggerTimeline`, `createStateSnapshotMotion`, `lintMotion`, `previewBeatDiffs`, `createReducedMotionDocument`, `holdFinalFrame` | Compile intent-level verbs and narration beats into ordinary v2 timelines/state machines, then verify readability and accessibility. |
+| Semantic motion | `planMotionBeats`, `createSemanticMotionTimeline`, `createAutoStaggerTimeline`, `createStateSnapshotMotion`, `lintMotion`, `previewBeatDiffs`, `createReducedMotionDocument`, `holdFinalFrame` | Compile intent-level verbs and narration beats into ordinary Elucim timelines/state machines, then verify readability and accessibility. |
 | State machines | `createStateMachine`, `createLoopingStateMachine` | Wire timelines into runtime playback. |
 | Validation | `validateForAgent`, `repairDocumentForAgent` | Return structured errors, hints, conservative repairs, summaries, validation, and diffs. |
 | Quality | `evaluateSceneForAgent`, `inspectSceneForAgent`, `analyzePolish`, `inspectPolishHeuristics` | Catch missing metadata, missing motion, blank frames, tiny scenes, off-canvas elements, zero-size elements, low contrast, graph readability issues, weak hierarchy, and static timelines. `inspectPolishHeuristics` exposes the raw evidence behind the score: bounds, intersections, overflow, text, colors, graph details, connector continuations, and semantic relationships. |
@@ -312,7 +312,7 @@ Nudge confidence matters:
 - Apply `safe` nudges automatically when the user asked for a polished result. These are low-risk changes such as strengthening title hierarchy or fixing tiny text.
 - Surface `review` nudges for confirmation or editor review. Graph layout nudges can move many nodes even though they preserve the graph structure.
 
-For explanatory structure, prefer semantic presets. They emit ordinary editable v2 elements, groups, and timelines, not opaque custom schema nodes.
+For explanatory structure, prefer semantic presets. They emit ordinary editable elements, groups, and timelines, not opaque custom schema nodes.
 
 ```ts
 const step = createStepCardPreset({
