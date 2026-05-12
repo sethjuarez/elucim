@@ -3,14 +3,14 @@ title: Validation
 description: Validate ElucimDocument JSON before rendering to catch errors early.
 ---
 
-The `validate` function checks an `ElucimDocument` for structural errors, missing fields, unknown node types, and unsafe math expressions — all before rendering.
+The `validateDocument` function checks an `ElucimDocument` for structural errors, missing fields, unknown references, timeline mistakes, and state-machine issues before rendering.
 
 ## Usage
 
 ```ts
-import { validate } from '@elucim/dsl';
+import { validateDocument } from '@elucim/dsl';
 
-const result = validate(myDocument);
+const result = validateDocument(myDocument);
 
 if (result.valid) {
   console.log('Document is valid!');
@@ -54,9 +54,9 @@ The `valid` field is `true` only when there are **no errors** (warnings are allo
 ## Example with Errors
 
 ```ts
-import { validate } from '@elucim/dsl';
+import { validateDocument } from '@elucim/dsl';
 
-const result = validate({
+const result = validateDocument({
   version: '2.0',
   scene: {
     type: 'player',
@@ -86,11 +86,11 @@ Validation is useful for:
 - **Editors** — show inline errors as the user types
 
 ```ts
-import { validate } from '@elucim/dsl';
+import { validateDocument } from '@elucim/dsl';
 import fs from 'fs';
 
 const doc = JSON.parse(fs.readFileSync('animation.json', 'utf-8'));
-const { valid, errors } = validate(doc);
+const { valid, errors } = validateDocument(doc);
 
 if (!valid) {
   console.error('Validation failed:');
@@ -121,5 +121,5 @@ try {
 ```
 
 :::note
-`DslRenderer` calls `validate` automatically and displays errors inline. The `fromYaml()` function also validates automatically and throws `ElucimYamlError` on failure. You only need to call `validate` directly if you want to check JSON documents outside of a React render.
+`DslRenderer` calls document validation automatically and displays errors inline. The `fromYaml()` function also validates automatically and throws `ElucimYamlError` on failure. Call `validateDocument` directly when you want to check JSON documents outside of a React render.
 :::

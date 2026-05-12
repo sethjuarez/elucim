@@ -10,9 +10,18 @@ The `@elucim/dsl` package lets agents and content pipelines describe Elucim visu
 Every DSL document is an `ElucimDocument` object:
 
 ```ts
+import type {
+  ElucimDocument,
+  ElucimElement,
+  ElucimMetadata,
+  ElucimScene,
+  ElucimStateMachine,
+  ElucimTimeline,
+} from '@elucim/dsl';
+
 interface ElucimDocument {
   $schema?: string;         // Optional JSON Schema URL for editor autocomplete
-  version: '2.0';           // DSL version (required)
+  version: '2.0';           // Current document format version
   scene: ElucimScene;       // Root scene/player settings
   elements: Record<string, ElucimElement>;
   timelines?: Record<string, ElucimTimeline>;

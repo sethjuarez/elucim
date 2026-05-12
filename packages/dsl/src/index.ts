@@ -2,6 +2,43 @@
 
 // Schema types
 export type {
+  ElucimAgentValidationResult,
+  ElucimAnimatableProperty,
+  ElucimCommand,
+  ElucimCommandResult,
+  ElucimDocument,
+  ElucimDocumentSummary,
+  ElucimElement,
+  ElucimElementSummary,
+  ElucimExportPolicy,
+  ElucimGraphPosition,
+  ElucimGraphViewport,
+  ElucimIntent,
+  ElucimKeyframe,
+  ElucimLayout,
+  ElucimMetadata,
+  ElucimRepairHint,
+  ElucimScene,
+  ElucimState,
+  ElucimStateEvent,
+  ElucimStateMachine,
+  ElucimStateMachineInput,
+  ElucimStateMachineLayout,
+  ElucimStateMachineRun,
+  ElucimStateMachineRunResult,
+  ElucimStateMachineVisualFrame,
+  ElucimStateMachineVisualFrameOptions,
+  ElucimStateTransitionResult,
+  ElucimTimeline,
+  ElucimTimelineFrame,
+  ElucimTimelineFrameSelection,
+  ElucimTimelinePatch,
+  ElucimTimelineTrack,
+  ElucimTransition,
+} from './document';
+export { validateDocument } from './document';
+
+export type {
   ElucimDocument as RenderableDocument,
   RootNode,
   SceneNode,
@@ -35,7 +72,7 @@ export type {
 } from './schema/types';
 
 export type {
-  ElucimV2Document as ElucimDocument,
+  ElucimV2Document,
   ElucimV2Scene,
   ElucimV2Element,
   ElucimV2Metadata,
