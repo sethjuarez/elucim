@@ -13,9 +13,9 @@ import { PanelShell } from './panels/PanelShell';
 import { v } from './theme/tokens';
 import { normalizeInitialDocument } from './document/documentCompatibility';
 import { DocumentChangeEmitter, InitialDocumentModelSync, resolveInitialFrame, resolvePreviewDocument, type ElucimEditorChangeDetails } from './document/documentLifecycle';
-import { CollapsedPanelRail } from './chrome/CollapsedPanelRail';
+import { EditorMainGrid } from './chrome/EditorMainGrid';
+import { EditorTimelineDock } from './chrome/EditorTimelineDock';
 import { EditorTopBar } from './chrome/EditorTopBar';
-import { PanelResizeHandle } from './chrome/PanelResizeHandle';
 import { resolveEditorThemeVars, useEditorShellState } from './shell/editorShell';
 
 export type { ElucimEditorChangeDetails } from './document/documentLifecycle';
@@ -210,40 +210,20 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
         onTimelineVisibleChange={setTimelineVisible}
       />
 
-      <div
-        style={{
-          flex: stateMachineWorkspaceActive ? '0 0 clamp(96px, 14vh, 180px)' : 1,
-          minHeight: 0,
-          display: 'grid',
-          gridTemplateColumns: `${leftVisible ? `${leftWidth}px` : '0px'} minmax(260px, 1fr) ${rightVisible ? `${rightWidth}px` : '0px'}`,
-          background: v('--elucim-editor-bg'),
-        }}
-      >
-        <aside
-          aria-hidden={!leftVisible}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: 0,
-            borderRight: `1px solid ${v('--elucim-editor-border')}`,
-            background: v('--elucim-editor-surface'),
-            overflow: 'hidden',
-            position: 'relative',
-          }}
-        >
-          {leftVisible && <LeftDock document={activeDocument} onDocumentChange={commitDocumentChange} preferredTab={preferredLeftTab} />}
-          {leftVisible && <PanelResizeHandle side="right" label="Resize left panel" onPointerDown={startSideResize('left')} />}
-        </aside>
-
-        <main style={{ position: 'relative', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
-          <CollapsedPanelRail
-            leftVisible={leftVisible}
-            rightVisible={rightVisible}
-            timelineVisible={timelineVisible}
-            onShowLeft={() => setLeftVisible(true)}
-            onShowRight={() => setRightVisible(true)}
-            onShowTimeline={() => setTimelineVisible(true)}
-          />
+      <EditorMainGrid
+        leftVisible={leftVisible}
+        rightVisible={rightVisible}
+        timelineVisible={timelineVisible}
+        leftWidth={leftWidth}
+        rightWidth={rightWidth}
+        stateMachineWorkspaceActive={stateMachineWorkspaceActive}
+        onLeftVisibleChange={setLeftVisible}
+        onRightVisibleChange={setRightVisible}
+        onTimelineVisibleChange={setTimelineVisible}
+        onLeftResizeStart={startSideResize('left')}
+        onRightResizeStart={startSideResize('right')}
+        leftDock={<LeftDock document={activeDocument} onDocumentChange={commitDocumentChange} preferredTab={preferredLeftTab} />}
+        canvas={(
           <ElucimCanvas
             previewDocument={previewDocument}
             previewMode={{
@@ -257,63 +237,35 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
             editorColorScheme={colorScheme}
             contentTheme={theme}
           />
-        </main>
+        )}
+        inspector={(
+          <PanelShell title="Inspector">
+            <Inspector showCanvasDuration={!activeDocument} />
+          </PanelShell>
+        )}
+      />
 
-        <aside
-          aria-hidden={!rightVisible}
-          style={{
-            minWidth: 0,
-            minHeight: 0,
-            borderLeft: `1px solid ${v('--elucim-editor-border')}`,
-            background: v('--elucim-editor-surface'),
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            position: 'relative',
-          }}
-        >
-          {rightVisible && <PanelResizeHandle side="left" label="Resize inspector" onPointerDown={startSideResize('right')} />}
-          {rightVisible && (
-            <PanelShell title="Inspector">
-              <Inspector showCanvasDuration={!activeDocument} />
-            </PanelShell>
-          )}
-        </aside>
-      </div>
-
-      {timelineVisible && (
-        <div
-          style={{
-            height: stateMachineWorkspaceActive ? undefined : timelineHeight,
-            flex: stateMachineWorkspaceActive ? '1 1 0' : '0 0 auto',
-            minHeight: stateMachineWorkspaceActive ? 360 : undefined,
-            borderTop: `1px solid ${v('--elucim-editor-border')}`,
-            background: v('--elucim-editor-surface'),
-            position: 'relative',
-          }}
-        >
-          <PanelResizeHandle side="top" label="Resize timeline" onPointerDown={startTimelineResize} />
-          <Timeline
-            style={{ height: '100%', borderTop: 'none' }}
-            document={liveDocument}
-            timelines={liveDocument?.timelines}
-            onTimelinesChange={liveDocument ? timelines => commitDocumentChange({ ...liveDocument, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
-            stateMachines={liveDocument?.stateMachines}
-            onStateMachinesChange={liveDocument ? stateMachines => commitDocumentChange({ ...liveDocument, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) }) : undefined}
-            onMotionChange={liveDocument ? (timelines, stateMachines) => commitDocumentChange({
-              ...liveDocument,
-              ...(timelines ? { timelines } : { timelines: undefined }),
-              ...(stateMachines ? { stateMachines } : { stateMachines: undefined }),
-            }) : undefined}
-            preferredMotionType={workspace === 'states' ? 'stateMachine' : 'animation'}
-            onPreviewTimelineFramesChange={setPreviewTimelineFrames}
-            onStateMachinePreviewActiveChange={setStateMachinePreviewActive}
-            onStateMachinePreviewClickChange={handler => setStateMachinePreviewClickHandler(() => handler)}
-            onStateMachinePreviewKeyDownChange={handler => setStateMachinePreviewKeyDownHandler(() => handler)}
-            onStateMachinePreviewExitChange={handler => setStateMachinePreviewExitHandler(() => handler)}
-          />
-        </div>
-      )}
+      <EditorTimelineDock visible={timelineVisible} stateMachineWorkspaceActive={stateMachineWorkspaceActive} timelineHeight={timelineHeight} onResizeStart={startTimelineResize}>
+        <Timeline
+          style={{ height: '100%', borderTop: 'none' }}
+          document={liveDocument}
+          timelines={liveDocument?.timelines}
+          onTimelinesChange={liveDocument ? timelines => commitDocumentChange({ ...liveDocument, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
+          stateMachines={liveDocument?.stateMachines}
+          onStateMachinesChange={liveDocument ? stateMachines => commitDocumentChange({ ...liveDocument, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) }) : undefined}
+          onMotionChange={liveDocument ? (timelines, stateMachines) => commitDocumentChange({
+            ...liveDocument,
+            ...(timelines ? { timelines } : { timelines: undefined }),
+            ...(stateMachines ? { stateMachines } : { stateMachines: undefined }),
+          }) : undefined}
+          preferredMotionType={workspace === 'states' ? 'stateMachine' : 'animation'}
+          onPreviewTimelineFramesChange={setPreviewTimelineFrames}
+          onStateMachinePreviewActiveChange={setStateMachinePreviewActive}
+          onStateMachinePreviewClickChange={handler => setStateMachinePreviewClickHandler(() => handler)}
+          onStateMachinePreviewKeyDownChange={handler => setStateMachinePreviewKeyDownHandler(() => handler)}
+          onStateMachinePreviewExitChange={handler => setStateMachinePreviewExitHandler(() => handler)}
+        />
+      </EditorTimelineDock>
     </div>
   );
 }
