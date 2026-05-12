@@ -759,8 +759,8 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
           willChange: 'transform',
           border: previewModeActive ? `3px solid ${v('--elucim-editor-accent')}` : `1px solid ${v('--elucim-editor-border')}`,
           boxShadow: previewModeActive
-            ? `0 0 0 4px color-mix(in srgb, ${v('--elucim-editor-accent')} 22%, transparent), 0 2px 16px rgba(0,0,0,0.35)`
-            : '0 2px 16px rgba(0,0,0,0.35)',
+            ? `0 0 0 4px color-mix(in srgb, ${v('--elucim-editor-accent')} 22%, transparent), ${v('--elucim-editor-shadow-canvas')}`
+            : v('--elucim-editor-shadow-canvas'),
           borderRadius: 2,
           boxSizing: 'border-box',
           ...sceneThemeVars,

@@ -60,7 +60,7 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
     border: `1px solid ${v('--elucim-editor-border')}`,
     borderRadius: 4,
     padding: '4px 0',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+    boxShadow: v('--elucim-editor-shadow-dropdown'),
     fontSize: 11,
     fontFamily: 'system-ui, -apple-system, sans-serif',
   };

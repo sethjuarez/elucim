@@ -15,6 +15,7 @@ import { normalizeTheme, type ElucimTheme } from '@elucim/core';
 export const EDITOR_TOKENS: Record<string, string> = {
   // ── Core ──────────────────────────────────────────────────────────────
   '--elucim-editor-accent':          '#4a9eff',
+  '--elucim-editor-on-accent':       '#ffffff',
   '--elucim-editor-bg':              '#1a1a2e',
   '--elucim-editor-surface':         '#12122a',
   '--elucim-editor-panel':           'rgba(22, 22, 42, 0.93)',
@@ -30,6 +31,7 @@ export const EDITOR_TOKENS: Record<string, string> = {
   '--elucim-editor-border':          '#334155',
   '--elucim-editor-border-subtle':   '#1e293b',
   '--elucim-editor-input-bg':        '#0f172a',
+  '--elucim-editor-handle-fill':     '#ffffff',
 
   // ── Animation timeline bars (reuse DSL semantic tokens where possible) ─
   '--elucim-editor-success':         '#34d399',
@@ -45,6 +47,7 @@ export const EDITOR_TOKENS: Record<string, string> = {
   '--elucim-editor-space-sm':        '4px',
   '--elucim-editor-shadow-panel':    '0 4px 24px rgba(0,0,0,0.4)',
   '--elucim-editor-shadow-dropdown': '0 4px 12px rgba(0,0,0,0.3)',
+  '--elucim-editor-shadow-canvas':   '0 2px 16px rgba(0,0,0,0.35)',
 
   // ── Motion ──────────────────────────────────────────────────────────
   '--elucim-editor-duration-fast':    '150ms',
@@ -55,6 +58,7 @@ export const EDITOR_TOKENS: Record<string, string> = {
 /** Light-mode defaults — used when `color-scheme: "light"` is passed. */
 export const EDITOR_TOKENS_LIGHT: Record<string, string> = {
   '--elucim-editor-accent':          '#2563eb',
+  '--elucim-editor-on-accent':       '#ffffff',
   '--elucim-editor-bg':              '#f1f5f9',
   '--elucim-editor-surface':         '#ffffff',
   '--elucim-editor-panel':           'rgba(255, 255, 255, 0.95)',
@@ -66,6 +70,7 @@ export const EDITOR_TOKENS_LIGHT: Record<string, string> = {
   '--elucim-editor-border':          '#e2e8f0',
   '--elucim-editor-border-subtle':   '#f1f5f9',
   '--elucim-editor-input-bg':        '#ffffff',
+  '--elucim-editor-handle-fill':     '#ffffff',
   '--elucim-editor-success':         '#34d399',
   '--elucim-editor-info':            '#4fc3f7',
   '--elucim-editor-error':           '#f87171',
@@ -79,6 +84,7 @@ export const EDITOR_TOKENS_LIGHT: Record<string, string> = {
   '--elucim-editor-space-sm':        '4px',
   '--elucim-editor-shadow-panel':    '0 4px 24px rgba(0,0,0,0.15)',
   '--elucim-editor-shadow-dropdown': '0 4px 12px rgba(0,0,0,0.1)',
+  '--elucim-editor-shadow-canvas':   '0 2px 16px rgba(0,0,0,0.15)',
 
   // ── Motion ──────────────────────────────────────────────────────────
   '--elucim-editor-duration-fast':    '150ms',
@@ -110,6 +116,7 @@ export function deriveEditorTheme(
   const theme = normalizeTheme(contentTheme, colorScheme);
 
   derived['accent'] = theme.accent;
+  derived['on-accent'] = '#ffffff';
   derived['bg'] = theme.background;
   derived['surface'] = theme.surface;
   derived['panel'] = `color-mix(in srgb, ${theme.surface} 95%, transparent)`;
@@ -121,6 +128,7 @@ export function deriveEditorTheme(
   derived['text-muted'] = theme.muted;
   derived['text-secondary'] = theme.subtitle;
   derived['border'] = theme.border;
+  derived['handle-fill'] = colorScheme === 'light' ? theme.surface : theme.foreground;
   derived['success'] = theme.success;
   derived['error'] = theme.error;
 
