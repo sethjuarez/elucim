@@ -301,6 +301,39 @@ describe('document mutation actions', () => {
     expect(next.compatibilityWarnings).toEqual(['adapter warning']);
   });
 
+  it('SET_CANONICAL_DOCUMENT can derive a fresh projection from the canonical document', () => {
+    const state = stateWithElements(circle1);
+    const canonicalDocument: CanonicalElucimDocument = {
+      version: '2.0',
+      metadata: { title: 'Replacement document' },
+      scene: { type: 'player', width: 640, height: 480, children: ['r1'] },
+      elements: {
+        r1: { id: 'r1', type: 'rect', props: { type: 'rect', x: 25, y: 35, width: 120, height: 80 } },
+      },
+      stateMachines: {
+        deck: {
+          id: 'deck',
+          entry: 'idle',
+          states: { idle: { layout: { x: 120, y: 80 } } },
+          transitions: [],
+          layout: { nodes: { idle: { x: 120, y: 80 } } },
+        },
+      },
+    };
+
+    const next = editorReducer(state, {
+      type: 'SET_CANONICAL_DOCUMENT',
+      document: canonicalDocument,
+      syncProjection: true,
+    });
+
+    expect((next.document.root as any).width).toBe(640);
+    expect((next.document.root as any).children).toHaveLength(1);
+    expect((next.document.root as any).children[0]).toMatchObject({ id: 'r1', x: 25, y: 35 });
+    expect(next.canonicalDocument?.metadata?.title).toBe('Replacement document');
+    expect(next.canonicalDocument?.stateMachines?.deck.layout).toEqual({ nodes: { idle: { x: 120, y: 80 } } });
+  });
+
   it('DELETE_ELEMENTS removes elements and clears selection', () => {
     let state = stateWithElements(circle1, rect1);
     state = editorReducer(state, { type: 'SELECT', ids: ['c1'] });
