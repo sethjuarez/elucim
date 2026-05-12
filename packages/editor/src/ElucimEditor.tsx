@@ -11,10 +11,10 @@ import { EditorTimelinePanel } from './timeline/EditorTimelinePanel';
 import { EditorErrorBoundary } from './panels/EditorErrorBoundary';
 import { LeftDock } from './dock/LeftDock';
 import { PanelShell } from './panels/PanelShell';
-import { v } from './theme/tokens';
 import { normalizeInitialDocument } from './document/documentCompatibility';
 import { DocumentChangeEmitter, InitialDocumentModelSync, resolveInitialFrame, type ElucimEditorChangeDetails } from './document/documentLifecycle';
 import { EditorMainGrid } from './chrome/EditorMainGrid';
+import { EditorRoot } from './chrome/EditorRoot';
 import { EditorTimelineDock } from './chrome/EditorTimelineDock';
 import { EditorTopBar } from './chrome/EditorTopBar';
 import { resolveEditorThemeVars, useEditorShellState } from './shell/editorShell';
@@ -147,53 +147,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
   const { previewDocument, stateMachinePreviewMode, timelinePreviewCallbacks } = useEditorPreviewController(liveDocument);
 
   return (
-    <div
-      className={`elucim-editor ${className ?? ''}`}
-      style={{
-        ...themeVars,
-        display: 'flex',
-        flexDirection: 'column',
-        background: v('--elucim-editor-bg'),
-        color: v('--elucim-editor-fg'),
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        height: '100%',
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        colorScheme: colorScheme as any,
-        ...style,
-        }}
-      >
-      {/* Scoped scrollbar + input styling */}
-      <style>{`
-        .elucim-editor ::-webkit-scrollbar { width: 6px; height: 6px; }
-        .elucim-editor ::-webkit-scrollbar-track { background: transparent; }
-        .elucim-editor ::-webkit-scrollbar-thumb {
-          background: ${v('--elucim-editor-border')};
-          border-radius: 3px;
-        }
-        .elucim-editor ::-webkit-scrollbar-thumb:hover {
-          background: ${v('--elucim-editor-text-muted')};
-        }
-        .elucim-editor input[type="number"] {
-          -moz-appearance: textfield;
-        }
-        .elucim-editor input[type="number"]::-webkit-inner-spin-button,
-        .elucim-editor input[type="number"]::-webkit-outer-spin-button {
-          opacity: 0;
-          width: 0;
-          margin: 0;
-        }
-        .elucim-editor input[type="number"]:hover::-webkit-inner-spin-button {
-          opacity: 1;
-          width: 10px;
-          height: 14px;
-          cursor: pointer;
-        }
-        .elucim-editor input:focus, .elucim-editor textarea:focus {
-          outline: 1px solid ${v('--elucim-editor-accent')};
-          outline-offset: -1px;
-        }
-      `}</style>
+    <EditorRoot className={className} style={style} themeVars={themeVars} colorScheme={colorScheme}>
       <EditorTopBar
         workspace={workspace}
         leftVisible={leftVisible}
@@ -242,6 +196,6 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
           {...timelinePreviewCallbacks}
         />
       </EditorTimelineDock>
-    </div>
+    </EditorRoot>
   );
 }
