@@ -1,287 +1,80 @@
 import { describe, expect, it } from 'vitest';
 import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
 import { validateDocument } from '@elucim/dsl';
-import {
-  createDocumentFromEditorState,
-  mapSourceIdsToRestoredIds,
-  restoreDocumentFromEditorState,
-} from '../document/documentBridge';
+import { createDocumentFromEditorState, normalizeInitialDocument } from '../document/documentBridge';
 
-const sourceDocument: ElucimDocument = {
-  $schema: 'https://elucim.dev/schema.json',
-  version: '2.0',
-  scene: {
+const renderableDocument: RenderableDocument = {
+  version: '1.0',
+  root: {
     type: 'player',
-    preset: 'slide',
     width: 800,
     height: 600,
-    fps: 60,
-    background: '$background',
-    controls: true,
-    loop: true,
-    autoPlay: false,
-    children: ['title', 'metric'],
+    durationInFrames: 120,
+    children: [
+      { type: 'rect', id: 'card', x: 80, y: 96, width: 240, height: 120 },
+    ],
   },
+};
+
+const canonicalDocument: ElucimDocument = {
+  version: '2.0',
+  metadata: { title: 'Bridge compatibility' },
+  scene: { type: 'player', width: 800, height: 600, children: ['card'] },
   elements: {
-    title: {
-      id: 'title',
-      type: 'text',
-      layout: { x: 80, y: 120, scale: 1.1, locked: true, rank: 1 },
-      intent: { role: 'title', importance: 'primary', flowTo: ['metric'], hints: ['preserve me'] },
-      props: { type: 'text', content: 'Before', opacity: 0 },
-    },
-    metric: {
-      id: 'metric',
-      type: 'text',
-      intent: { role: 'metric' },
-      props: { type: 'text', content: '42%', opacity: 1 },
+    card: {
+      id: 'card',
+      type: 'rect',
+      layout: { x: 80, y: 96, rank: 1 },
+      props: { type: 'rect', x: 80, y: 96, width: 240, height: 120 },
     },
   },
   timelines: {
     intro: {
       id: 'intro',
       duration: 30,
-      tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+      tracks: [{ target: 'card', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
     },
   },
   stateMachines: {
-    presentation: {
-      id: 'presentation',
+    deck: {
+      id: 'deck',
       entry: 'intro',
-      inputs: {
-        reset: { type: 'trigger' },
-        enabled: { type: 'boolean', default: true },
-        speed: { type: 'number', default: 1 },
-      },
       states: { intro: { timeline: 'intro' } },
-      transitions: [
-        { id: 'entry-intro', from: 'entry', to: 'intro', trigger: 'onStart' },
-        { id: 'intro-reset', from: 'intro', to: 'entry', trigger: 'reset' },
-      ],
-      layout: {
-        entry: { x: -180, y: 0 },
-        states: { intro: { x: 80, y: 40 } },
-        viewport: { x: 10, y: 20, zoom: 0.85 },
-      },
+      transitions: [{ id: 'entry-intro', from: 'entry', to: 'intro', trigger: 'onStart' }],
+      layout: { entry: { x: -180, y: 0 }, states: { intro: { x: 80, y: 40 } } },
     },
   },
-  defaultStateMachine: 'presentation',
-  metadata: {
-    title: 'Bridge test',
-    intent: 'Prove canonical fields survive bridge restore.',
-    polishLevel: 'refined',
-    generatedBy: 'agent-fixture',
-    notes: ['source metadata should survive'],
-  },
+  defaultStateMachine: 'deck',
 };
 
-function editorDocument(...children: RenderableDocument['root']['children']): RenderableDocument {
-  return {
-    version: '1.0',
-    root: {
-      type: 'player',
-      width: 800,
-      height: 600,
-      durationInFrames: 120,
-      children,
-    },
-  };
-}
+describe('editor document compatibility helpers', () => {
+  it('returns renderable documents unchanged for editor projection initialization', () => {
+    expect(normalizeInitialDocument(renderableDocument)).toBe(renderableDocument);
+  });
 
-type EditorScenePolicyFields = Partial<{
-  preset: string;
-  fps: number;
-  controls: boolean;
-  loop: boolean;
-  autoPlay: boolean;
-}>;
+  it('normalizes canonical Elucim Documents into renderable editor projections', () => {
+    const normalized = normalizeInitialDocument(canonicalDocument);
 
-describe('editor document bridge', () => {
-  it('creates a canonical document from editor state without a source document', () => {
-    const document = createDocumentFromEditorState(editorDocument({
-      type: 'rect',
-      id: 'card',
-      x: 80,
-      y: 96,
-      width: 240,
-      height: 120,
-    }));
+    expect(normalized?.version).toBe('1.0');
+    expect(normalized?.root.type).toBe('player');
+    expect((normalized?.root as any).children[0]).toMatchObject({ type: 'rect', id: 'card', x: 80, y: 96 });
+  });
+
+  it('rejects invalid canonical Elucim Documents before projection', () => {
+    const invalid: ElucimDocument = {
+      ...canonicalDocument,
+      scene: { ...canonicalDocument.scene, children: ['missing-card'] },
+    };
+
+    expect(() => normalizeInitialDocument(invalid)).toThrow('Invalid editor document:');
+  });
+
+  it('creates canonical Elucim Documents from renderable compatibility imports', () => {
+    const document = createDocumentFromEditorState(renderableDocument);
 
     expect(validateDocument(document).valid).toBe(true);
+    expect(document.version).toBe('2.0');
     expect(document.scene.children).toEqual(['card']);
     expect(document.elements.card.props).toMatchObject({ type: 'rect', x: 80, y: 96 });
-  });
-
-  it('restores canonical metadata, intent, layout, and renamed timeline targets from editor state', () => {
-    const result = restoreDocumentFromEditorState(editorDocument(
-      { type: 'text', id: 'hero-title', content: 'After', x: 120, y: 140 },
-      { type: 'text', id: 'metric', content: '42%' },
-    ), sourceDocument);
-
-    expect(validateDocument(result.document).valid).toBe(true);
-    expect(result.document.$schema).toBe('https://elucim.dev/schema.json');
-    expect(result.document.scene).toMatchObject({
-      type: 'player',
-      preset: 'slide',
-      width: 800,
-      height: 600,
-      fps: 60,
-      background: '$background',
-      controls: true,
-      loop: true,
-      autoPlay: false,
-    });
-    expect(result.document.metadata).toMatchObject({
-      title: 'Bridge test',
-      intent: 'Prove canonical fields survive bridge restore.',
-      polishLevel: 'refined',
-      generatedBy: 'agent-fixture',
-      notes: ['source metadata should survive'],
-    });
-    expect(result.document.elements['hero-title'].intent).toMatchObject({ role: 'title', importance: 'primary' });
-    expect(result.document.elements['hero-title'].intent?.flowTo).toEqual(['metric']);
-    expect(result.document.elements['hero-title'].intent?.hints).toEqual(['preserve me']);
-    expect(result.document.elements['hero-title'].layout).toMatchObject({ x: 120, y: 140, scale: 1.1, locked: true, rank: 1 });
-    expect(result.document.timelines?.intro.tracks[0].target).toBe('hero-title');
-    expect(result.document.stateMachines?.presentation.inputs).toEqual(sourceDocument.stateMachines?.presentation.inputs);
-    expect(result.document.stateMachines?.presentation.transitions).toEqual(sourceDocument.stateMachines?.presentation.transitions);
-    expect(result.document.stateMachines?.presentation.layout).toEqual(sourceDocument.stateMachines?.presentation.layout);
-    expect(result.document.defaultStateMachine).toBe('presentation');
-    expect(result.warnings).toContain('Element "title" was renamed to "hero-title"; timeline references were updated.');
-  });
-
-  it('preserves canonical scene policy fields even if the editor tree changes them', () => {
-    const doc = editorDocument(
-      { type: 'text', id: 'title', content: 'After', x: 120, y: 140 },
-      { type: 'text', id: 'metric', content: '42%' },
-    );
-    Object.assign(doc.root as RenderableDocument['root'] & EditorScenePolicyFields, {
-      preset: 'card',
-      fps: 24,
-      controls: false,
-      loop: false,
-      autoPlay: true,
-    });
-
-    const result = restoreDocumentFromEditorState(doc, sourceDocument);
-
-    expect(result.document.scene).toMatchObject({
-      preset: 'slide',
-      fps: 60,
-      controls: true,
-      loop: true,
-      autoPlay: false,
-    });
-  });
-
-  it('does not inject migration metadata into canonical documents without metadata', () => {
-    const { metadata: _metadata, ...sourceWithoutMetadata } = sourceDocument;
-    const result = restoreDocumentFromEditorState(editorDocument(
-      { type: 'text', id: 'title', content: 'After' },
-      { type: 'text', id: 'metric', content: '42%' },
-    ), sourceWithoutMetadata);
-
-    expect(result.document.metadata).toBeUndefined();
-  });
-
-  it('prunes timeline links when editor output removes targeted elements', () => {
-    const result = restoreDocumentFromEditorState(editorDocument(
-      { type: 'text', id: 'metric', content: '42%' },
-    ), sourceDocument);
-
-    expect(validateDocument(result.document).valid).toBe(true);
-    expect(result.document.timelines?.intro).toBeUndefined();
-    expect(result.document.stateMachines?.presentation.states.intro.timeline).toBeUndefined();
-    expect(result.warnings).toContain('Timeline "intro" has 1 track(s) targeting missing elements and will be omitted from document output.');
-    expect(result.warnings).toContain('State "intro" in machine "presentation" references missing timeline "intro" and will lose that timeline link.');
-  });
-
-  it('warns when the default state machine is removed during restore', () => {
-    const result = restoreDocumentFromEditorState(editorDocument(
-      { type: 'text', id: 'metric', content: '42%' },
-    ), {
-      ...sourceDocument,
-      stateMachines: undefined,
-    });
-
-    expect(result.document.defaultStateMachine).toBeUndefined();
-    expect(result.warnings).toContain('Default state machine "presentation" is no longer present and will be omitted from document output.');
-  });
-
-  it('does not map renamed IDs onto existing source IDs', () => {
-    const restored = createDocumentFromEditorState(editorDocument(
-      { type: 'text', id: 'metric', content: 'Renamed title collides with metric' },
-      { type: 'text', id: 'metric-copy', content: 'Metric copy' },
-    ));
-
-    const idMap = mapSourceIdsToRestoredIds(sourceDocument, restored);
-
-    expect(idMap.has('title')).toBe(false);
-    expect(idMap.get('metric')).toBe('metric');
-  });
-
-  it('does not retarget timelines when a new element is inserted before an existing one', () => {
-    const result = restoreDocumentFromEditorState(editorDocument(
-      { type: 'rect', id: 'new-card', x: 10, y: 20, width: 80, height: 40 },
-      { type: 'text', id: 'title', content: 'After' },
-      { type: 'text', id: 'metric', content: '42%' },
-    ), sourceDocument);
-
-    expect(validateDocument(result.document).valid).toBe(true);
-    expect(result.document.scene.children).toEqual(['new-card', 'title', 'metric']);
-    expect(result.document.timelines?.intro.tracks[0].target).toBe('title');
-    expect(result.warnings).not.toContain('Element "title" was renamed to "new-card"; timeline references were updated.');
-  });
-
-  it('does not retarget timelines when existing elements are reordered', () => {
-    const result = restoreDocumentFromEditorState(editorDocument(
-      { type: 'text', id: 'metric', content: '42%' },
-      { type: 'text', id: 'title', content: 'After' },
-    ), sourceDocument);
-
-    expect(validateDocument(result.document).valid).toBe(true);
-    expect(result.document.scene.children).toEqual(['metric', 'title']);
-    expect(result.document.timelines?.intro.tracks[0].target).toBe('title');
-  });
-
-  it('still infers nested renames under exact parent IDs', () => {
-    const sourceWithGroup: ElucimDocument = {
-      ...sourceDocument,
-      scene: { ...sourceDocument.scene, children: ['group'] },
-      elements: {
-        group: {
-          id: 'group',
-          type: 'group',
-          children: ['title'],
-          props: { type: 'group' },
-        },
-        title: sourceDocument.elements.title,
-      },
-      timelines: {
-        intro: {
-          id: 'intro',
-          duration: 30,
-          tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
-        },
-      },
-      stateMachines: undefined,
-      defaultStateMachine: undefined,
-    };
-    const restored = createDocumentFromEditorState(editorDocument({
-      type: 'group',
-      id: 'group',
-      children: [{ type: 'text', id: 'hero-title', content: 'After' }],
-    }));
-
-    const idMap = mapSourceIdsToRestoredIds(sourceWithGroup, restored);
-
-    expect(idMap.get('group')).toBe('group');
-    expect(idMap.get('title')).toBe('hero-title');
-  });
-
-  it('fails loudly when restore source is not a canonical Elucim Document', () => {
-    expect(() => restoreDocumentFromEditorState(editorDocument(), editorDocument() as unknown as ElucimDocument)).toThrow(
-      'restoreDocumentFromEditorState requires a canonical Elucim Document source.',
-    );
   });
 });
