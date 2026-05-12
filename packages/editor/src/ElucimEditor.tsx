@@ -10,14 +10,14 @@ import { Timeline } from './timeline/Timeline';
 import { EditorErrorBoundary } from './panels/EditorErrorBoundary';
 import { LeftDock } from './dock/LeftDock';
 import { PanelShell } from './panels/PanelShell';
-import { buildThemeVars, deriveEditorTheme, v } from './theme/tokens';
-import { startRafDrag } from './interactions/rafDrag';
+import { v } from './theme/tokens';
 import { normalizeInitialDocument } from './document/documentCompatibility';
 import { DocumentChangeEmitter, InitialDocumentModelSync, resolveInitialFrame, resolvePreviewDocument, type ElucimEditorChangeDetails } from './document/documentLifecycle';
 import { CollapsedPanelRail } from './chrome/CollapsedPanelRail';
 import { PanelResizeHandle } from './chrome/PanelResizeHandle';
 import { PanelToggle } from './chrome/PanelToggle';
 import { WorkspaceTab } from './chrome/WorkspaceTab';
+import { resolveEditorThemeVars, useEditorShellState } from './shell/editorShell';
 
 export type { ElucimEditorChangeDetails } from './document/documentLifecycle';
 
@@ -107,20 +107,6 @@ export interface ElucimEditorLayoutProps {
   onDocumentChange?: (document: ElucimDocument) => void;
 }
 
-type EditorWorkspace = 'design' | 'animate' | 'states' | 'polish';
-
-const DEFAULT_LEFT_WIDTH = 252;
-const DEFAULT_RIGHT_WIDTH = 286;
-const DEFAULT_TIMELINE_HEIGHT = 340;
-const MIN_SIDE_WIDTH = 180;
-const MAX_SIDE_WIDTH = 560;
-const MIN_TIMELINE_HEIGHT = 220;
-const MAX_TIMELINE_HEIGHT = 640;
-
-function clampPanelSize(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
 /**
  * The internal layout component used by ElucimEditor.
  * Must be rendered inside an EditorProvider. Useful for consumers who need
@@ -130,82 +116,40 @@ function clampPanelSize(value: number, min: number, max: number): number {
 export function ElucimEditorLayout({ theme, editorTheme, className, style, document: documentModel, onDocumentChange }: ElucimEditorLayoutProps) {
   const { state, dispatch } = useEditorState();
   const activeDocument = documentModel ?? state.canonicalDocument;
-  const [workspace, setWorkspace] = useState<EditorWorkspace>(() => activeDocument ? 'animate' : 'design');
+  const shell = useEditorShellState({
+    hasActiveDocument: Boolean(activeDocument),
+    isPlaying: state.isPlaying,
+    stopPlayback: () => dispatch({ type: 'SET_PLAYING', playing: false }),
+  });
+  const {
+    workspace,
+    leftVisible,
+    rightVisible,
+    timelineVisible,
+    leftWidth,
+    rightWidth,
+    timelineHeight,
+    setLeftVisible,
+    setRightVisible,
+    setTimelineVisible,
+    preferredLeftTab,
+    stateMachineWorkspaceActive,
+    selectWorkspace,
+    startSideResize,
+    startTimelineResize,
+  } = shell;
   const [previewTimelineFrames, setPreviewTimelineFrames] = useState<ElucimTimelineFrameSelection[] | undefined>(undefined);
   const [stateMachinePreviewActive, setStateMachinePreviewActive] = useState(false);
   const [stateMachinePreviewClickHandler, setStateMachinePreviewClickHandler] = useState<(() => boolean) | undefined>(undefined);
   const [stateMachinePreviewKeyDownHandler, setStateMachinePreviewKeyDownHandler] = useState<((key: string) => boolean) | undefined>(undefined);
   const [stateMachinePreviewExitHandler, setStateMachinePreviewExitHandler] = useState<(() => void) | undefined>(undefined);
-  const [leftVisible, setLeftVisible] = useState(true);
-  const [rightVisible, setRightVisible] = useState(() => !activeDocument);
-  const [timelineVisible, setTimelineVisible] = useState(true);
-  const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT_WIDTH);
-  const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT_WIDTH);
-  const [timelineHeight, setTimelineHeight] = useState(DEFAULT_TIMELINE_HEIGHT);
-
-  // Derive editor chrome from content theme, then layer explicit overrides
-  const colorSchemeHint = editorTheme?.['color-scheme'] ?? editorTheme?.['--elucim-editor-color-scheme'] ?? 'dark';
-  const derived = theme
-    ? deriveEditorTheme(theme, colorSchemeHint as 'light' | 'dark')
-    : {};
-  const merged = { ...derived, ...editorTheme };
-  for (const [k, val] of Object.entries(state.themeOverrides)) {
-    merged[k] = val;
-  }
-  const themeVars = buildThemeVars(merged);
-  const colorScheme = merged['--elucim-editor-color-scheme'] || merged['color-scheme'] || colorSchemeHint;
-  const preferredLeftTab = workspace === 'polish' ? 'polish' : workspace === 'design' ? 'objects' : undefined;
-  const stateMachineWorkspaceActive = workspace === 'states' && timelineVisible;
+  const { themeVars, colorScheme } = resolveEditorThemeVars(theme, editorTheme, state.themeOverrides);
   const commitDocumentChange = (document: ElucimDocument) => {
     dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [] });
     onDocumentChange?.(document);
   };
   const liveDocument = activeDocument;
   const previewDocument = useMemo(() => resolvePreviewDocument(liveDocument, previewTimelineFrames), [previewTimelineFrames, liveDocument]);
-  const selectWorkspace = (nextWorkspace: EditorWorkspace) => {
-    if (nextWorkspace !== 'animate' && state.isPlaying) {
-      dispatch({ type: 'SET_PLAYING', playing: false });
-    }
-    setWorkspace(nextWorkspace);
-    if (nextWorkspace === 'design') {
-      setLeftVisible(true);
-      setRightVisible(true);
-      setTimelineVisible(false);
-    } else if (nextWorkspace === 'animate') {
-      setLeftVisible(true);
-      setRightVisible(false);
-      setTimelineVisible(true);
-      setTimelineHeight(Math.max(timelineHeight, 360));
-    } else if (nextWorkspace === 'states') {
-      setLeftVisible(false);
-      setRightVisible(false);
-      setTimelineVisible(true);
-      setTimelineHeight(Math.max(timelineHeight, 420));
-    } else {
-      setLeftVisible(true);
-      setRightVisible(false);
-      setTimelineVisible(false);
-      setLeftWidth(Math.max(leftWidth, 360));
-    }
-  };
-  const startSideResize = (side: 'left' | 'right') => (event: React.PointerEvent<HTMLDivElement>) => {
-    const startWidth = side === 'left' ? leftWidth : rightWidth;
-    startRafDrag({
-      event,
-      onFrame: point => {
-        const nextWidth = side === 'left' ? startWidth + point.deltaX : startWidth - point.deltaX;
-        if (side === 'left') setLeftWidth(clampPanelSize(nextWidth, MIN_SIDE_WIDTH, MAX_SIDE_WIDTH));
-        else setRightWidth(clampPanelSize(nextWidth, MIN_SIDE_WIDTH, MAX_SIDE_WIDTH));
-      },
-    });
-  };
-  const startTimelineResize = (event: React.PointerEvent<HTMLDivElement>) => {
-    const startHeight = timelineHeight;
-    startRafDrag({
-      event,
-      onFrame: point => setTimelineHeight(clampPanelSize(startHeight - point.deltaY, MIN_TIMELINE_HEIGHT, MAX_TIMELINE_HEIGHT)),
-    });
-  };
 
   return (
     <div
