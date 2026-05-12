@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { RenderableDocument, ElucimDocument, ElucimDocumentNudge, ElucimV2StateMachine, ElucimV2Timeline, ElucimV2TimelineFrameSelection } from '@elucim/dsl';
-import { analyzePolish, applyNudge, applyTimelineFrames, migrateV1ToV2, migrateV2ToV1, suggestDocumentNudges, suggestSemanticLayoutNudges, validate, validateV2 } from '@elucim/dsl';
+import type { RenderableDocument, ElucimDocument, ElucimDocumentNudge, ElucimTimelineFrameSelection } from '@elucim/dsl';
+import { analyzePolish, applyNudge, applyTimelineFrames, migrateV2ToV1, suggestDocumentNudges, suggestSemanticLayoutNudges } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider } from './state/EditorProvider';
@@ -17,6 +17,7 @@ import { findElementById } from './state/reducer';
 import { CANVAS_ID } from './state/types';
 import { buildThemeVars, deriveEditorTheme, v } from './theme/tokens';
 import { startRafDrag } from './interactions/rafDrag';
+import { createDocumentFromEditorState, normalizeInitialDocument, restoreDocumentFromEditorState } from './document/documentBridge';
 
 export interface ElucimEditorProps {
   /** Initial document to edit. Creates an empty scene if not provided. */
@@ -86,8 +87,8 @@ function DocumentBridge({
     previousDocRef.current = doc;
     previousV2DocumentRef.current = v2Document;
     const result = v2Document
-      ? restoreV2FromEditorDoc(doc, v2Document)
-      : { document: migrateV1ToV2(doc), warnings: [] };
+      ? restoreDocumentFromEditorState(doc, v2Document)
+      : { document: createDocumentFromEditorState(doc), warnings: [] };
     const details: ElucimEditorChangeDetails = {
       changedFormat: docChanged,
       warnings: result.warnings,
@@ -103,15 +104,6 @@ function DocumentBridge({
   }, [doc, onWarnings, v2Document]);
 
   return null;
-}
-
-function normalizeInitialDocument(document: RenderableDocument | ElucimDocument | undefined): RenderableDocument | undefined {
-  if (!document || document.version === '1.0') return document;
-  const result = validate(document);
-  if (!result.valid) {
-    throw new Error(`Invalid v2 editor document: ${result.errors.map(error => `${error.path}: ${error.message}`).join('; ')}`);
-  }
-  return migrateV2ToV1(document);
 }
 
 /**
@@ -158,98 +150,6 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
   return inner;
 }
 
-function restoreV2FromEditorDoc(doc: RenderableDocument, sourceV2: ElucimDocument): { document: ElucimDocument; warnings: string[] } {
-  const migrated = migrateV1ToV2(doc);
-  const idMap = mapSourceIdsToMigratedIds(sourceV2, migrated);
-  const reverseIdMap = new Map([...idMap.entries()].map(([sourceId, migratedId]) => [migratedId, sourceId]));
-  for (const [id, element] of Object.entries(migrated.elements)) {
-    const sourceElement = sourceV2.elements[reverseIdMap.get(id) ?? id];
-    if (sourceElement) {
-      migrated.elements[id] = {
-        ...element,
-        layout: sourceElement.layout || element.layout
-          ? { ...sourceElement.layout, ...element.layout }
-          : element.layout,
-        role: sourceElement.role ?? element.role,
-        intent: sourceElement.intent ? { ...sourceElement.intent, ...element.intent } : element.intent,
-      };
-    }
-  }
-  const elementIds = new Set(Object.keys(migrated.elements));
-  const warnings: string[] = [];
-  for (const sourceId of Object.keys(sourceV2.elements)) {
-    const mappedId = idMap.get(sourceId);
-    if (!mappedId) {
-      warnings.push(`Element "${sourceId}" is no longer present in editor output; related references may be pruned.`);
-    } else if (mappedId !== sourceId) {
-      warnings.push(`Element "${sourceId}" was renamed to "${mappedId}"; timeline references were updated.`);
-    }
-  }
-  const timelines: Record<string, ElucimV2Timeline> = {};
-  for (const [id, timeline] of Object.entries(sourceV2.timelines ?? {})) {
-    const tracks = timeline.tracks
-      .map(track => ({ ...track, target: idMap.get(track.target) ?? track.target }))
-      .filter(track => elementIds.has(track.target));
-    if (tracks.length < timeline.tracks.length) {
-      warnings.push(`Timeline "${id}" has ${timeline.tracks.length - tracks.length} track(s) targeting missing elements and will be omitted from document output.`);
-    }
-    if (tracks.length > 0) timelines[id] = { ...timeline, tracks };
-  }
-  const timelineIds = new Set(Object.keys(timelines));
-  const stateMachines: Record<string, ElucimV2StateMachine> = {};
-  for (const [id, machine] of Object.entries(sourceV2.stateMachines ?? {})) {
-    stateMachines[id] = {
-      ...machine,
-      states: Object.fromEntries(
-        Object.entries(machine.states).map(([stateId, state]) => {
-          const nextState = { ...state };
-          if (nextState.timeline && !timelineIds.has(nextState.timeline)) {
-            warnings.push(`State "${stateId}" in machine "${id}" references missing timeline "${nextState.timeline}" and will lose that timeline link.`);
-            nextState.timeline = undefined;
-          }
-          return [stateId, nextState];
-        }),
-      ),
-      transitions: machine.transitions,
-    };
-  }
-  const document = {
-    ...migrated,
-    metadata: { ...migrated.metadata, ...sourceV2.metadata },
-    ...(Object.keys(timelines).length > 0 ? { timelines } : {}),
-    ...(Object.keys(stateMachines).length > 0 ? { stateMachines } : {}),
-  };
-  const validation = validateV2(document);
-  for (const error of validation.errors) {
-    warnings.push(`V2 output ${error.severity}: ${error.path}: ${error.message}`);
-  }
-  return { document, warnings };
-}
-
-function mapSourceIdsToMigratedIds(sourceV2: ElucimDocument, migrated: ElucimDocument): Map<string, string> {
-  const idMap = new Map<string, string>();
-  const visit = (sourceIds: string[], migratedIds: string[]) => {
-    const count = Math.min(sourceIds.length, migratedIds.length);
-    for (let index = 0; index < count; index += 1) {
-      const sourceId = sourceIds[index];
-      const migratedId = migratedIds[index];
-      const sourceElement = sourceV2.elements[sourceId];
-      const migratedElement = migrated.elements[migratedId];
-      if (!sourceElement || !migratedElement) continue;
-      if (sourceId !== migratedId && sourceV2.elements[migratedId]) {
-        continue;
-      }
-      idMap.set(sourceId, migratedId);
-      visit(sourceElement.children ?? [], migratedElement.children ?? []);
-    }
-  };
-  visit(sourceV2.scene.children, migrated.scene.children);
-  for (const id of Object.keys(sourceV2.elements)) {
-    if (!idMap.has(id) && migrated.elements[id]) idMap.set(id, id);
-  }
-  return idMap;
-}
-
 export interface ElucimEditorLayoutProps {
   theme?: ElucimTheme;
   editorTheme?: Record<string, string>;
@@ -282,7 +182,7 @@ function clampPanelSize(value: number, min: number, max: number): number {
 export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Document, onDocumentChange }: ElucimEditorLayoutProps) {
   const { state, dispatch } = useEditorState();
   const [workspace, setWorkspace] = useState<EditorWorkspace>(() => v2Document ? 'animate' : 'design');
-  const [previewTimelineFrames, setPreviewTimelineFrames] = useState<ElucimV2TimelineFrameSelection[] | undefined>(undefined);
+  const [previewTimelineFrames, setPreviewTimelineFrames] = useState<ElucimTimelineFrameSelection[] | undefined>(undefined);
   const [stateMachinePreviewActive, setStateMachinePreviewActive] = useState(false);
   const [stateMachinePreviewClickHandler, setStateMachinePreviewClickHandler] = useState<(() => boolean) | undefined>(undefined);
   const [stateMachinePreviewKeyDownHandler, setStateMachinePreviewKeyDownHandler] = useState<((key: string) => boolean) | undefined>(undefined);
@@ -309,7 +209,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, v2Doc
   const stateMachineWorkspaceActive = workspace === 'states' && timelineVisible;
   const liveV2Document = useMemo(() => {
     if (!v2Document) return undefined;
-    return restoreV2FromEditorDoc(state.document, v2Document).document;
+    return restoreDocumentFromEditorState(state.document, v2Document).document;
   }, [state.document, v2Document]);
   const previewDocument = useMemo(() => {
     if (!liveV2Document || !previewTimelineFrames?.length) return undefined;
@@ -755,7 +655,7 @@ function StateMachinePanel({ v2Document, onDocumentChange }: { v2Document?: Eluc
   const selectedId = state.selectedIds.length === 1 && state.selectedIds[0] !== CANVAS_ID ? state.selectedIds[0] : null;
   const selected = selectedId ? findElementById(state.document.root, selectedId)?.element : null;
   const selectedLabel = selectedId && selected ? (('id' in selected && selected.id) ? selected.id : selectedId) : null;
-  const v2Compatibility = useMemo(() => v2Document ? restoreV2FromEditorDoc(state.document, v2Document) : undefined, [state.document, v2Document]);
+  const v2Compatibility = useMemo(() => v2Document ? restoreDocumentFromEditorState(state.document, v2Document) : undefined, [state.document, v2Document]);
   const currentV2Document = v2Compatibility?.document ?? v2Document;
   const selectedV2Element = selectedId && currentV2Document ? currentV2Document.elements[selectedId] : undefined;
   const machineIds = Object.keys(currentV2Document?.stateMachines ?? {});
