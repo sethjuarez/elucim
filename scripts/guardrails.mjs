@@ -33,9 +33,13 @@ function lineColumn(source, index) {
   return { line: lines.length, column: lines.at(-1).length + 1 };
 }
 
+function stripMarkdownCodeFences(source) {
+  return source.replace(/```[\s\S]*?```/g, match => ' '.repeat(match.length));
+}
+
 function isCssCustomPropertyValue(source, index) {
-  const lineStart = source.lastIndexOf('\n', index) + 1;
-  const beforeLiteral = source.slice(lineStart, index);
+  const declarationStart = Math.max(source.lastIndexOf(';', index), source.lastIndexOf('{', index)) + 1;
+  const beforeLiteral = source.slice(declarationStart, index);
   return /^\s*--[\w-]+\s*:/.test(beforeLiteral);
 }
 
@@ -43,12 +47,13 @@ function assertNoPublicVersionTerms() {
   const offenders = [];
   for (const root of publicTerminologyRoots) {
     for (const file of listFiles(root, ['.md', '.mdx'])) {
-      const source = readFileSync(file, 'utf8');
+      const source = stripMarkdownCodeFences(readFileSync(file, 'utf8'));
       for (const pattern of bannedPublicDocumentTerms) {
-        const match = pattern.exec(source);
-        if (!match) continue;
-        const { line, column } = lineColumn(source, match.index);
-        offenders.push(`${relative(repoRoot, file)}:${line}:${column} contains "${match[0]}"`);
+        const globalPattern = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`);
+        for (const match of source.matchAll(globalPattern)) {
+          const { line, column } = lineColumn(source, match.index);
+          offenders.push(`${relative(repoRoot, file)}:${line}:${column} contains "${match[0]}"`);
+        }
       }
     }
   }
