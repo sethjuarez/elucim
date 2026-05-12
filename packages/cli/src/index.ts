@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
-import { extname } from 'node:path';
+import { dirname, extname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
   applyNudge,
@@ -665,8 +665,19 @@ async function maybeWriteDocument(args: ParsedArgs, inputPath: string, doc: Eluc
   if (out && inPlace) throw new Error('Use either --out or --in-place, not both.');
   const outputPath = out ?? (inPlace ? inputPath : undefined);
   if (!outputPath) return undefined;
-  await writeFile(outputPath, `${JSON.stringify(doc, null, 2)}\n`, 'utf8');
+  await writeDocumentAtomically(outputPath, doc);
   return outputPath;
+}
+
+async function writeDocumentAtomically(outputPath: string, doc: ElucimDocument): Promise<void> {
+  const tempPath = join(dirname(outputPath), `.${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`);
+  try {
+    await writeFile(tempPath, `${JSON.stringify(doc, null, 2)}\n`, 'utf8');
+    await rename(tempPath, outputPath);
+  } catch (error) {
+    await rm(tempPath, { force: true });
+    throw error;
+  }
 }
 
 function semanticOptions(args: ParsedArgs) {

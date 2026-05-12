@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { describe, expect, it } from 'vitest';
@@ -109,6 +109,18 @@ describe('elucim CLI', () => {
       expect(payload.applied.map((item: { id: string }) => item.id)).toContain('polish-text-readability');
       const next = JSON.parse(await readFile(out, 'utf8'));
       expect(next.elements.title.props.fontSize).toBe(40);
+    });
+  });
+
+  it('writes in-place updates atomically without leaving temporary files', async () => {
+    await withTempDoc(doc, async (file, dir) => {
+      const output = capture();
+      const code = await runCli(['polish', file, '--apply-safe', '--in-place', '--json'], output.io);
+
+      expect(code).toBe(0);
+      const next = JSON.parse(await readFile(file, 'utf8'));
+      expect(next.elements.title.props.fontSize).toBe(40);
+      expect(await readdir(dir)).toEqual(['diagram.elc']);
     });
   });
 
