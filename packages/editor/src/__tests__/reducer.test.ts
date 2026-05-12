@@ -785,6 +785,34 @@ describe('undo/redo', () => {
     expect((state.document.root as any).children).toHaveLength(2);
   });
 
+  it('UNDO and REDO restore canonical document state and warnings', () => {
+    let state = {
+      ...stateWithCanonicalDocument(),
+      compatibilityWarnings: ['starting warning'],
+    };
+    state = editorReducer(state, { type: 'DELETE_ELEMENTS', ids: ['c1'] });
+
+    expect(state.canonicalDocument?.elements.c1).toBeUndefined();
+    expect(state.canonicalDocument?.timelines?.intro).toBeUndefined();
+    expect(state.compatibilityWarnings).toContain('Timeline "intro" has 1 track(s) targeting missing elements and will be omitted from document output.');
+
+    state = editorReducer(state, { type: 'UNDO' });
+
+    expect((state.document.root as any).children).toHaveLength(2);
+    expect(state.canonicalDocument?.elements.c1).toBeTruthy();
+    expect(state.canonicalDocument?.timelines?.intro.tracks[0].target).toBe('c1');
+    expect(state.canonicalDocument?.stateMachines?.presentation.states.intro.timeline).toBe('intro');
+    expect(state.compatibilityWarnings).toEqual(['starting warning']);
+
+    state = editorReducer(state, { type: 'REDO' });
+
+    expect((state.document.root as any).children).toHaveLength(1);
+    expect(state.canonicalDocument?.elements.c1).toBeUndefined();
+    expect(state.canonicalDocument?.timelines?.intro).toBeUndefined();
+    expect(state.canonicalDocument?.stateMachines?.presentation.states.intro.timeline).toBeUndefined();
+    expect(state.compatibilityWarnings).toContain('Timeline "intro" has 1 track(s) targeting missing elements and will be omitted from document output.');
+  });
+
   it('UNDO does nothing when history is empty', () => {
     const state = stateWithElements(circle1);
     const next = editorReducer(state, { type: 'UNDO' });

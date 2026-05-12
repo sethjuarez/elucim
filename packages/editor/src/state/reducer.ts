@@ -1,6 +1,6 @@
 import type { ElucimDocument as CanonicalElucimDocument, ElucimStateMachine, ElucimTimeline, RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
 import { migrateV1ToV2, migrateV2ToV1 } from '@elucim/dsl';
-import type { EditorState, EditorAction, AlignDirection, DistributeDirection, AnimationWrapperType } from './types';
+import type { EditorState, EditorAction, EditorHistoryEntry, AlignDirection, DistributeDirection, AnimationWrapperType } from './types';
 import { CANVAS_ID } from './types';
 import { getElementId, isUndoableAction } from './types';
 import { getElementBounds as getMeasuredElementBounds, type BoundingBox } from '../utils/bounds';
@@ -11,6 +11,27 @@ const MAX_HISTORY = 50;
 
 function cloneDoc(doc: ElucimDocument): ElucimDocument {
   return JSON.parse(JSON.stringify(doc));
+}
+
+function cloneCanonicalDocument(doc: CanonicalElucimDocument | undefined): CanonicalElucimDocument | undefined {
+  return doc ? JSON.parse(JSON.stringify(doc)) : undefined;
+}
+
+function historyEntryFromState(state: EditorState): EditorHistoryEntry {
+  return {
+    document: cloneDoc(state.document),
+    canonicalDocument: cloneCanonicalDocument(state.canonicalDocument),
+    compatibilityWarnings: [...state.compatibilityWarnings],
+  };
+}
+
+function restoreHistoryEntry(state: EditorState, entry: EditorHistoryEntry): EditorState {
+  return {
+    ...state,
+    document: cloneDoc(entry.document),
+    canonicalDocument: cloneCanonicalDocument(entry.canonicalDocument),
+    compatibilityWarnings: [...entry.compatibilityWarnings],
+  };
 }
 
 function documentsEqual(left: ElucimDocument, right: ElucimDocument): boolean {
@@ -549,7 +570,7 @@ function getElementBounds(el: ElementNode): Bounds | null {
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   // Push history for undoable actions
   if (isUndoableAction(action)) {
-    const past = [...state.past, cloneDoc(state.document)].slice(-MAX_HISTORY);
+    const past = [...state.past, historyEntryFromState(state)].slice(-MAX_HISTORY);
     state = { ...state, past, future: [] };
   }
 
@@ -976,10 +997,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (state.past.length === 0) return state;
       const prev = state.past[state.past.length - 1];
       return {
-        ...state,
-        ...syncCanonicalFromProjection(state, prev),
+        ...restoreHistoryEntry(state, prev),
         past: state.past.slice(0, -1),
-        future: [cloneDoc(state.document), ...state.future].slice(0, MAX_HISTORY),
+        future: [historyEntryFromState(state), ...state.future].slice(0, MAX_HISTORY),
         selectedIds: [],
       };
     }
@@ -988,9 +1008,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (state.future.length === 0) return state;
       const next = state.future[0];
       return {
-        ...state,
-        ...syncCanonicalFromProjection(state, next),
-        past: [...state.past, cloneDoc(state.document)].slice(-MAX_HISTORY),
+        ...restoreHistoryEntry(state, next),
+        past: [...state.past, historyEntryFromState(state)].slice(-MAX_HISTORY),
         future: state.future.slice(1),
         selectedIds: [],
       };
