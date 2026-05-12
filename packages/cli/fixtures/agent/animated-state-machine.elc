@@ -1,0 +1,212 @@
+{
+  "$schema": "https://elucim.dev/schema.json",
+  "version": "2.0",
+  "metadata": {
+    "title": "Animated state machine",
+    "intent": "A copyable Elucim Document fixture showing Objects animated through a default state machine.",
+    "polishLevel": "refined",
+    "generatedBy": "elucim-cli-fixture",
+    "notes": [
+      "Use validate, inspect, export-frames, or the editor round-trip tests against this file before extending it."
+    ]
+  },
+  "scene": {
+    "type": "player",
+    "preset": "slide",
+    "width": 800,
+    "height": 450,
+    "fps": 60,
+    "background": "$background",
+    "controls": true,
+    "loop": false,
+    "autoPlay": false,
+    "children": [
+      "agent-card"
+    ]
+  },
+  "elements": {
+    "agent-card": {
+      "id": "agent-card",
+      "type": "group",
+      "role": "stepCard",
+      "children": [
+        "agent-card-bg",
+        "agent-card-title",
+        "agent-card-body"
+      ],
+      "intent": {
+        "role": "concept",
+        "description": "Animated explanatory card.",
+        "importance": "primary",
+        "group": "agent-workflow",
+        "polishLevel": "refined"
+      },
+      "layout": {
+        "x": 140,
+        "y": 96,
+        "width": 520,
+        "height": 240,
+        "rank": 1
+      },
+      "props": {
+        "type": "group",
+        "opacity": 0
+      }
+    },
+    "agent-card-bg": {
+      "id": "agent-card-bg",
+      "type": "rect",
+      "parentId": "agent-card",
+      "role": "cardBackground",
+      "intent": {
+        "importance": "decorative",
+        "group": "agent-workflow"
+      },
+      "layout": {
+        "x": 140,
+        "y": 96,
+        "width": 520,
+        "height": 240,
+        "locked": true
+      },
+      "props": {
+        "type": "rect",
+        "x": 140,
+        "y": 96,
+        "width": 520,
+        "height": 240,
+        "rx": 28,
+        "fill": "$surface",
+        "stroke": "$primary",
+        "strokeWidth": 3,
+        "opacity": 0
+      }
+    },
+    "agent-card-title": {
+      "id": "agent-card-title",
+      "type": "text",
+      "parentId": "agent-card",
+      "role": "title",
+      "intent": {
+        "role": "title",
+        "importance": "primary",
+        "flowTo": [
+          "agent-card-body"
+        ],
+        "group": "agent-workflow"
+      },
+      "layout": {
+        "x": 180,
+        "y": 156,
+        "rank": 1
+      },
+      "props": {
+        "type": "text",
+        "x": 180,
+        "y": 156,
+        "content": "Object -> timeline -> state",
+        "fontSize": 38,
+        "fontWeight": 700,
+        "fill": "$text",
+        "opacity": 0
+      }
+    },
+    "agent-card-body": {
+      "id": "agent-card-body",
+      "type": "text",
+      "parentId": "agent-card",
+      "role": "body",
+      "intent": {
+        "role": "body",
+        "importance": "secondary",
+        "group": "agent-workflow"
+      },
+      "layout": {
+        "x": 180,
+        "y": 220,
+        "width": 440,
+        "rank": 2
+      },
+      "props": {
+        "type": "text",
+        "x": 180,
+        "y": 220,
+        "content": "Agents author stable Objects, compile semantic motion, and expose a default state machine for preview.",
+        "fontSize": 22,
+        "fill": "$mutedText",
+        "opacity": 0
+      }
+    }
+  },
+  "timelines": {
+    "intro": {
+      "id": "intro",
+      "duration": 48,
+      "tracks": [
+        {
+          "target": "agent-card",
+          "property": "opacity",
+          "keyframes": [
+            { "frame": 0, "value": 0 },
+            { "frame": 18, "value": 1, "easing": "easeOutCubic" },
+            { "frame": 48, "value": 1 }
+          ]
+        },
+        {
+          "target": "agent-card-bg",
+          "property": "opacity",
+          "keyframes": [
+            { "frame": 0, "value": 0 },
+            { "frame": 18, "value": 1, "easing": "easeOutCubic" },
+            { "frame": 48, "value": 1 }
+          ]
+        },
+        {
+          "target": "agent-card-title",
+          "property": "opacity",
+          "keyframes": [
+            { "frame": 8, "value": 0 },
+            { "frame": 28, "value": 1, "easing": "easeOutCubic" },
+            { "frame": 48, "value": 1 }
+          ]
+        },
+        {
+          "target": "agent-card-body",
+          "property": "opacity",
+          "keyframes": [
+            { "frame": 14, "value": 0 },
+            { "frame": 36, "value": 1, "easing": "easeOutCubic" },
+            { "frame": 48, "value": 1 }
+          ]
+        }
+      ]
+    }
+  },
+  "stateMachines": {
+    "presentation": {
+      "id": "presentation",
+      "entry": "intro",
+      "inputs": {
+        "restart": { "type": "trigger" }
+      },
+      "states": {
+        "intro": { "timeline": "intro" },
+        "complete": {}
+      },
+      "transitions": [
+        { "id": "entry-intro", "from": "entry", "to": "intro", "trigger": "onStart" },
+        { "id": "intro-complete", "from": "intro", "to": "complete", "exitTime": 1 },
+        { "id": "restart-intro", "from": "complete", "to": "intro", "trigger": "restart" }
+      ],
+      "layout": {
+        "entry": { "x": -180, "y": 0 },
+        "states": {
+          "intro": { "x": 80, "y": 0 },
+          "complete": { "x": 340, "y": 0 }
+        },
+        "viewport": { "x": 0, "y": 0, "zoom": 1 }
+      }
+    }
+  },
+  "defaultStateMachine": "presentation"
+}

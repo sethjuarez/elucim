@@ -19,8 +19,13 @@ npx @elucim/cli reduced-motion diagram.elc --mode minimal --out reduced.elc --js
 
 Use `npx @elucim/cli ops --json` as the discovery entrypoint for agents. The installed binary is still `elucim`, so global installs can run `elucim ops --json`.
 
+Copyable fixtures live in `fixtures/agent`:
+
+- `concept-card.elc` is a minimal editor-friendly card with semantic layout and intent.
+- `animated-state-machine.elc` adds a timeline and default state machine for preview/export workflows.
+
 Authoring shortcuts such as `add-step-card`, `add-text-block`, `add-card-grid`, and `add-connector` write normal editable Elucim elements. At edit time these are groups plus SVG primitives; semantic connectors also add relationship metadata that the ELK layout pass reads as virtual graph edges.
 
 The broader composite helper set is available from `@elucim/dsl` and advertised by `elucim ops --json`: decision nodes, boundaries/containers, badges/pills, queues/stacks, roadmaps, comparison tables, auto-layout groups, and progressive reveal groups.
 
-Semantic motion commands compile higher-level animation verbs into ordinary v2 timelines. Use `add-beat` for presets such as `revealFlow`, `emphasizeDecision`, `tracePath`, `loopOnce`, `handoff`, `drainQueue`, and `compareBeforeAfter`; `reveal-group` to auto-stagger by document order, rank, or group; `sample-beats` for motion lint plus beat-level before/after summaries; `hold-final` for static posters; `reduced-motion` for static or minimal-motion fallbacks; and `export-frames` for selected frame documents.
+Semantic motion commands compile higher-level animation verbs into ordinary Elucim timelines. Use `add-beat` for presets such as `revealFlow`, `emphasizeDecision`, `tracePath`, `loopOnce`, `handoff`, `drainQueue`, and `compareBeforeAfter`; `reveal-group` to auto-stagger by document order, rank, or group; `sample-beats` for motion lint plus beat-level before/after summaries; `hold-final` for static posters; `reduced-motion` for static or minimal-motion fallbacks; and `export-frames` for selected frame documents.

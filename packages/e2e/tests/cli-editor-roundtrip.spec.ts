@@ -9,6 +9,7 @@ import { expect, type Page, test } from '@playwright/test';
 const execFileAsync = promisify(execFile);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const cliBin = resolve(repoRoot, 'packages', 'cli', 'dist', 'index.js');
+const animatedFixturePath = resolve(repoRoot, 'packages', 'cli', 'fixtures', 'agent', 'animated-state-machine.elc');
 
 interface EditorDocument {
   scene: { children: string[] };
@@ -16,6 +17,7 @@ interface EditorDocument {
   timelines?: Record<string, { tracks: Array<{ target: string }> }>;
   stateMachines?: Record<string, { states: Record<string, { timeline?: string }> }>;
   defaultStateMachine?: string;
+  metadata?: { title?: string; generatedBy?: string };
 }
 
 declare global {
@@ -160,5 +162,46 @@ test.describe('CLI to editor round trip', () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  test('round-trips packaged agent fixtures through editor preview and edit', async ({ page }) => {
+    const fixtureDocument = JSON.parse(await readFile(animatedFixturePath, 'utf8'));
+    await loadDocumentInEditor(page, fixtureDocument);
+
+    await page.getByRole('tab', { name: 'Design workspace' }).click();
+    await expect(page.getByRole('treeitem', { name: /agent-card group/ })).toBeVisible();
+    await expect(page.getByRole('treeitem', { name: /agent-card-title title/ })).toBeVisible();
+
+    await page.getByRole('tab', { name: 'State Machine workspace' }).click();
+    await expect(page.getByLabel('State machine graph presentation')).toBeVisible();
+    const cardBackground = page.locator('[data-measure-id="agent-card"] [data-testid="elucim-rect"]').first();
+    expect(Number(await cardBackground.getAttribute('opacity'))).toBeLessThan(0.01);
+
+    await page.getByRole('button', { name: 'Preview state machine presentation' }).click();
+    await expect(page.getByText(/Previewing intro/)).toBeVisible();
+    await expect.poll(async () => Number(await cardBackground.getAttribute('opacity')), { timeout: 6000 }).toBeGreaterThan(0.99);
+
+    await page.getByRole('tab', { name: 'Design workspace' }).click();
+    await page.getByRole('button', { name: 'Exit state machine preview mode' }).click();
+    await page.getByRole('tab', { name: 'Create' }).click();
+    await page.getByTitle('Circle').click();
+    await expect(page.locator('[data-editor-id^="circle-"]').first()).toBeVisible();
+
+    await expect.poll(async () => page.evaluate(() => {
+      const document = window.__elucimEditor?.getDocument();
+      return {
+        generatedBy: document?.metadata?.generatedBy,
+        hasGeneratedCircle: Object.keys(document?.elements ?? {}).some(id => id.startsWith('circle-')),
+        timelineTargets: [...new Set(document?.timelines?.intro?.tracks.map(track => track.target) ?? [])].sort(),
+        defaultStateMachine: document?.defaultStateMachine,
+        states: Object.keys(document?.stateMachines?.presentation?.states ?? {}).sort(),
+      };
+    })).toEqual({
+      generatedBy: 'elucim-cli-fixture',
+      hasGeneratedCircle: true,
+      timelineTargets: ['agent-card', 'agent-card-bg', 'agent-card-body', 'agent-card-title'],
+      defaultStateMachine: 'presentation',
+      states: ['complete', 'intro'],
+    });
   });
 });

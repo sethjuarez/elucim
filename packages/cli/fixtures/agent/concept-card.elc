@@ -1,0 +1,137 @@
+{
+  "$schema": "https://elucim.dev/schema.json",
+  "version": "2.0",
+  "metadata": {
+    "title": "Concept card",
+    "intent": "A minimal editor-friendly card that agents can copy, validate, and extend.",
+    "polishLevel": "refined",
+    "generatedBy": "elucim-cli-fixture",
+    "notes": [
+      "Use this as the smallest useful Elucim Document starting point for an explanatory card."
+    ]
+  },
+  "scene": {
+    "type": "player",
+    "preset": "slide",
+    "width": 800,
+    "height": 450,
+    "fps": 60,
+    "background": "$background",
+    "controls": true,
+    "loop": false,
+    "autoPlay": false,
+    "children": [
+      "concept-card"
+    ]
+  },
+  "elements": {
+    "concept-card": {
+      "id": "concept-card",
+      "type": "group",
+      "role": "stepCard",
+      "children": [
+        "concept-card-bg",
+        "concept-card-title",
+        "concept-card-body"
+      ],
+      "intent": {
+        "role": "concept",
+        "description": "Container for the main explanatory idea.",
+        "importance": "primary",
+        "group": "concept",
+        "polishLevel": "refined"
+      },
+      "layout": {
+        "x": 120,
+        "y": 96,
+        "width": 560,
+        "height": 240,
+        "rank": 1
+      },
+      "props": {
+        "type": "group"
+      }
+    },
+    "concept-card-bg": {
+      "id": "concept-card-bg",
+      "type": "rect",
+      "parentId": "concept-card",
+      "role": "cardBackground",
+      "intent": {
+        "importance": "decorative",
+        "group": "concept"
+      },
+      "layout": {
+        "x": 120,
+        "y": 96,
+        "width": 560,
+        "height": 240,
+        "locked": true
+      },
+      "props": {
+        "type": "rect",
+        "x": 120,
+        "y": 96,
+        "width": 560,
+        "height": 240,
+        "rx": 28,
+        "fill": "$surface",
+        "stroke": "$border",
+        "strokeWidth": 2
+      }
+    },
+    "concept-card-title": {
+      "id": "concept-card-title",
+      "type": "text",
+      "parentId": "concept-card",
+      "role": "title",
+      "intent": {
+        "role": "title",
+        "importance": "primary",
+        "flowTo": [
+          "concept-card-body"
+        ],
+        "group": "concept"
+      },
+      "layout": {
+        "x": 160,
+        "y": 152,
+        "rank": 1
+      },
+      "props": {
+        "type": "text",
+        "x": 160,
+        "y": 152,
+        "content": "Explain the concept",
+        "fontSize": 42,
+        "fontWeight": 700,
+        "fill": "$text"
+      }
+    },
+    "concept-card-body": {
+      "id": "concept-card-body",
+      "type": "text",
+      "parentId": "concept-card",
+      "role": "body",
+      "intent": {
+        "role": "body",
+        "importance": "secondary",
+        "group": "concept"
+      },
+      "layout": {
+        "x": 160,
+        "y": 218,
+        "width": 480,
+        "rank": 2
+      },
+      "props": {
+        "type": "text",
+        "x": 160,
+        "y": 218,
+        "content": "Agents can place Objects, preserve intent, and add motion without hand-authoring rendering code.",
+        "fontSize": 24,
+        "fill": "$mutedText"
+      }
+    }
+  }
+}
