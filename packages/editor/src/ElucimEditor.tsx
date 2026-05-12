@@ -6,7 +6,7 @@ import { EditorProvider, useEditorState } from './state/EditorProvider';
 import { ImagePickerProvider, type BrowseImageFn } from './image/ImagePickerProvider';
 import { ElucimCanvas } from './canvas/ElucimCanvas';
 import { Inspector } from './inspector/Inspector';
-import { Timeline } from './timeline/Timeline';
+import { EditorTimelinePanel } from './timeline/EditorTimelinePanel';
 import { EditorErrorBoundary } from './panels/EditorErrorBoundary';
 import { LeftDock } from './dock/LeftDock';
 import { PanelShell } from './panels/PanelShell';
@@ -246,19 +246,10 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
       />
 
       <EditorTimelineDock visible={timelineVisible} stateMachineWorkspaceActive={stateMachineWorkspaceActive} timelineHeight={timelineHeight} onResizeStart={startTimelineResize}>
-        <Timeline
-          style={{ height: '100%', borderTop: 'none' }}
+        <EditorTimelinePanel
           document={liveDocument}
-          timelines={liveDocument?.timelines}
-          onTimelinesChange={liveDocument ? timelines => commitDocumentChange({ ...liveDocument, ...(timelines ? { timelines } : { timelines: undefined }) }) : undefined}
-          stateMachines={liveDocument?.stateMachines}
-          onStateMachinesChange={liveDocument ? stateMachines => commitDocumentChange({ ...liveDocument, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) }) : undefined}
-          onMotionChange={liveDocument ? (timelines, stateMachines) => commitDocumentChange({
-            ...liveDocument,
-            ...(timelines ? { timelines } : { timelines: undefined }),
-            ...(stateMachines ? { stateMachines } : { stateMachines: undefined }),
-          }) : undefined}
-          preferredMotionType={workspace === 'states' ? 'stateMachine' : 'animation'}
+          workspace={workspace}
+          onDocumentChange={commitDocumentChange}
           onPreviewTimelineFramesChange={setPreviewTimelineFrames}
           onStateMachinePreviewActiveChange={setStateMachinePreviewActive}
           onStateMachinePreviewClickChange={handler => setStateMachinePreviewClickHandler(() => handler)}
