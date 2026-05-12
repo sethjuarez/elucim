@@ -69,9 +69,12 @@ describe('elucim CLI', () => {
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('inspect');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('add-connector');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('sample-beats');
+    expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('create-state-machine');
     expect(payload.agentOperations.map((operation: { name: string }) => operation.name)).toContain('inspectPolishHeuristics');
     expect(payload.agentOperations.map((operation: { name: string }) => operation.name)).toContain('createStepCardPreset');
     expect(payload.agentOperations.map((operation: { name: string }) => operation.name)).toContain('createSemanticMotionTimeline');
+    expect(payload.cli.commands.map((command: { usage: string; description: string }) => `${command.usage} ${command.description}`).join(' '))
+      .not.toMatch(/\bv[12]\b/i);
   });
 
   it('validates documents with structured JSON', async () => {
@@ -197,6 +200,125 @@ describe('elucim CLI', () => {
       const payload = JSON.parse(sample.stdout());
       expect(payload.preview.length).toBe(3);
       expect(payload.lint.score).toBeGreaterThan(0);
+    });
+  });
+
+  it('supports an agent-friendly Object, timeline, state-machine, validation, and frame-export workflow', async () => {
+    await withTempDoc({
+      version: '2.0',
+      metadata: {
+        title: 'Agent workflow',
+        intent: 'Author an animated concept card through CLI contracts.',
+      },
+      scene: { type: 'player', width: 800, height: 450, children: [] },
+      elements: {},
+    }, async (file, dir) => {
+      const objectDoc = join(dir, 'object.elc');
+      const motionDoc = join(dir, 'motion.elc');
+      const machineDoc = join(dir, 'machine.elc');
+
+      const addObject = capture();
+      expect(await runCli([
+        'add-step-card',
+        file,
+        '--id', 'concept',
+        '--x', '120',
+        '--y', '96',
+        '--title', 'Elucim Document',
+        '--body', 'Agents author Objects, then animate them through state machines.',
+        '--out', objectDoc,
+        '--json',
+      ], addObject.io)).toBe(0);
+      expect(JSON.parse(addObject.stdout()).added).toContain('concept');
+
+      const addMotion = capture();
+      expect(await runCli([
+        'add-beat',
+        objectDoc,
+        '--id', 'intro',
+        '--preset', 'revealFlow',
+        '--targets', 'concept',
+        '--duration', '36',
+        '--out', motionDoc,
+        '--json',
+      ], addMotion.io)).toBe(0);
+      expect(JSON.parse(addMotion.stdout()).timeline).toMatchObject({ id: 'intro', duration: 36 });
+
+      const createMachine = capture();
+      expect(await runCli([
+        'create-state-machine',
+        motionDoc,
+        '--timeline', 'intro',
+        '--id', 'presentation',
+        '--start', 'onStart',
+        '--exit-to', 'exit',
+        '--out', machineDoc,
+        '--json',
+        '--print-document',
+      ], createMachine.io)).toBe(0);
+      const machinePayload = JSON.parse(createMachine.stdout());
+      expect(machinePayload.validation.valid).toBe(true);
+      expect(machinePayload.summaries).toContain('Added state machine "presentation".');
+      expect(machinePayload.document.defaultStateMachine).toBe('presentation');
+      expect(machinePayload.document.stateMachines.presentation.states.intro.timeline).toBe('intro');
+      expect(machinePayload.document.stateMachines.presentation.transitions).toEqual(expect.arrayContaining([
+        expect.objectContaining({ from: 'entry', to: 'intro', trigger: 'onStart' }),
+        expect.objectContaining({ from: 'intro', to: 'exit', exitTime: 1 }),
+      ]));
+
+      const validate = capture();
+      expect(await runCli(['validate', machineDoc, '--json'], validate.io)).toBe(0);
+      expect(JSON.parse(validate.stdout()).validation.valid).toBe(true);
+
+      const inspect = capture();
+      expect(await runCli(['inspect', machineDoc, '--json'], inspect.io)).toBe(0);
+      const inspectPayload = JSON.parse(inspect.stdout());
+      expect(inspectPayload.summary.elementCount).toBeGreaterThan(0);
+      expect(inspectPayload.quality.issues.map((issue: { code: string }) => issue.code)).not.toContain('missing-state-machine');
+
+      const frames = capture();
+      expect(await runCli([
+        'export-frames',
+        machineDoc,
+        '--timeline', 'intro',
+        '--frames', '0,18,36',
+        '--json',
+        '--print-document',
+      ], frames.io)).toBe(0);
+      const framePayload = JSON.parse(frames.stdout());
+      expect(framePayload.summaries).toEqual([
+        expect.objectContaining({ frame: 0 }),
+        expect.objectContaining({ frame: 18 }),
+        expect.objectContaining({ frame: 36, visibleElementIds: expect.arrayContaining(['concept']) }),
+      ]);
+      expect(framePayload.documents[framePayload.documents.length - 1].document.elements.concept.props.opacity).toBeGreaterThan(0.99);
+    });
+  });
+
+  it('rejects explicit state-machine id collisions for agent-safe follow-up commands', async () => {
+    await withTempDoc({
+      ...flowDoc,
+      timelines: {
+        intro: {
+          id: 'intro',
+          duration: 24,
+          tracks: [{ target: 'start', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 24, value: 1 }] }],
+        },
+      },
+      stateMachines: {
+        presentation: {
+          id: 'presentation',
+          entry: 'intro',
+          states: { intro: { timeline: 'intro' } },
+          transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+        },
+      },
+    }, async file => {
+      const output = capture();
+      const code = await runCli(['create-state-machine', file, '--timeline', 'intro', '--id', 'presentation', '--json'], output.io);
+
+      expect(code).toBe(1);
+      expect(JSON.parse(output.stderr()).error).toBe('State machine "presentation" already exists.');
     });
   });
 
