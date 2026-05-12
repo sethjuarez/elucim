@@ -115,6 +115,29 @@ describe('selection actions', () => {
 // ─── Document mutation ─────────────────────────────────────────────────────
 
 describe('document mutation actions', () => {
+  it('supports the core canvas Object placement workflow', () => {
+    let state = stateWithElements();
+
+    state = editorReducer(state, { type: 'ADD_ELEMENT', element: rect1 });
+    expect(collectAllIds(state.document.root)).toContain('r1');
+    expect((state.document.root.children ?? []).map(child => ('id' in child ? child.id : undefined))).toContain('r1');
+
+    state = editorReducer(state, { type: 'SELECT', ids: ['r1'] });
+    expect(state.selectedIds).toEqual(['r1']);
+
+    state = editorReducer(state, { type: 'MOVE_ELEMENT', id: 'r1', dx: 25, dy: 10 });
+    const moved = findElementById(state.document.root, 'r1')?.element as RectNode | undefined;
+    expect(moved).toMatchObject({ x: 75, y: 60 });
+
+    state = editorReducer(state, { type: 'UNDO' });
+    const restored = findElementById(state.document.root, 'r1')?.element as RectNode | undefined;
+    expect(restored).toMatchObject({ x: 50, y: 50 });
+
+    state = editorReducer(state, { type: 'REDO' });
+    const redone = findElementById(state.document.root, 'r1')?.element as RectNode | undefined;
+    expect(redone).toMatchObject({ x: 75, y: 60 });
+  });
+
   it('ADD_ELEMENT adds to root children', () => {
     const state = stateWithElements();
     const next = editorReducer(state, { type: 'ADD_ELEMENT', element: circle1 });

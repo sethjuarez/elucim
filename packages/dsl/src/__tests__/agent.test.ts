@@ -19,7 +19,13 @@ import {
   sendElementBackward,
   sendElementToBack,
 } from '../agent';
-import { validateV2 } from '../index';
+import {
+  applyTimelineFrames,
+  getInitialStateSnapshot,
+  getStateMachineVisualFrames,
+  transitionStateMachine,
+  validateV2,
+} from '../index';
 
 describe('agent authoring API', () => {
   it('creates a normalized starter document', () => {
@@ -79,6 +85,72 @@ describe('agent authoring API', () => {
     expect(withElements.elements.title.props).not.toHaveProperty('fadeIn');
     expect(withElements.elements.title.props).not.toHaveProperty('draw');
     expect(validateV2(withElements).valid).toBe(true);
+  });
+
+  it('authors Objects, state-machine-embedded animation, and agent-readable validation in one document workflow', () => {
+    const result = applyAgentCommands(createDocument({
+      metadata: { title: 'Concept flow', intent: 'Show a concept becoming visible.' },
+    }), [
+      {
+        op: 'addElement',
+        element: {
+          id: 'concept-card',
+          type: 'rect',
+          props: { x: 80, y: 96, width: 240, height: 120, fill: '$surface', opacity: 0 },
+          layout: { x: 80, y: 96, width: 240, height: 120 },
+          role: 'object',
+          intent: { purpose: 'Container for the core concept' },
+        },
+      },
+      {
+        op: 'addElement',
+        element: {
+          id: 'concept-label',
+          type: 'text',
+          props: { x: 112, y: 160, content: 'Elucim Document', fill: '$foreground', opacity: 0 },
+          layout: { x: 112, y: 160 },
+          role: 'label',
+          intent: { purpose: 'Name the authored document model' },
+        },
+      },
+      {
+        op: 'addRevealTimeline',
+        timeline: { id: 'reveal-concept', targets: ['concept-card', 'concept-label'], preset: 'staggeredFadeIn', duration: 48 },
+      },
+      {
+        op: 'createStateMachine',
+        stateMachine: { id: 'presentation', timelineId: 'reveal-concept', start: 'onStart', exitTo: 'exit' },
+      },
+    ]);
+
+    const doc = result.document;
+    expect(result.validation.valid).toBe(true);
+    expect(doc.scene.children).toEqual(['concept-card', 'concept-label']);
+    expect(doc.defaultStateMachine).toBe('presentation');
+
+    const initial = getInitialStateSnapshot(doc, 'presentation');
+    expect(initial).toMatchObject({
+      machineId: 'presentation',
+      stateId: 'reveal-concept',
+      timelineId: 'reveal-concept',
+      events: [],
+    });
+
+    const frames = getStateMachineVisualFrames(doc, 'presentation', {
+      statePath: ['reveal-concept'],
+      currentStateId: 'reveal-concept',
+      currentFrame: 48,
+    });
+    expect(frames).toEqual(expect.arrayContaining([
+      expect.objectContaining({ timelineId: 'reveal-concept', frame: 48 }),
+    ]));
+
+    const finalFrame = applyTimelineFrames(doc, frames);
+    expect(finalFrame.elements['concept-card'].props.opacity).toBe(1);
+    expect(finalFrame.elements['concept-label'].props.opacity).toBe(1);
+
+    const exited = transitionStateMachine(doc, 'presentation', 'reveal-concept', 'next');
+    expect(exited.exited).toBe(true);
   });
 
   it('reorders elements by sibling order instead of z-index', () => {
