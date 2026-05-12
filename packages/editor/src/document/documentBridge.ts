@@ -87,6 +87,9 @@ export function restoreDocumentFromEditorState(doc: RenderableDocument, sourceDo
     metadata: { ...migrated.metadata, ...sourceDocument.metadata },
     ...(Object.keys(timelines).length > 0 ? { timelines } : {}),
     ...(Object.keys(stateMachines).length > 0 ? { stateMachines } : {}),
+    ...(sourceDocument.defaultStateMachine && stateMachines[sourceDocument.defaultStateMachine]
+      ? { defaultStateMachine: sourceDocument.defaultStateMachine }
+      : {}),
   };
   const validation = validateDocument(document);
   for (const error of validation.errors) {

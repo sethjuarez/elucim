@@ -40,6 +40,7 @@ const sourceDocument: ElucimDocument = {
       transitions: [{ id: 'entry-intro', from: 'entry', to: 'intro', trigger: 'onStart' }],
     },
   },
+  defaultStateMachine: 'presentation',
   metadata: { title: 'Bridge test' },
 };
 
@@ -83,6 +84,7 @@ describe('editor document bridge', () => {
     expect(result.document.elements['hero-title'].intent).toMatchObject({ role: 'title', importance: 'primary' });
     expect(result.document.elements['hero-title'].layout).toMatchObject({ x: 120, y: 140, scale: 1.1 });
     expect(result.document.timelines?.intro.tracks[0].target).toBe('hero-title');
+    expect(result.document.defaultStateMachine).toBe('presentation');
     expect(result.warnings).toContain('Element "title" was renamed to "hero-title"; timeline references were updated.');
   });
 

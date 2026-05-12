@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "lint": "tsc --noEmit",
-    "test": "playwright test --reporter=line",
+    "test": "pnpm --filter @elucim/cli build && playwright test --reporter=line",
     "test:workflows": "playwright test tests/core-workflows.spec.ts tests/state-machine.spec.ts --reporter=line",
-    "test:all": "playwright test --reporter=line",
-    "test:line": "playwright test --reporter=line",
+    "test:all": "pnpm --filter @elucim/cli build && playwright test --reporter=line",
+    "test:line": "pnpm --filter @elucim/cli build && playwright test --reporter=line",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui"
   },
   "devDependencies": {
+    "@elucim/cli": "workspace:*",
     "@playwright/test": "^1.45.0",
     "@types/node": "^24.12.3",
     "typescript": "^5.5.0"
