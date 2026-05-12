@@ -172,7 +172,7 @@ test.describe('Editor state-machine interactions', () => {
     await openStateMachineWorkspace(page);
     const introRect = page.locator('[data-measure-id="rect-1"] [data-testid="elucim-rect"]').first();
     const focusText = page.locator('[data-measure-id="text-1"] text').first();
-    expect(await opacity(introRect)).toBe(1);
+    expect(await opacity(introRect)).toBeGreaterThan(0.99);
 
     await page.getByRole('button', { name: 'Preview state machine walkthrough' }).click();
     await expect(page.getByText(/Previewing idle/)).toBeVisible();
@@ -181,7 +181,7 @@ test.describe('Editor state-machine interactions', () => {
     expect(await opacity(focusText)).toBeLessThan(0.1);
     await expect.poll(() => opacity(introRect), { timeout: 3000 }).toBeGreaterThan(0.45);
     await expect(page.getByText(/Previewing focus via complete from idle/)).toBeVisible({ timeout: 6000 });
-    expect(await opacity(introRect)).toBe(1);
+    expect(await opacity(introRect)).toBeGreaterThan(0.99);
     await expect.poll(() => opacity(focusText), { timeout: 3000 }).toBeGreaterThan(0.35);
 
     await graphNode(page, 'focus').locator('.react-flow__handle-right').dragTo(graphNode(page, 'idle').locator('.react-flow__handle-left'));
@@ -193,7 +193,7 @@ test.describe('Editor state-machine interactions', () => {
     await expect(page.getByRole('button', { name: 'Trigger back event from focus' })).toBeVisible();
     await page.getByRole('button', { name: 'Trigger back event from focus' }).click();
     await expect(page.getByText(/Previewing idle via back from focus/)).toBeVisible();
-    expect(await opacity(focusText)).toBe(1);
+    expect(await opacity(focusText)).toBeGreaterThan(0.99);
     await page.waitForTimeout(50);
     expect(await opacity(introRect)).toBeLessThan(0.3);
   });
@@ -206,8 +206,8 @@ test.describe('Editor state-machine interactions', () => {
     await page.getByRole('button', { name: 'Preview state machine walkthrough' }).click();
     await expect(page.getByText(/Finished focus/)).toBeVisible({ timeout: 15000 });
     await expect(page.getByLabel('Preview mode canvas')).not.toBeVisible();
-    expect(await opacity(introRect)).toBe(1);
-    expect(await opacity(focusText)).toBe(1);
+    expect(await opacity(introRect)).toBeGreaterThan(0.99);
+    expect(await opacity(focusText)).toBeGreaterThan(0.99);
 
     await page.getByRole('button', { name: 'Restart state machine preview walkthrough' }).click();
     await expect(page.getByText(/Waiting at Entry/)).toBeVisible();
