@@ -5,10 +5,10 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ElucimDocument } from '@elucim/dsl';
-import { normalizeToV2, toRenderableV1, validateV2 } from '@elucim/dsl';
+import { normalizeToV2 as normalizeToCanonicalDocument, toRenderableV1 as toRenderableDocument, validateV2 as validateCanonicalDocument } from '@elucim/dsl';
 import { ElucimEditor } from '../ElucimEditor';
 
-const v2Fixture: ElucimDocument = {
+const canonicalFixture: ElucimDocument = {
   version: '2.0',
   scene: { type: 'player', width: 800, height: 600, children: ['title', 'metric'] },
   elements: {
@@ -50,7 +50,7 @@ const v2Fixture: ElucimDocument = {
   metadata: { polishLevel: 'draft', intent: 'CutReady persistence fixture', generatedBy: 'test' },
 };
 
-describe('v2 editor persistence', () => {
+describe('canonical document editor persistence', () => {
   beforeEach(() => {
     globalThis.ResizeObserver = class ResizeObserver {
       observe() {}
@@ -62,8 +62,8 @@ describe('v2 editor persistence', () => {
 
   afterEach(() => cleanup());
 
-  it('keeps legacy-rootless visuals valid through edit, v2 callback, validation, and renderable conversion', async () => {
-    const normalized = normalizeToV2({
+  it('keeps legacy-rootless visuals valid through edit, canonical callback, validation, and renderable conversion', async () => {
+    const normalized = normalizeToCanonicalDocument({
       version: 1,
       title: 'Legacy visual',
       elements: [{ type: 'text', id: 'caption', text: 'Before' }],
@@ -80,17 +80,17 @@ describe('v2 editor persistence', () => {
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.elements.caption.props.content).toBe('After');
-      expect(validateV2(latest).valid).toBe(true);
-      expect(toRenderableV1(latest).root.children).toHaveLength(2);
+      expect(validateCanonicalDocument(latest).valid).toBe(true);
+      expect(toRenderableDocument(latest).root.children).toHaveLength(2);
     });
   });
 
-  it('preserves v2 timelines/state machines and updates timeline targets after ID rename', async () => {
+  it('preserves canonical timelines/state machines and updates timeline targets after ID rename', async () => {
     const onDocumentChange = vi.fn();
     const onCompatibilityWarnings = vi.fn();
 
     render(React.createElement(ElucimEditor, {
-      initialDocument: v2Fixture,
+      initialDocument: canonicalFixture,
       onDocumentChange,
       onCompatibilityWarnings,
     }));
@@ -105,19 +105,19 @@ describe('v2 editor persistence', () => {
       expect(latest?.elements['hero-title'].intent?.role).toBe('title');
       expect(latest?.timelines?.intro.tracks[0].target).toBe('hero-title');
       expect(latest?.stateMachines?.deck.states.intro.timeline).toBe('intro');
-      expect(validateV2(latest).valid).toBe(true);
+      expect(validateCanonicalDocument(latest).valid).toBe(true);
     });
     expect(onCompatibilityWarnings.mock.calls.flat().join('\n')).toContain('renamed to "hero-title"');
   });
 
-  it('preserves v2-only element layout fields through editor round-trips', async () => {
+  it('preserves canonical-only element layout fields through editor round-trips', async () => {
     const onDocumentChange = vi.fn();
     const documentWithLayout: ElucimDocument = {
-      ...v2Fixture,
+      ...canonicalFixture,
       elements: {
-        ...v2Fixture.elements,
+        ...canonicalFixture.elements,
         title: {
-          ...v2Fixture.elements.title,
+          ...canonicalFixture.elements.title,
           layout: { x: 100, y: 120, scale: 1.15, role: 'callout' },
           props: { type: 'text', content: 'Original title' },
         },
@@ -135,7 +135,7 @@ describe('v2 editor persistence', () => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.elements.title.props.content).toBe('Updated title');
       expect(latest?.elements.title.layout).toMatchObject({ x: 100, y: 120, scale: 1.15, role: 'callout' });
-      expect(validateV2(latest).valid).toBe(true);
+      expect(validateCanonicalDocument(latest).valid).toBe(true);
     });
   });
 
@@ -143,7 +143,7 @@ describe('v2 editor persistence', () => {
     const onDocumentChange = vi.fn();
 
     function ControlledEditor() {
-      const [document, setDocument] = React.useState<ElucimDocument>(v2Fixture);
+      const [document, setDocument] = React.useState<ElucimDocument>(canonicalFixture);
       return React.createElement(ElucimEditor, {
         initialDocument: document,
         onDocumentChange: nextDocument => {
@@ -200,7 +200,7 @@ describe('v2 editor persistence', () => {
 
   it('applies safe polish nudges through onDocumentChange', async () => {
     const onDocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Fixture, onDocumentChange }));
+    render(React.createElement(ElucimEditor, { initialDocument: canonicalFixture, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
     fireEvent.click(screen.getByRole('button', { name: 'Apply nudge Mark document as refined' }));
@@ -208,13 +208,13 @@ describe('v2 editor persistence', () => {
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.metadata?.polishLevel).toBe('refined');
-      expect(validateV2(latest).valid).toBe(true);
+      expect(validateCanonicalDocument(latest).valid).toBe(true);
     });
   });
 
-  it('lets users dismiss suggested nudges without changing the v2 document', () => {
+  it('lets users dismiss suggested nudges without changing the canonical document', () => {
     const onDocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Fixture, onDocumentChange }));
+    render(React.createElement(ElucimEditor, { initialDocument: canonicalFixture, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss nudge Mark document as refined' }));
@@ -224,7 +224,7 @@ describe('v2 editor persistence', () => {
   });
 
   it('shows previewed nudge command results before applying', () => {
-    render(React.createElement(ElucimEditor, { initialDocument: v2Fixture }));
+    render(React.createElement(ElucimEditor, { initialDocument: canonicalFixture }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
 
@@ -232,11 +232,11 @@ describe('v2 editor persistence', () => {
     expect(screen.getByText('Updated document metadata.')).toBeTruthy();
   });
 
-  it('prunes deleted timeline references from states and transitions while keeping v2 valid', async () => {
+  it('prunes deleted timeline references from states and transitions while keeping canonical document valid', async () => {
     const onDocumentChange = vi.fn();
     const onCompatibilityWarnings = vi.fn();
     render(React.createElement(ElucimEditor, {
-      initialDocument: v2Fixture,
+      initialDocument: canonicalFixture,
       onDocumentChange,
       onCompatibilityWarnings,
     }));
@@ -250,7 +250,7 @@ describe('v2 editor persistence', () => {
       expect(latest?.timelines?.intro).toBeUndefined();
       expect(latest?.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'intro', trigger: 'start' });
       expect(latest?.stateMachines?.deck.states.intro.timeline).toBeUndefined();
-      expect(validateV2(latest).valid).toBe(true);
+      expect(validateCanonicalDocument(latest).valid).toBe(true);
     });
     const warnings = onCompatibilityWarnings.mock.calls.flat().join('\n');
     expect(warnings).toContain('references missing timeline "intro"');

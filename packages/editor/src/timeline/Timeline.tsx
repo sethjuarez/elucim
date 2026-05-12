@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState } from 'react';
-import { DEFAULT_LINEAR_DURATION_IN_FRAMES, getMaxTimelineDuration, getStateMachineVisualFrames, type ElementNode, type ElucimDocument, type ElucimV2StateMachine, type ElucimV2Timeline, type ElucimV2TimelineFrameSelection, type ElucimV2Transition } from '@elucim/dsl';
+import { DEFAULT_LINEAR_DURATION_IN_FRAMES, getMaxTimelineDuration, getStateMachineVisualFrames, type ElementNode, type ElucimDocument, type ElucimStateMachine, type ElucimTimeline, type ElucimTimelineFrameSelection, type ElucimTransition } from '@elucim/dsl';
 import { BaseEdge, EdgeLabelRenderer, Handle, MarkerType, Position, ReactFlow, applyNodeChanges, getSmoothStepPath, type Edge, type EdgeProps, type Node, type NodeMouseHandler, type NodeProps, type OnConnect, type OnNodeDrag, type OnNodesChange, type ReactFlowInstance, type Viewport as ReactFlowViewport } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorState } from '../state/EditorProvider';
@@ -13,26 +13,14 @@ export interface TimelineProps {
   className?: string;
   style?: React.CSSProperties;
   document?: ElucimDocument;
-  timelines?: Record<string, ElucimV2Timeline>;
-  onTimelinesChange?: (timelines: Record<string, ElucimV2Timeline> | undefined) => void;
-  stateMachines?: Record<string, ElucimV2StateMachine>;
-  onStateMachinesChange?: (stateMachines: Record<string, ElucimV2StateMachine> | undefined) => void;
-  onMotionChange?: (timelines: Record<string, ElucimV2Timeline> | undefined, stateMachines: Record<string, ElucimV2StateMachine> | undefined) => void;
-  /** @deprecated Use `document` instead. */
-  v2Document?: ElucimDocument;
-  /** @deprecated Use `timelines` instead. */
-  v2Timelines?: Record<string, ElucimV2Timeline>;
-  /** @deprecated Use `onTimelinesChange` instead. */
-  onV2TimelinesChange?: (timelines: Record<string, ElucimV2Timeline> | undefined) => void;
-  /** @deprecated Use `stateMachines` instead. */
-  v2StateMachines?: Record<string, ElucimV2StateMachine>;
-  /** @deprecated Use `onStateMachinesChange` instead. */
-  onV2StateMachinesChange?: (stateMachines: Record<string, ElucimV2StateMachine> | undefined) => void;
-  /** @deprecated Use `onMotionChange` instead. */
-  onV2MotionChange?: (timelines: Record<string, ElucimV2Timeline> | undefined, stateMachines: Record<string, ElucimV2StateMachine> | undefined) => void;
+  timelines?: Record<string, ElucimTimeline>;
+  onTimelinesChange?: (timelines: Record<string, ElucimTimeline> | undefined) => void;
+  stateMachines?: Record<string, ElucimStateMachine>;
+  onStateMachinesChange?: (stateMachines: Record<string, ElucimStateMachine> | undefined) => void;
+  onMotionChange?: (timelines: Record<string, ElucimTimeline> | undefined, stateMachines: Record<string, ElucimStateMachine> | undefined) => void;
   preferredMotionType?: 'animation' | 'stateMachine';
   onActiveTimelineChange?: (timelineId: string | undefined) => void;
-  onPreviewTimelineFramesChange?: (frames: ElucimV2TimelineFrameSelection[] | undefined) => void;
+  onPreviewTimelineFramesChange?: (frames: ElucimTimelineFrameSelection[] | undefined) => void;
   onStateMachinePreviewActiveChange?: (active: boolean) => void;
   onStateMachinePreviewClickChange?: (handler: (() => boolean) | undefined) => void;
   onStateMachinePreviewKeyDownChange?: (handler: ((key: string) => boolean) | undefined) => void;
@@ -44,7 +32,7 @@ const RULER_HEIGHT = 24;
 const CLIP_HEADER_HEIGHT = 46;
 const LABEL_WIDTH = 156;
 const EASING_OPTIONS = ['linear', 'easeInQuad', 'easeOutQuad', 'easeInOutQuad', 'easeInCubic', 'easeOutCubic', 'easeInOutCubic', 'easeInSine', 'easeOutSine', 'easeInOutSine', 'easeOutElastic', 'easeOutBounce', 'easeInBack', 'easeOutBack'];
-const V2_ANIMATABLE_PROPERTIES = ['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke'] as const;
+const ANIMATABLE_PROPERTIES = ['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke'] as const;
 const WRAPPER_TYPES = new Set(['fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
 type GraphLayoutDirection = 'horizontal' | 'vertical';
 
@@ -86,35 +74,35 @@ interface StateMachineGraphEdgeData extends Record<string, unknown> {
 const ENTRY_NODE_ID = '__entry__';
 const EXIT_NODE_ID = '__exit__';
 
-function getStateTriggerTransitions(machine: ElucimV2StateMachine, stateId: string): ElucimV2Transition[] {
+function getStateTriggerTransitions(machine: ElucimStateMachine, stateId: string): ElucimTransition[] {
   return (machine.transitions ?? []).filter(transition => (transition.from === stateId || transition.from === 'any') && transition.trigger);
 }
 
-function getEntryTriggerTransitions(machine: ElucimV2StateMachine): ElucimV2Transition[] {
+function getEntryTriggerTransitions(machine: ElucimStateMachine): ElucimTransition[] {
   return (machine.transitions ?? []).filter(transition => transition.from === 'entry' && transition.trigger);
 }
 
-function getStateCompleteTransition(machine: ElucimV2StateMachine, stateId: string): ElucimV2Transition | undefined {
+function getStateCompleteTransition(machine: ElucimStateMachine, stateId: string): ElucimTransition | undefined {
   return (machine.transitions ?? []).find(transition => transition.from === stateId && transition.exitTime !== undefined);
 }
 
-function getEntryTransition(machine: ElucimV2StateMachine): ElucimV2Transition | undefined {
+function getEntryTransition(machine: ElucimStateMachine): ElucimTransition | undefined {
   return (machine.transitions ?? []).find(transition => transition.from === 'entry');
 }
 
-function getEntryTargetStateId(machine: ElucimV2StateMachine): string | undefined {
+function getEntryTargetStateId(machine: ElucimStateMachine): string | undefined {
   const entryTarget = getEntryTransition(machine)?.to;
   if (entryTarget && entryTarget !== 'entry' && entryTarget !== 'exit' && machine.states[entryTarget]) return entryTarget;
   return machine.states[machine.entry] ? machine.entry : Object.keys(machine.states)[0];
 }
 
-function resolveTransitionTarget(machine: ElucimV2StateMachine, transition: ElucimV2Transition): string | 'exit' | undefined {
+function resolveTransitionTarget(machine: ElucimStateMachine, transition: ElucimTransition): string | 'exit' | undefined {
   if (transition.to === 'exit') return 'exit';
   if (transition.to === 'entry') return getEntryTargetStateId(machine);
   return machine.states[transition.to] ? transition.to : undefined;
 }
 
-function getPreviewTransition(machine: ElucimV2StateMachine, stateId: string, eventName: string, key?: string): ElucimV2Transition | undefined {
+function getPreviewTransition(machine: ElucimStateMachine, stateId: string, eventName: string, key?: string): ElucimTransition | undefined {
   if (eventName === 'complete' || eventName === 'next') return getStateCompleteTransition(machine, stateId);
   return (machine.transitions ?? []).find(transition => {
     if ((transition.from !== stateId && transition.from !== 'any') || transition.trigger !== eventName) return false;
@@ -122,7 +110,7 @@ function getPreviewTransition(machine: ElucimV2StateMachine, stateId: string, ev
   });
 }
 
-function previewEventLabel(transition: ElucimV2Transition): string {
+function previewEventLabel(transition: ElucimTransition): string {
   switch (transition.trigger) {
     case 'onClick':
       return 'Click';
@@ -135,7 +123,7 @@ function previewEventLabel(transition: ElucimV2Transition): string {
   }
 }
 
-function createUniqueTransitionId(machine: ElucimV2StateMachine, preferred: string): string {
+function createUniqueTransitionId(machine: ElucimStateMachine, preferred: string): string {
   const existing = new Set((machine.transitions ?? []).map(transition => transition.id));
   if (!existing.has(preferred)) return preferred;
   let index = 2;
@@ -144,9 +132,9 @@ function createUniqueTransitionId(machine: ElucimV2StateMachine, preferred: stri
 }
 
 function pruneUnusedTriggerInputs(
-  inputs: ElucimV2StateMachine['inputs'],
-  transitions: ElucimV2Transition[] | undefined,
-): ElucimV2StateMachine['inputs'] {
+  inputs: ElucimStateMachine['inputs'],
+  transitions: ElucimTransition[] | undefined,
+): ElucimStateMachine['inputs'] {
   if (!inputs) return undefined;
   const usedTriggers = new Set((transitions ?? []).map(transition => transition.trigger).filter((trigger): trigger is string => Boolean(trigger)));
   const nextInputs = Object.fromEntries(Object.entries(inputs).filter(([inputId, input]) => input.type !== 'trigger' || usedTriggers.has(inputId)));
@@ -158,7 +146,7 @@ const EVENT_PRESETS = ['onClick', 'reset', 'onKey'] as const;
 const ENTRY_EVENT_PRESETS = ['onStart', 'onClick', 'onKey'] as const;
 const EVENT_PRESET_SET = new Set<string>([...EVENT_PRESETS, ...ENTRY_EVENT_PRESETS]);
 
-function isAvailableTransitionTrigger(machine: ElucimV2StateMachine, transition: ElucimV2Transition, trigger: string): boolean {
+function isAvailableTransitionTrigger(machine: ElucimStateMachine, transition: ElucimTransition, trigger: string): boolean {
   if (!trigger || RESERVED_STATE_EVENT_NAMES.has(trigger)) return false;
   return !(machine.transitions ?? []).some(current => {
     if (current.id === transition.id || current.from !== transition.from || current.exitTime !== undefined || current.trigger !== trigger) return false;
@@ -167,7 +155,7 @@ function isAvailableTransitionTrigger(machine: ElucimV2StateMachine, transition:
   });
 }
 
-function transitionTriggerLabel(transition: ElucimV2Transition): string {
+function transitionTriggerLabel(transition: ElucimTransition): string {
   if (transition.from === 'entry') return transition.trigger ?? 'onStart';
   if (transition.trigger === 'onKey') return transition.key ? `Key: ${transition.key}` : 'Key';
   if (transition.trigger && EVENT_PRESET_SET.has(transition.trigger)) return transition.trigger;
@@ -205,7 +193,7 @@ const verticalMotionButtonStyle = (active: boolean, disabled = false): React.CSS
   padding: 0,
 });
 
-interface SelectedV2TimelineItem {
+interface SelectedTimelineItem {
   type: 'animation';
   timelineId: string;
   trackIndex?: number;
@@ -219,7 +207,7 @@ interface SelectedStateMachineItem {
   transitionEvent?: string;
 }
 
-type SelectedMotionItem = SelectedV2TimelineItem | SelectedStateMachineItem;
+type SelectedMotionItem = SelectedTimelineItem | SelectedStateMachineItem;
 
 interface TrackRow {
   element: ElementNode;
@@ -268,14 +256,14 @@ function getAnimationUpdateProp(element: ElementNode, prop: 'fadeIn' | 'fadeOut'
   return WRAPPER_TYPES.has(element.type) ? 'duration' : prop;
 }
 
-function createUniqueTimelineId(existing: Record<string, ElucimV2Timeline> | undefined, preferred: string): string {
+function createUniqueTimelineId(existing: Record<string, ElucimTimeline> | undefined, preferred: string): string {
   if (!existing?.[preferred]) return preferred;
   let index = 2;
   while (existing[`${preferred}-${index}`]) index += 1;
   return `${preferred}-${index}`;
 }
 
-function createUniqueStateMachineId(existing: Record<string, ElucimV2StateMachine> | undefined, preferred: string): string {
+function createUniqueStateMachineId(existing: Record<string, ElucimStateMachine> | undefined, preferred: string): string {
   if (!existing?.[preferred]) return preferred;
   let index = 2;
   while (existing[`${preferred}-${index}`]) index += 1;
@@ -300,12 +288,6 @@ export function Timeline({
   stateMachines,
   onStateMachinesChange,
   onMotionChange,
-  v2Document: legacyDocument,
-  v2Timelines: legacyTimelines,
-  onV2TimelinesChange: legacyOnTimelinesChange,
-  v2StateMachines: legacyStateMachines,
-  onV2StateMachinesChange: legacyOnStateMachinesChange,
-  onV2MotionChange: legacyOnMotionChange,
   preferredMotionType = 'animation',
   onActiveTimelineChange,
   onPreviewTimelineFramesChange,
@@ -314,12 +296,12 @@ export function Timeline({
   onStateMachinePreviewKeyDownChange,
   onStateMachinePreviewExitChange,
 }: TimelineProps) {
-  const v2Document = documentModel ?? legacyDocument;
-  const v2Timelines = timelines ?? legacyTimelines;
-  const onV2TimelinesChange = onTimelinesChange ?? legacyOnTimelinesChange;
-  const v2StateMachines = stateMachines ?? legacyStateMachines;
-  const onV2StateMachinesChange = onStateMachinesChange ?? legacyOnStateMachinesChange;
-  const onV2MotionChange = onMotionChange ?? legacyOnMotionChange;
+  const activeDocument = documentModel;
+  const activeTimelines = timelines;
+  const onActiveTimelinesChange = onTimelinesChange;
+  const activeStateMachines = stateMachines;
+  const onActiveStateMachinesChange = onStateMachinesChange;
+  const onActiveMotionChange = onMotionChange;
   const { state, dispatch } = useEditorState();
   const icons = useEditorIcons();
   const { document, currentFrame, isPlaying, selectedIds } = state;
@@ -333,35 +315,35 @@ export function Timeline({
   const elementIds = children.map((el, i) => getElementId(el, i));
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const rows = useMemo(() => getRows(children, expandedIds), [children, expandedIds]);
-  const timelineClips = useMemo(() => Object.values(v2Timelines ?? {}), [v2Timelines]);
-  const stateMachineClips = useMemo(() => Object.values(v2StateMachines ?? {}), [v2StateMachines]);
-  const timelineDurationFallback = getMaxTimelineDuration(v2Timelines) ?? DEFAULT_LINEAR_DURATION_IN_FRAMES;
+  const timelineClips = useMemo(() => Object.values(activeTimelines ?? {}), [activeTimelines]);
+  const stateMachineClips = useMemo(() => Object.values(activeStateMachines ?? {}), [activeStateMachines]);
+  const timelineDurationFallback = getMaxTimelineDuration(activeTimelines) ?? DEFAULT_LINEAR_DURATION_IN_FRAMES;
   const showLegacyElementTracks = timelineClips.length === 0 && stateMachineClips.length === 0;
   const [activeMotionType, setActiveMotionType] = useState<'animation' | 'stateMachine'>(preferredMotionType);
   const [activeTimelineId, setActiveTimelineId] = useState<string | undefined>(undefined);
   const showAnimationTimeline = showLegacyElementTracks || activeMotionType === 'animation';
-  const effectiveActiveTimelineId = activeTimelineId && v2Timelines?.[activeTimelineId]
+  const effectiveActiveTimelineId = activeTimelineId && activeTimelines?.[activeTimelineId]
     ? activeTimelineId
     : activeMotionType === 'animation'
       ? timelineClips[0]?.id
       : undefined;
-  const activeTimelineMaxFrame = effectiveActiveTimelineId && v2Timelines?.[effectiveActiveTimelineId]
-    ? v2Timelines[effectiveActiveTimelineId].duration
+  const activeTimelineMaxFrame = effectiveActiveTimelineId && activeTimelines?.[effectiveActiveTimelineId]
+    ? activeTimelines[effectiveActiveTimelineId].duration
     : (showLegacyElementTracks ? durationInFrames : timelineDurationFallback) - 1;
   const scopedPlayheadPercent = activeTimelineMaxFrame > 0 ? (Math.min(currentFrame, activeTimelineMaxFrame) / activeTimelineMaxFrame) * 100 : 0;
-  const updateV2Timeline = useCallback((timeline: ElucimV2Timeline) => {
-    onV2TimelinesChange?.({ ...(v2Timelines ?? {}), [timeline.id]: timeline });
-  }, [onV2TimelinesChange, v2Timelines]);
-  const renameV2Timeline = useCallback((timeline: ElucimV2Timeline, nextId: string) => {
-    if (!v2Timelines || timeline.id === nextId) return;
-    const existing = { ...v2Timelines };
+  const updateTimeline = useCallback((timeline: ElucimTimeline) => {
+    onActiveTimelinesChange?.({ ...(activeTimelines ?? {}), [timeline.id]: timeline });
+  }, [onActiveTimelinesChange, activeTimelines]);
+  const renameTimeline = useCallback((timeline: ElucimTimeline, nextId: string) => {
+    if (!activeTimelines || timeline.id === nextId) return;
+    const existing = { ...activeTimelines };
     delete existing[timeline.id];
     const normalizedId = createUniqueTimelineId(existing, normalizeGraphId(nextId, timeline.id));
     if (normalizedId === timeline.id) return;
     const renamedTimeline = { ...timeline, id: normalizedId };
     const nextTimelines = { ...existing, [normalizedId]: renamedTimeline };
-    const nextStateMachines = v2StateMachines
-      ? Object.fromEntries(Object.entries(v2StateMachines).map(([machineId, machine]) => [machineId, {
+    const nextStateMachines = activeStateMachines
+      ? Object.fromEntries(Object.entries(activeStateMachines).map(([machineId, machine]) => [machineId, {
           ...machine,
           states: Object.fromEntries(Object.entries(machine.states).map(([stateId, state]) => [stateId, {
             ...state,
@@ -369,53 +351,53 @@ export function Timeline({
           }])),
         }]))
       : undefined;
-    if (onV2MotionChange) onV2MotionChange(nextTimelines, nextStateMachines ?? v2StateMachines);
+    if (onActiveMotionChange) onActiveMotionChange(nextTimelines, nextStateMachines ?? activeStateMachines);
     else {
-      onV2TimelinesChange?.(nextTimelines);
-      if (nextStateMachines) onV2StateMachinesChange?.(nextStateMachines);
+      onActiveTimelinesChange?.(nextTimelines);
+      if (nextStateMachines) onActiveStateMachinesChange?.(nextStateMachines);
     }
     onActiveTimelineChange?.(normalizedId);
-  }, [onActiveTimelineChange, onV2MotionChange, onV2StateMachinesChange, onV2TimelinesChange, v2StateMachines, v2Timelines]);
-  const updateV2StateMachine = useCallback((machine: ElucimV2StateMachine) => {
-    onV2StateMachinesChange?.({ ...(v2StateMachines ?? {}), [machine.id]: machine });
-  }, [onV2StateMachinesChange, v2StateMachines]);
-  const renameV2StateMachine = useCallback((machine: ElucimV2StateMachine, nextId: string) => {
-    if (!v2StateMachines || machine.id === nextId) return;
-    const normalizedId = createUniqueStateMachineId(v2StateMachines, normalizeGraphId(nextId, machine.id));
+  }, [onActiveTimelineChange, onActiveMotionChange, onActiveStateMachinesChange, onActiveTimelinesChange, activeStateMachines, activeTimelines]);
+  const updateStateMachine = useCallback((machine: ElucimStateMachine) => {
+    onActiveStateMachinesChange?.({ ...(activeStateMachines ?? {}), [machine.id]: machine });
+  }, [onActiveStateMachinesChange, activeStateMachines]);
+  const renameStateMachine = useCallback((machine: ElucimStateMachine, nextId: string) => {
+    if (!activeStateMachines || machine.id === nextId) return;
+    const normalizedId = createUniqueStateMachineId(activeStateMachines, normalizeGraphId(nextId, machine.id));
     if (normalizedId === machine.id) return;
-    const next = { ...v2StateMachines };
+    const next = { ...activeStateMachines };
     delete next[machine.id];
     next[normalizedId] = { ...machine, id: normalizedId };
-    onV2StateMachinesChange?.(next);
-  }, [onV2StateMachinesChange, v2StateMachines]);
-  const deleteV2Timeline = useCallback((id: string) => {
-    if (!v2Timelines) return;
-    const next = { ...v2Timelines };
+    onActiveStateMachinesChange?.(next);
+  }, [onActiveStateMachinesChange, activeStateMachines]);
+  const deleteTimeline = useCallback((id: string) => {
+    if (!activeTimelines) return;
+    const next = { ...activeTimelines };
     delete next[id];
     const nextTimelines = Object.keys(next).length > 0 ? next : undefined;
-    const nextStateMachines = v2StateMachines
-      ? Object.fromEntries(Object.entries(v2StateMachines).map(([machineId, machine]) => [machineId, {
+    const nextStateMachines = activeStateMachines
+      ? Object.fromEntries(Object.entries(activeStateMachines).map(([machineId, machine]) => [machineId, {
           ...machine,
           states: Object.fromEntries(Object.entries(machine.states).map(([stateId, state]) => [stateId, {
             ...state,
             timeline: state.timeline === id ? undefined : state.timeline,
-          } satisfies ElucimV2StateMachine['states'][string]])),
-        } satisfies ElucimV2StateMachine]))
+          } satisfies ElucimStateMachine['states'][string]])),
+        } satisfies ElucimStateMachine]))
       : undefined;
-    if (onV2MotionChange) onV2MotionChange(nextTimelines, nextStateMachines ?? v2StateMachines);
+    if (onActiveMotionChange) onActiveMotionChange(nextTimelines, nextStateMachines ?? activeStateMachines);
     else {
-      onV2TimelinesChange?.(nextTimelines);
-      if (nextStateMachines) onV2StateMachinesChange?.(nextStateMachines);
+      onActiveTimelinesChange?.(nextTimelines);
+      if (nextStateMachines) onActiveStateMachinesChange?.(nextStateMachines);
     }
-  }, [onV2MotionChange, onV2StateMachinesChange, onV2TimelinesChange, v2StateMachines, v2Timelines]);
+  }, [onActiveMotionChange, onActiveStateMachinesChange, onActiveTimelinesChange, activeStateMachines, activeTimelines]);
   const addIntroTimeline = useCallback(() => {
     const targets = rows.slice(0, 8).map(row => row.id);
     if (targets.length === 0) return;
-    const id = createUniqueTimelineId(v2Timelines, 'auto-intro');
+    const id = createUniqueTimelineId(activeTimelines, 'auto-intro');
     const stagger = 6;
     const fadeDuration = 18;
     const duration = Math.max(fadeDuration, (targets.length - 1) * stagger + fadeDuration);
-    updateV2Timeline({
+    updateTimeline({
       id,
       duration,
       tracks: targets.map((target, index) => {
@@ -430,12 +412,12 @@ export function Timeline({
         };
       }),
     });
-  }, [rows, updateV2Timeline, v2Timelines]);
+  }, [rows, updateTimeline, activeTimelines]);
   const addBlankTimeline = useCallback(() => {
     const target = rows.find(row => selectedIds.includes(row.id))?.id ?? rows[0]?.id;
     if (!target) return;
-    const id = createUniqueTimelineId(v2Timelines, 'timeline');
-    updateV2Timeline({
+    const id = createUniqueTimelineId(activeTimelines, 'timeline');
+    updateTimeline({
       id,
       duration: 30,
       tracks: [
@@ -449,17 +431,17 @@ export function Timeline({
         },
       ],
     });
-  }, [rows, selectedIds, updateV2Timeline, v2Timelines]);
+  }, [rows, selectedIds, updateTimeline, activeTimelines]);
   const addStateMachine = useCallback(() => {
-    const id = createUniqueStateMachineId(v2StateMachines, 'state-machine');
-    updateV2StateMachine({
+    const id = createUniqueStateMachineId(activeStateMachines, 'state-machine');
+    updateStateMachine({
       id,
       entry: 'idle',
       states: { idle: {} },
       inputs: { onStart: { type: 'trigger' } },
       transitions: [{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }],
     });
-  }, [updateV2StateMachine, v2StateMachines]);
+  }, [updateStateMachine, activeStateMachines]);
 
   // ── Rename state ──
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -480,23 +462,23 @@ export function Timeline({
 
   const handleActiveTimelineChange = useCallback((timelineId: string | undefined) => {
     setActiveTimelineId(timelineId);
-    const nextMaxFrame = timelineId && v2Timelines?.[timelineId] ? v2Timelines[timelineId].duration : (showLegacyElementTracks ? durationInFrames : timelineDurationFallback) - 1;
+    const nextMaxFrame = timelineId && activeTimelines?.[timelineId] ? activeTimelines[timelineId].duration : (showLegacyElementTracks ? durationInFrames : timelineDurationFallback) - 1;
     if (currentFrame > nextMaxFrame) dispatch({ type: 'SET_FRAME', frame: nextMaxFrame });
     onActiveTimelineChange?.(timelineId);
-  }, [currentFrame, dispatch, durationInFrames, onActiveTimelineChange, showLegacyElementTracks, timelineDurationFallback, v2Timelines]);
+  }, [currentFrame, dispatch, durationInFrames, onActiveTimelineChange, showLegacyElementTracks, timelineDurationFallback, activeTimelines]);
 
   const previewStateAnimation = useCallback((machineId: string, stateId: string, details?: { event?: string; previousStateId?: string; activeTransitionId?: string }) => {
-    const timelineId = v2StateMachines?.[machineId]?.states[stateId]?.timeline;
+    const timelineId = activeStateMachines?.[machineId]?.states[stateId]?.timeline;
     handleActiveTimelineChange(timelineId);
     setPlaybackSpeed(0.5);
     setStateMachinePreview({ machineId, stateId, timelineId, event: details?.event ?? 'start', previousStateId: details?.previousStateId, activeTransitionId: details?.activeTransitionId, logicalStatePath: [stateId] });
     dispatch({ type: 'SET_FRAME', frame: 0 });
     dispatch({ type: 'SET_PLAYING', playing: Boolean(timelineId) });
-  }, [dispatch, handleActiveTimelineChange, v2StateMachines]);
+  }, [dispatch, handleActiveTimelineChange, activeStateMachines]);
 
   const triggerStateMachinePreviewEvent = useCallback((machineId: string, stateId: string, eventName: string, key?: string): boolean => {
     if (stateMachinePreview?.machineId === machineId && stateMachinePreview.exited) return false;
-    const machine = v2StateMachines?.[machineId];
+    const machine = activeStateMachines?.[machineId];
     const sourceIsEntry = stateId === 'entry';
     const state = sourceIsEntry ? undefined : machine?.states[stateId];
     if (!machine || (!sourceIsEntry && !state)) return false;
@@ -553,11 +535,11 @@ export function Timeline({
     dispatch({ type: 'SET_FRAME', frame: 0 });
     dispatch({ type: 'SET_PLAYING', playing: Boolean(timelineId) });
     return true;
-  }, [dispatch, handleActiveTimelineChange, stateMachinePreview?.logicalStatePath, v2StateMachines]);
+  }, [dispatch, handleActiveTimelineChange, stateMachinePreview?.logicalStatePath, activeStateMachines]);
 
   useEffect(() => {
     if (!stateMachinePreview || stateMachinePreview.timelineId || stateMachinePreview.exited) return;
-    const machine = v2StateMachines?.[stateMachinePreview.machineId];
+    const machine = activeStateMachines?.[stateMachinePreview.machineId];
     const nextTransition = machine ? getStateCompleteTransition(machine, stateMachinePreview.stateId) : undefined;
     if (!machine || !nextTransition || stateMachinePreview.activeTransitionId === nextTransition.id) return;
     const targetStateId = resolveTransitionTarget(machine, nextTransition);
@@ -567,7 +549,7 @@ export function Timeline({
       triggerStateMachinePreviewEvent(stateMachinePreview.machineId, stateMachinePreview.stateId, 'complete');
     }, 0);
     return () => window.clearTimeout(timeout);
-  }, [stateMachinePreview, triggerStateMachinePreviewEvent, v2StateMachines]);
+  }, [stateMachinePreview, triggerStateMachinePreviewEvent, activeStateMachines]);
 
   // Playback animation loop
   useEffect(() => {
@@ -825,23 +807,23 @@ export function Timeline({
           </div>
         )}
 
-        {(timelineClips.length > 0 || stateMachineClips.length > 0 || onV2TimelinesChange || onV2StateMachinesChange) && (
+        {(timelineClips.length > 0 || stateMachineClips.length > 0 || onActiveTimelinesChange || onActiveStateMachinesChange) && (
             <TimelineClipRows
             clips={timelineClips}
-            document={v2Document}
+            document={activeDocument}
             durationInFrames={activeTimelineMaxFrame + 1}
             onKeyframeClick={frame => dispatch({ type: 'SET_FRAME', frame: Math.max(0, Math.min(frame, activeTimelineMaxFrame)) })}
-            onTimelineChange={onV2TimelinesChange ? updateV2Timeline : undefined}
-            onTimelineRename={onV2TimelinesChange ? renameV2Timeline : undefined}
-            onTimelineDelete={onV2TimelinesChange ? deleteV2Timeline : undefined}
-            onAddTimeline={onV2TimelinesChange ? addBlankTimeline : undefined}
-            onAddIntroTimeline={onV2TimelinesChange ? addIntroTimeline : undefined}
+            onTimelineChange={onActiveTimelinesChange ? updateTimeline : undefined}
+            onTimelineRename={onActiveTimelinesChange ? renameTimeline : undefined}
+            onTimelineDelete={onActiveTimelinesChange ? deleteTimeline : undefined}
+            onAddTimeline={onActiveTimelinesChange ? addBlankTimeline : undefined}
+            onAddIntroTimeline={onActiveTimelinesChange ? addIntroTimeline : undefined}
             elementIds={rows.map(row => row.id)}
             stateMachines={stateMachineClips}
-            timelines={v2Timelines ?? {}}
-            onStateMachineChange={onV2StateMachinesChange ? updateV2StateMachine : undefined}
-            onStateMachineRename={onV2StateMachinesChange ? renameV2StateMachine : undefined}
-            onAddStateMachine={onV2StateMachinesChange ? addStateMachine : undefined}
+            timelines={activeTimelines ?? {}}
+            onStateMachineChange={onActiveStateMachinesChange ? updateStateMachine : undefined}
+            onStateMachineRename={onActiveStateMachinesChange ? renameStateMachine : undefined}
+            onAddStateMachine={onActiveStateMachinesChange ? addStateMachine : undefined}
             stateMachinePreview={stateMachinePreview}
             isPlaying={isPlaying}
             currentFrame={currentFrame}
@@ -1115,20 +1097,20 @@ function TimelineClipRows({
   onPreviewState,
   onPreviewEvent,
 }: {
-  clips: ElucimV2Timeline[];
+  clips: ElucimTimeline[];
   document?: ElucimDocument;
   durationInFrames: number;
   onKeyframeClick: (frame: number) => void;
-  onTimelineChange?: (timeline: ElucimV2Timeline) => void;
-  onTimelineRename?: (timeline: ElucimV2Timeline, nextId: string) => void;
+  onTimelineChange?: (timeline: ElucimTimeline) => void;
+  onTimelineRename?: (timeline: ElucimTimeline, nextId: string) => void;
   onTimelineDelete?: (id: string) => void;
   onAddTimeline?: () => void;
   onAddIntroTimeline?: () => void;
   elementIds: string[];
-  stateMachines: ElucimV2StateMachine[];
-  timelines: Record<string, ElucimV2Timeline>;
-  onStateMachineChange?: (machine: ElucimV2StateMachine) => void;
-  onStateMachineRename?: (machine: ElucimV2StateMachine, nextId: string) => void;
+  stateMachines: ElucimStateMachine[];
+  timelines: Record<string, ElucimTimeline>;
+  onStateMachineChange?: (machine: ElucimStateMachine) => void;
+  onStateMachineRename?: (machine: ElucimStateMachine, nextId: string) => void;
   onAddStateMachine?: () => void;
   stateMachinePreview: StateMachinePreviewState | null;
   isPlaying: boolean;
@@ -1137,7 +1119,7 @@ function TimelineClipRows({
   preferredMotionType: 'animation' | 'stateMachine';
   onMotionTypeChange?: (type: 'animation' | 'stateMachine') => void;
   onActiveTimelineChange?: (timelineId: string | undefined) => void;
-  onPreviewTimelineFramesChange?: (frames: ElucimV2TimelineFrameSelection[] | undefined) => void;
+  onPreviewTimelineFramesChange?: (frames: ElucimTimelineFrameSelection[] | undefined) => void;
   onStateMachinePreviewClickChange?: (handler: (() => boolean) | undefined) => void;
   onStateMachinePreviewKeyDownChange?: (handler: ((key: string) => boolean) | undefined) => void;
   playheadPercent: number;
@@ -1151,7 +1133,7 @@ function TimelineClipRows({
   onPreviewEvent: (machineId: string, stateId: string, eventName: string, key?: string) => boolean;
 }) {
   const icons = useEditorIcons();
-  const firstAnimationItem = useMemo<SelectedV2TimelineItem | null>(() => clips[0] ? { type: 'animation', timelineId: clips[0].id } : null, [clips]);
+  const firstAnimationItem = useMemo<SelectedTimelineItem | null>(() => clips[0] ? { type: 'animation', timelineId: clips[0].id } : null, [clips]);
   const firstStateMachineItem = useMemo<SelectedStateMachineItem | null>(() => stateMachines[0] ? { type: 'stateMachine', machineId: stateMachines[0].id } : null, [stateMachines]);
   const [selectedItem, setSelectedItem] = useState<SelectedMotionItem | null>(() => {
     if (preferredMotionType === 'stateMachine' && firstStateMachineItem) return firstStateMachineItem;
@@ -1163,7 +1145,7 @@ function TimelineClipRows({
   const [renamingMotionItem, setRenamingMotionItem] = useState<SelectedMotionItem | null>(null);
   const [keyframeDragPreview, setKeyframeDragPreview] = useState<{ timelineId: string; trackIndex: number; keyframeIndex: number; frame: number; percent: number } | null>(null);
   const suppressKeyframeClickRef = useRef(false);
-  const lastAnimationItem = useRef<SelectedV2TimelineItem | null>(firstAnimationItem);
+  const lastAnimationItem = useRef<SelectedTimelineItem | null>(firstAnimationItem);
   const lastStateMachineItem = useRef<SelectedStateMachineItem | null>(firstStateMachineItem);
   const latestStateMachinesRef = useRef(stateMachines);
   useEffect(() => {
@@ -1284,7 +1266,7 @@ function TimelineClipRows({
     const machine = stateMachines.find(currentMachine => currentMachine.id === item.machineId);
     if (machine) renameMachine(machine, value);
   };
-  const updateDuration = (clip: ElucimV2Timeline, duration: number) => {
+  const updateDuration = (clip: ElucimTimeline, duration: number) => {
     const nextDuration = Math.max(1, Math.round(duration));
     onTimelineChange?.({
       ...clip,
@@ -1295,7 +1277,7 @@ function TimelineClipRows({
       })),
     });
   };
-  const renameClip = (clip: ElucimV2Timeline, value: string) => {
+  const renameClip = (clip: ElucimTimeline, value: string) => {
     const baseId = normalizeGraphId(value, clip.id);
     const existing = Object.fromEntries(clips.filter(current => current.id !== clip.id).map(current => [current.id, current]));
     const nextId = createUniqueTimelineId(existing, baseId);
@@ -1303,7 +1285,7 @@ function TimelineClipRows({
     onTimelineRename?.(clip, nextId);
     selectMotionItem({ type: 'animation', timelineId: nextId });
   };
-  const updateKeyframe = (clip: ElucimV2Timeline, trackIndex: number, keyframeIndex: number, patch: { frame?: number; value?: unknown }) => {
+  const updateKeyframe = (clip: ElucimTimeline, trackIndex: number, keyframeIndex: number, patch: { frame?: number; value?: unknown }) => {
     onTimelineChange?.({
       ...clip,
       tracks: clip.tracks.map((track, currentTrackIndex) => currentTrackIndex === trackIndex
@@ -1316,13 +1298,13 @@ function TimelineClipRows({
         : track),
     });
   };
-  const updateTrack = (clip: ElucimV2Timeline, trackIndex: number, patch: Partial<ElucimV2Timeline['tracks'][number]>) => {
+  const updateTrack = (clip: ElucimTimeline, trackIndex: number, patch: Partial<ElucimTimeline['tracks'][number]>) => {
     onTimelineChange?.({
       ...clip,
       tracks: clip.tracks.map((track, currentTrackIndex) => currentTrackIndex === trackIndex ? { ...track, ...patch } : track),
     });
   };
-  const addTrack = (clip: ElucimV2Timeline) => {
+  const addTrack = (clip: ElucimTimeline) => {
     const target = elementIds[0] ?? clip.tracks[0]?.target;
     if (!target) return;
     onTimelineChange?.({
@@ -1340,14 +1322,14 @@ function TimelineClipRows({
       ],
     });
   };
-  const deleteTrack = (clip: ElucimV2Timeline, trackIndex: number) => {
+  const deleteTrack = (clip: ElucimTimeline, trackIndex: number) => {
     onTimelineChange?.({
       ...clip,
       tracks: clip.tracks.filter((_, currentTrackIndex) => currentTrackIndex !== trackIndex),
     });
     selectMotionItem({ type: 'animation', timelineId: clip.id });
   };
-  const addKeyframe = (clip: ElucimV2Timeline, trackIndex: number) => {
+  const addKeyframe = (clip: ElucimTimeline, trackIndex: number) => {
     const middleFrame = Math.round(clip.duration / 2);
     onTimelineChange?.({
       ...clip,
@@ -1362,7 +1344,7 @@ function TimelineClipRows({
         : track),
     });
   };
-  const deleteKeyframe = (clip: ElucimV2Timeline, trackIndex: number, keyframeIndex: number) => {
+  const deleteKeyframe = (clip: ElucimTimeline, trackIndex: number, keyframeIndex: number) => {
     onTimelineChange?.({
       ...clip,
       tracks: clip.tracks.map((track, currentTrackIndex) => currentTrackIndex === trackIndex
@@ -1371,7 +1353,7 @@ function TimelineClipRows({
     });
     selectMotionItem({ type: 'animation', timelineId: clip.id, trackIndex });
   };
-  const dragKeyframe = (event: React.PointerEvent<HTMLButtonElement>, clip: ElucimV2Timeline, trackIndex: number, keyframeIndex: number) => {
+  const dragKeyframe = (event: React.PointerEvent<HTMLButtonElement>, clip: ElucimTimeline, trackIndex: number, keyframeIndex: number) => {
     if (!onTimelineChange) return;
     event.preventDefault();
     event.stopPropagation();
@@ -1423,7 +1405,7 @@ function TimelineClipRows({
     ? selectedItem.stateId && selectedMachine.states[selectedItem.stateId] ? selectedItem.stateId : undefined
     : undefined;
   const selectedState = selectedMachine && selectedStateId ? selectedMachine.states[selectedStateId] : undefined;
-  const renameMachine = (machine: ElucimV2StateMachine, value: string) => {
+  const renameMachine = (machine: ElucimStateMachine, value: string) => {
     const baseId = normalizeGraphId(value, machine.id);
     const existing = Object.fromEntries(stateMachines.filter(current => current.id !== machine.id).map(current => [current.id, current]));
     const nextId = createUniqueStateMachineId(existing, baseId);
@@ -1431,7 +1413,7 @@ function TimelineClipRows({
     onStateMachineRename?.(machine, nextId);
     selectMotionItem({ type: 'stateMachine', machineId: nextId });
   };
-  const updateMachineState = (machine: ElucimV2StateMachine, stateId: string, patch: Partial<ElucimV2StateMachine['states'][string]>) => {
+  const updateMachineState = (machine: ElucimStateMachine, stateId: string, patch: Partial<ElucimStateMachine['states'][string]>) => {
     onStateMachineChange?.({
       ...machine,
       states: {
@@ -1440,7 +1422,7 @@ function TimelineClipRows({
       },
     });
   };
-  const renameMachineState = (machine: ElucimV2StateMachine, stateId: string, value: string) => {
+  const renameMachineState = (machine: ElucimStateMachine, stateId: string, value: string) => {
     const baseId = normalizeGraphId(value, stateId);
     let nextStateId = baseId;
     let index = 2;
@@ -1466,7 +1448,7 @@ function TimelineClipRows({
     });
     selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId: nextStateId });
   };
-  const addMachineState = (machine: ElucimV2StateMachine) => {
+  const addMachineState = (machine: ElucimStateMachine) => {
     let id = 'state';
     let index = 2;
     while (machine.states[id]) {
@@ -1487,7 +1469,7 @@ function TimelineClipRows({
     });
     selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId: id });
   };
-  const deleteMachineState = (machine: ElucimV2StateMachine, stateId: string) => {
+  const deleteMachineState = (machine: ElucimStateMachine, stateId: string) => {
     const remainingStateIds = Object.keys(machine.states).filter(id => id !== stateId);
     if (remainingStateIds.length === 0) return;
     const fallback = remainingStateIds[0] ?? machine.entry;
@@ -1511,7 +1493,7 @@ function TimelineClipRows({
     y: Math.round(viewport.y),
     zoom: Number(viewport.zoom.toFixed(3)),
   });
-  const moveMachineGraphNode = (machine: ElucimV2StateMachine, nodeId: string, position: { x: number; y: number }, viewport?: ReactFlowViewport) => {
+  const moveMachineGraphNode = (machine: ElucimStateMachine, nodeId: string, position: { x: number; y: number }, viewport?: ReactFlowViewport) => {
     const latestMachine = latestStateMachinesRef.current.find(current => current.id === machine.id) ?? machine;
     onStateMachineChange?.({
       ...latestMachine,
@@ -1526,7 +1508,7 @@ function TimelineClipRows({
       },
     });
   };
-  const applyMachineGraphLayout = (machine: ElucimV2StateMachine, entryPosition: { x: number; y: number }, statePositions: Map<string, { x: number; y: number }>) => {
+  const applyMachineGraphLayout = (machine: ElucimStateMachine, entryPosition: { x: number; y: number }, statePositions: Map<string, { x: number; y: number }>) => {
     const latestMachine = latestStateMachinesRef.current.find(current => current.id === machine.id) ?? machine;
     onStateMachineChange?.({
       ...latestMachine,
@@ -1540,7 +1522,7 @@ function TimelineClipRows({
       },
     });
   };
-  const moveMachineViewport = (machine: ElucimV2StateMachine, viewport: ReactFlowViewport) => {
+  const moveMachineViewport = (machine: ElucimStateMachine, viewport: ReactFlowViewport) => {
     const latestMachine = latestStateMachinesRef.current.find(current => current.id === machine.id) ?? machine;
     onStateMachineChange?.({
       ...latestMachine,
@@ -1550,7 +1532,7 @@ function TimelineClipRows({
       },
     });
   };
-  const addMachineTransition = (machine: ElucimV2StateMachine, stateId: string, targetStateId?: string) => {
+  const addMachineTransition = (machine: ElucimStateMachine, stateId: string, targetStateId?: string) => {
     const state = machine.states[stateId];
     if (!state) return;
     let transitionName = 'next';
@@ -1582,13 +1564,13 @@ function TimelineClipRows({
     selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId, transitionEvent: transitionId });
     return transitionId;
   };
-  const updateMachineTransition = (machine: ElucimV2StateMachine, transitionId: string, patch: Partial<ElucimV2Transition>) => {
+  const updateMachineTransition = (machine: ElucimStateMachine, transitionId: string, patch: Partial<ElucimTransition>) => {
     onStateMachineChange?.({
       ...machine,
       transitions: (machine.transitions ?? []).map(transition => transition.id === transitionId ? { ...transition, ...patch } : transition),
     });
   };
-  const renameMachineTransition = (machine: ElucimV2StateMachine, transitionId: string, nextTrigger: string) => {
+  const renameMachineTransition = (machine: ElucimStateMachine, transitionId: string, nextTrigger: string) => {
     const transition = machine.transitions?.find(current => current.id === transitionId);
     if (!transition?.trigger) return;
     const trigger = EVENT_PRESET_SET.has(nextTrigger) ? nextTrigger : normalizeGraphId(nextTrigger, transition.trigger);
@@ -1604,7 +1586,7 @@ function TimelineClipRows({
       transitions,
     });
   };
-  const setMachineTransitionKind = (machine: ElucimV2StateMachine, transitionId: string, kind: 'event' | 'next') => {
+  const setMachineTransitionKind = (machine: ElucimStateMachine, transitionId: string, kind: 'event' | 'next') => {
     const transition = machine.transitions?.find(current => current.id === transitionId);
     if (!transition || transition.from === 'entry') return;
     const transitions = (machine.transitions ?? []).flatMap(current => {
@@ -1626,7 +1608,7 @@ function TimelineClipRows({
       transitions,
     });
   };
-  const deleteMachineTransition = (machine: ElucimV2StateMachine, transitionId: string) => {
+  const deleteMachineTransition = (machine: ElucimStateMachine, transitionId: string) => {
     const transition = machine.transitions?.find(current => current.id === transitionId);
     const transitions = machine.transitions?.filter(current => current.id !== transitionId);
     onStateMachineChange?.({
@@ -1636,7 +1618,7 @@ function TimelineClipRows({
     });
     selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId: transition?.from !== 'entry' && transition?.from !== 'any' ? transition?.from : undefined });
   };
-  const playStateMachine = (machine: ElucimV2StateMachine) => {
+  const playStateMachine = (machine: ElucimStateMachine) => {
     const entryTransition = getEntryTransition(machine);
     const initialStateId = getEntryTargetStateId(machine);
     if (!initialStateId) return;
@@ -1648,7 +1630,7 @@ function TimelineClipRows({
     selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId: initialStateId });
     onPreviewState(machine.id, initialStateId, { event: entryTransition?.trigger ?? 'onStart', previousStateId: 'entry', activeTransitionId: entryTransition?.id });
   };
-  const resetStateMachinePreview = (machine: ElucimV2StateMachine) => {
+  const resetStateMachinePreview = (machine: ElucimStateMachine) => {
     const entryTransition = getEntryTransition(machine);
     onStopPlayback();
     onPreviewState(machine.id, 'entry', { event: 'reset', activeTransitionId: entryTransition?.id });
@@ -2150,7 +2132,7 @@ function TimelineClipRows({
             onPreviewState={onPreviewState}
           />
         ) : onTimelineChange && (
-          <V2TimelineInspector
+          <TimelineInspector
             clip={selectedClip}
             track={selectedTrack}
             keyframe={selectedKeyframe}
@@ -2168,7 +2150,7 @@ function TimelineClipRows({
   );
 }
 
-function V2TimelineInspector({
+function TimelineInspector({
   clip,
   track,
   keyframe,
@@ -2180,16 +2162,16 @@ function V2TimelineInspector({
   onUpdateKeyframe,
   onDeleteKeyframe,
 }: {
-  clip?: ElucimV2Timeline;
-  track?: ElucimV2Timeline['tracks'][number];
-  keyframe?: ElucimV2Timeline['tracks'][number]['keyframes'][number];
-  selectedItem: SelectedV2TimelineItem | null;
+  clip?: ElucimTimeline;
+  track?: ElucimTimeline['tracks'][number];
+  keyframe?: ElucimTimeline['tracks'][number]['keyframes'][number];
+  selectedItem: SelectedTimelineItem | null;
   elementIds: string[];
-  onRenameClip?: (clip: ElucimV2Timeline, nextId: string) => void;
-  onUpdateDuration: (clip: ElucimV2Timeline, duration: number) => void;
-  onUpdateTrack: (clip: ElucimV2Timeline, trackIndex: number, patch: Partial<ElucimV2Timeline['tracks'][number]>) => void;
-  onUpdateKeyframe: (clip: ElucimV2Timeline, trackIndex: number, keyframeIndex: number, patch: { frame?: number; value?: unknown }) => void;
-  onDeleteKeyframe: (clip: ElucimV2Timeline, trackIndex: number, keyframeIndex: number) => void;
+  onRenameClip?: (clip: ElucimTimeline, nextId: string) => void;
+  onUpdateDuration: (clip: ElucimTimeline, duration: number) => void;
+  onUpdateTrack: (clip: ElucimTimeline, trackIndex: number, patch: Partial<ElucimTimeline['tracks'][number]>) => void;
+  onUpdateKeyframe: (clip: ElucimTimeline, trackIndex: number, keyframeIndex: number, patch: { frame?: number; value?: unknown }) => void;
+  onDeleteKeyframe: (clip: ElucimTimeline, trackIndex: number, keyframeIndex: number) => void;
 }) {
   if (!clip) {
     return <div style={{ ...motionInspectorPanelStyle, color: v('--elucim-editor-text-muted'), fontSize: 11 }}>Select a timeline to edit details.</div>;
@@ -2269,10 +2251,10 @@ function V2TimelineInspector({
             <select
               aria-label={`${clip.id} track ${selectedItem.trackIndex + 1} property`}
               value={track.property}
-              onChange={event => onUpdateTrack(clip, selectedItem.trackIndex!, { property: event.target.value as ElucimV2Timeline['tracks'][number]['property'] })}
+              onChange={event => onUpdateTrack(clip, selectedItem.trackIndex!, { property: event.target.value as ElucimTimeline['tracks'][number]['property'] })}
               style={inspectorInputStyle}
             >
-              {V2_ANIMATABLE_PROPERTIES.map(property => <option key={property} value={property}>{property}</option>)}
+              {ANIMATABLE_PROPERTIES.map(property => <option key={property} value={property}>{property}</option>)}
             </select>
           </label>
         </>
@@ -2333,7 +2315,7 @@ function V2TimelineInspector({
 }
 
 function createStateMachineDagLayout(
-  states: [string, ElucimV2StateMachine['states'][string]][],
+  states: [string, ElucimStateMachine['states'][string]][],
   transitions: { from: string; to: string }[],
   entryStateId: string,
   direction: GraphLayoutDirection,
@@ -2610,7 +2592,7 @@ function StateMachineTimelineGraph({
   onTriggerEvent,
   onConnectStates,
 }: {
-  machine: ElucimV2StateMachine;
+  machine: ElucimStateMachine;
   selectedStateId?: string;
   selectedTransitionEvent?: string;
   onSelectState: (stateId: string) => void;
@@ -3073,18 +3055,18 @@ function StateMachineMotionInspector({
   onDeleteTransition,
   onPreviewState,
 }: {
-  machine: ElucimV2StateMachine;
-  state?: ElucimV2StateMachine['states'][string];
+  machine: ElucimStateMachine;
+  state?: ElucimStateMachine['states'][string];
   selectedStateId?: string;
   selectedTransitionEvent?: string;
-  timelines: Record<string, ElucimV2Timeline>;
-  onRenameMachine: (machine: ElucimV2StateMachine, nextId: string) => void;
-  onUpdateState: (machine: ElucimV2StateMachine, stateId: string, patch: Partial<ElucimV2StateMachine['states'][string]>) => void;
-  onRenameState: (machine: ElucimV2StateMachine, stateId: string, nextId: string) => void;
-  onUpdateTransition: (machine: ElucimV2StateMachine, transitionId: string, patch: Partial<ElucimV2Transition>) => void;
-  onRenameTransition: (machine: ElucimV2StateMachine, transitionId: string, nextTrigger: string) => void;
-  onSetTransitionKind: (machine: ElucimV2StateMachine, transitionId: string, kind: 'event' | 'next') => void;
-  onDeleteTransition: (machine: ElucimV2StateMachine, transitionId: string) => void;
+  timelines: Record<string, ElucimTimeline>;
+  onRenameMachine: (machine: ElucimStateMachine, nextId: string) => void;
+  onUpdateState: (machine: ElucimStateMachine, stateId: string, patch: Partial<ElucimStateMachine['states'][string]>) => void;
+  onRenameState: (machine: ElucimStateMachine, stateId: string, nextId: string) => void;
+  onUpdateTransition: (machine: ElucimStateMachine, transitionId: string, patch: Partial<ElucimTransition>) => void;
+  onRenameTransition: (machine: ElucimStateMachine, transitionId: string, nextTrigger: string) => void;
+  onSetTransitionKind: (machine: ElucimStateMachine, transitionId: string, kind: 'event' | 'next') => void;
+  onDeleteTransition: (machine: ElucimStateMachine, transitionId: string) => void;
   onPreviewState: (machineId: string, stateId: string) => void;
 }) {
   const stateIds = Object.keys(machine.states);

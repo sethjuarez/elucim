@@ -1,5 +1,5 @@
 import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
-import { migrateV1ToV2, migrateV2ToV1, validate } from '@elucim/dsl';
+import { migrateV1ToV2 as createCanonicalDocumentFromRenderable, migrateV2ToV1 as createRenderableProjectionFromCanonical, validate } from '@elucim/dsl';
 
 export interface ExportOptions {
   pretty?: boolean;
@@ -16,7 +16,7 @@ export function exportToJson(document: ExportableDocument, options: ExportOption
 }
 
 export function getEditorExportDocument(document: RenderableDocument, canonicalDocument?: ElucimDocument): ElucimDocument {
-  return canonicalDocument ?? migrateV1ToV2(document);
+  return canonicalDocument ?? createCanonicalDocumentFromRenderable(document);
 }
 
 export function exportEditorDocumentToJson(document: RenderableDocument, canonicalDocument?: ElucimDocument, options: ExportOptions = {}): string {
@@ -50,7 +50,7 @@ export function importFromJson(json: string): ImportResult {
         };
       }
       const canonicalDocument = parsed as ElucimDocument;
-      return { document: migrateV2ToV1(canonicalDocument), canonicalDocument, errors: [] };
+      return { document: createRenderableProjectionFromCanonical(canonicalDocument), canonicalDocument, errors: [] };
     }
     if (parsed.version !== '1.0') {
       return { document: null, errors: [`Unknown version: ${parsed.version}. Expected "1.0" or "2.0"`] };
@@ -70,7 +70,7 @@ export function importFromJson(json: string): ImportResult {
       };
     }
 
-    return { document: doc, canonicalDocument: migrateV1ToV2(doc), errors: [] };
+    return { document: doc, canonicalDocument: createCanonicalDocumentFromRenderable(doc), errors: [] };
   } catch (err) {
     return { document: null, errors: [`Invalid JSON: ${(err as Error).message}`] };
   }

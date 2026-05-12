@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
 import { validateDocument } from '@elucim/dsl';
-import { createDocumentFromEditorState, normalizeInitialDocument } from '../document/documentBridge';
+import { createDocumentFromEditorState, normalizeInitialDocument } from '../document/documentCompatibility';
 
 const renderableDocument: RenderableDocument = {
   version: '1.0',
@@ -18,7 +18,7 @@ const renderableDocument: RenderableDocument = {
 
 const canonicalDocument: ElucimDocument = {
   version: '2.0',
-  metadata: { title: 'Bridge compatibility' },
+  metadata: { title: 'Document compatibility' },
   scene: { type: 'player', width: 800, height: 600, children: ['card'] },
   elements: {
     card: {
