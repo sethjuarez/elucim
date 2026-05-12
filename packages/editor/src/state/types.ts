@@ -25,9 +25,9 @@ export interface EditorState {
   /** Canvas viewport (pan/zoom) */
   viewport: Viewport;
   /** Undo history stack */
-  past: ElucimDocument[];
+  past: EditorHistoryEntry[];
   /** Redo stack */
-  future: ElucimDocument[];
+  future: EditorHistoryEntry[];
   /** Current animation frame for preview */
   currentFrame: number;
   /** Whether the animation is playing */
@@ -46,6 +46,12 @@ export interface EditorState {
   toolbarCollapsed: boolean;
   /** Runtime editor-chrome theme overrides (set by "Apply theme") */
   themeOverrides: Record<string, string>;
+}
+
+export interface EditorHistoryEntry {
+  document: ElucimDocument;
+  canonicalDocument?: CanonicalElucimDocument;
+  compatibilityWarnings: string[];
 }
 
 export type EditorTool =
