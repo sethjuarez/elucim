@@ -573,6 +573,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return { ...state, document: action.document, selectedIds: [] };
 
     case 'SET_CANONICAL_DOCUMENT':
+      if (action.document && action.syncProjection) {
+        return syncCanonicalFromProjection(
+          { ...state, canonicalDocument: action.document, compatibilityWarnings: action.warnings ?? [] },
+          state.document,
+          { warnings: action.warnings },
+        );
+      }
       return {
         ...state,
         canonicalDocument: action.document,
