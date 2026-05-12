@@ -19,7 +19,7 @@ import {
   holdFinalFrame,
   inspectPolishHeuristics,
   lintMotion,
-  normalizeToV2,
+  normalizeDocument,
   planMotionBeats,
   previewBeatDiffs,
   suggestDocumentNudges,
@@ -784,7 +784,7 @@ async function loadDocument(filePath: string): Promise<LoadedDocument> {
   const raw = ext === '.yaml' || ext === '.yml'
     ? fromYaml(text)
     : JSON.parse(text) as unknown;
-  const normalized = normalizeToV2(raw);
+  const normalized = normalizeDocument(raw);
   return {
     path: filePath,
     document: normalized.document,

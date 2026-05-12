@@ -4,7 +4,7 @@ import {
   createConnectorPreset,
   planSemanticLayout,
   suggestSemanticLayoutNudges,
-  validateV2,
+  validateDocument,
   type ElucimDocument,
 } from '../index';
 
@@ -51,7 +51,7 @@ function semanticFlowDoc(): ElucimDocument {
 
 describe('semantic layout nudges', () => {
   it('validates semantic relationship metadata', () => {
-    const result = validateV2(semanticFlowDoc());
+    const result = validateDocument(semanticFlowDoc());
 
     expect(result.valid).toBe(true);
     expect(result.errors).toEqual([]);
@@ -61,7 +61,7 @@ describe('semantic layout nudges', () => {
     const doc = semanticFlowDoc();
     doc.elements.cache.intent = { ...doc.elements.cache.intent, flowTo: ['missing'] };
 
-    const result = validateV2(doc);
+    const result = validateDocument(doc);
 
     expect(result.valid).toBe(false);
     expect(result.errors).toContainEqual({
@@ -80,7 +80,7 @@ describe('semantic layout nudges', () => {
       flowTo: ['cache'],
     };
 
-    const result = validateV2(doc);
+    const result = validateDocument(doc);
 
     expect(result.valid).toBe(false);
     expect(result.errors).toContainEqual({
@@ -116,7 +116,7 @@ describe('semantic layout nudges', () => {
     expect(next).not.toBe(doc);
     expect(next.elements.request.layout?.x).toBeLessThan(next.elements.cache.layout?.x ?? 0);
     expect(next.elements.cache.layout?.x).toBeLessThan(next.elements.database.layout?.x ?? 0);
-    expect(validateV2(next).valid).toBe(true);
+    expect(validateDocument(next).valid).toBe(true);
   });
 
   it('uses semantic connector composites as virtual ELK edges', async () => {
@@ -157,7 +157,7 @@ describe('semantic layout nudges', () => {
 
     expect(nudges).toHaveLength(1);
     expect(next.elements.request.layout?.x).toBeLessThan(next.elements.cache.layout?.x ?? 0);
-    expect(validateV2(next).valid).toBe(true);
+    expect(validateDocument(next).valid).toBe(true);
   });
 
   it('keeps locked elements fixed while arranging unlocked peers', async () => {

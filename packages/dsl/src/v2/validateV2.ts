@@ -26,7 +26,7 @@ export function validateV2(doc: unknown): ValidationResult {
       errors.push({ path: 'scene.type', message: 'scene.type must be "scene" or "player"', severity: 'error' });
     }
     if ('durationInFrames' in d.scene) {
-      errors.push({ path: 'scene.durationInFrames', message: 'Scene duration is not part of v2; timelines, state machines, and export policies own time.', severity: 'error' });
+      errors.push({ path: 'scene.durationInFrames', message: 'Scene duration is not part of Elucim Document scene layout; timelines, state machines, and export policies own time.', severity: 'error' });
     }
     if (!Array.isArray(d.scene.children)) {
       errors.push({ path: 'scene.children', message: 'scene.children must be an array of element IDs', severity: 'error' });
@@ -70,7 +70,7 @@ function validateElement(id: string, element: ElucimV2Element, errors: Validatio
   } else if (LEGACY_WRAPPER_ELEMENT_TYPES.has(element.type.toLowerCase())) {
     errors.push({
       path: `${path}.type`,
-      message: `Legacy wrapper element "${element.type}" is not part of v2. Use timelines and state machines for motion.`,
+      message: `Legacy wrapper element "${element.type}" is not part of Elucim Documents. Use timelines and state machines for motion.`,
       severity: 'error',
     });
   }
@@ -81,7 +81,7 @@ function validateElement(id: string, element: ElucimV2Element, errors: Validatio
       if (prop in element.props) {
         errors.push({
           path: `${path}.props.${prop}`,
-          message: `Legacy animation prop "${prop}" is not part of v2. Use timeline tracks and keyframes instead.`,
+          message: `Legacy animation prop "${prop}" is not part of Elucim Documents. Use timeline tracks and keyframes instead.`,
           severity: 'error',
         });
       }

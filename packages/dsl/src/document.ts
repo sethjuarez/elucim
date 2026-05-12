@@ -50,4 +50,14 @@ export type {
 } from './v2/stateMachine';
 // Deliberately omit ElucimV2StateSnapshot: motion exports a different ElucimStateSnapshot.
 
+export type {
+  NormalizeToV2Result as NormalizeDocumentResult,
+} from './v2/migrate';
+
+export {
+  migrateV1ToV2 as createDocumentFromRenderable,
+  migrateV2ToV1 as createRenderableDocument,
+  normalizeToV2 as normalizeDocument,
+  toRenderableV1 as toRenderableDocument,
+} from './v2/migrate';
 export { validateV2 as validateDocument } from './v2/validateV2';

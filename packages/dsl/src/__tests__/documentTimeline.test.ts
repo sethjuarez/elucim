@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyCommand, applyTimelineFrame, applyTimelineFrames, evaluateTimeline, migrateV2ToV1, validateV2, type ElucimDocument } from '../index';
+import { applyCommand, applyTimelineFrame, applyTimelineFrames, createRenderableDocument, evaluateTimeline, validateDocument, type ElucimDocument } from '../index';
 
 const doc: ElucimDocument = {
   version: '2.0',
@@ -25,13 +25,13 @@ const doc: ElucimDocument = {
   },
 };
 
-describe('v2 timelines and keyframes', () => {
+describe('document timelines and keyframes', () => {
   it('validates safe keyframe tracks', () => {
-    expect(validateV2(doc).valid).toBe(true);
+    expect(validateDocument(doc).valid).toBe(true);
   });
 
   it('reports invalid timeline keyframes with machine-friendly paths', () => {
-    const result = validateV2({
+    const result = validateDocument({
       ...doc,
       timelines: {
         bad: {
@@ -90,7 +90,7 @@ describe('v2 timelines and keyframes', () => {
     expect(next.elements.title.layout?.scale).toBe(1.1);
   });
 
-  it('restores layout timeline patches into renderable v1 elements', () => {
+  it('restores layout timeline patches into renderable elements', () => {
     const next = applyTimelineFrame({
       ...doc,
       elements: {
@@ -114,7 +114,7 @@ describe('v2 timelines and keyframes', () => {
       },
     }, 'intro', 15);
 
-    const restored = migrateV2ToV1(next);
+    const restored = createRenderableDocument(next);
     const title = restored.root.children[0] as any;
 
     expect(title.opacity).toBe(0.5);

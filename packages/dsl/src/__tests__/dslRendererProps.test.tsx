@@ -47,7 +47,7 @@ describe('DslRenderer player override props', () => {
     expect(ref.current!.isPlaying()).toBe(true);
   });
 
-  it('renders v2 documents through the official v1 bridge', () => {
+  it('renders canonical documents through the renderable compatibility adapter', () => {
     const { container } = render(
       <DslRenderer
         dsl={{
@@ -63,7 +63,7 @@ describe('DslRenderer player override props', () => {
     expect(container.querySelector('[data-testid="dsl-error"]')).toBeNull();
   });
 
-  it('runs default v2 state-machine click events in the viewer', () => {
+  it('runs default document state-machine click events in the viewer', () => {
     const { container } = render(
       <DslRenderer
         dsl={{
@@ -105,7 +105,7 @@ describe('DslRenderer player override props', () => {
     expect(container.querySelector('[data-testid="elucim-text"]')?.getAttribute('opacity')).toBe('0.5');
   });
 
-  it('runs default v2 state-machine key events in the viewer', () => {
+  it('runs default document state-machine key events in the viewer', () => {
     const { container } = render(
       <DslRenderer
         dsl={{
@@ -147,7 +147,7 @@ describe('DslRenderer player override props', () => {
     expect(container.querySelector('[data-testid="elucim-text"]')?.getAttribute('opacity')).toBe('0.75');
   });
 
-  it('renders v2 state machines parsed from YAML in the viewer', () => {
+  it('renders document state machines parsed from YAML in the viewer', () => {
     const dsl = fromYaml(`
 version: '2.0'
 scene:

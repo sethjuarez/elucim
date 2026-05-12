@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 import { renderRoot } from './renderElements';
 import { validate } from '../validator/validate';
-import { toRenderableV1 } from '../v2/migrate';
+import { toRenderableV1 as toRenderableDocument } from '../v2/migrate';
 import type { ElucimDocument as RenderableDocument } from '../schema/types';
 import type { ElucimV2Document as ElucimDocument } from '../v2/types';
 
@@ -31,7 +31,7 @@ export function renderToSvgString(
     );
   }
 
-  const renderable = toRenderableV1(dsl);
+  const renderable = toRenderableDocument(dsl);
 
   // Clone the root and apply size overrides
   const root = { ...renderable.root };

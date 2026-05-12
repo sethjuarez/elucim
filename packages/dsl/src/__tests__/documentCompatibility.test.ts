@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getDocumentLinearDuration, migrateV1ToV2, migrateV2ToV1, normalizeToV2, resolveExportFrameCount, toRenderableV1, validate, validateV2 } from '../index';
+import { createDocumentFromRenderable, createRenderableDocument, getDocumentLinearDuration, normalizeDocument, resolveExportFrameCount, toRenderableDocument, validate, validateDocument } from '../index';
 import type { ElucimDocument, RenderableDocument } from '../index';
 
-describe('Elucim v2 document foundation', () => {
-  it('validates a minimal normalized v2 document', () => {
+describe('Elucim Document compatibility foundation', () => {
+  it('validates a minimal normalized document', () => {
     const doc: ElucimDocument = {
       version: '2.0',
       scene: { type: 'player', width: 1920, height: 1080, children: ['title'] },
@@ -19,11 +19,11 @@ describe('Elucim v2 document foundation', () => {
       },
     };
 
-    expect(validateV2(doc)).toEqual({ valid: true, errors: [] });
+    expect(validateDocument(doc)).toEqual({ valid: true, errors: [] });
     expect(validate(doc)).toEqual({ valid: true, errors: [] });
   });
 
-  it('does not require canvas duration for v2 scene layout', () => {
+  it('does not require canvas duration for document scene layout', () => {
     const doc: ElucimDocument = {
       version: '2.0',
       scene: { type: 'scene', width: 800, height: 600, children: ['title'] },
@@ -35,9 +35,9 @@ describe('Elucim v2 document foundation', () => {
       },
     };
 
-    const result = validateV2(doc);
+    const result = validateDocument(doc);
     expect(result).toEqual({ valid: true, errors: [] });
-    expect((migrateV2ToV1(doc).root as any).durationInFrames).toBe(45);
+    expect((createRenderableDocument(doc).root as any).durationInFrames).toBe(45);
   });
 
   it('requires explicit export policies instead of canvas duration for fixed machine output', () => {
@@ -70,7 +70,7 @@ describe('Elucim v2 document foundation', () => {
   });
 
   it('reports machine-friendly reference errors', () => {
-    const result = validateV2({
+    const result = validateDocument({
       version: '2.0',
       scene: { type: 'scene', children: ['missing'] },
       elements: {},
@@ -84,8 +84,8 @@ describe('Elucim v2 document foundation', () => {
     });
   });
 
-  it('rejects legacy wrapper animation syntax in normalized v2 documents', () => {
-    const result = validateV2({
+  it('rejects legacy wrapper animation syntax in normalized documents', () => {
+    const result = validateDocument({
       version: '2.0',
       scene: { type: 'player', children: ['title', 'intro'] },
       elements: {
@@ -97,17 +97,17 @@ describe('Elucim v2 document foundation', () => {
     expect(result.valid).toBe(false);
     expect(result.errors).toContainEqual({
       path: 'elements.title.props.fadeIn',
-      message: 'Legacy animation prop "fadeIn" is not part of v2. Use timeline tracks and keyframes instead.',
+      message: 'Legacy animation prop "fadeIn" is not part of Elucim Documents. Use timeline tracks and keyframes instead.',
       severity: 'error',
     });
     expect(result.errors).toContainEqual({
       path: 'elements.intro.type',
-      message: 'Legacy wrapper element "fadeIn" is not part of v2. Use timelines and state machines for motion.',
+      message: 'Legacy wrapper element "fadeIn" is not part of Elucim Documents. Use timelines and state machines for motion.',
       severity: 'error',
     });
   });
 
-  it('migrates a v1 player into normalized v2 elements with stable IDs', () => {
+  it('migrates a renderable player into normalized elements with stable IDs', () => {
     const v1: RenderableDocument = {
       version: '1.0',
       root: {
@@ -128,18 +128,18 @@ describe('Elucim v2 document foundation', () => {
       },
     };
 
-    const v2 = migrateV1ToV2(v1);
+    const doc = createDocumentFromRenderable(v1);
 
-    expect(v2.version).toBe('2.0');
-    expect(v2.scene.children).toEqual(['card']);
-    expect(v2.elements.card.children).toEqual(['title', 'card.rect[1]']);
-    expect(v2.elements.title.parentId).toBe('card');
-    expect(v2.elements.title.layout).toMatchObject({ x: 40, y: 50 });
-    expect(v2.elements.title.props).toMatchObject({ type: 'text', content: 'Revenue', x: 40, y: 50 });
-    expect(validateV2(v2).valid).toBe(true);
+    expect(doc.version).toBe('2.0');
+    expect(doc.scene.children).toEqual(['card']);
+    expect(doc.elements.card.children).toEqual(['title', 'card.rect[1]']);
+    expect(doc.elements.title.parentId).toBe('card');
+    expect(doc.elements.title.layout).toMatchObject({ x: 40, y: 50 });
+    expect(doc.elements.title.props).toMatchObject({ type: 'text', content: 'Revenue', x: 40, y: 50 });
+    expect(validateDocument(doc).valid).toBe(true);
   });
 
-  it('deduplicates repeated v1 IDs during migration', () => {
+  it('deduplicates repeated renderable IDs during migration', () => {
     const v1: RenderableDocument = {
       version: '1.0',
       root: {
@@ -152,16 +152,16 @@ describe('Elucim v2 document foundation', () => {
       },
     };
 
-    const v2 = migrateV1ToV2(v1);
+    const doc = createDocumentFromRenderable(v1);
 
-    expect(v2.scene.children).toEqual(['label', 'label-2']);
-    expect(v2.elements.label.id).toBe('label');
-    expect(v2.elements['label-2'].id).toBe('label-2');
-    expect(validateV2(v2).valid).toBe(true);
+    expect(doc.scene.children).toEqual(['label', 'label-2']);
+    expect(doc.elements.label.id).toBe('label');
+    expect(doc.elements['label-2'].id).toBe('label-2');
+    expect(validateDocument(doc).valid).toBe(true);
   });
 
-  it('converts normalized v2 documents back to v1 editor documents', () => {
-    const v2 = migrateV1ToV2({
+  it('converts normalized documents back to renderable editor documents', () => {
+    const doc = createDocumentFromRenderable({
       version: '1.0',
       root: {
         type: 'player',
@@ -174,7 +174,7 @@ describe('Elucim v2 document foundation', () => {
       },
     });
 
-    const v1 = migrateV2ToV1(v2);
+    const v1 = createRenderableDocument(doc);
 
     expect(v1.version).toBe('1.0');
     expect(v1.root.type).toBe('player');
@@ -186,8 +186,8 @@ describe('Elucim v2 document foundation', () => {
     expect(validate(v1).valid).toBe(true);
   });
 
-  it('normalizes legacy rootless documents to v2', () => {
-    const result = normalizeToV2({
+  it('normalizes legacy rootless documents to Elucim Documents', () => {
+    const result = normalizeDocument({
       version: 1,
       title: 'Legacy visual',
       elements: [{ type: 'text', content: 'Metric', x: 100, y: 160 }],
@@ -198,11 +198,11 @@ describe('Elucim v2 document foundation', () => {
     expect(result.warnings[0]).toContain('legacy rootless');
     expect(result.document.version).toBe('2.0');
     expect(result.document.metadata?.notes?.[0]).toContain('Migrated');
-    expect(validateV2(result.document).valid).toBe(true);
+    expect(validateDocument(result.document).valid).toBe(true);
   });
 
-  it('exposes an official renderable v1 bridge for v2 and legacy docs', () => {
-    const v1 = toRenderableV1({
+  it('exposes an official renderable compatibility adapter for canonical and legacy docs', () => {
+    const v1 = toRenderableDocument({
       version: 1,
       title: 'Legacy visual',
       elements: [{ type: 'circle', cx: 100, cy: 100, r: 40 }],
@@ -213,8 +213,8 @@ describe('Elucim v2 document foundation', () => {
     expect(validate(v1).valid).toBe(true);
   });
 
-  it('applies default state-machine start frames in the renderable v1 bridge', () => {
-    const v1 = toRenderableV1({
+  it('applies default state-machine start frames in the renderable compatibility adapter', () => {
+    const v1 = toRenderableDocument({
       version: '2.0',
       scene: { type: 'player', children: ['title'] },
       elements: {

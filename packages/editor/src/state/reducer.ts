@@ -1,5 +1,5 @@
 import type { ElucimDocument as CanonicalElucimDocument, ElucimStateMachine, ElucimTimeline, RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
-import { migrateV1ToV2 as createCanonicalDocumentFromRenderable, migrateV2ToV1 as createRenderableProjectionFromCanonical } from '@elucim/dsl';
+import { createDocumentFromRenderable, createRenderableDocument } from '@elucim/dsl';
 import type { EditorState, EditorAction, EditorHistoryEntry, AlignDirection, DistributeDirection, AnimationWrapperType } from './types';
 import { CANVAS_ID } from './types';
 import { getElementId, isUndoableAction } from './types';
@@ -44,7 +44,7 @@ function syncCanonicalFromProjection(
   options: { idMap?: Map<string, string>; removedIds?: Set<string>; warnings?: string[] } = {},
 ): EditorState {
   if (!state.canonicalDocument) return { ...state, document };
-  const migrated = createCanonicalDocumentFromRenderable(document);
+  const migrated = createDocumentFromRenderable(document);
   const source = state.canonicalDocument;
   const elementIds = new Set(Object.keys(migrated.elements));
   const reverseIdMap = new Map([...options.idMap?.entries() ?? []].map(([from, to]) => [to, from]));
@@ -598,14 +598,14 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return {
         ...state,
         document: action.document,
-        canonicalDocument: createCanonicalDocumentFromRenderable(action.document),
+        canonicalDocument: createDocumentFromRenderable(action.document),
         compatibilityWarnings: [],
         selectedIds: [],
       };
 
     case 'SET_CANONICAL_DOCUMENT':
       if (action.document && action.syncProjection) {
-        const projectedDocument = createRenderableProjectionFromCanonical(action.document);
+        const projectedDocument = createRenderableDocument(action.document);
         return syncCanonicalFromProjection(
           { ...state, canonicalDocument: action.document, compatibilityWarnings: action.warnings ?? [] },
           documentsEqual(projectedDocument, state.document) ? state.document : projectedDocument,

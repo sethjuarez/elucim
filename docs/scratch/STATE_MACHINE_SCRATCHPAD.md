@@ -328,7 +328,7 @@ Rules:
 - Existing v1/legacy documents with root `durationInFrames` should migrate safely.
 - If a document has timelines, preserve each timeline's own duration.
 - If old content relied only on root duration, record that in migration notes or infer an explicit timeline/export setting rather than treating the canvas as timed.
-- Validation should reject v2 documents that put `durationInFrames` on `scene`.
+- Validation should reject Elucim Documents that put `durationInFrames` on `scene`.
 
 ## Multiple machines
 

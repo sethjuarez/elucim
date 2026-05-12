@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { RenderableDocument, ElucimDocument, ElucimTimelineFrameSelection } from '@elucim/dsl';
-import { applyTimelineFrames, migrateV2ToV1 as toRenderableDocument } from '@elucim/dsl';
+import { applyTimelineFrames, createRenderableDocument } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider, useEditorState } from './state/EditorProvider';
@@ -227,7 +227,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
     if (!liveDocument || !previewTimelineFrames?.length) return undefined;
     const renderableFrames = previewTimelineFrames.filter(frame => liveDocument.timelines?.[frame.timelineId]);
     if (renderableFrames.length === 0) return undefined;
-    return toRenderableDocument(applyTimelineFrames(liveDocument, renderableFrames));
+    return createRenderableDocument(applyTimelineFrames(liveDocument, renderableFrames));
   }, [previewTimelineFrames, liveDocument]);
   const selectWorkspace = (nextWorkspace: EditorWorkspace) => {
     if (nextWorkspace !== 'animate' && state.isPlaying) {

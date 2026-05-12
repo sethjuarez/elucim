@@ -24,7 +24,7 @@ import {
   getInitialStateSnapshot,
   getStateMachineVisualFrames,
   transitionStateMachine,
-  validateV2,
+  validateDocument,
 } from '../index';
 
 describe('agent authoring API', () => {
@@ -43,7 +43,7 @@ describe('agent authoring API', () => {
         children: [],
       },
     });
-    expect(validateV2(doc).valid).toBe(true);
+    expect(validateDocument(doc).valid).toBe(true);
   });
 
   it('adds elements with stable ids and semantic intent', () => {
@@ -65,7 +65,7 @@ describe('agent authoring API', () => {
       role: 'title',
       intent: { purpose: 'Introduce the concept' },
     });
-    expect(validateV2(result.document).valid).toBe(true);
+    expect(validateDocument(result.document).valid).toBe(true);
   });
 
   it('builds reveal timelines and a default state machine without wrapper animation props', () => {
@@ -84,7 +84,7 @@ describe('agent authoring API', () => {
     expect(withElements.stateMachines?.main.states.intro.timeline).toBe('intro');
     expect(withElements.elements.title.props).not.toHaveProperty('fadeIn');
     expect(withElements.elements.title.props).not.toHaveProperty('draw');
-    expect(validateV2(withElements).valid).toBe(true);
+    expect(validateDocument(withElements).valid).toBe(true);
   });
 
   it('authors Objects, state-machine-embedded animation, and agent-readable validation in one document workflow', () => {

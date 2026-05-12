@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ElucimDocument } from '../schema/types';
 import type { ElucimV2Document } from '../v2/types';
-import { migrateV2ToV1 } from '../v2/migrate';
+import { migrateV2ToV1 as createRenderableDocument } from '../v2/migrate';
 import { applyTimelineFrames } from '../v2/timeline';
 import {
   advanceStateMachineRunFrame,
@@ -99,7 +99,7 @@ export function useStateMachineRuntime({
   }, [effectiveRun?.playing, enabled, onPlayStateChange, shouldLoop, stateMachineId, v2StateMachineDoc]);
 
   const renderableDsl = enabled && v2StateMachineDoc && effectiveRun
-    ? stateMachineRunToRenderableV1(v2StateMachineDoc, effectiveRun)
+    ? stateMachineRunToRenderableDocument(v2StateMachineDoc, effectiveRun)
     : undefined;
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -158,9 +158,9 @@ function getV2StateMachineDocument(dsl: ElucimDocument | ElucimV2Document): Eluc
   return dsl.version === '2.0' && dsl.defaultStateMachine ? dsl : undefined;
 }
 
-function stateMachineRunToRenderableV1(doc: ElucimV2Document, run: ElucimV2StateMachineRun): ElucimDocument {
+function stateMachineRunToRenderableDocument(doc: ElucimV2Document, run: ElucimV2StateMachineRun): ElucimDocument {
   const frames = getStateMachineRunVisualFrames(doc, run);
-  return migrateV2ToV1(frames.length > 0 ? applyTimelineFrames(doc, frames) : doc);
+  return createRenderableDocument(frames.length > 0 ? applyTimelineFrames(doc, frames) : doc);
 }
 
 function getRunDuration(doc: ElucimV2Document | undefined, run: ElucimV2StateMachineRun): number {

@@ -82,9 +82,9 @@ export function validateForAgent(doc: unknown): ElucimV2AgentValidationResult {
   const legacyHint = isLegacyRootlessDocument(doc)
     ? [{
       path: '',
-      message: 'Legacy rootless visual detected. Convert it with normalizeToV2() before validating or editing as v2.',
+      message: 'Legacy rootless visual detected. Convert it with normalizeDocument() before validating or editing as an Elucim Document.',
       code: 'legacy-rootless-document' as const,
-      suggestions: ['Use normalizeToV2(doc) to wrap elements in a player scene and migrate to version "2.0".'],
+      suggestions: ['Use normalizeDocument(doc) to wrap elements in a player scene and migrate to the Elucim Document format.'],
     }]
     : [];
   return {
@@ -118,7 +118,7 @@ function toRepairHint(error: ValidationError, doc: unknown): ElucimV2RepairHint 
     return { path: error.path, message: error.message, code: 'missing-state' };
   }
   if (error.path === 'version') {
-    return { path: error.path, message: error.message, code: 'unsupported-version', suggestions: ['Use normalizeToV2(doc) to migrate supported legacy/v1 formats.'] };
+    return { path: error.path, message: error.message, code: 'unsupported-version', suggestions: ['Use normalizeDocument(doc) to migrate supported renderable compatibility formats.'] };
   }
   if (error.path.includes('.tracks') || error.path.startsWith('timelines.')) {
     return { path: error.path, message: error.message, code: 'invalid-timeline', suggestions: knownIds };

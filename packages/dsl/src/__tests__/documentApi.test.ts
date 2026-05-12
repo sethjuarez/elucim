@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyCommand,
+  createDocumentFromRenderable,
+  createRenderableDocument,
+  normalizeDocument,
   summarizeDocument,
+  toRenderableDocument,
   validateDocument,
   type ElucimCommand,
   type ElucimDocument,
@@ -51,5 +55,29 @@ describe('canonical Elucim Document API', () => {
     expect(summary.elementCount).toBe(1);
     expect(summary.timelines).toEqual(['intro']);
     expect(summary.stateMachines).toEqual(['presentation']);
+  });
+
+  it('exposes canonical document normalization and renderable compatibility helpers', () => {
+    const renderable = {
+      version: '1.0' as const,
+      root: {
+        type: 'player' as const,
+        width: 640,
+        height: 360,
+        durationInFrames: 30,
+        children: [{ id: 'label', type: 'text' as const, content: 'Renderable input' }],
+      },
+    };
+
+    const normalized = normalizeDocument(renderable);
+    const canonical = createDocumentFromRenderable(renderable);
+    const renderableProjection = createRenderableDocument(canonical);
+    const renderableFromUnknown = toRenderableDocument(canonical);
+
+    expect(normalized.document).toEqual(canonical);
+    expect(normalized.migrated).toBe(true);
+    expect(validateDocument(canonical).valid).toBe(true);
+    expect(renderableProjection.root.children).toHaveLength(1);
+    expect(renderableFromUnknown.root.children).toHaveLength(1);
   });
 });
