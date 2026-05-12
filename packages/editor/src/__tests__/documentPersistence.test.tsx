@@ -5,7 +5,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ElucimDocument } from '@elucim/dsl';
-import { normalizeToV2 as normalizeToCanonicalDocument, toRenderableV1 as toRenderableDocument, validateV2 as validateCanonicalDocument } from '@elucim/dsl';
+import { normalizeDocument, toRenderableDocument, validateDocument } from '@elucim/dsl';
 import { ElucimEditor } from '../ElucimEditor';
 
 const canonicalFixture: ElucimDocument = {
@@ -63,7 +63,7 @@ describe('canonical document editor persistence', () => {
   afterEach(() => cleanup());
 
   it('keeps legacy-rootless visuals valid through edit, canonical callback, validation, and renderable conversion', async () => {
-    const normalized = normalizeToCanonicalDocument({
+    const normalized = normalizeDocument({
       version: 1,
       title: 'Legacy visual',
       elements: [{ type: 'text', id: 'caption', text: 'Before' }],
@@ -80,7 +80,7 @@ describe('canonical document editor persistence', () => {
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.elements.caption.props.content).toBe('After');
-      expect(validateCanonicalDocument(latest).valid).toBe(true);
+      expect(validateDocument(latest).valid).toBe(true);
       expect(toRenderableDocument(latest).root.children).toHaveLength(2);
     });
   });
@@ -105,7 +105,7 @@ describe('canonical document editor persistence', () => {
       expect(latest?.elements['hero-title'].intent?.role).toBe('title');
       expect(latest?.timelines?.intro.tracks[0].target).toBe('hero-title');
       expect(latest?.stateMachines?.deck.states.intro.timeline).toBe('intro');
-      expect(validateCanonicalDocument(latest).valid).toBe(true);
+      expect(validateDocument(latest).valid).toBe(true);
     });
     expect(onCompatibilityWarnings.mock.calls.flat().join('\n')).toContain('renamed to "hero-title"');
   });
@@ -135,7 +135,7 @@ describe('canonical document editor persistence', () => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.elements.title.props.content).toBe('Updated title');
       expect(latest?.elements.title.layout).toMatchObject({ x: 100, y: 120, scale: 1.15, role: 'callout' });
-      expect(validateCanonicalDocument(latest).valid).toBe(true);
+      expect(validateDocument(latest).valid).toBe(true);
     });
   });
 
@@ -208,7 +208,7 @@ describe('canonical document editor persistence', () => {
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.metadata?.polishLevel).toBe('refined');
-      expect(validateCanonicalDocument(latest).valid).toBe(true);
+      expect(validateDocument(latest).valid).toBe(true);
     });
   });
 
@@ -250,7 +250,7 @@ describe('canonical document editor persistence', () => {
       expect(latest?.timelines?.intro).toBeUndefined();
       expect(latest?.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'intro', trigger: 'start' });
       expect(latest?.stateMachines?.deck.states.intro.timeline).toBeUndefined();
-      expect(validateCanonicalDocument(latest).valid).toBe(true);
+      expect(validateDocument(latest).valid).toBe(true);
     });
     const warnings = onCompatibilityWarnings.mock.calls.flat().join('\n');
     expect(warnings).toContain('references missing timeline "intro"');

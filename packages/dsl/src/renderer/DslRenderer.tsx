@@ -2,7 +2,7 @@ import React, { forwardRef, useImperativeHandle, useMemo, useRef, useSyncExterna
 import { validate } from '../validator/validate';
 import type { ElucimDocument as RenderableDocument } from '../schema/types';
 import type { ElucimV2Document as ElucimDocument } from '../v2/types';
-import { migrateV2ToV1, toRenderableV1 } from '../v2/migrate';
+import { migrateV2ToV1 as createRenderableDocument, toRenderableV1 as toRenderableDocument } from '../v2/migrate';
 import { getDocumentLinearDuration } from '../v2/duration';
 import { applyTimelineFrames, type ElucimV2TimelineFrameSelection } from '../v2/timeline';
 import { getInitialStateSnapshot, getStateMachineVisualFrames } from '../v2/stateMachine';
@@ -254,7 +254,7 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
   ) as React.CSSProperties;
 
   const posterRenderableDsl = poster !== undefined ? resolvePosterRenderableDsl(poster, dsl) : undefined;
-  const renderableDsl = stateMachineRuntime.renderableDsl ?? posterRenderableDsl ?? toRenderableV1(dsl);
+  const renderableDsl = stateMachineRuntime.renderableDsl ?? posterRenderableDsl ?? toRenderableDocument(dsl);
   const posterOverrides = poster !== undefined && posterRenderableDsl === undefined ? resolvePoster(poster, renderableDsl) : undefined;
   const rootOverrides = stateMachineRuntime.enabled ? { frame: stateMachineRuntime.frameOverride } : posterOverrides;
 
@@ -302,7 +302,7 @@ function resolvePosterRenderableDsl(poster: 'first' | 'last' | number, dsl: Eluc
   const frame = resolveV2PosterFrame(poster, dsl);
   const frames = getV2PosterTimelineFrames(dsl, frame);
   const posterDoc = frames.length > 0 ? applyTimelineFrames(dsl, frames) : dsl;
-  return migrateV2ToV1(posterDoc);
+  return createRenderableDocument(posterDoc);
 }
 
 function resolveV2PosterFrame(poster: 'first' | 'last' | number, dsl: ElucimDocument): number {

@@ -8,7 +8,7 @@ import {
   lintMotion,
   planMotionBeats,
   previewBeatDiffs,
-  validateV2,
+  validateDocument,
   type ElucimDocument,
 } from '../index';
 
@@ -59,7 +59,7 @@ describe('semantic motion helpers', () => {
     expect(beats[3].start + beats[3].duration).toBe(360);
   });
 
-  it('compiles semantic reveal flow and connector path presets to v2 timelines', () => {
+  it('compiles semantic reveal flow and connector path presets to document timelines', () => {
     const reveal = createSemanticMotionTimeline(doc, {
       id: 'intro-flow',
       preset: 'revealFlow',
@@ -76,7 +76,7 @@ describe('semantic motion helpers', () => {
     expect(reveal.tracks.filter(track => track.property === 'opacity').map(track => track.target)).toEqual(['start', 'decision', 'end']);
     expect(reveal.tracks.some(track => track.property === 'translate')).toBe(true);
     expect(trace.tracks).toContainEqual(expect.objectContaining({ target: 'start-to-decision', property: 'opacity' }));
-    expect(validateV2({ ...doc, timelines: { [reveal.id]: reveal, [trace.id]: trace } }).valid).toBe(true);
+    expect(validateDocument({ ...doc, timelines: { [reveal.id]: reveal, [trace.id]: trace } }).valid).toBe(true);
   });
 
   it('auto-staggers by rank without hand-computing offsets', () => {
@@ -112,7 +112,7 @@ describe('semantic motion helpers', () => {
 
     expect(Object.keys(motion.timelines)).toEqual(['agent-status-idle', 'agent-status-thinking', 'agent-status-done']);
     expect(motion.stateMachine.transitions?.[1]).toMatchObject({ from: 'idle', to: 'thinking', exitTime: 1 });
-    expect(validateV2(document).valid).toBe(true);
+    expect(validateDocument(document).valid).toBe(true);
   });
 
   it('lints motion and returns beat-level preview diffs', () => {

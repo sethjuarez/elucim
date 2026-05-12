@@ -1,5 +1,5 @@
 import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
-import { migrateV1ToV2 as createCanonicalDocumentFromRenderable, migrateV2ToV1 as createRenderableProjectionFromCanonical, validate } from '@elucim/dsl';
+import { createDocumentFromRenderable, createRenderableDocument, validate } from '@elucim/dsl';
 
 /**
  * Returns the renderable tree consumed by the current editor reducer.
@@ -11,9 +11,9 @@ export function normalizeInitialDocument(document: RenderableDocument | ElucimDo
   if (!result.valid) {
     throw new Error(`Invalid editor document: ${result.errors.map(error => `${error.path}: ${error.message}`).join('; ')}`);
   }
-  return createRenderableProjectionFromCanonical(document);
+  return createRenderableDocument(document);
 }
 
 export function createDocumentFromEditorState(doc: RenderableDocument): ElucimDocument {
-  return createCanonicalDocumentFromRenderable(doc);
+  return createDocumentFromRenderable(doc);
 }

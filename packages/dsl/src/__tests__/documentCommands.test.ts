@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyCommand, validateV2 } from '../index';
+import { applyCommand, validateDocument } from '../index';
 import type { ElucimDocument } from '../index';
 
 function doc(): ElucimDocument {
@@ -20,7 +20,7 @@ function doc(): ElucimDocument {
   };
 }
 
-describe('v2 command API', () => {
+describe('document command API', () => {
   it('adds an element under a parent without mutating the source document', () => {
     const source = doc();
     const result = applyCommand(source, {
@@ -32,7 +32,7 @@ describe('v2 command API', () => {
     expect(source.elements.subtitle).toBeUndefined();
     expect(result.document.elements.subtitle.parentId).toBe('group');
     expect(result.document.elements.group.children).toEqual(['title', 'subtitle']);
-    expect(validateV2(result.document).valid).toBe(true);
+    expect(validateDocument(result.document).valid).toBe(true);
   });
 
   it('updates props and layout shallowly', () => {
@@ -57,7 +57,7 @@ describe('v2 command API', () => {
     expect(result.document.elements.group.children).toEqual([]);
     expect(result.document.elements.card.children).toEqual(['title']);
     expect(result.document.elements.title.parentId).toBe('card');
-    expect(validateV2(result.document).valid).toBe(true);
+    expect(validateDocument(result.document).valid).toBe(true);
   });
 
   it('reorders elements within their current sibling list', () => {
@@ -71,7 +71,7 @@ describe('v2 command API', () => {
 
     expect(result.document.elements.group.children).toEqual(['subtitle', 'title']);
     expect(result.document.elements.title.parentId).toBe('group');
-    expect(validateV2(result.document).valid).toBe(true);
+    expect(validateDocument(result.document).valid).toBe(true);
   });
 
   it('deletes descendants and cleans timeline tracks', () => {
@@ -81,7 +81,7 @@ describe('v2 command API', () => {
     expect(result.document.elements.group).toBeUndefined();
     expect(result.document.elements.title).toBeUndefined();
     expect(result.document.timelines?.intro.tracks).toEqual([]);
-    expect(validateV2(result.document).valid).toBe(true);
+    expect(validateDocument(result.document).valid).toBe(true);
   });
 
   it('throws for unsafe reparent cycles', () => {

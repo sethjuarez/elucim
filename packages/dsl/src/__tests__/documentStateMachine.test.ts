@@ -7,7 +7,7 @@ import {
   getStateMachineVisualFrames,
   startStateMachineRun,
   transitionStateMachine,
-  validateV2,
+  validateDocument,
   type ElucimDocument,
 } from '../index';
 
@@ -48,7 +48,7 @@ const doc: ElucimDocument = {
   },
 };
 
-describe('v2 state machines', () => {
+describe('document state machines', () => {
   it('returns the initial state snapshot with available events', () => {
     const snapshot = getInitialStateSnapshot(doc, 'presentation');
 
@@ -196,7 +196,7 @@ describe('v2 state machines', () => {
   });
 
   it('validates transition targets', () => {
-    const result = validateV2({
+    const result = validateDocument({
       ...doc,
       stateMachines: {
         presentation: {
@@ -219,7 +219,7 @@ describe('v2 state machines', () => {
   });
 
   it('validates transition event and Next rules', () => {
-    const result = validateV2({
+    const result = validateDocument({
       ...doc,
       stateMachines: {
         presentation: {
@@ -247,7 +247,7 @@ describe('v2 state machines', () => {
   });
 
   it('requires exactly one Entry edge to a real state', () => {
-    const withoutEntry = validateV2({
+    const withoutEntry = validateDocument({
       ...doc,
       stateMachines: {
         presentation: {
@@ -259,7 +259,7 @@ describe('v2 state machines', () => {
     expect(withoutEntry.valid).toBe(false);
     expect(withoutEntry.errors.map(error => error.message)).toContain('Entry must have exactly one outgoing transition');
 
-    const withMultipleEntries = validateV2({
+    const withMultipleEntries = validateDocument({
       ...doc,
       stateMachines: {
         presentation: {
@@ -276,7 +276,7 @@ describe('v2 state machines', () => {
   });
 
   it('requires Entry edges to declare a valid start event', () => {
-    const result = validateV2({
+    const result = validateDocument({
       ...doc,
       stateMachines: {
         presentation: {
@@ -298,7 +298,7 @@ describe('v2 state machines', () => {
   });
 
   it('validates keyed events by event preset and key metadata', () => {
-    const result = validateV2({
+    const result = validateDocument({
       ...doc,
       stateMachines: {
         presentation: {

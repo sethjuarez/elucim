@@ -17,7 +17,7 @@ import {
   createTextBlockPreset,
   inspectPolishHeuristics,
   suggestDocumentNudges,
-  validateV2,
+  validateDocument,
   type ElucimDocument,
 } from '../index';
 
@@ -43,7 +43,7 @@ describe('document polish nudges', () => {
     const result = applyNudge(doc, intro);
 
     expect(result.document.timelines?.['auto-intro'].tracks).toHaveLength(2);
-    expect(validateV2(result.document).valid).toBe(true);
+    expect(validateDocument(result.document).valid).toBe(true);
     expect(doc.timelines).toBeUndefined();
   });
 
@@ -91,7 +91,7 @@ describe('document polish nudges', () => {
       { id: 'b', x: expect.any(Number), y: expect.any(Number) },
       { id: 'c', x: expect.any(Number), y: expect.any(Number) },
     ]);
-    expect(validateV2(next).valid).toBe(true);
+    expect(validateDocument(next).valid).toBe(true);
   });
 
   it('exposes raw heuristic evidence for agents to interrogate', () => {
@@ -166,7 +166,7 @@ describe('document polish nudges', () => {
 
     expect(presetDoc.elements['agent-note'].role).toBe('callout');
     expect(presetDoc.elements['agent-note-card'].props.fill).toBe('$surface');
-    expect(validateV2(presetDoc).valid).toBe(true);
+    expect(validateDocument(presetDoc).valid).toBe(true);
   });
 
   it('creates editable composite helpers as ordinary grouped elements', () => {
@@ -223,7 +223,7 @@ describe('document polish nudges', () => {
       intent: { flowFrom: ['draft'], flowTo: ['notes'], relationship: 'flows-to' },
     });
     expect(presetDoc.elements['draft-to-notes-curve'].type).toBe('bezierCurve');
-    expect(validateV2(presetDoc).valid).toBe(true);
+    expect(validateDocument(presetDoc).valid).toBe(true);
   });
 
   it('creates the remaining suggestion-table composites as editable elements', () => {
@@ -284,6 +284,6 @@ describe('document polish nudges', () => {
     expect(presetDoc.elements.tradeoffs.role).toBe('comparisonTable');
     expect(presetDoc.elements['auto-layout'].role).toBe('autoLayoutGroup');
     expect(presetDoc.timelines?.['progressive-reveal'].tracks).toHaveLength(2);
-    expect(validateV2(presetDoc).valid).toBe(true);
+    expect(validateDocument(presetDoc).valid).toBe(true);
   });
 });

@@ -35,8 +35,15 @@ export type {
   ElucimTimelinePatch,
   ElucimTimelineTrack,
   ElucimTransition,
+  NormalizeDocumentResult,
 } from './document';
-export { validateDocument } from './document';
+export {
+  createDocumentFromRenderable,
+  createRenderableDocument,
+  normalizeDocument,
+  toRenderableDocument,
+  validateDocument,
+} from './document';
 
 export type {
   ElucimDocument as RenderableDocument,

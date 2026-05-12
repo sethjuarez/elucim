@@ -1,6 +1,6 @@
 import { renderToSvgString } from './renderToSvgString';
 import { resolveColor, SEMANTIC_TOKENS } from './resolveColor';
-import { toRenderableV1 } from '../v2/migrate';
+import { toRenderableV1 as toRenderableDocument } from '../v2/migrate';
 import type { ElucimDocument as RenderableDocument } from '../schema/types';
 import type { ElucimV2Document as ElucimDocument } from '../v2/types';
 
@@ -61,7 +61,7 @@ export async function renderToPng(
   options?: RenderToPngOptions,
 ): Promise<Uint8Array> {
   const scale = options?.scale ?? 2;
-  const renderable = toRenderableV1(dsl);
+  const renderable = toRenderableDocument(dsl);
 
   // 1. Render DSL → HTML string containing <svg> (server-side, no DOM needed)
   const htmlString = renderToSvgString(dsl, frame, {

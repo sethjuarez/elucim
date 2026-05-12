@@ -1,5 +1,5 @@
 import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
-import { migrateV1ToV2, validate } from '@elucim/dsl';
+import { createDocumentFromRenderable, validate } from '@elucim/dsl';
 
 export const ELUCIM_FILE_EXTENSION = 'elc';
 export const ELUCIM_FILE_FILTERS = [
@@ -46,8 +46,8 @@ export function parseDocument(contents: string): ParsedDocument {
       throw new Error(formatValidationErrors(result.errors));
     }
     return {
-      document: migrateV1ToV2(parsed as RenderableDocument),
-      warnings: ['Imported a legacy v1 document and converted it to Elucim v2.'],
+      document: createDocumentFromRenderable(parsed as RenderableDocument),
+      warnings: ['Imported a renderable compatibility document and converted it to an Elucim Document.'],
     };
   }
 
