@@ -28,12 +28,13 @@ import {
   type ElucimBeatPreviewOptions,
   type ElucimDocument,
   type ElucimDocumentNudge,
+  type ElucimElement,
   type ElucimMotionBeat,
   type ElucimSemanticMotionPreset,
-  type ElucimV2Element,
-  type ElucimV2Timeline,
+  type ElucimTimeline,
 } from '@elucim/dsl';
 import {
+  applyAgentCommands,
   evaluateSceneForAgent,
   getAgentOperationCatalog,
   summarizeDocument,
@@ -112,7 +113,12 @@ const COMMANDS = [
   {
     name: 'add-beat',
     usage: 'elucim add-beat <file> --id intro --preset revealFlow --targets a,b,c --duration 60 --out <file> --json',
-    description: 'Compile a semantic animation beat into an ordinary v2 timeline.',
+    description: 'Compile a semantic animation beat into an ordinary Elucim timeline.',
+  },
+  {
+    name: 'create-state-machine',
+    usage: 'elucim create-state-machine <file> --timeline intro --id presentation --start onStart --exit-to exit --out <file> --json',
+    description: 'Embed an existing timeline into a state machine so agents can author playable animated documents; omit --exit-to to hold the final state.',
   },
   {
     name: 'animate-flow',
@@ -179,6 +185,8 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
         return await addCardGridCommand(args, io);
       case 'add-beat':
         return await addBeatCommand(args, io);
+      case 'create-state-machine':
+        return await createStateMachineCommand(args, io);
       case 'animate-flow':
         return await animateFlowCommand(args, io);
       case 'reveal-group':
@@ -465,6 +473,37 @@ async function addBeatCommand(args: ParsedArgs, io: CliIo): Promise<number> {
   const outputPath = await maybeWriteDocument(args, loaded.path, document);
   writeTimelineOutput(args, io, 'add-beat', loaded.path, outputPath, before, document, timeline);
   return 0;
+}
+
+async function createStateMachineCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const before = loaded.document;
+  const explicitId = flagValue(args, 'id');
+  if (explicitId && before.stateMachines?.[explicitId]) {
+    throw new Error(`State machine "${explicitId}" already exists.`);
+  }
+  const result = applyAgentCommands(before, [{
+    op: 'createStateMachine',
+    stateMachine: {
+      id: explicitId,
+      timelineId: requiredFlag(args, 'timeline'),
+      start: stateMachineStart(args),
+      key: flagValue(args, 'key'),
+      exitTo: stateMachineExit(args),
+    },
+  }]);
+  const outputPath = await maybeWriteDocument(args, loaded.path, result.document);
+  writeOutput(args, io, {
+    command: 'create-state-machine',
+    file: loaded.path,
+    outputPath,
+    changed: result.changed,
+    summaries: result.summaries,
+    validation: result.validation,
+    diff: diffDocuments(before, result.document),
+    document: shouldIncludeDocument(args) ? result.document : undefined,
+  });
+  return result.validation.valid ? 0 : 1;
 }
 
 async function animateFlowCommand(args: ParsedArgs, io: CliIo): Promise<number> {
@@ -774,6 +813,20 @@ function reducedMotionMode(args: ParsedArgs): 'static' | 'minimal' | undefined {
   throw new Error('--mode must be static or minimal.');
 }
 
+function stateMachineStart(args: ParsedArgs): 'onStart' | 'onClick' | 'onKey' | undefined {
+  const value = flagValue(args, 'start');
+  if (value === undefined) return undefined;
+  if (value === 'onStart' || value === 'onClick' || value === 'onKey') return value;
+  throw new Error('--start must be onStart, onClick, or onKey.');
+}
+
+function stateMachineExit(args: ParsedArgs): 'exit' | 'hold' | undefined {
+  const value = flagValue(args, 'exit-to');
+  if (value === undefined) return undefined;
+  if (value === 'exit' || value === 'hold') return value;
+  throw new Error('--exit-to must be exit or hold.');
+}
+
 function beatPlan(args: ParsedArgs, fallbackDuration = 120): ElucimMotionBeat[] {
   const raw = flagValue(args, 'beats-json');
   if (raw) {
@@ -797,7 +850,7 @@ function frameList(args: ParsedArgs, fallbackDuration = 120): number[] {
   return [...new Set(frames.map(frame => Math.round(frame)))].sort((a, b) => a - b);
 }
 
-function upsertTimelineDocument(doc: ElucimDocument, timeline: ElucimV2Timeline): ElucimDocument {
+function upsertTimelineDocument(doc: ElucimDocument, timeline: ElucimTimeline): ElucimDocument {
   const next = {
     ...doc,
     timelines: { ...doc.timelines, [timeline.id]: timeline },
@@ -810,7 +863,7 @@ function upsertTimelineDocument(doc: ElucimDocument, timeline: ElucimV2Timeline)
   return next;
 }
 
-function addCompositeElements(doc: ElucimDocument, elements: ElucimV2Element[]): ElucimDocument {
+function addCompositeElements(doc: ElucimDocument, elements: ElucimElement[]): ElucimDocument {
   const existing = new Set(Object.keys(doc.elements));
   const duplicate = elements.find(element => existing.has(element.id));
   if (duplicate) throw new Error(`Element "${duplicate.id}" already exists.`);
@@ -843,7 +896,7 @@ function writeCompositeOutput(
   outputPath: string | undefined,
   before: ElucimDocument,
   document: ElucimDocument,
-  elements: ElucimV2Element[],
+  elements: ElucimElement[],
 ) {
   writeOutput(args, io, {
     command,
@@ -863,7 +916,7 @@ function writeTimelineOutput(
   outputPath: string | undefined,
   before: ElucimDocument,
   document: ElucimDocument,
-  timeline: ElucimV2Timeline,
+  timeline: ElucimTimeline,
 ) {
   writeOutput(args, io, {
     command,
