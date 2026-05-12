@@ -1,4 +1,4 @@
-import type { RenderableDocument as ElucimDocument, ElementNode, SceneNode, PlayerNode } from '@elucim/dsl';
+import type { ElucimDocument as CanonicalElucimDocument, RenderableDocument as ElucimDocument, ElementNode, SceneNode, PlayerNode } from '@elucim/dsl';
 
 // ─── Editor State ──────────────────────────────────────────────────────────
 
@@ -16,6 +16,10 @@ export interface PanelPosition {
 export interface EditorState {
   /** The document being edited */
   document: ElucimDocument;
+  /** Canonical Elucim Document shadow model carried while the canvas still uses a renderable projection. */
+  canonicalDocument?: CanonicalElucimDocument;
+  /** Warnings from adapting the current editor projection back to the canonical document. */
+  compatibilityWarnings: string[];
   /** IDs of currently selected elements (uses id field or generated path) */
   selectedIds: string[];
   /** Canvas viewport (pan/zoom) */
@@ -65,6 +69,7 @@ export type EditorAction =
   | { type: 'SELECT_TOGGLE'; id: string }
   | { type: 'DESELECT_ALL' }
   | { type: 'SET_DOCUMENT'; document: ElucimDocument }
+  | { type: 'SET_CANONICAL_DOCUMENT'; document?: CanonicalElucimDocument; warnings?: string[] }
   | { type: 'UPDATE_ELEMENT'; id: string; changes: Partial<ElementNode> }
   | { type: 'UPDATE_CANVAS'; changes: Record<string, any> }
   | { type: 'ADD_ELEMENT'; element: ElementNode; parentPath?: string }
@@ -133,9 +138,11 @@ export function createDefaultDocument(): ElucimDocument {
   };
 }
 
-export function createInitialState(document?: ElucimDocument, initialFrame?: number): EditorState {
+export function createInitialState(document?: ElucimDocument, initialFrame?: number, canonicalDocument?: CanonicalElucimDocument): EditorState {
   return {
     document: document ?? createDefaultDocument(),
+    canonicalDocument,
+    compatibilityWarnings: [],
     selectedIds: [CANVAS_ID],
     viewport: { x: 0, y: 0, zoom: 1 },
     past: [],

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { editorReducer, findElementById, collectAllIds } from '../state/reducer';
 import { CANVAS_ID, createInitialState, createDefaultDocument } from '../state/types';
 import type { EditorState } from '../state/types';
-import type { RenderableDocument as ElucimDocument, CircleNode, GraphNode, MatrixNode, RectNode, LineNode, TextNode } from '@elucim/dsl';
+import type { ElucimDocument as CanonicalElucimDocument, RenderableDocument as ElucimDocument, CircleNode, GraphNode, MatrixNode, RectNode, LineNode, TextNode } from '@elucim/dsl';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -55,6 +55,30 @@ describe('createInitialState', () => {
     };
     const state = createInitialState(doc);
     expect(state.document.root.type).toBe('scene');
+  });
+
+  it('carries a canonical Elucim Document shadow model', () => {
+    const renderableDoc: ElucimDocument = {
+      version: '1.0',
+      root: { type: 'scene', width: 400, height: 300, durationInFrames: 60, children: [circle1] },
+    };
+    const canonicalDocument: CanonicalElucimDocument = {
+      version: '2.0',
+      metadata: { title: 'Canonical source' },
+      scene: { type: 'player', width: 400, height: 300, children: ['c1'] },
+      elements: {
+        c1: { id: 'c1', type: 'circle', props: { type: 'circle', cx: 100, cy: 100, r: 50 } },
+      },
+      timelines: {
+        intro: { id: 'intro', duration: 30, tracks: [{ target: 'c1', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }] },
+      },
+    };
+
+    const state = createInitialState(renderableDoc, undefined, canonicalDocument);
+
+    expect(state.canonicalDocument).toBe(canonicalDocument);
+    expect(state.canonicalDocument?.metadata?.title).toBe('Canonical source');
+    expect(state.canonicalDocument?.timelines?.intro.tracks[0].target).toBe('c1');
   });
 });
 
@@ -144,6 +168,28 @@ describe('document mutation actions', () => {
     const root = next.document.root as any;
     expect(root.children).toHaveLength(1);
     expect(root.children[0].id).toBe('c1');
+  });
+
+  it('SET_CANONICAL_DOCUMENT updates canonical state without replacing the canvas projection', () => {
+    const state = stateWithElements(circle1);
+    const canonicalDocument: CanonicalElucimDocument = {
+      version: '2.0',
+      metadata: { title: 'Updated canonical model' },
+      scene: { type: 'player', width: 800, height: 600, children: ['c1'] },
+      elements: {
+        c1: { id: 'c1', type: 'circle', props: { type: 'circle', cx: 100, cy: 100, r: 50 } },
+      },
+    };
+
+    const next = editorReducer(state, {
+      type: 'SET_CANONICAL_DOCUMENT',
+      document: canonicalDocument,
+      warnings: ['adapter warning'],
+    });
+
+    expect(next.document).toBe(state.document);
+    expect(next.canonicalDocument).toBe(canonicalDocument);
+    expect(next.compatibilityWarnings).toEqual(['adapter warning']);
   });
 
   it('DELETE_ELEMENTS removes elements and clears selection', () => {

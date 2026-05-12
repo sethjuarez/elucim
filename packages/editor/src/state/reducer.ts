@@ -472,6 +472,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'SET_DOCUMENT':
       return { ...state, document: action.document, selectedIds: [] };
 
+    case 'SET_CANONICAL_DOCUMENT':
+      return {
+        ...state,
+        canonicalDocument: action.document,
+        compatibilityWarnings: action.warnings ?? [],
+      };
+
     case 'UPDATE_ELEMENT': {
       const doc = cloneDoc(state.document);
       const loc = findElementById(doc.root, action.id);
