@@ -112,24 +112,40 @@ export function restoreDocumentFromEditorState(doc: RenderableDocument, sourceDo
 
 export function mapSourceIdsToRestoredIds(sourceDocument: ElucimDocument, restoredDocument: ElucimDocument): Map<string, string> {
   const idMap = new Map<string, string>();
+  const restoredIds = new Set(Object.keys(restoredDocument.elements));
+  const usedRestoredIds = new Set<string>();
+  for (const sourceId of Object.keys(sourceDocument.elements)) {
+    if (restoredIds.has(sourceId)) {
+      idMap.set(sourceId, sourceId);
+      usedRestoredIds.add(sourceId);
+    }
+  }
   const visit = (sourceIds: string[], restoredIds: string[]) => {
     const count = Math.min(sourceIds.length, restoredIds.length);
     for (let index = 0; index < count; index += 1) {
       const sourceId = sourceIds[index];
       const restoredId = restoredIds[index];
+      const mappedRestoredId = idMap.get(sourceId);
       const sourceElement = sourceDocument.elements[sourceId];
       const restoredElement = restoredDocument.elements[restoredId];
+      if (mappedRestoredId) {
+        if (mappedRestoredId === restoredId && sourceElement && restoredElement) {
+          visit(sourceElement.children ?? [], restoredElement.children ?? []);
+        }
+        continue;
+      }
+      if (usedRestoredIds.has(restoredId)) {
+        continue;
+      }
       if (!sourceElement || !restoredElement) continue;
       if (sourceId !== restoredId && sourceDocument.elements[restoredId]) {
         continue;
       }
       idMap.set(sourceId, restoredId);
+      usedRestoredIds.add(restoredId);
       visit(sourceElement.children ?? [], restoredElement.children ?? []);
     }
   };
   visit(sourceDocument.scene.children, restoredDocument.scene.children);
-  for (const id of Object.keys(sourceDocument.elements)) {
-    if (!idMap.has(id) && restoredDocument.elements[id]) idMap.set(id, id);
-  }
   return idMap;
 }
