@@ -1,16 +1,20 @@
 import type {
-  ElucimV2AnimatableProperty,
-  ElucimV2Element,
-  ElucimV2Intent,
-  ElucimV2Keyframe,
-  ElucimV2Layout,
-  ElucimV2Metadata,
-  ElucimV2StateMachine,
-  ElucimV2Timeline,
-  ElucimV2TimelineTrack,
-} from './v2/types';
-import type { ElucimDocument } from './index';
-import { applyCommand, type ElucimV2Command, type ElucimV2CommandResult } from './v2/commands';
+  ElucimAgentValidationResult,
+  ElucimAnimatableProperty,
+  ElucimCommand,
+  ElucimCommandResult,
+  ElucimDocument,
+  ElucimDocumentSummary,
+  ElucimElement,
+  ElucimIntent,
+  ElucimKeyframe,
+  ElucimLayout,
+  ElucimMetadata,
+  ElucimStateMachine,
+  ElucimTimeline,
+  ElucimTimelineTrack,
+} from './document';
+import { applyCommand } from './v2/commands';
 import { applyNudge, suggestDocumentNudges, type ElucimDocumentNudge } from './v2/nudges';
 import { inspectPolishHeuristics, type ElucimPolishHeuristicReport, type ElucimPolishReport } from './v2/polish';
 import {
@@ -66,20 +70,17 @@ import {
   diffDocuments,
   summarizeDocument,
   validateForAgent,
-  type ElucimV2AgentValidationResult,
-  type ElucimV2DocumentSummary,
   type JsonPatchOperation,
 } from './v2/services';
-import { validateV2 } from './v2/validateV2';
 
 export type AgentDocument = ElucimDocument;
-export type AgentValidationResult = ElucimV2AgentValidationResult;
-export type AgentDocumentSummary = ElucimV2DocumentSummary;
+export type AgentValidationResult = ElucimAgentValidationResult;
+export type AgentDocumentSummary = ElucimDocumentSummary;
 export type AgentMetadata = NonNullable<AgentDocument['metadata']>;
 export type AgentIntent = NonNullable<AgentDocument['elements'][string]['intent']>;
 export type AgentLayout = NonNullable<AgentDocument['elements'][string]['layout']>;
-export type AgentAnimatableProperty = ElucimV2AnimatableProperty;
-export type AgentKeyframe = ElucimV2Keyframe;
+export type AgentAnimatableProperty = ElucimAnimatableProperty;
+export type AgentKeyframe = ElucimKeyframe;
 export type AgentNudge = ElucimDocumentNudge;
 
 export type AgentOperationKind = 'author' | 'validate' | 'inspect' | 'polish' | 'layout' | 'motion';
@@ -107,7 +108,7 @@ const AGENT_OPERATION_CATALOG: readonly AgentOperationDescriptor[] = [
   { name: 'createAutoLayoutGroupPreset', kind: 'author', async: false, description: 'Create an editable group that positions supplied elements in row, column, grid, or stack order.' },
   { name: 'createProgressiveRevealGroupPreset', kind: 'author', async: false, description: 'Create an editable group plus staggered opacity timeline for progressive reveal sequencing.' },
   { name: 'planMotionBeats', kind: 'motion', async: false, description: 'Plan named narration beats/chapters from a frame or seconds budget.' },
-  { name: 'createSemanticMotionTimeline', kind: 'motion', async: false, description: 'Compile semantic motion verbs such as revealFlow, tracePath, handoff, and compareBeforeAfter into ordinary v2 timeline tracks.' },
+  { name: 'createSemanticMotionTimeline', kind: 'motion', async: false, description: 'Compile semantic motion verbs such as revealFlow, tracePath, handoff, and compareBeforeAfter into ordinary Elucim timeline tracks.' },
   { name: 'createAutoStaggerTimeline', kind: 'motion', async: false, description: 'Reveal or pulse ranked/grouped elements without hand-computing keyframe offsets.' },
   { name: 'createStateSnapshotMotion', kind: 'motion', async: false, description: 'Compile named visual states such as idle/thinking/toolRunning/blocked/done into timelines and a state machine.' },
   { name: 'lintMotion', kind: 'motion', async: false, description: 'Detect blank first frames, too-fast transitions, simultaneous overload, hidden labels, flashing, and excessive motion.' },
@@ -458,7 +459,7 @@ export function updateElement(
   id: string,
   patch: AgentElementPatch,
 ): AgentEditResult {
-  return toAgentEditResult(applyCommand(doc, { op: 'updateElement', id, patch: patch as Partial<Omit<ElucimV2Element, 'id'>> }));
+  return toAgentEditResult(applyCommand(doc, { op: 'updateElement', id, patch: patch as Partial<Omit<ElucimElement, 'id'>> }));
 }
 
 export function getElementOrder(doc: AgentDocument, id?: string): AgentElementOrderItem[] {
@@ -536,7 +537,7 @@ export function createStateMachine(doc: AgentDocument, spec: AgentStateMachineSp
       ? [{ id: `${stateId}-exit`, from: stateId, to: 'exit' as const, exitTime: 1 }]
       : []),
   ];
-  const machine: ElucimV2StateMachine = {
+  const machine: ElucimStateMachine = {
     id,
     entry: stateId,
     states: { [stateId]: { timeline: timelineId } },
@@ -564,7 +565,7 @@ export function applyAgentCommand(doc: AgentDocument, command: AgentCommand): Ag
     case 'reorderElement':
     case 'reparentElement':
     case 'updateMetadata':
-      return toAgentEditResult(applyCommand(doc, command as ElucimV2Command));
+      return toAgentEditResult(applyCommand(doc, command as ElucimCommand));
     case 'bringElementForward':
       return bringElementForward(doc, command.id);
     case 'sendElementBackward':
@@ -864,7 +865,7 @@ export function inspectSceneForAgent(
   };
 }
 
-function toElement(spec: AgentElementSpec): ElucimV2Element {
+function toElement(spec: AgentElementSpec): ElucimElement {
   return {
     id: spec.id,
     type: spec.type,
@@ -877,7 +878,7 @@ function toElement(spec: AgentElementSpec): ElucimV2Element {
   };
 }
 
-function toAgentEditResult(result: ElucimV2CommandResult): AgentEditResult {
+function toAgentEditResult(result: ElucimCommandResult): AgentEditResult {
   return {
     document: result.document,
     changed: result.changed,
@@ -885,7 +886,7 @@ function toAgentEditResult(result: ElucimV2CommandResult): AgentEditResult {
   };
 }
 
-function toTimeline(spec: AgentTimelineSpec): ElucimV2Timeline {
+function toTimeline(spec: AgentTimelineSpec): ElucimTimeline {
   return {
     id: spec.id,
     duration: spec.duration,
@@ -913,7 +914,7 @@ function buildRevealTimeline(doc: AgentDocument, spec: AgentRevealTimelineSpec):
   return {
     id: spec.id ?? reserveId('intro', new Set(Object.keys(doc.timelines ?? {}))),
     duration,
-    tracks: targets.flatMap((target, index): ElucimV2TimelineTrack[] => {
+    tracks: targets.flatMap((target, index): ElucimTimelineTrack[] => {
       const start = Math.min(index * stagger, Math.max(0, duration - 1));
       const end = Math.min(duration, start + fadeDuration);
       if (preset === 'draw') return [track(target, 'opacity', [{ frame: start, value: 0 }, { frame: end, value: 1, easing: 'easeOutCubic' }])];
@@ -928,7 +929,7 @@ function buildRevealTimeline(doc: AgentDocument, spec: AgentRevealTimelineSpec):
   };
 }
 
-function track(target: string, property: ElucimV2AnimatableProperty, keyframes: ElucimV2Keyframe[]): ElucimV2TimelineTrack {
+function track(target: string, property: ElucimAnimatableProperty, keyframes: ElucimKeyframe[]): ElucimTimelineTrack {
   return { target, property, keyframes };
 }
 
@@ -1077,7 +1078,7 @@ function inspectFrame(
 }
 
 function inspectElement(
-  element: ElucimV2Element,
+  element: ElucimElement,
   scene: { width: number; height: number },
   background?: string,
 ): AgentInspectedElement {
@@ -1131,7 +1132,7 @@ function resolveSceneSize(doc: AgentDocument): { width: number; height: number }
   return { width: doc.scene.width ?? 800, height: doc.scene.height ?? 600 };
 }
 
-function estimateElementBounds(element: ElucimV2Element): AgentElementBounds | undefined {
+function estimateElementBounds(element: ElucimElement): AgentElementBounds | undefined {
   const props = element.props;
   const layout = element.layout;
   const translate = readNumberTuple(layout?.translate) ?? [0, 0];
@@ -1199,7 +1200,7 @@ function estimateElementBounds(element: ElucimV2Element): AgentElementBounds | u
   return normalizeBounds({ x, y, width, height });
 }
 
-function readOpacity(element: ElucimV2Element): number {
+function readOpacity(element: ElucimElement): number {
   const opacity = readNumber(element.props.opacity) ?? 1;
   const fillOpacity = readNumber(element.props.fillOpacity) ?? 1;
   const strokeOpacity = readNumber(element.props.strokeOpacity) ?? 1;
