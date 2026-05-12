@@ -7,7 +7,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { ElucimDocument } from '@elucim/dsl';
 import { ElucimEditor } from '../ElucimEditor';
 
-const v2Document: ElucimDocument = {
+const documentModel: ElucimDocument = {
   version: '2.0',
   scene: { type: 'player', width: 800, height: 600, children: ['title'] },
   elements: {
@@ -55,7 +55,7 @@ describe('StateMachinePanel', () => {
   });
 
   it('previews state machines in the motion graph', () => {
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document }));
+    render(React.createElement(ElucimEditor, { initialDocument: documentModel }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
 
@@ -79,7 +79,7 @@ describe('StateMachinePanel', () => {
   });
 
   it('opens normalized documents in the animate workspace with animations visible', () => {
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document }));
+    render(React.createElement(ElucimEditor, { initialDocument: documentModel }));
 
     expect(screen.getByRole('tab', { name: 'Animate workspace' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('tab', { name: 'Animations motion tab' }).getAttribute('aria-selected')).toBe('true');
@@ -88,7 +88,7 @@ describe('StateMachinePanel', () => {
   });
 
   it('stops animation playback when leaving the animate workspace', async () => {
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document }));
+    render(React.createElement(ElucimEditor, { initialDocument: documentModel }));
 
     fireEvent.click(screen.getByTitle('Play'));
     expect(await screen.findByTitle('Pause')).toBeTruthy();
@@ -99,7 +99,7 @@ describe('StateMachinePanel', () => {
   });
 
   it('uses the bottom motion area for the state machine workspace', () => {
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document }));
+    render(React.createElement(ElucimEditor, { initialDocument: documentModel }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
 
@@ -118,10 +118,10 @@ describe('StateMachinePanel', () => {
     const onDocumentChange = vi.fn();
     const { container } = render(React.createElement(ElucimEditor, {
       initialDocument: {
-        ...v2Document,
+        ...documentModel,
         stateMachines: {
           deck: {
-            ...v2Document.stateMachines!.deck,
+            ...documentModel.stateMachines!.deck,
             layout: { entry: { x: 32, y: 146 }, states: { idle: { x: 120, y: 140 } } },
           },
         },
@@ -139,7 +139,7 @@ describe('StateMachinePanel', () => {
 
   it('edits v2 metadata and selected element intent without losing v2 extras', async () => {
     const onDocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onDocumentChange }));
+    render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
     fireEvent.change(screen.getByLabelText('Polish level'), { target: { value: 'refined' } });
@@ -161,13 +161,13 @@ describe('StateMachinePanel', () => {
   it('surfaces warnings for lossy v2 compatibility output', () => {
     render(React.createElement(ElucimEditor, {
       initialDocument: {
-        ...v2Document,
+        ...documentModel,
         elements: {
-          ...v2Document.elements,
+          ...documentModel.elements,
           ghost: { id: 'ghost', type: 'text', props: { type: 'text', content: 'Hidden', x: 100, y: 200 } },
         },
         timelines: {
-          ...v2Document.timelines,
+          ...documentModel.timelines,
           ghostTimeline: {
             id: 'ghostTimeline',
             duration: 10,
@@ -186,7 +186,7 @@ describe('StateMachinePanel', () => {
   it('creates state machines and authors states/transitions from the motion graph', async () => {
     const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, {
-      initialDocument: { ...v2Document, stateMachines: undefined },
+      initialDocument: { ...documentModel, stateMachines: undefined },
       onDocumentChange,
     }));
 
@@ -210,7 +210,7 @@ describe('StateMachinePanel', () => {
 
   it('renames state machines and states while preserving references', async () => {
     const onDocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onDocumentChange }));
+    render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
     fireEvent.change(screen.getByLabelText('Rename state machine deck'), { target: { value: 'Deck Flow' } });
@@ -238,7 +238,7 @@ describe('StateMachinePanel', () => {
 
   it('renames state machines from the motion list on double click', async () => {
     const onDocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onDocumentChange }));
+    render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
     fireEvent.doubleClick(screen.getByRole('button', { name: 'Select state machine deck' }));
@@ -255,7 +255,7 @@ describe('StateMachinePanel', () => {
 
   it('keeps event inputs aligned with renamed and deleted transitions', async () => {
     const onDocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onDocumentChange }));
+    render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
     fireEvent.click(screen.getByLabelText('Select graph state idle'));
@@ -281,7 +281,7 @@ describe('StateMachinePanel', () => {
 
   it('shows source target type and event-specific metadata for selected transitions', async () => {
     const onDocumentChange = vi.fn();
-    render(React.createElement(ElucimEditor, { initialDocument: v2Document, onDocumentChange }));
+    render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit Event: start transition from idle' }));
@@ -315,10 +315,10 @@ describe('StateMachinePanel', () => {
     const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, {
       initialDocument: {
-        ...v2Document,
+        ...documentModel,
         stateMachines: {
           deck: {
-            ...v2Document.stateMachines!.deck,
+            ...documentModel.stateMachines!.deck,
             states: {
               idle: { timeline: 'idle' },
               intro: { timeline: 'intro' },

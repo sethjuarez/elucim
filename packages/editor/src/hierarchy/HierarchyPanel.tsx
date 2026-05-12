@@ -8,6 +8,8 @@ import { v } from '../theme/tokens';
 export interface HierarchyPanelProps {
   className?: string;
   style?: React.CSSProperties;
+  document?: ElucimDocument;
+  /** @deprecated Use `document` instead. */
   v2Document?: ElucimDocument;
 }
 
@@ -75,9 +77,10 @@ function getTypeColor(type: string): string {
  * Persistent scene hierarchy inspired by motion-design editors.
  * Keeps nested groups and animation wrappers visible without opening the inspector.
  */
-export function HierarchyPanel({ className, style, v2Document }: HierarchyPanelProps) {
+export function HierarchyPanel({ className, style, document: documentModel, v2Document }: HierarchyPanelProps) {
   const { state, dispatch } = useEditorState();
   const icons = useEditorIcons();
+  const activeDocument = documentModel ?? v2Document;
   const root = state.document.root;
   const children: ElementNode[] = 'children' in root && Array.isArray(root.children) ? root.children : [];
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
@@ -158,7 +161,7 @@ export function HierarchyPanel({ className, style, v2Document }: HierarchyPanelP
         ) : rows.map(row => {
           const selected = state.selectedIds.includes(row.id);
           const collapsed = collapsedIds.has(row.id);
-          const semanticRole = v2Document?.elements[row.id]?.intent?.role ?? v2Document?.elements[row.id]?.role;
+          const semanticRole = activeDocument?.elements[row.id]?.intent?.role ?? activeDocument?.elements[row.id]?.role;
           return (
             <div
               key={row.id}

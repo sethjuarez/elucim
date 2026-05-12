@@ -12,11 +12,23 @@ import { startRafDrag } from '../interactions/rafDrag';
 export interface TimelineProps {
   className?: string;
   style?: React.CSSProperties;
+  document?: ElucimDocument;
+  timelines?: Record<string, ElucimV2Timeline>;
+  onTimelinesChange?: (timelines: Record<string, ElucimV2Timeline> | undefined) => void;
+  stateMachines?: Record<string, ElucimV2StateMachine>;
+  onStateMachinesChange?: (stateMachines: Record<string, ElucimV2StateMachine> | undefined) => void;
+  onMotionChange?: (timelines: Record<string, ElucimV2Timeline> | undefined, stateMachines: Record<string, ElucimV2StateMachine> | undefined) => void;
+  /** @deprecated Use `document` instead. */
   v2Document?: ElucimDocument;
+  /** @deprecated Use `timelines` instead. */
   v2Timelines?: Record<string, ElucimV2Timeline>;
+  /** @deprecated Use `onTimelinesChange` instead. */
   onV2TimelinesChange?: (timelines: Record<string, ElucimV2Timeline> | undefined) => void;
+  /** @deprecated Use `stateMachines` instead. */
   v2StateMachines?: Record<string, ElucimV2StateMachine>;
+  /** @deprecated Use `onStateMachinesChange` instead. */
   onV2StateMachinesChange?: (stateMachines: Record<string, ElucimV2StateMachine> | undefined) => void;
+  /** @deprecated Use `onMotionChange` instead. */
   onV2MotionChange?: (timelines: Record<string, ElucimV2Timeline> | undefined, stateMachines: Record<string, ElucimV2StateMachine> | undefined) => void;
   preferredMotionType?: 'animation' | 'stateMachine';
   onActiveTimelineChange?: (timelineId: string | undefined) => void;
@@ -279,7 +291,35 @@ function normalizeGraphId(value: string, fallback: string): string {
  * Animation timeline with playhead, per-element tracks, and playback controls.
  * Supports: editable labels, drag reorder, draggable animation bars, easing picker.
  */
-export function Timeline({ className, style, v2Document, v2Timelines, onV2TimelinesChange, v2StateMachines, onV2StateMachinesChange, onV2MotionChange, preferredMotionType = 'animation', onActiveTimelineChange, onPreviewTimelineFramesChange, onStateMachinePreviewActiveChange, onStateMachinePreviewClickChange, onStateMachinePreviewKeyDownChange, onStateMachinePreviewExitChange }: TimelineProps) {
+export function Timeline({
+  className,
+  style,
+  document: documentModel,
+  timelines,
+  onTimelinesChange,
+  stateMachines,
+  onStateMachinesChange,
+  onMotionChange,
+  v2Document: legacyDocument,
+  v2Timelines: legacyTimelines,
+  onV2TimelinesChange: legacyOnTimelinesChange,
+  v2StateMachines: legacyStateMachines,
+  onV2StateMachinesChange: legacyOnStateMachinesChange,
+  onV2MotionChange: legacyOnMotionChange,
+  preferredMotionType = 'animation',
+  onActiveTimelineChange,
+  onPreviewTimelineFramesChange,
+  onStateMachinePreviewActiveChange,
+  onStateMachinePreviewClickChange,
+  onStateMachinePreviewKeyDownChange,
+  onStateMachinePreviewExitChange,
+}: TimelineProps) {
+  const v2Document = documentModel ?? legacyDocument;
+  const v2Timelines = timelines ?? legacyTimelines;
+  const onV2TimelinesChange = onTimelinesChange ?? legacyOnTimelinesChange;
+  const v2StateMachines = stateMachines ?? legacyStateMachines;
+  const onV2StateMachinesChange = onStateMachinesChange ?? legacyOnStateMachinesChange;
+  const onV2MotionChange = onMotionChange ?? legacyOnMotionChange;
   const { state, dispatch } = useEditorState();
   const icons = useEditorIcons();
   const { document, currentFrame, isPlaying, selectedIds } = state;
@@ -786,9 +826,9 @@ export function Timeline({ className, style, v2Document, v2Timelines, onV2Timeli
         )}
 
         {(timelineClips.length > 0 || stateMachineClips.length > 0 || onV2TimelinesChange || onV2StateMachinesChange) && (
-          <TimelineClipRows
+            <TimelineClipRows
             clips={timelineClips}
-            v2Document={v2Document}
+            document={v2Document}
             durationInFrames={activeTimelineMaxFrame + 1}
             onKeyframeClick={frame => dispatch({ type: 'SET_FRAME', frame: Math.max(0, Math.min(frame, activeTimelineMaxFrame)) })}
             onTimelineChange={onV2TimelinesChange ? updateV2Timeline : undefined}
@@ -1041,7 +1081,7 @@ export function Timeline({ className, style, v2Document, v2Timelines, onV2Timeli
 
 function TimelineClipRows({
   clips,
-  v2Document,
+  document,
   durationInFrames,
   onKeyframeClick,
   onTimelineChange,
@@ -1076,7 +1116,7 @@ function TimelineClipRows({
   onPreviewEvent,
 }: {
   clips: ElucimV2Timeline[];
-  v2Document?: ElucimDocument;
+  document?: ElucimDocument;
   durationInFrames: number;
   onKeyframeClick: (frame: number) => void;
   onTimelineChange?: (timeline: ElucimV2Timeline) => void;
@@ -1205,7 +1245,7 @@ function TimelineClipRows({
       return;
     }
     const frames = getStateMachineVisualFrames(
-      v2Document ?? { version: '2.0', scene: { type: 'scene', children: [] }, elements: {}, timelines, stateMachines: Object.fromEntries(stateMachines.map(machine => [machine.id, machine])) },
+      document ?? { version: '2.0', scene: { type: 'scene', children: [] }, elements: {}, timelines, stateMachines: Object.fromEntries(stateMachines.map(machine => [machine.id, machine])) },
       stateMachinePreview.machineId,
       {
         statePath: stateMachinePreview.logicalStatePath,
@@ -1218,7 +1258,7 @@ function TimelineClipRows({
       },
     );
     onPreviewTimelineFramesChange?.(frames.length > 0 ? frames : undefined);
-  }, [activeMotionType, currentFrame, onPreviewTimelineFramesChange, selectedClip, stateMachinePreview, stateMachines, timelines, v2Document]);
+  }, [activeMotionType, currentFrame, document, onPreviewTimelineFramesChange, selectedClip, stateMachinePreview, stateMachines, timelines]);
   const selectedMachine = activeMotionType === 'stateMachine' && selectedItem?.type === 'stateMachine' ? stateMachines.find(machine => machine.id === selectedItem.machineId) : undefined;
   const selectedTrack = selectedClip && selectedItem?.type === 'animation' && selectedItem.trackIndex !== undefined ? selectedClip.tracks[selectedItem.trackIndex] : undefined;
   const selectedKeyframe = selectedTrack && selectedItem?.type === 'animation' && selectedItem.keyframeIndex !== undefined ? selectedTrack.keyframes[selectedItem.keyframeIndex] : undefined;
