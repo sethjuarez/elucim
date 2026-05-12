@@ -1,10 +1,11 @@
-import React, { useMemo, useRef, useState } from 'react';
-import type { RenderableDocument, ElucimDocument, ElucimTimelineFrameSelection } from '@elucim/dsl';
+import React, { useMemo, useRef } from 'react';
+import type { RenderableDocument, ElucimDocument } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
 import { EditorProvider, useEditorState } from './state/EditorProvider';
 import { ImagePickerProvider, type BrowseImageFn } from './image/ImagePickerProvider';
-import { ElucimCanvas } from './canvas/ElucimCanvas';
+import { EditorCanvasPanel } from './canvas/EditorCanvasPanel';
+import { useEditorPreviewController } from './canvas/editorPreviewController';
 import { Inspector } from './inspector/Inspector';
 import { EditorTimelinePanel } from './timeline/EditorTimelinePanel';
 import { EditorErrorBoundary } from './panels/EditorErrorBoundary';
@@ -12,7 +13,7 @@ import { LeftDock } from './dock/LeftDock';
 import { PanelShell } from './panels/PanelShell';
 import { v } from './theme/tokens';
 import { normalizeInitialDocument } from './document/documentCompatibility';
-import { DocumentChangeEmitter, InitialDocumentModelSync, resolveInitialFrame, resolvePreviewDocument, type ElucimEditorChangeDetails } from './document/documentLifecycle';
+import { DocumentChangeEmitter, InitialDocumentModelSync, resolveInitialFrame, type ElucimEditorChangeDetails } from './document/documentLifecycle';
 import { EditorMainGrid } from './chrome/EditorMainGrid';
 import { EditorTimelineDock } from './chrome/EditorTimelineDock';
 import { EditorTopBar } from './chrome/EditorTopBar';
@@ -137,18 +138,13 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
     startSideResize,
     startTimelineResize,
   } = shell;
-  const [previewTimelineFrames, setPreviewTimelineFrames] = useState<ElucimTimelineFrameSelection[] | undefined>(undefined);
-  const [stateMachinePreviewActive, setStateMachinePreviewActive] = useState(false);
-  const [stateMachinePreviewClickHandler, setStateMachinePreviewClickHandler] = useState<(() => boolean) | undefined>(undefined);
-  const [stateMachinePreviewKeyDownHandler, setStateMachinePreviewKeyDownHandler] = useState<((key: string) => boolean) | undefined>(undefined);
-  const [stateMachinePreviewExitHandler, setStateMachinePreviewExitHandler] = useState<(() => void) | undefined>(undefined);
   const { themeVars, colorScheme } = resolveEditorThemeVars(theme, editorTheme, state.themeOverrides);
   const commitDocumentChange = (document: ElucimDocument) => {
     dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [] });
     onDocumentChange?.(document);
   };
   const liveDocument = activeDocument;
-  const previewDocument = useMemo(() => resolvePreviewDocument(liveDocument, previewTimelineFrames), [previewTimelineFrames, liveDocument]);
+  const { previewDocument, stateMachinePreviewMode, timelinePreviewCallbacks } = useEditorPreviewController(liveDocument);
 
   return (
     <div
@@ -224,16 +220,9 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
         onRightResizeStart={startSideResize('right')}
         leftDock={<LeftDock document={activeDocument} onDocumentChange={commitDocumentChange} preferredTab={preferredLeftTab} />}
         canvas={(
-          <ElucimCanvas
+          <EditorCanvasPanel
             previewDocument={previewDocument}
-            previewMode={{
-              active: stateMachinePreviewActive,
-              label: 'Preview mode',
-              exitLabel: 'Exit state machine preview mode',
-              onClick: stateMachinePreviewClickHandler,
-              onKeyDown: stateMachinePreviewKeyDownHandler,
-              onExit: stateMachinePreviewExitHandler,
-            }}
+            previewMode={stateMachinePreviewMode}
             editorColorScheme={colorScheme}
             contentTheme={theme}
           />
@@ -250,11 +239,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
           document={liveDocument}
           workspace={workspace}
           onDocumentChange={commitDocumentChange}
-          onPreviewTimelineFramesChange={setPreviewTimelineFrames}
-          onStateMachinePreviewActiveChange={setStateMachinePreviewActive}
-          onStateMachinePreviewClickChange={handler => setStateMachinePreviewClickHandler(() => handler)}
-          onStateMachinePreviewKeyDownChange={handler => setStateMachinePreviewKeyDownHandler(() => handler)}
-          onStateMachinePreviewExitChange={handler => setStateMachinePreviewExitHandler(() => handler)}
+          {...timelinePreviewCallbacks}
         />
       </EditorTimelineDock>
     </div>
