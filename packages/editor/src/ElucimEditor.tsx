@@ -84,7 +84,7 @@ function DocumentBridge({
     const docChanged = previousDocRef.current !== doc;
     previousDocRef.current = doc;
     const result = sourceDocument
-      ? restoreDocumentFromEditorState(doc, sourceDocument)
+      ? { document: sourceDocument, warnings: state.compatibilityWarnings }
       : { document: createDocumentFromEditorState(doc), warnings: [] };
     const details: ElucimEditorChangeDetails = {
       changedFormat: docChanged,
@@ -99,7 +99,7 @@ function DocumentBridge({
       previousWarningsRef.current = warningKey;
       onWarnings?.(result.warnings);
     }
-  }, [dispatch, doc, onWarnings]);
+  }, [dispatch, doc, onWarnings, sourceDocument, state.compatibilityWarnings]);
 
   return null;
 }
