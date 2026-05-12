@@ -3,7 +3,7 @@ import { useEditorState } from '../state/EditorProvider';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 import type { RenderableDocument as ElucimDocument } from '@elucim/dsl';
-import { importFromJson } from '../utils/io';
+import { exportEditorDocumentToJson, importFromJson } from '../utils/io';
 
 const SEMANTIC_TOKENS = [
   'foreground', 'background', 'title', 'subtitle', 'accent', 'muted', 'surface',
@@ -62,15 +62,15 @@ export function EditorMenuBar() {
 
   // ── Export (save JSON) ──
   const handleSave = useCallback(() => {
-    const json = JSON.stringify(state.document, null, 2);
+    const json = exportEditorDocumentToJson(state.document, state.canonicalDocument);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'elucim-scene.json';
+    a.download = 'elucim-document.elc';
     a.click();
     URL.revokeObjectURL(url);
-  }, [state.document]);
+  }, [state.canonicalDocument, state.document]);
 
   // ── Import (open JSON) ──
   const handleOpen = useCallback(() => {
@@ -83,7 +83,9 @@ export function EditorMenuBar() {
     const reader = new FileReader();
     reader.onload = () => {
       const result = importFromJson(reader.result as string);
-      if (result.document) {
+      if (result.canonicalDocument) {
+        dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.canonicalDocument, syncProjection: true });
+      } else if (result.document) {
         dispatch({ type: 'SET_DOCUMENT', document: result.document });
       }
     };
@@ -93,7 +95,7 @@ export function EditorMenuBar() {
 
   // ── Copy JSON ──
   const handleCopy = useCallback(async () => {
-    const json = JSON.stringify(state.document, null, 2);
+    const json = exportEditorDocumentToJson(state.document, state.canonicalDocument);
     try {
       await navigator.clipboard.writeText(json);
     } catch {
@@ -105,7 +107,7 @@ export function EditorMenuBar() {
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
-  }, [state.document]);
+  }, [state.canonicalDocument, state.document]);
 
   // ── Apply theme ──
   const applyTheme = useCallback((themeName: string) => {
@@ -153,15 +155,15 @@ export function EditorMenuBar() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".json"
+        accept=".elc,.json,application/json"
         onChange={handleFileChange}
         style={{ display: 'none' }}
       />
 
       {/* File operations */}
-      <MenuButton icon={icons.Save()} title="Save as JSON" onClick={handleSave} label="Save" />
-      <MenuButton icon={icons.Open()} title="Open JSON file" onClick={handleOpen} label="Open" />
-      <MenuButton icon={icons.Copy()} title="Copy JSON to clipboard" onClick={handleCopy} label="Copy" />
+      <MenuButton icon={icons.Save()} title="Save Elucim Document" onClick={handleSave} label="Save" />
+      <MenuButton icon={icons.Open()} title="Open Elucim Document" onClick={handleOpen} label="Open" />
+      <MenuButton icon={icons.Copy()} title="Copy Elucim Document to clipboard" onClick={handleCopy} label="Copy" />
 
       <div style={{ width: 1, height: 16, background: v('--elucim-editor-border-subtle'), margin: '0 4px' }} />
 
