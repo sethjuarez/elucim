@@ -17,7 +17,7 @@ import { useMarquee } from './useMarquee';
 import { DotGrid } from './DotGrid';
 import { Minimap } from './Minimap';
 import { ZoomControls } from './ZoomControls';
-import { exportToJson, importFromJson } from '../utils/io';
+import { exportEditorDocumentToJson, importFromJson } from '../utils/io';
 import { ContextMenu } from './ContextMenu';
 import type { ContextMenuItem } from './ContextMenu';
 
@@ -367,10 +367,12 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
   });
 
   // Keyboard shortcuts
-  const getDocumentJson = useCallback(() => exportToJson(document), [document]);
+  const getDocumentJson = useCallback(() => exportEditorDocumentToJson(state.document, state.canonicalDocument), [state.canonicalDocument, state.document]);
   const handleImport = useCallback((json: string) => {
     const result = importFromJson(json);
-    if (result.document) {
+    if (result.canonicalDocument) {
+      dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.canonicalDocument, syncProjection: true });
+    } else if (result.document) {
       dispatch({ type: 'SET_DOCUMENT', document: result.document });
     }
   }, [dispatch]);

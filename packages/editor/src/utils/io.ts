@@ -1,20 +1,31 @@
 import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
-import { migrateV2ToV1, validate } from '@elucim/dsl';
+import { migrateV1ToV2, migrateV2ToV1, validate } from '@elucim/dsl';
 
 export interface ExportOptions {
   pretty?: boolean;
 }
 
+export type ExportableDocument = ElucimDocument | RenderableDocument;
+
 /**
  * Export an ElucimDocument to a JSON string.
  */
-export function exportToJson(document: RenderableDocument, options: ExportOptions = {}): string {
+export function exportToJson(document: ExportableDocument, options: ExportOptions = {}): string {
   const { pretty = true } = options;
   return JSON.stringify(document, null, pretty ? 2 : undefined);
 }
 
+export function getEditorExportDocument(document: RenderableDocument, canonicalDocument?: ElucimDocument): ElucimDocument {
+  return canonicalDocument ?? migrateV1ToV2(document);
+}
+
+export function exportEditorDocumentToJson(document: RenderableDocument, canonicalDocument?: ElucimDocument, options: ExportOptions = {}): string {
+  return exportToJson(getEditorExportDocument(document, canonicalDocument), options);
+}
+
 export interface ImportResult {
   document: RenderableDocument | null;
+  canonicalDocument?: ElucimDocument;
   errors: string[];
 }
 
@@ -38,7 +49,8 @@ export function importFromJson(json: string): ImportResult {
           errors: result.errors.map(e => `${e.path}: ${e.message}`),
         };
       }
-      return { document: migrateV2ToV1(parsed as ElucimDocument), errors: [] };
+      const canonicalDocument = parsed as ElucimDocument;
+      return { document: migrateV2ToV1(canonicalDocument), canonicalDocument, errors: [] };
     }
     if (parsed.version !== '1.0') {
       return { document: null, errors: [`Unknown version: ${parsed.version}. Expected "1.0" or "2.0"`] };
@@ -58,7 +70,7 @@ export function importFromJson(json: string): ImportResult {
       };
     }
 
-    return { document: doc, errors: [] };
+    return { document: doc, canonicalDocument: migrateV1ToV2(doc), errors: [] };
   } catch (err) {
     return { document: null, errors: [`Invalid JSON: ${(err as Error).message}`] };
   }
@@ -67,7 +79,7 @@ export function importFromJson(json: string): ImportResult {
 /**
  * Download a document as a .json file in the browser.
  */
-export function downloadAsJson(doc: RenderableDocument, filename = 'elucim-scene.json'): void {
+export function downloadAsJson(doc: ExportableDocument, filename = 'elucim-document.elc'): void {
   const json = exportToJson(doc);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

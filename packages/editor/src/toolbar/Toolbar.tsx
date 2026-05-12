@@ -5,7 +5,7 @@ import { getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from '.
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 import type { RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
-import { importFromJson } from '../utils/io';
+import { exportEditorDocumentToJson, importFromJson } from '../utils/io';
 
 // ─── Built-in scene themes ─────────────────────────────────────────────────
 // Each theme covers both the scene content AND the editor chrome tokens.
@@ -140,15 +140,15 @@ export function Toolbar({ className, style }: ToolbarProps) {
 
   // ── File operations ──
   const handleSave = useCallback(() => {
-    const json = JSON.stringify(state.document, null, 2);
+    const json = exportEditorDocumentToJson(state.document, state.canonicalDocument);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'elucim-scene.json';
+    a.download = 'elucim-document.elc';
     a.click();
     URL.revokeObjectURL(url);
-  }, [state.document]);
+  }, [state.canonicalDocument, state.document]);
 
   const handleOpen = useCallback(() => {
     fileInputRef.current?.click();
@@ -160,7 +160,9 @@ export function Toolbar({ className, style }: ToolbarProps) {
     const reader = new FileReader();
     reader.onload = () => {
       const result = importFromJson(reader.result as string);
-      if (result.document) {
+      if (result.canonicalDocument) {
+        dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.canonicalDocument, syncProjection: true });
+      } else if (result.document) {
         dispatch({ type: 'SET_DOCUMENT', document: result.document });
       }
     };
@@ -169,7 +171,7 @@ export function Toolbar({ className, style }: ToolbarProps) {
   }, [dispatch]);
 
   const handleCopy = useCallback(async () => {
-    const json = JSON.stringify(state.document, null, 2);
+    const json = exportEditorDocumentToJson(state.document, state.canonicalDocument);
     try {
       await navigator.clipboard.writeText(json);
     } catch {
@@ -180,7 +182,7 @@ export function Toolbar({ className, style }: ToolbarProps) {
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
-  }, [state.document]);
+  }, [state.canonicalDocument, state.document]);
 
   const applyTheme = useCallback((themeName: string) => {
     const theme = SCENE_THEMES[themeName];
@@ -215,7 +217,7 @@ export function Toolbar({ className, style }: ToolbarProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".json"
+        accept=".elc,.json,application/json"
         onChange={handleFileChange}
         style={{ display: 'none' }}
       />
