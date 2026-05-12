@@ -82,9 +82,21 @@ export function restoreDocumentFromEditorState(doc: RenderableDocument, sourceDo
       transitions: machine.transitions,
     };
   }
+  if (sourceDocument.defaultStateMachine && !stateMachines[sourceDocument.defaultStateMachine]) {
+    warnings.push(`Default state machine "${sourceDocument.defaultStateMachine}" is no longer present and will be omitted from document output.`);
+  }
   const document = {
     ...migrated,
-    metadata: { ...migrated.metadata, ...sourceDocument.metadata },
+    $schema: migrated.$schema ?? sourceDocument.$schema,
+    scene: {
+      ...sourceDocument.scene,
+      type: migrated.scene.type,
+      width: migrated.scene.width,
+      height: migrated.scene.height,
+      background: migrated.scene.background ?? sourceDocument.scene.background,
+      children: migrated.scene.children,
+    },
+    metadata: sourceDocument.metadata,
     ...(Object.keys(timelines).length > 0 ? { timelines } : {}),
     ...(Object.keys(stateMachines).length > 0 ? { stateMachines } : {}),
     ...(sourceDocument.defaultStateMachine && stateMachines[sourceDocument.defaultStateMachine]
