@@ -220,7 +220,7 @@ Hosts that expose Elucim tools to agents can call `getAgentOperationCatalog()` f
 
 ## Composite helpers and connectors
 
-Use composite helpers when an agent needs polished explanatory structure but the user still needs editable pieces in the editor. These helpers emit normal v2 groups/primitives and optional timelines:
+Use composite helpers when an agent needs polished explanatory structure but the user still needs editable pieces in the editor. These helpers emit normal Elucim groups/primitives and optional timelines:
 
 ```ts
 import {
@@ -265,7 +265,7 @@ npx @elucim/cli add-connector diagram.elc --id draft-to-review --from draft --to
 
 ## Semantic motion
 
-Agents should describe motion in beats and semantic verbs, then let Elucim compile those intents to v2 timelines/state machines. This is safer than asking a model to hand-compute every keyframe.
+Agents should describe motion in beats and semantic verbs, then let Elucim compile those intents to timelines/state machines. This is safer than asking a model to hand-compute every keyframe.
 
 ```ts
 import {

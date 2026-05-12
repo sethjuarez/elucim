@@ -314,7 +314,7 @@ const supportingElements = [
 
 ### Semantic motion for agents
 
-Use semantic motion helpers when an agent knows the intent of the animation but should not hand-author every keyframe. These helpers compile to ordinary v2 timelines/state machines, so the result remains editable and renderer-independent.
+Use semantic motion helpers when an agent knows the intent of the animation but should not hand-author every keyframe. These helpers compile to ordinary Elucim timelines/state machines, so the result remains editable and renderer-independent.
 
 ```ts
 import {

@@ -280,7 +280,7 @@ function importFromJson(json: string): { document: RenderableDocument | null; er
 function downloadAsJson(document: RenderableDocument, filename?: string): void;
 ```
 
-`importFromJson()` accepts normalized v2 JSON, validates it, and migrates it into the editor working document shape. Host apps should persist `onDocumentChange` output when they need normalized v2.
+`importFromJson()` accepts Elucim Document JSON, validates it, and migrates it into the editor working document shape. Host apps should persist `onDocumentChange` output when they need normalized document JSON.
 
 ### Bounds and snapping
 
