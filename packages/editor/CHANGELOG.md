@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.22.0](https://github.com/sethjuarez/elucim/compare/editor-v0.21.1...editor-v0.22.0) (2026-05-13)
+
+
+### Features
+
+* **editor:** support embedded panel chrome ([854a614](https://github.com/sethjuarez/elucim/commit/854a614f89544c9479fa47d224277f1393db4020))
+
+
+### Bug Fixes
+
+* **editor:** expose packaged editor styles ([34418b4](https://github.com/sethjuarez/elucim/commit/34418b40a14b6042ee4ced5bdc3b111aedd9dec7))
+* **editor:** refine state machine and timeline interactions ([112a370](https://github.com/sethjuarez/elucim/commit/112a3705348471fef801b800afa197032989d59c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.22.0
+    * @elucim/dsl bumped to 0.22.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.22.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.22.0
+
 ## [0.21.1](https://github.com/sethjuarez/elucim/compare/editor-v0.21.0...editor-v0.21.1) (2026-05-13)
 
 
