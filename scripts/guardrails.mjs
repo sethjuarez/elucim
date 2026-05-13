@@ -12,6 +12,7 @@ const publicTerminologyRoots = [
 const bannedPublicDocumentTerms = [
   /\bv1\b/i,
   /\bv2\b/i,
+  /\bbridge\b/i,
 ];
 const bannedPublicObjectOrderTerms = [
   /\bhierarchy order\b/i,
@@ -83,7 +84,7 @@ function assertNoPublicVersionTerms() {
     }
   }
   if (offenders.length > 0) {
-    throw new Error(`Public docs must use "Elucim Document" language instead of v1/v2 terminology:\n${offenders.join('\n')}`);
+    throw new Error(`Public docs must use "Elucim Document" language instead of v1/v2/bridge implementation terminology:\n${offenders.join('\n')}`);
   }
 }
 
