@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.21.0](https://github.com/sethjuarez/elucim/compare/editor-v0.20.0...editor-v0.21.0) (2026-05-13)
+
+
+### Features
+
+* add cli editor roundtrip coverage ([b94610b](https://github.com/sethjuarez/elucim/commit/b94610b7aacd5edefb19906ae705838f0c30847e))
+
+
+### Bug Fixes
+
+* animate grouped object opacity ([4a6a243](https://github.com/sethjuarez/elucim/commit/4a6a2431a30bd8668876590320346afe927e7c50))
+* preserve bridge timeline targets on insert ([51ce7d2](https://github.com/sethjuarez/elucim/commit/51ce7d24adb9b1713a0e9e9285f531238ed3a5b4))
+* surface polish nudge feedback ([8b119d2](https://github.com/sethjuarez/elucim/commit/8b119d22dc5adbc7893393867331cecdbf80ec8c))
+* use objects label in editor dock ([8eee576](https://github.com/sethjuarez/elucim/commit/8eee5763c9e19fbfc55997084aac76c811149954))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.21.0
+    * @elucim/dsl bumped to 0.21.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.21.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.21.0
+
 ## [0.20.0](https://github.com/sethjuarez/elucim/compare/editor-v0.19.0...editor-v0.20.0) (2026-05-08)
 
 

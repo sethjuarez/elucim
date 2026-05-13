@@ -1,5 +1,26 @@
 # @elucim/dsl
 
+## [0.21.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.20.0...dsl-v0.21.0) (2026-05-13)
+
+
+### Features
+
+* add canonical document API aliases ([023702a](https://github.com/sethjuarez/elucim/commit/023702a022ff3eccf10d8a7c2c5032d08091c9f8))
+
+
+### Bug Fixes
+
+* animate grouped object opacity ([4a6a243](https://github.com/sethjuarez/elucim/commit/4a6a2431a30bd8668876590320346afe927e7c50))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.21.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.21.0
+
 ## [0.20.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.19.0...dsl-v0.20.0) (2026-05-08)
 
 
