@@ -31,6 +31,9 @@ const TRACK_HEIGHT = 30;
 const RULER_HEIGHT = 24;
 const CLIP_HEADER_HEIGHT = 46;
 const LABEL_WIDTH = 156;
+const MOTION_RAIL_WIDTH = 34;
+const MOTION_LIST_WIDTH = 140;
+const MOTION_DETAILS_WIDTH = 300;
 const EASING_OPTIONS = ['linear', 'easeInQuad', 'easeOutQuad', 'easeInOutQuad', 'easeInCubic', 'easeOutCubic', 'easeInOutCubic', 'easeInSine', 'easeOutSine', 'easeInOutSine', 'easeOutElastic', 'easeOutBounce', 'easeInBack', 'easeOutBack'];
 const ANIMATABLE_PROPERTIES = ['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke'] as const;
 const WRAPPER_TYPES = new Set(['fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
@@ -190,6 +193,22 @@ const verticalMotionButtonStyle = (active: boolean, disabled = false): React.CSS
   cursor: disabled ? 'not-allowed' : 'pointer',
   fontSize: 11,
   fontWeight: 800,
+  padding: 0,
+});
+
+const motionListActionButtonStyle = (active: boolean, visible = true): React.CSSProperties => ({
+  width: 22,
+  height: 22,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: `1px solid ${active ? v('--elucim-editor-accent') : v('--elucim-editor-border-subtle')}`,
+  borderRadius: 6,
+  background: active ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 14%, transparent)` : 'transparent',
+  color: active ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
+  cursor: 'pointer',
+  opacity: visible ? 1 : 0,
+  pointerEvents: visible ? 'auto' : 'none',
   padding: 0,
 });
 
@@ -369,6 +388,12 @@ export function Timeline({
     delete next[machine.id];
     next[normalizedId] = { ...machine, id: normalizedId };
     onActiveStateMachinesChange?.(next);
+  }, [onActiveStateMachinesChange, activeStateMachines]);
+  const deleteStateMachine = useCallback((id: string) => {
+    if (!activeStateMachines) return;
+    const next = { ...activeStateMachines };
+    delete next[id];
+    onActiveStateMachinesChange?.(Object.keys(next).length > 0 ? next : undefined);
   }, [onActiveStateMachinesChange, activeStateMachines]);
   const deleteTimeline = useCallback((id: string) => {
     if (!activeTimelines) return;
@@ -823,6 +848,7 @@ export function Timeline({
             timelines={activeTimelines ?? {}}
             onStateMachineChange={onActiveStateMachinesChange ? updateStateMachine : undefined}
             onStateMachineRename={onActiveStateMachinesChange ? renameStateMachine : undefined}
+            onStateMachineDelete={onActiveStateMachinesChange ? deleteStateMachine : undefined}
             onAddStateMachine={onActiveStateMachinesChange ? addStateMachine : undefined}
             stateMachinePreview={stateMachinePreview}
             isPlaying={isPlaying}
@@ -1076,6 +1102,7 @@ function TimelineClipRows({
   timelines,
   onStateMachineChange,
   onStateMachineRename,
+  onStateMachineDelete,
   onAddStateMachine,
   stateMachinePreview,
   isPlaying,
@@ -1111,6 +1138,7 @@ function TimelineClipRows({
   timelines: Record<string, ElucimTimeline>;
   onStateMachineChange?: (machine: ElucimStateMachine) => void;
   onStateMachineRename?: (machine: ElucimStateMachine, nextId: string) => void;
+  onStateMachineDelete?: (id: string) => void;
   onAddStateMachine?: () => void;
   stateMachinePreview: StateMachinePreviewState | null;
   isPlaying: boolean;
@@ -1143,6 +1171,7 @@ function TimelineClipRows({
   });
   const [activeMotionType, setActiveMotionType] = useState<'animation' | 'stateMachine'>(() => selectedItem?.type ?? preferredMotionType);
   const [renamingMotionItem, setRenamingMotionItem] = useState<SelectedMotionItem | null>(null);
+  const [hoveredMotionItem, setHoveredMotionItem] = useState<SelectedMotionItem | null>(null);
   const [keyframeDragPreview, setKeyframeDragPreview] = useState<{ timelineId: string; trackIndex: number; keyframeIndex: number; frame: number; percent: number } | null>(null);
   const suppressKeyframeClickRef = useRef(false);
   const lastAnimationItem = useRef<SelectedTimelineItem | null>(firstAnimationItem);
@@ -1637,8 +1666,8 @@ function TimelineClipRows({
     selectMotionItem({ type: 'stateMachine', machineId: machine.id, stateId: undefined, transitionEvent: entryTransition?.id });
   };
   const motionGridColumns = activeMotionType === 'stateMachine'
-    ? '34px 120px minmax(0, 1fr) minmax(236px, 280px)'
-    : '34px 140px minmax(0, 1fr) 300px';
+    ? `${MOTION_RAIL_WIDTH}px ${MOTION_LIST_WIDTH}px minmax(0, 1fr) minmax(236px, ${MOTION_DETAILS_WIDTH}px)`
+    : `${MOTION_RAIL_WIDTH}px ${MOTION_LIST_WIDTH}px minmax(0, 1fr) ${MOTION_DETAILS_WIDTH}px`;
   return (
     <div aria-label="Animation clips" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'grid', gridTemplateColumns: motionGridColumns, flex: 1, minHeight: 0 }}>
@@ -1668,48 +1697,49 @@ function TimelineClipRows({
             {icons.Graph({ size: 13 })}
           </button>
           <div style={{ flex: 1 }} />
-          {activeMotionType === 'animation' && onAddTimeline && (
-            <>
+        </div>
+        <div style={{ borderRight: `1px solid ${v('--elucim-editor-border')}`, background: v('--elucim-editor-surface') }}>
+          <div style={{ minHeight: 31, padding: '4px 6px 4px 8px', display: 'flex', alignItems: 'center', gap: 4, borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}` }}>
+            <span style={{ flex: 1, minWidth: 0, color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+              {activeMotionType === 'animation' ? 'Animations' : 'State machines'}
+            </span>
+            {activeMotionType === 'animation' && onAddIntroTimeline && (
+              <button
+                type="button"
+                aria-label="Add intro animation"
+                title="Auto-create staggered intro animation"
+                onClick={onAddIntroTimeline}
+                style={motionListActionButtonStyle(false)}
+              >
+                {icons.AutoIntro({ size: 13 })}
+              </button>
+            )}
+            {activeMotionType === 'animation' && onAddTimeline && (
               <button
                 type="button"
                 aria-label="Add animation"
                 title="Add animation"
                 onClick={onAddTimeline}
-                style={verticalMotionButtonStyle(false)}
+                style={motionListActionButtonStyle(false)}
               >
-                +
+                {icons.Add({ size: 13 })}
               </button>
-              {onAddIntroTimeline && (
-                <button
-                  type="button"
-                  aria-label="Add intro animation"
-                  title="Add intro animation"
-                  onClick={onAddIntroTimeline}
-                  style={verticalMotionButtonStyle(false)}
-                >
-                  I
-                </button>
-              )}
-            </>
-          )}
-          {activeMotionType === 'stateMachine' && onAddStateMachine && (
-            <button
-              type="button"
-              aria-label="Add state machine"
-              title="Add state machine"
-              onClick={onAddStateMachine}
-              style={verticalMotionButtonStyle(false)}
-            >
-              +
-            </button>
-          )}
-        </div>
-        <div style={{ borderRight: `1px solid ${v('--elucim-editor-border')}`, background: v('--elucim-editor-surface') }}>
-          <div style={{ padding: '6px 8px', color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            {activeMotionType === 'animation' ? 'Animations' : 'State machines'}
+            )}
+            {activeMotionType === 'stateMachine' && onAddStateMachine && (
+              <button
+                type="button"
+                aria-label="Add state machine"
+                title="Add state machine"
+                onClick={onAddStateMachine}
+                style={motionListActionButtonStyle(false)}
+              >
+                {icons.Add({ size: 13 })}
+              </button>
+            )}
           </div>
           {activeMotionType === 'animation' && clips.map(clip => {
             const selected = selectedItem?.type === 'animation' && selectedItem.timelineId === clip.id;
+            const hovered = hoveredMotionItem?.type === 'animation' && hoveredMotionItem.timelineId === clip.id;
             const renaming = renamingMotionItem?.type === 'animation' && renamingMotionItem.timelineId === clip.id;
             if (renaming) {
               return (
@@ -1728,19 +1758,32 @@ function TimelineClipRows({
               );
             }
             return (
-              <button
+              <div
                 key={clip.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 aria-label={`Select animation ${clip.id}`}
                 onClick={() => selectMotionItem({ type: 'animation', timelineId: clip.id })}
+                onKeyDown={event => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    selectMotionItem({ type: 'animation', timelineId: clip.id });
+                  }
+                }}
                 onDoubleClick={() => {
                   selectMotionItem({ type: 'animation', timelineId: clip.id });
                   setRenamingMotionItem({ type: 'animation', timelineId: clip.id });
                 }}
+                onMouseEnter={() => setHoveredMotionItem({ type: 'animation', timelineId: clip.id })}
+                onMouseLeave={() => setHoveredMotionItem(current => current?.type === 'animation' && current.timelineId === clip.id ? null : current)}
+                onFocus={() => setHoveredMotionItem({ type: 'animation', timelineId: clip.id })}
+                onBlur={() => setHoveredMotionItem(current => current?.type === 'animation' && current.timelineId === clip.id ? null : current)}
                 style={{
                   width: '100%',
                   display: 'grid',
-                  gap: 2,
+                  gridTemplateColumns: 'minmax(0, 1fr) auto',
+                  alignItems: 'center',
+                  gap: 6,
                   padding: '6px 8px',
                   border: 'none',
                   borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`,
@@ -1751,13 +1794,30 @@ function TimelineClipRows({
                   fontSize: 10,
                 }}
               >
-                <strong>{clip.id}</strong>
-                <span style={{ color: v('--elucim-editor-text-muted') }}>{clip.duration}f · {clip.tracks.length} track{clip.tracks.length === 1 ? '' : 's'}</span>
-              </button>
+                <span style={{ minWidth: 0, display: 'grid', gap: 2 }}>
+                  <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clip.id}</strong>
+                  <span style={{ color: v('--elucim-editor-text-muted'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clip.duration}f · {clip.tracks.length} track{clip.tracks.length === 1 ? '' : 's'}</span>
+                </span>
+                {onTimelineDelete && (
+                  <button
+                    type="button"
+                    aria-label={`Remove animation ${clip.id}`}
+                    title="Remove animation"
+                    onClick={event => {
+                      event.stopPropagation();
+                      onTimelineDelete(clip.id);
+                    }}
+                    style={motionListActionButtonStyle(false, selected || hovered)}
+                  >
+                    {icons.Remove({ size: 12 })}
+                  </button>
+                )}
+              </div>
             );
           })}
           {activeMotionType === 'stateMachine' && stateMachines.map(machine => {
             const selected = selectedItem?.type === 'stateMachine' && selectedItem.machineId === machine.id;
+            const hovered = hoveredMotionItem?.type === 'stateMachine' && hoveredMotionItem.machineId === machine.id;
             const renaming = renamingMotionItem?.type === 'stateMachine' && renamingMotionItem.machineId === machine.id;
             if (renaming) {
               return (
@@ -1776,19 +1836,32 @@ function TimelineClipRows({
               );
             }
             return (
-              <button
+              <div
                 key={machine.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 aria-label={`Select state machine ${machine.id}`}
                 onClick={() => selectMotionItem({ type: 'stateMachine', machineId: machine.id })}
+                onKeyDown={event => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    selectMotionItem({ type: 'stateMachine', machineId: machine.id });
+                  }
+                }}
                 onDoubleClick={() => {
                   selectMotionItem({ type: 'stateMachine', machineId: machine.id });
                   setRenamingMotionItem({ type: 'stateMachine', machineId: machine.id });
                 }}
+                onMouseEnter={() => setHoveredMotionItem({ type: 'stateMachine', machineId: machine.id })}
+                onMouseLeave={() => setHoveredMotionItem(current => current?.type === 'stateMachine' && current.machineId === machine.id ? null : current)}
+                onFocus={() => setHoveredMotionItem({ type: 'stateMachine', machineId: machine.id })}
+                onBlur={() => setHoveredMotionItem(current => current?.type === 'stateMachine' && current.machineId === machine.id ? null : current)}
                 style={{
                   width: '100%',
                   display: 'grid',
-                  gap: 2,
+                  gridTemplateColumns: 'minmax(0, 1fr) auto',
+                  alignItems: 'center',
+                  gap: 6,
                   padding: '6px 8px',
                   border: 'none',
                   borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`,
@@ -1799,9 +1872,25 @@ function TimelineClipRows({
                   fontSize: 10,
                 }}
               >
-                <strong>{machine.id}</strong>
-                <span style={{ color: v('--elucim-editor-text-muted') }}>{Object.keys(machine.states).length} state{Object.keys(machine.states).length === 1 ? '' : 's'}</span>
-              </button>
+                <span style={{ minWidth: 0, display: 'grid', gap: 2 }}>
+                  <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{machine.id}</strong>
+                  <span style={{ color: v('--elucim-editor-text-muted'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{Object.keys(machine.states).length} state{Object.keys(machine.states).length === 1 ? '' : 's'}</span>
+                </span>
+                {onStateMachineDelete && (
+                  <button
+                    type="button"
+                    aria-label={`Remove state machine ${machine.id}`}
+                    title="Remove state machine"
+                    onClick={event => {
+                      event.stopPropagation();
+                      onStateMachineDelete(machine.id);
+                    }}
+                    style={motionListActionButtonStyle(false, selected || hovered)}
+                  >
+                    {icons.Remove({ size: 12 })}
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>
@@ -1845,11 +1934,11 @@ function TimelineClipRows({
         />
       ) : (
         <div style={{ height: '100%', display: 'grid', placeItems: 'center', color: v('--elucim-editor-text-muted'), fontSize: 11 }}>
-          Use the + button in the motion rail to add a state machine.
+          Use the add button in the State machines header to create a state machine.
         </div>
       ) : visibleClips.length === 0 ? (
         <div style={{ height: '100%', display: 'grid', placeItems: 'center', color: v('--elucim-editor-text-muted'), fontSize: 11 }}>
-          Use the + button in the motion rail to add an animation.
+          Use the add button in the Animations header to create an animation.
         </div>
       ) : visibleClips.map(clip => (
         <div key={clip.id} style={{ position: 'relative' }}>
@@ -1863,18 +1952,7 @@ function TimelineClipRows({
               borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
             }}
           >
-            <div style={{ display: 'grid', gridTemplateColumns: onTimelineDelete && onTimelineChange ? '1fr 1fr' : '1fr', gap: 4, alignItems: 'center', minWidth: 0, padding: '0 6px' }}>
-                {onTimelineDelete && (
-                  <button
-                    type="button"
-                    aria-label={`Remove animation ${clip.id}`}
-                    title="Remove animation"
-                    onClick={() => onTimelineDelete(clip.id)}
-                    style={{ height: 24, border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 999, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer', fontSize: 13, fontWeight: 800, lineHeight: 1, padding: 0 }}
-                  >
-                    ×
-                  </button>
-                )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 4, alignItems: 'center', minWidth: 0, padding: '0 6px' }}>
                 {onTimelineChange && (
                   <button
                     type="button"
@@ -1883,7 +1961,7 @@ function TimelineClipRows({
                     onClick={() => addTrack(clip)}
                     style={{ height: 24, border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 999, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 13, fontWeight: 800, lineHeight: 1, padding: 0 }}
                   >
-                    +
+                    {icons.Add({ size: 13 })}
                   </button>
                 )}
             </div>
@@ -1986,18 +2064,18 @@ function TimelineClipRows({
                       aria-label={`Add keyframe to ${clip.id} ${track.target}.${track.property}`}
                       title="Add keyframe"
                       onClick={() => addKeyframe(clip, trackIndex)}
-                      style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 3, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 9, padding: '1px 4px', whiteSpace: 'nowrap' }}
+                      style={{ width: 24, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 3, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', padding: 0 }}
                     >
-                      + key
+                      {icons.Add({ size: 12 })}
                     </button>
                     <button
                       type="button"
                       aria-label={`Remove ${clip.id} ${track.target}.${track.property} track`}
                       title="Remove track"
                       onClick={() => deleteTrack(clip, trackIndex)}
-                      style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 3, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer', fontSize: 11, fontWeight: 800, padding: '1px 6px', whiteSpace: 'nowrap', lineHeight: 1 }}
+                      style={{ width: 24, height: 22, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 3, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer', padding: 0 }}
                     >
-                      -
+                      {icons.Remove({ size: 12 })}
                     </button>
                   </div>
                 )}
