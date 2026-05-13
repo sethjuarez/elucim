@@ -61,6 +61,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test
+      - run: pnpm test:package-smoke
 
       - name: Publish @elucim/core
         if: ${{ needs.release-please.outputs.core_release == 'true' }}

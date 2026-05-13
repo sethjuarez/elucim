@@ -54,6 +54,10 @@ packages/
 # Unit tests (429 tests across core, dsl, editor)
 pnpm test
 
+# Packed package smoke tests (requires pnpm build first; installs tarballs with npm)
+pnpm build
+pnpm test:package-smoke
+
 # Individual packages
 pnpm --filter @elucim/core test
 pnpm --filter @elucim/dsl test
