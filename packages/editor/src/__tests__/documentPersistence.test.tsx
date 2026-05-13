@@ -73,7 +73,7 @@ describe('canonical document editor persistence', () => {
     render(React.createElement(ElucimEditor, { initialDocument: normalized.document, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
-    fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Objects' }));
     fireEvent.click(screen.getAllByText('caption')[0]);
     fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'After' } });
 
@@ -127,7 +127,7 @@ describe('canonical document editor persistence', () => {
     render(React.createElement(ElucimEditor, { initialDocument: documentWithLayout, onDocumentChange }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
-    fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Objects' }));
     fireEvent.click(screen.getAllByText('title')[0]);
     fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'Updated title' } });
 
@@ -241,7 +241,7 @@ describe('canonical document editor persistence', () => {
       onCompatibilityWarnings,
     }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Objects' }));
     fireEvent.click(screen.getAllByText('title')[0]);
     fireEvent.keyDown(document, { key: 'Delete' });
 

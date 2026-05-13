@@ -50,7 +50,7 @@ export interface ElucimEditorProps {
 
 /**
  * A visual editor for creating and editing Elucim animated scenes.
- * Persistent shell with hierarchy, stage, inspector, and timeline.
+ * Persistent shell with Objects, stage, inspector, and timeline.
  */
 export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange, onCompatibilityWarnings, onBrowseImage, imageResolver }: ElucimEditorProps) {
   let inner = (

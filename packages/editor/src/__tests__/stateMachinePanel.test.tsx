@@ -150,7 +150,7 @@ describe('StateMachinePanel', () => {
     expect(onDocumentChange.mock.calls.at(-1)?.[0].stateMachines?.deck).toBeTruthy();
 
     fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
-    fireEvent.click(screen.getByRole('tab', { name: 'Hierarchy' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Objects' }));
     fireEvent.click(screen.getAllByText('title')[0]);
     fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
     fireEvent.change(screen.getByLabelText('Selected role'), { target: { value: 'hero' } });

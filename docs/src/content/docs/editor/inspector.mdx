@@ -1,6 +1,6 @@
 ---
 title: Inspector & Properties
-description: Edit canvas, element, hierarchy, motion, and polish properties in the current editor UI.
+description: Edit canvas, Object, motion, and polish properties in the current editor UI.
 ---
 
 The inspector is the contextual property panel on the right side of the editor. It edits the selected canvas or element immediately, while timelines and state machines own animated changes over time.
@@ -61,11 +61,11 @@ Use the inspector for an element's static starting state. Use the motion panel f
 | State machine states | State Machine workspace graph |
 | Transitions / triggers | State Machine workspace graph and details |
 
-The inspector does not create wrapper animation props. Legacy documents that already contain wrapper nodes can still be inspected through the hierarchy, but new motion should be authored in timelines and state machines.
+The inspector does not create wrapper animation props. Legacy documents that already contain wrapper nodes can still be inspected through Objects, but new motion should be authored in timelines and state machines.
 
-## Hierarchy and nested selection
+## Objects and nested selection
 
-The left **Hierarchy** tab is the fastest way to inspect a dense scene. It shows root canvas, nested groups, generated IDs, element types, and semantic roles from Elucim Document data. Double-click a row to rename an element. If a selected element is inside a group, the inspector header shows its parent path and lets you jump back to the parent.
+The left **Objects** tab is the fastest way to inspect a dense scene. It shows root canvas, nested groups, generated IDs, element types, and semantic roles from Elucim Document data. Double-click a row to rename an element. If a selected element is inside a group, the inspector header shows its parent path and lets you jump back to the parent.
 
 ## Image fields
 
@@ -86,7 +86,7 @@ Right-click the canvas or selected elements for operations that do not belong in
 <img class="theme-img-dark" src="/images/editor/editor-context-menu.png" alt="Editor context menu in dark mode" />
 <img class="theme-img-light" src="/images/editor/editor-context-menu-light.png" alt="Editor context menu in light mode" />
 
-The context menu includes group/ungroup, duplicate, copy, paste, delete, hierarchy order, align, distribute, select all, and deselect all.
+The context menu includes group/ungroup, duplicate, copy, paste, delete, Object order, align, distribute, select all, and deselect all.
 
 ## Next steps
 

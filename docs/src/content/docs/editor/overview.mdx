@@ -21,10 +21,10 @@ export function App() {
 }
 ```
 
-This opens the full editor shell with workspace tabs, a hierarchy/create dock, canvas, inspector, zoom controls, minimap, and the motion panel.
+This opens the full editor shell with workspace tabs, an Objects/Create dock, canvas, inspector, zoom controls, minimap, and the motion panel.
 
-<img class="theme-img-dark" src="/images/editor/editor-overview-dark.png" alt="Elucim editor in dark mode showing dense canvas, hierarchy, inspector, and motion panel" />
-<img class="theme-img-light" src="/images/editor/editor-overview-light.png" alt="Elucim editor in light mode showing dense canvas, hierarchy, inspector, and motion panel" />
+<img class="theme-img-dark" src="/images/editor/editor-overview-dark.png" alt="Elucim editor in dark mode showing dense canvas, Objects, inspector, and motion panel" />
+<img class="theme-img-light" src="/images/editor/editor-overview-light.png" alt="Elucim editor in light mode showing dense canvas, Objects, inspector, and motion panel" />
 
 ## Load a normalized document
 
@@ -93,7 +93,7 @@ The editor is organized around four workspaces:
 
 | Workspace | Use it for |
 |-----------|------------|
-| **Design** | Arrange elements, browse the scene hierarchy, add templates, edit static properties, group, align, and distribute. |
+| **Design** | Arrange Objects, browse scene structure, add templates, edit static properties, group, align, and distribute. |
 | **Animate** | Create and edit timelines, tracks, keyframes, easing, and sampled timeline preview frames. |
 | **State Machine** | Wire timelines into Entry/state/Exit flows, transitions, trigger inputs, keyboard/click events, and preview behavior. |
 | **Polish** | Review metadata, selected-element intent, validation warnings, compatibility notes, and suggested document nudges. |
@@ -107,7 +107,7 @@ The current editor shell is a docked workspace UI:
 | Region | Purpose |
 |--------|---------|
 | **Top bar** | Workspace tabs plus show/hide toggles for left panel, inspector, and timeline. |
-| **Left dock** | `Hierarchy` tab for scene structure and `Create` tab for element templates. |
+| **Left dock** | `Objects` tab for scene structure and `Create` tab for element templates. |
 | **Canvas** | Pan/zoom stage with grid, selection overlay, context menu, minimap, and zoom controls. |
 | **Inspector** | Contextual properties for the canvas or selected element. |
 | **Motion panel** | Timeline editor or state-machine graph, depending on workspace/tab. |
@@ -134,11 +134,11 @@ Templates insert normal scene elements with sensible tokenized colors. Select th
 - Click an element to select it; Shift/Ctrl/Cmd+click toggles multi-selection.
 - Drag selected elements to move them; Alt+drag duplicates first, then drags the copy.
 - Drag handles to resize; Shift+drag constrains uniform resizing.
-- Use the hierarchy or right-click context menu for grouping, clipboard actions, layer order, align, and distribute.
-- Double-click an item in the hierarchy to rename it. Renames are mapped back into normalized output where possible.
+- Use Objects or the right-click context menu for grouping, clipboard actions, layer order, align, and distribute.
+- Double-click an item in Objects to rename it. Renames are mapped back into normalized output where possible.
 
-<img class="theme-img-dark" src="/images/editor/editor-element-selected.png" alt="Selected element in the editor with hierarchy, inspector, and selection handles" />
-<img class="theme-img-light" src="/images/editor/editor-element-selected-light.png" alt="Selected element in the editor light theme with hierarchy, inspector, and selection handles" />
+<img class="theme-img-dark" src="/images/editor/editor-element-selected.png" alt="Selected Object in the editor with Objects, inspector, and selection handles" />
+<img class="theme-img-light" src="/images/editor/editor-element-selected-light.png" alt="Selected Object in the editor light theme with Objects, inspector, and selection handles" />
 
 ## Motion authoring
 
