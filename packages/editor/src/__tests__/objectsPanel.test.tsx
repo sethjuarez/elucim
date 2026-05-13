@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import type { GroupNode, RectNode } from '@elucim/dsl';
 import { EditorProvider, useEditorState } from '../state/EditorProvider';
-import { HierarchyPanel } from '../hierarchy/HierarchyPanel';
+import { ObjectsPanel } from '../objects/ObjectsPanel';
 import { CANVAS_ID } from '../state/types';
 
 const rect: RectNode = { type: 'rect', id: 'r1', x: 10, y: 20, width: 100, height: 80 };
@@ -33,7 +33,7 @@ function CaptureRootChildren({ onChildren }: { onChildren: (ids: string[]) => vo
   return null;
 }
 
-function renderHierarchy(
+function renderObjectsPanel(
   onSelection: (ids: string[]) => void = () => {},
   children: unknown[] = [group],
   onChildren: (ids: string[]) => void = () => {},
@@ -47,15 +47,15 @@ function renderHierarchy(
     >
       <CaptureSelection onSelection={onSelection} />
       <CaptureRootChildren onChildren={onChildren} />
-      <HierarchyPanel />
+      <ObjectsPanel />
     </EditorProvider>,
   );
 }
 
-describe('hierarchy panel', () => {
+describe('objects panel', () => {
   it('selects canvas and nested children from the tree', async () => {
     let selectedIds: string[] = [];
-    const { getByText } = renderHierarchy(ids => { selectedIds = ids; });
+    const { getByText } = renderObjectsPanel(ids => { selectedIds = ids; });
 
     fireEvent.click(getByText('Canvas'));
     await waitFor(() => expect(selectedIds).toEqual([CANVAS_ID]));
@@ -65,7 +65,7 @@ describe('hierarchy panel', () => {
   });
 
   it('collapses and expands container rows', () => {
-    const { getByText, queryByText, getByRole } = renderHierarchy();
+    const { getByText, queryByText, getByRole } = renderObjectsPanel();
 
     expect(getByText('child-rect')).toBeTruthy();
     fireEvent.click(getByRole('button', { name: 'Collapse g1' }));
@@ -75,11 +75,11 @@ describe('hierarchy panel', () => {
     expect(getByText('child-rect')).toBeTruthy();
   });
 
-  it('reorders sibling rows by dragging in the hierarchy', async () => {
+  it('reorders sibling rows by dragging in Objects', async () => {
     let rootChildren: string[] = [];
     const backRect: RectNode = { ...rect, id: 'back-rect' };
     const frontRect: RectNode = { ...rect, id: 'front-rect' };
-    const { getAllByRole, getByText } = renderHierarchy(() => {}, [backRect, frontRect], ids => { rootChildren = ids; });
+    const { getAllByRole, getByText } = renderObjectsPanel(() => {}, [backRect, frontRect], ids => { rootChildren = ids; });
     const dataTransfer = {
       effectAllowed: '',
       dropEffect: '',
