@@ -1888,7 +1888,8 @@ function TimelineClipRows({
             );
           })}
         </div>
-        <div style={{ minHeight: 0, overflow: 'hidden', paddingRight: 10, boxSizing: 'border-box' }}>
+        <div style={{ minHeight: 0, overflow: 'hidden', paddingRight: 10, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
       {activeMotionType === 'stateMachine' ? selectedMachine ? (
         <StateMachineTimelineGraph
           machine={selectedMachine}
@@ -2212,6 +2213,21 @@ function TimelineClipRows({
           )}
         </div>
       ))}
+          </div>
+          {activeMotionType === 'animation' && (
+            <div
+              style={{
+                minHeight: 40,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`,
+                background: `color-mix(in srgb, ${v('--elucim-editor-input-bg')} 42%, transparent)`,
+              }}
+            >
+              {playbackControls}
+            </div>
+          )}
         </div>
         {selectedMachine && onStateMachineChange ? (
           <StateMachineMotionInspector
@@ -2244,25 +2260,6 @@ function TimelineClipRows({
           />
         )}
       </div>
-      {activeMotionType === 'animation' && (
-        <div
-          style={{
-            minHeight: 40,
-            display: 'grid',
-            gridTemplateColumns: motionGridColumns,
-            alignItems: 'center',
-            borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`,
-            background: `color-mix(in srgb, ${v('--elucim-editor-input-bg')} 42%, transparent)`,
-          }}
-        >
-          <div />
-          <div />
-          <div style={{ display: 'flex', justifyContent: 'center', minWidth: 0 }}>
-            {playbackControls}
-          </div>
-          <div />
-        </div>
-      )}
     </div>
   );
 }
@@ -3482,6 +3479,7 @@ function TimelinePlaybackControls({
   onStepForward: () => void;
   onEnd: () => void;
 }) {
+  const frameNumberWidth = `${Math.max(2, String(maxFrame).length)}ch`;
   return (
     <div
       role="group"
@@ -3522,9 +3520,9 @@ function TimelinePlaybackControls({
           whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{currentFrame}</span>
+        <span style={{ width: frameNumberWidth, color: v('--elucim-editor-fg'), fontWeight: 700, textAlign: 'right' }}>{currentFrame}</span>
         <span>/</span>
-        <span>{maxFrame}</span>
+        <span style={{ width: frameNumberWidth }}>{maxFrame}</span>
         <span style={{ color: v('--elucim-editor-text-muted') }}>{fps}fps</span>
       </div>
     </div>
