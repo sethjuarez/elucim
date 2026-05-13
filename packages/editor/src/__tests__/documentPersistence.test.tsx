@@ -203,11 +203,14 @@ describe('canonical document editor persistence', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Polish' }));
     fireEvent.click(screen.getByRole('button', { name: 'Apply nudge Mark document as refined' }));
 
+    expect(await screen.findByText('Applied Mark document as refined')).toBeTruthy();
+    expect(screen.getByText('Updated document metadata.')).toBeTruthy();
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
       expect(latest?.metadata?.polishLevel).toBe('refined');
       expect(validateDocument(latest).valid).toBe(true);
     });
+    expect((screen.getByLabelText('Polish level') as HTMLSelectElement).value).toBe('refined');
   });
 
   it('lets users dismiss suggested nudges without changing the canonical document', () => {
