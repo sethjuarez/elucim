@@ -1,7 +1,8 @@
 // @elucim/editor — Visual editor for Elucim animated scenes
 
 // Main component
-export { ElucimEditor, ElucimEditorLayout, type ElucimEditorProps, type ElucimEditorLayoutProps, type ElucimEditorChangeDetails } from './ElucimEditor';
+export { ElucimEditor, type ElucimEditorProps, type ElucimEditorChangeDetails } from './ElucimEditor';
+export { ElucimEditorLayout, type ElucimEditorLayoutProps } from './ElucimEditorLayout';
 
 // State management (for advanced integrations)
 export { EditorProvider, useEditorState, useEditorDocument, useEditorSelection, type EditorProviderProps } from './state/EditorProvider';
