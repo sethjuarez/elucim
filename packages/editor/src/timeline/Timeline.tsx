@@ -34,6 +34,8 @@ const LABEL_WIDTH = 156;
 const MOTION_RAIL_WIDTH = 34;
 const MOTION_LIST_WIDTH = 140;
 const MOTION_DETAILS_WIDTH = 300;
+const PLAYBACK_BUTTON_SIZE = 24;
+const PLAYBACK_PRIMARY_BUTTON_SIZE = 30;
 const EASING_OPTIONS = ['linear', 'easeInQuad', 'easeOutQuad', 'easeInOutQuad', 'easeInCubic', 'easeOutCubic', 'easeInOutCubic', 'easeInSine', 'easeOutSine', 'easeInOutSine', 'easeOutElastic', 'easeOutBounce', 'easeInBack', 'easeOutBack'];
 const ANIMATABLE_PROPERTIES = ['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke'] as const;
 const WRAPPER_TYPES = new Set(['fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
@@ -737,6 +739,26 @@ export function Timeline({
   }, []);
 
   const playheadPercent = scopedPlayheadPercent;
+  const playbackControls = (
+    <TimelinePlaybackControls
+      currentFrame={Math.min(currentFrame, activeTimelineMaxFrame)}
+      maxFrame={activeTimelineMaxFrame}
+      fps={fps}
+      isPlaying={isPlaying}
+      icons={{
+        skipStart: icons.SkipStart({ size: 12 }),
+        stepBackward: icons.StepBackward({ size: 12 }),
+        playPause: isPlaying ? icons.Pause({ size: 14 }) : icons.Play({ size: 14 }),
+        stepForward: icons.StepForward({ size: 12 }),
+        skipEnd: icons.SkipEnd({ size: 12 }),
+      }}
+      onStart={goToStart}
+      onStepBackward={stepBackward}
+      onTogglePlay={togglePlay}
+      onStepForward={stepForward}
+      onEnd={goToEnd}
+    />
+  );
 
   return (
     <div
@@ -752,23 +774,6 @@ export function Timeline({
         ...style,
       }}
     >
-      {showLegacyElementTracks && (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}` }}>
-        {showLegacyElementTracks && showAnimationTimeline && (
-          <>
-            <TimelineButton icon={icons.SkipStart()} title="Start" onClick={goToStart} />
-            <TimelineButton icon={icons.StepBackward()} title="Step back" onClick={stepBackward} />
-            <TimelineButton icon={isPlaying ? icons.Pause() : icons.Play()} title={isPlaying ? 'Pause' : 'Play'} onClick={togglePlay} active={isPlaying} />
-            <TimelineButton icon={icons.StepForward()} title="Step forward" onClick={stepForward} />
-            <TimelineButton icon={icons.SkipEnd()} title="End" onClick={goToEnd} />
-            <div style={{ marginLeft: 8, color: v('--elucim-editor-text-secondary'), fontVariantNumeric: 'tabular-nums' }}>
-              {currentFrame} / {durationInFrames - 1} @ {fps}fps
-            </div>
-          </>
-        )}
-      </div>
-      )}
-
       {/* Ruler + tracks */}
       <div style={{ position: 'relative', flex: 1, minHeight: 0 }} data-track-area>
         {/* Ruler */}
@@ -861,18 +866,7 @@ export function Timeline({
             onStateMachinePreviewClickChange={onStateMachinePreviewClickChange}
             onStateMachinePreviewKeyDownChange={onStateMachinePreviewKeyDownChange}
             playheadPercent={playheadPercent}
-            playbackControls={(
-              <>
-                <TimelineButton icon={icons.SkipStart({ size: 11 })} title="Start" onClick={goToStart} size={18} />
-                <TimelineButton icon={icons.StepBackward({ size: 11 })} title="Step back" onClick={stepBackward} size={18} />
-                <TimelineButton icon={isPlaying ? icons.Pause({ size: 11 }) : icons.Play({ size: 11 })} title={isPlaying ? 'Pause' : 'Play'} onClick={togglePlay} active={isPlaying} size={18} />
-                <TimelineButton icon={icons.StepForward({ size: 11 })} title="Step forward" onClick={stepForward} size={18} />
-                <TimelineButton icon={icons.SkipEnd({ size: 11 })} title="End" onClick={goToEnd} size={18} />
-                <span style={{ color: v('--elucim-editor-text-secondary'), fontVariantNumeric: 'tabular-nums', fontSize: 10, whiteSpace: 'nowrap' }}>
-                  {Math.min(currentFrame, activeTimelineMaxFrame)} / {activeTimelineMaxFrame} @ {fps}fps
-                </span>
-              </>
-            )}
+            playbackControls={playbackControls}
             rulerRef={rulerRef}
             onRulerPointerDown={handleRulerPointerDown}
             onRulerPointerMove={handleRulerPointerMove}
@@ -1955,14 +1949,22 @@ function TimelineClipRows({
             <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', padding: '0 8px', color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
               Tracks
             </div>
-            <div style={{ minWidth: 0, display: 'grid', gridTemplateRows: '20px 1fr' }}>
-              <div style={{ minWidth: 0, display: 'flex', alignItems: 'end', gap: 8 }}>
+            <div style={{ minWidth: 0, display: 'grid', gridTemplateRows: '20px 1fr', position: 'relative' }}>
+              <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', paddingRight: 8 }}>
                 <div style={{ color: v('--elucim-editor-text-secondary'), fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                   {clip.id} - {clip.duration}f - {clip.tracks.length} track{clip.tracks.length === 1 ? '' : 's'}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 3, alignSelf: 'center', paddingRight: 6 }}>
-                  {playbackControls}
-                </div>
+              </div>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: -5,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  zIndex: 4,
+                }}
+              >
+                {playbackControls}
               </div>
               <div
                 ref={rulerRef}
@@ -3443,11 +3445,93 @@ function AnimationBar({ left, width, color, title, onEdgeDrag, onClick, edgeSide
   );
 }
 
-function TimelineButton({ icon, title, onClick, active, size = 28 }: {
-  icon: React.ReactNode; title: string; onClick: () => void; active?: boolean; size?: number;
+function TimelinePlaybackControls({
+  currentFrame,
+  maxFrame,
+  fps,
+  isPlaying,
+  icons,
+  onStart,
+  onStepBackward,
+  onTogglePlay,
+  onStepForward,
+  onEnd,
+}: {
+  currentFrame: number;
+  maxFrame: number;
+  fps: number;
+  isPlaying: boolean;
+  icons: {
+    skipStart: React.ReactNode;
+    stepBackward: React.ReactNode;
+    playPause: React.ReactNode;
+    stepForward: React.ReactNode;
+    skipEnd: React.ReactNode;
+  };
+  onStart: () => void;
+  onStepBackward: () => void;
+  onTogglePlay: () => void;
+  onStepForward: () => void;
+  onEnd: () => void;
 }) {
   return (
+    <div
+      role="group"
+      aria-label="Timeline playback controls"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        minWidth: 0,
+      }}
+    >
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 3,
+          padding: 2,
+          border: `1px solid ${v('--elucim-editor-border-subtle')}`,
+          borderRadius: 999,
+          background: `color-mix(in srgb, ${v('--elucim-editor-input-bg')} 72%, transparent)`,
+        }}
+      >
+        <TimelineButton icon={icons.skipStart} title="Start" onClick={onStart} size={PLAYBACK_BUTTON_SIZE} variant="ghost" />
+        <TimelineButton icon={icons.stepBackward} title="Step back" onClick={onStepBackward} size={PLAYBACK_BUTTON_SIZE} variant="ghost" />
+        <TimelineButton icon={icons.playPause} title={isPlaying ? 'Pause' : 'Play'} onClick={onTogglePlay} active={isPlaying} size={PLAYBACK_PRIMARY_BUTTON_SIZE} variant="primary" />
+        <TimelineButton icon={icons.stepForward} title="Step forward" onClick={onStepForward} size={PLAYBACK_BUTTON_SIZE} variant="ghost" />
+        <TimelineButton icon={icons.skipEnd} title="End" onClick={onEnd} size={PLAYBACK_BUTTON_SIZE} variant="ghost" />
+      </div>
+      <div
+        aria-label={`Frame ${currentFrame} of ${maxFrame} at ${fps} frames per second`}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'baseline',
+          gap: 5,
+          color: v('--elucim-editor-text-secondary'),
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: 10,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <span style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{currentFrame}</span>
+        <span>/</span>
+        <span>{maxFrame}</span>
+        <span style={{ color: v('--elucim-editor-text-muted') }}>{fps}fps</span>
+      </div>
+    </div>
+  );
+}
+
+function TimelineButton({ icon, title, onClick, active, size = 28, variant = 'default' }: {
+  icon: React.ReactNode; title: string; onClick: () => void; active?: boolean; size?: number; variant?: 'default' | 'ghost' | 'primary';
+}) {
+  const primary = variant === 'primary';
+  const ghost = variant === 'ghost';
+  return (
     <button
+      type="button"
+      aria-label={title}
       title={title}
       onClick={onClick}
       style={{
@@ -3456,10 +3540,14 @@ function TimelineButton({ icon, title, onClick, active, size = 28 }: {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        border: `1px solid ${active ? v('--elucim-editor-accent') : v('--elucim-editor-border-subtle')}`,
+        border: ghost ? 'none' : `1px solid ${active ? v('--elucim-editor-accent') : v('--elucim-editor-border-subtle')}`,
         borderRadius: 999,
-        background: active ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 20%, transparent)` : 'transparent',
-        color: v('--elucim-editor-fg'),
+        background: active
+          ? `color-mix(in srgb, ${v('--elucim-editor-accent')} ${primary ? '28%' : '20%'}, transparent)`
+          : primary
+            ? v('--elucim-editor-input-bg')
+            : 'transparent',
+        color: active ? v('--elucim-editor-accent') : v('--elucim-editor-fg'),
         cursor: 'pointer',
         padding: 0,
       }}
