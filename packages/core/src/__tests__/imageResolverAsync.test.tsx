@@ -1,10 +1,9 @@
 /**
  * @vitest-environment jsdom
  */
-import React from 'react';
+import React, { act } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import ReactDOM from 'react-dom/client';
-import { act } from 'react-dom/test-utils';
 import { ImageResolverProvider, type ImageResolverFn } from '../providers/ImageResolverProvider';
 import { Image } from '../primitives/Image';
 import { ElucimContext } from '../context';

@@ -1,10 +1,9 @@
 /**
  * @vitest-environment jsdom
  */
-import React from 'react';
+import React, { act } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ReactDOM from 'react-dom/client';
-import { act } from 'react-dom/test-utils';
 import { Player, type PlayerRef } from '../components/Player';
 
 // Default matchMedia mock — no reduced motion
