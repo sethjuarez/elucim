@@ -1,5 +1,5 @@
 import { SEMANTIC_TOKENS } from '@elucim/core';
-import type { ElucimV2Document, ElucimV2Element } from './types';
+import type { ElucimDocument, ElucimElement } from './types';
 
 export type ElucimPolishCategory = 'layout' | 'hierarchy' | 'readability' | 'contrast' | 'graph' | 'motion' | 'structure';
 export type ElucimPolishSeverity = 'info' | 'warning' | 'error';
@@ -29,7 +29,7 @@ export interface ElucimPolishReport {
   diagnostics: ElucimPolishDiagnostic[];
 }
 
-export type ElucimPresetElement = ElucimV2Element;
+export type ElucimPresetElement = ElucimElement;
 
 export interface ElucimElementIntersection {
   ids: [string, string];
@@ -168,7 +168,7 @@ const MIN_TEXT_SIZE = 16;
 const TARGET_TITLE_SIZE = 40;
 const TOKEN_VALUES = new Set(Object.keys(SEMANTIC_TOKENS).map(token => `$${token}`));
 
-export function analyzePolish(doc: ElucimV2Document): ElucimPolishReport {
+export function analyzePolish(doc: ElucimDocument): ElucimPolishReport {
   const diagnostics: ElucimPolishDiagnostic[] = [];
   const bounds = collectElementBounds(doc);
   diagnostics.push(...checkSceneStructure(doc));
@@ -182,7 +182,7 @@ export function analyzePolish(doc: ElucimV2Document): ElucimPolishReport {
   return { diagnostics, score: scoreDiagnostics(diagnostics) };
 }
 
-export function inspectPolishHeuristics(doc: ElucimV2Document): ElucimPolishHeuristicReport {
+export function inspectPolishHeuristics(doc: ElucimDocument): ElucimPolishHeuristicReport {
   const polish = analyzePolish(doc);
   const bounds = collectElementBounds(doc);
   return {
@@ -198,11 +198,11 @@ export function inspectPolishHeuristics(doc: ElucimV2Document): ElucimPolishHeur
   };
 }
 
-export function getSmoothConnectorCandidates(doc: ElucimV2Document): ElucimConnectorContinuationHeuristic[] {
+export function getSmoothConnectorCandidates(doc: ElucimDocument): ElucimConnectorContinuationHeuristic[] {
   return collectConnectorContinuations(doc, collectElementBounds(doc));
 }
 
-export function collectElementBounds(doc: ElucimV2Document): ElementBounds[] {
+export function collectElementBounds(doc: ElucimDocument): ElementBounds[] {
   return Object.values(doc.elements)
     .map(element => getElementBounds(element))
     .filter((bounds): bounds is ElementBounds => Boolean(bounds));
@@ -251,7 +251,7 @@ export function createCalloutCardPreset(spec: ElucimCalloutCardPresetSpec): Eluc
       role: 'body',
       intent: { role: 'body', importance: 'supporting' },
       props: { x: spec.x + 22, y: spec.y + 74, content: spec.body, fontSize: 16, fill: '$muted' },
-    } satisfies ElucimV2Element] : []),
+    } satisfies ElucimElement] : []),
   ];
 }
 
@@ -327,7 +327,7 @@ export function layoutGraphLayered(
   });
 }
 
-export function graphNeedsLayout(element: ElucimV2Element): boolean {
+export function graphNeedsLayout(element: ElucimElement): boolean {
   const nodes = getGraphNodes(element);
   const edges = getGraphEdges(element);
   if (!nodes || !edges || nodes.length < 3 || edges.length === 0) return false;
@@ -335,14 +335,14 @@ export function graphNeedsLayout(element: ElucimV2Element): boolean {
   return metrics.overlappingNodes > 0 || metrics.crossings > 0 || metrics.hasDirectedEdges;
 }
 
-export function layoutGraphElementLayered(element: ElucimV2Element): ElucimGraphNodeLayout[] | undefined {
+export function layoutGraphElementLayered(element: ElucimElement): ElucimGraphNodeLayout[] | undefined {
   const nodes = getGraphNodes(element);
   const edges = getGraphEdges(element);
   if (!nodes || !edges) return undefined;
   return layoutGraphLayered(nodes, edges);
 }
 
-function checkSceneStructure(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
+function checkSceneStructure(doc: ElucimDocument): ElucimPolishDiagnostic[] {
   const diagnostics: ElucimPolishDiagnostic[] = [];
   if (!doc.metadata?.title && !findTitleElement(doc)) {
     diagnostics.push({
@@ -365,7 +365,7 @@ function checkSceneStructure(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
   return diagnostics;
 }
 
-function checkBounds(doc: ElucimV2Document, bounds: ElementBounds[]): ElucimPolishDiagnostic[] {
+function checkBounds(doc: ElucimDocument, bounds: ElementBounds[]): ElucimPolishDiagnostic[] {
   const width = doc.scene.width ?? DEFAULT_SCENE_WIDTH;
   const height = doc.scene.height ?? DEFAULT_SCENE_HEIGHT;
   return bounds
@@ -414,7 +414,7 @@ function collectIntersections(bounds: ElementBounds[]): ElucimElementIntersectio
   return intersections.sort((a, b) => b.area - a.area || a.ids.join(':').localeCompare(b.ids.join(':')));
 }
 
-function collectOffCanvasHeuristics(doc: ElucimV2Document, bounds: ElementBounds[]): ElucimOffCanvasHeuristic[] {
+function collectOffCanvasHeuristics(doc: ElucimDocument, bounds: ElementBounds[]): ElucimOffCanvasHeuristic[] {
   const width = doc.scene.width ?? DEFAULT_SCENE_WIDTH;
   const height = doc.scene.height ?? DEFAULT_SCENE_HEIGHT;
   return bounds
@@ -431,7 +431,7 @@ function collectOffCanvasHeuristics(doc: ElucimV2Document, bounds: ElementBounds
     .filter(item => Object.values(item.overflow).some(value => value > 0));
 }
 
-function collectTextHeuristics(doc: ElucimV2Document): ElucimTextHeuristic[] {
+function collectTextHeuristics(doc: ElucimDocument): ElucimTextHeuristic[] {
   const title = findTitleElement(doc);
   return Object.values(doc.elements)
     .filter(element => element.type === 'text' || element.props.type === 'text')
@@ -451,7 +451,7 @@ function collectTextHeuristics(doc: ElucimV2Document): ElucimTextHeuristic[] {
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function collectColorHeuristics(doc: ElucimV2Document): ElucimColorHeuristic[] {
+function collectColorHeuristics(doc: ElucimDocument): ElucimColorHeuristic[] {
   const colorProps = ['fill', 'stroke', 'color', 'labelColor', 'nodeColor', 'edgeColor'];
   return Object.values(doc.elements)
     .map(element => ({
@@ -464,7 +464,7 @@ function collectColorHeuristics(doc: ElucimV2Document): ElucimColorHeuristic[] {
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function collectGraphHeuristics(doc: ElucimV2Document): ElucimGraphHeuristic[] {
+function collectGraphHeuristics(doc: ElucimDocument): ElucimGraphHeuristic[] {
   return Object.values(doc.elements)
     .map(element => {
       const nodes = getGraphNodes(element);
@@ -484,7 +484,7 @@ function collectGraphHeuristics(doc: ElucimV2Document): ElucimGraphHeuristic[] {
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function collectSemanticRelationshipHeuristics(doc: ElucimV2Document): ElucimSemanticRelationshipHeuristic[] {
+function collectSemanticRelationshipHeuristics(doc: ElucimDocument): ElucimSemanticRelationshipHeuristic[] {
   return Object.values(doc.elements)
     .filter(element => Boolean(
       element.intent?.target ||
@@ -508,7 +508,7 @@ function collectSemanticRelationshipHeuristics(doc: ElucimV2Document): ElucimSem
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function collectConnectorContinuations(doc: ElucimV2Document, bounds: ElementBounds[]): ElucimConnectorContinuationHeuristic[] {
+function collectConnectorContinuations(doc: ElucimDocument, bounds: ElementBounds[]): ElucimConnectorContinuationHeuristic[] {
   return Object.values(doc.elements)
     .map((element): ElucimConnectorContinuationHeuristic | undefined => {
       if (element.type !== 'line' && element.type !== 'arrow' && element.props.type !== 'line' && element.props.type !== 'arrow') return undefined;
@@ -564,7 +564,7 @@ function smoothCurveForConnector(x1: number, y1: number, x2: number, y2: number)
   };
 }
 
-function checkTextHierarchy(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
+function checkTextHierarchy(doc: ElucimDocument): ElucimPolishDiagnostic[] {
   const title = findTitleElement(doc);
   if (!title) return [];
   const fontSize = asNumber(title.element.props.fontSize) ?? 24;
@@ -579,7 +579,7 @@ function checkTextHierarchy(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
   }];
 }
 
-function checkTextReadability(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
+function checkTextReadability(doc: ElucimDocument): ElucimPolishDiagnostic[] {
   return Object.values(doc.elements)
     .filter(element => element.type === 'text' || element.props.type === 'text')
     .filter(element => (asNumber(element.props.fontSize) ?? 24) < MIN_TEXT_SIZE)
@@ -593,7 +593,7 @@ function checkTextReadability(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
     }));
 }
 
-function checkLiteralColors(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
+function checkLiteralColors(doc: ElucimDocument): ElucimPolishDiagnostic[] {
   const literalColorElements = Object.values(doc.elements).filter(element => {
     const colors = ['fill', 'stroke', 'color', 'labelColor', 'nodeColor', 'edgeColor']
       .map(key => element.props[key])
@@ -610,7 +610,7 @@ function checkLiteralColors(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
   }];
 }
 
-function checkGraphReadability(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
+function checkGraphReadability(doc: ElucimDocument): ElucimPolishDiagnostic[] {
   const diagnostics: ElucimPolishDiagnostic[] = [];
   for (const element of Object.values(doc.elements)) {
     const nodes = getGraphNodes(element);
@@ -641,7 +641,7 @@ function checkGraphReadability(doc: ElucimV2Document): ElucimPolishDiagnostic[] 
   return diagnostics;
 }
 
-function checkMotion(doc: ElucimV2Document): ElucimPolishDiagnostic[] {
+function checkMotion(doc: ElucimDocument): ElucimPolishDiagnostic[] {
   if (doc.scene.children.length === 0 || Object.keys(doc.timelines ?? {}).length > 0) return [];
   return [{
     id: 'missing-motion-intro',
@@ -679,7 +679,7 @@ function severityPenalty(severity: ElucimPolishSeverity): number {
   return 6;
 }
 
-function getElementBounds(element: ElucimV2Element): ElementBounds | undefined {
+function getElementBounds(element: ElucimElement): ElementBounds | undefined {
   const props = element.props;
   const x = asNumber(element.layout?.x) ?? asNumber(props.x);
   const y = asNumber(element.layout?.y) ?? asNumber(props.y);
@@ -736,7 +736,7 @@ function graphBounds(nodes: Array<{ id: string; x: number; y: number; radius?: n
   return { id, x: left, y: top, width: right - left, height: bottom - top };
 }
 
-function findTitleElement(doc: ElucimV2Document): { id: string; element: ElucimV2Element } | undefined {
+function findTitleElement(doc: ElucimDocument): { id: string; element: ElucimElement } | undefined {
   const candidates = Object.values(doc.elements).filter(element => element.type === 'text' || element.props.type === 'text');
   const semanticTitle = candidates.find(element => element.role === 'title' || element.intent?.role === 'title');
   if (semanticTitle) return { id: semanticTitle.id, element: semanticTitle };
@@ -745,14 +745,14 @@ function findTitleElement(doc: ElucimV2Document): { id: string; element: ElucimV
   return candidates[0] ? { id: candidates[0].id, element: candidates[0] } : undefined;
 }
 
-function getGraphNodes(element: ElucimV2Element): ElucimGraphNodeLayout[] | undefined {
+function getGraphNodes(element: ElucimElement): ElucimGraphNodeLayout[] | undefined {
   if (element.type !== 'graph' && element.props.type !== 'graph') return undefined;
   if (!Array.isArray(element.props.nodes)) return undefined;
   const nodes = element.props.nodes.filter(isGraphNode);
   return nodes.length === element.props.nodes.length ? nodes : undefined;
 }
 
-function getGraphEdges(element: ElucimV2Element): ElucimGraphEdgeLayout[] | undefined {
+function getGraphEdges(element: ElucimElement): ElucimGraphEdgeLayout[] | undefined {
   if (element.type !== 'graph' && element.props.type !== 'graph') return undefined;
   if (!Array.isArray(element.props.edges)) return undefined;
   const edges = element.props.edges.filter(isGraphEdge);

@@ -40,6 +40,9 @@ export type {
 export {
   createDocumentFromRenderable,
   createRenderableDocument,
+  getDocumentLinearDuration,
+  getMaxTimelineDuration,
+  resolveExportFrameCount,
   normalizeDocument,
   toRenderableDocument,
   validateDocument,
@@ -78,43 +81,19 @@ export type {
   ScenePreset,
 } from './schema/types';
 
-export type {
-  ElucimV2Document,
-  ElucimV2Scene,
-  ElucimV2Element,
-  ElucimV2Metadata,
-  ElucimV2Intent,
-  ElucimV2Layout,
-  ElucimV2Timeline,
-  ElucimV2TimelineTrack,
-  ElucimV2Keyframe,
-  ElucimV2StateMachine,
-  ElucimV2StateMachineInput,
-  ElucimV2State,
-  ElucimV2Transition,
-} from './v2/types';
-export { migrateV1ToV2, migrateV2ToV1, normalizeToV2, toRenderableV1, type NormalizeToV2Result } from './v2/migrate';
-export { validateV2 } from './v2/validateV2';
-export { DEFAULT_LINEAR_DURATION_IN_FRAMES, getDocumentLinearDuration, getMaxTimelineDuration, resolveExportFrameCount, type ElucimV2ExportPolicy } from './v2/duration';
-export { applyCommand, type ElucimV2Command, type ElucimV2CommandResult } from './v2/commands';
+export { DEFAULT_LINEAR_DURATION_IN_FRAMES } from './documentModel/duration';
+export { applyCommand } from './documentModel/commands';
 export {
   summarizeDocument,
   validateForAgent,
   diffDocuments,
-  type ElucimV2DocumentSummary,
-  type ElucimV2ElementSummary,
-  type ElucimV2RepairHint,
-  type ElucimV2AgentValidationResult,
   type JsonPatchOperation,
-} from './v2/services';
+} from './documentModel/services';
 export {
   evaluateTimeline,
   applyTimelineFrame,
   applyTimelineFrames,
-  type ElucimV2TimelineFrame,
-  type ElucimV2TimelineFrameSelection,
-  type ElucimV2TimelinePatch,
-} from './v2/timeline';
+} from './documentModel/timeline';
 export {
   getInitialStateSnapshot,
   startStateMachineRun,
@@ -123,20 +102,13 @@ export {
   getStateMachineRunVisualFrames,
   getStateMachineVisualFrames,
   transitionStateMachine,
-  type ElucimV2StateEvent,
-  type ElucimV2StateMachineRun,
-  type ElucimV2StateMachineRunResult,
-  type ElucimV2StateMachineVisualFrame,
-  type ElucimV2StateMachineVisualFrameOptions,
-  type ElucimV2StateSnapshot,
-  type ElucimV2StateTransitionResult,
-} from './v2/stateMachine';
+} from './documentModel/stateMachine';
 export {
   suggestDocumentNudges,
   applyNudge,
   type ElucimDocumentNudge,
   type ElucimDocumentNudgeResult,
-} from './v2/nudges';
+} from './documentModel/nudges';
 export {
   analyzePolish,
   collectElementBounds,
@@ -163,7 +135,7 @@ export {
   type ElucimOffCanvasHeuristic,
   type ElucimSemanticRelationshipHeuristic,
   type ElucimTextHeuristic,
-} from './v2/polish';
+} from './documentModel/polish';
 export {
   createAutoLayoutGroupPreset,
   createBadgePreset,
@@ -200,7 +172,7 @@ export {
   type ElucimTimelineRoadmapPresetSpec,
   type ElucimTextAlign,
   type ElucimTextBlockPresetSpec,
-} from './v2/composites';
+} from './documentModel/composites';
 export {
   applySemanticLayoutNudge,
   planSemanticLayout,
@@ -208,7 +180,7 @@ export {
   type ElucimSemanticLayoutDirection,
   type ElucimSemanticLayoutOptions,
   type ElucimSemanticLayoutPlan,
-} from './v2/semanticLayout';
+} from './documentModel/semanticLayout';
 export {
   createAutoStaggerTimeline,
   createReducedMotionDocument,
@@ -234,7 +206,7 @@ export {
   type ElucimStateSnapshot,
   type ElucimStateSnapshotMotion,
   type ElucimStateSnapshotMotionSpec,
-} from './v2/motion';
+} from './documentModel/motion';
 
 // Math expression evaluator
 export {

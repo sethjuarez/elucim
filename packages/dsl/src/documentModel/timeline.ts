@@ -1,25 +1,25 @@
 import type {
-  ElucimV2Document,
-  ElucimV2Layout,
-  ElucimV2Timeline,
-  ElucimV2TimelineTrack,
+  ElucimDocument,
+  ElucimLayout,
+  ElucimTimeline,
+  ElucimTimelineTrack,
 } from './types';
 import type { EasingSpec } from '../schema/types';
 
-export interface ElucimV2TimelinePatch {
-  layout?: Partial<ElucimV2Layout>;
+export interface ElucimTimelinePatch {
+  layout?: Partial<ElucimLayout>;
   props?: Record<string, unknown>;
 }
 
-export type ElucimV2TimelineFrame = Record<string, ElucimV2TimelinePatch>;
+export type ElucimTimelineFrame = Record<string, ElucimTimelinePatch>;
 
-export interface ElucimV2TimelineFrameSelection {
+export interface ElucimTimelineFrameSelection {
   timelineId: string;
   frame: number;
 }
 
-export function evaluateTimeline(timeline: ElucimV2Timeline, frame: number): ElucimV2TimelineFrame {
-  const patches: ElucimV2TimelineFrame = {};
+export function evaluateTimeline(timeline: ElucimTimeline, frame: number): ElucimTimelineFrame {
+  const patches: ElucimTimelineFrame = {};
   const clampedFrame = Math.max(0, Math.min(frame, timeline.duration));
   for (const track of timeline.tracks) {
     const value = evaluateTrack(track, clampedFrame);
@@ -36,11 +36,11 @@ export function evaluateTimeline(timeline: ElucimV2Timeline, frame: number): Elu
   return patches;
 }
 
-export function applyTimelineFrame(doc: ElucimV2Document, timelineId: string, frame: number): ElucimV2Document {
+export function applyTimelineFrame(doc: ElucimDocument, timelineId: string, frame: number): ElucimDocument {
   return applyTimelineFrames(doc, [{ timelineId, frame }]);
 }
 
-export function applyTimelineFrames(doc: ElucimV2Document, frames: ElucimV2TimelineFrameSelection[]): ElucimV2Document {
+export function applyTimelineFrames(doc: ElucimDocument, frames: ElucimTimelineFrameSelection[]): ElucimDocument {
   const next = cloneDoc(doc);
   for (const { timelineId, frame } of frames) {
     applyTimelineFrameToDocument(next, timelineId, frame);
@@ -48,7 +48,7 @@ export function applyTimelineFrames(doc: ElucimV2Document, frames: ElucimV2Timel
   return next;
 }
 
-function applyTimelineFrameToDocument(doc: ElucimV2Document, timelineId: string, frame: number): void {
+function applyTimelineFrameToDocument(doc: ElucimDocument, timelineId: string, frame: number): void {
   const timeline = doc.timelines?.[timelineId];
   if (!timeline) throw new Error(`Timeline "${timelineId}" does not exist`);
   const patches = evaluateTimeline(timeline, frame);
@@ -60,7 +60,7 @@ function applyTimelineFrameToDocument(doc: ElucimV2Document, timelineId: string,
   }
 }
 
-function evaluateTrack(track: ElucimV2TimelineTrack, frame: number): unknown {
+function evaluateTrack(track: ElucimTimelineTrack, frame: number): unknown {
   const keyframes = [...track.keyframes].sort((a, b) => a.frame - b.frame);
   if (keyframes.length === 0) throw new Error('Timeline track must have at least one keyframe');
   if (frame <= keyframes[0].frame) return keyframes[0].value;
@@ -134,6 +134,6 @@ function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function cloneDoc(doc: ElucimV2Document): ElucimV2Document {
-  return JSON.parse(JSON.stringify(doc)) as ElucimV2Document;
+function cloneDoc(doc: ElucimDocument): ElucimDocument {
+  return JSON.parse(JSON.stringify(doc)) as ElucimDocument;
 }

@@ -1,6 +1,6 @@
-import type { ElucimV2Document, ElucimV2StateMachine, ElucimV2Transition } from './types';
+import type { ElucimDocument, ElucimStateMachine, ElucimTransition } from './types';
 
-export interface ElucimV2StateSnapshot {
+export interface ElucimStateSnapshot {
   machineId: string;
   stateId: string;
   timelineId?: string;
@@ -9,24 +9,24 @@ export interface ElucimV2StateSnapshot {
   onComplete?: string;
 }
 
-export interface ElucimV2StateTransitionResult extends ElucimV2StateSnapshot {
+export interface ElucimStateTransitionResult extends ElucimStateSnapshot {
   changed: boolean;
   event: string;
   previousStateId: string;
   exited?: boolean;
 }
 
-export interface ElucimV2StateEvent {
+export interface ElucimStateEvent {
   name: string;
   key?: string;
 }
 
-export interface ElucimV2StateMachineVisualFrame {
+export interface ElucimStateMachineVisualFrame {
   timelineId: string;
   frame: number;
 }
 
-export interface ElucimV2StateMachineRun {
+export interface ElucimStateMachineRun {
   machineId: string;
   stateId: string | 'entry';
   timelineId?: string;
@@ -40,7 +40,7 @@ export interface ElucimV2StateMachineRun {
   finished?: boolean;
 }
 
-export interface ElucimV2StateMachineRunResult extends ElucimV2StateMachineRun {
+export interface ElucimStateMachineRunResult extends ElucimStateMachineRun {
   changed: boolean;
 }
 
@@ -51,7 +51,7 @@ export interface ElucimV2StateMachineRunResult extends ElucimV2StateMachineRun {
  * start frames are applied first, then completed/current state frames overlay later.
  * Consumers should apply selections in array order so later entries win.
  */
-export interface ElucimV2StateMachineVisualFrameOptions {
+export interface ElucimStateMachineVisualFrameOptions {
   statePath?: string[];
   currentStateId: string;
   currentFrame: number;
@@ -61,12 +61,12 @@ export interface ElucimV2StateMachineVisualFrameOptions {
   missingTimeline?: 'throw' | 'skip';
 }
 
-export function getInitialStateSnapshot(doc: ElucimV2Document, machineId: string): ElucimV2StateSnapshot {
+export function getInitialStateSnapshot(doc: ElucimDocument, machineId: string): ElucimStateSnapshot {
   const machine = getMachine(doc, machineId);
   return snapshot(machine, getInitialStateId(machine));
 }
 
-export function startStateMachineRun(doc: ElucimV2Document, machineId: string): ElucimV2StateMachineRun {
+export function startStateMachineRun(doc: ElucimDocument, machineId: string): ElucimStateMachineRun {
   const machine = getMachine(doc, machineId);
   const entryTransition = getEntryTransition(machine);
   if (entryTransition?.trigger && entryTransition.trigger !== 'onStart') {
@@ -88,10 +88,10 @@ export function startStateMachineRun(doc: ElucimV2Document, machineId: string): 
 }
 
 export function dispatchStateMachineRunEvent(
-  doc: ElucimV2Document,
-  run: ElucimV2StateMachineRun,
-  event: string | ElucimV2StateEvent,
-): ElucimV2StateMachineRunResult {
+  doc: ElucimDocument,
+  run: ElucimStateMachineRun,
+  event: string | ElucimStateEvent,
+): ElucimStateMachineRunResult {
   if (run.exited || run.finished) return { ...run, changed: false };
   const machine = getMachine(doc, run.machineId);
   const eventName = typeof event === 'string' ? event : event.name;
@@ -135,10 +135,10 @@ export function dispatchStateMachineRunEvent(
 }
 
 export function advanceStateMachineRunFrame(
-  doc: ElucimV2Document,
-  run: ElucimV2StateMachineRun,
+  doc: ElucimDocument,
+  run: ElucimStateMachineRun,
   frameDelta: number,
-): ElucimV2StateMachineRun {
+): ElucimStateMachineRun {
   if (!run.playing || run.stateId === 'entry' || frameDelta <= 0) return run;
   const machine = getMachine(doc, run.machineId);
   const duration = getStateTimelineDuration(doc, machine, run.stateId);
@@ -150,9 +150,9 @@ export function advanceStateMachineRunFrame(
 }
 
 export function getStateMachineRunVisualFrames(
-  doc: ElucimV2Document,
-  run: ElucimV2StateMachineRun,
-): ElucimV2StateMachineVisualFrame[] {
+  doc: ElucimDocument,
+  run: ElucimStateMachineRun,
+): ElucimStateMachineVisualFrame[] {
   return getStateMachineVisualFrames(doc, run.machineId, {
     statePath: run.stateId === 'entry' ? ['entry'] : run.statePath,
     currentStateId: run.stateId,
@@ -165,16 +165,16 @@ export function getStateMachineRunVisualFrames(
 }
 
 export function getStateMachineVisualFrames(
-  doc: ElucimV2Document,
+  doc: ElucimDocument,
   machineId: string,
-  options: ElucimV2StateMachineVisualFrameOptions,
-): ElucimV2StateMachineVisualFrame[] {
+  options: ElucimStateMachineVisualFrameOptions,
+): ElucimStateMachineVisualFrame[] {
   const machine = getMachine(doc, machineId);
   if (options.exited || options.finished) {
     return Object.entries(doc.timelines ?? {}).map(([timelineId, timeline]) => ({ timelineId, frame: timeline.duration }));
   }
   const path = options.statePath?.length ? options.statePath : [options.currentStateId];
-  const frames: ElucimV2StateMachineVisualFrame[] = Object.keys(doc.timelines ?? {}).map(timelineId => ({ timelineId, frame: 0 }));
+  const frames: ElucimStateMachineVisualFrame[] = Object.keys(doc.timelines ?? {}).map(timelineId => ({ timelineId, frame: 0 }));
   for (const stateId of path) {
     if (stateId === 'entry') continue;
     const state = machine.states[stateId];
@@ -197,11 +197,11 @@ export function getStateMachineVisualFrames(
 }
 
 export function transitionStateMachine(
-  doc: ElucimV2Document,
+  doc: ElucimDocument,
   machineId: string,
   currentStateId: string,
-  event: string | ElucimV2StateEvent,
-): ElucimV2StateTransitionResult {
+  event: string | ElucimStateEvent,
+): ElucimStateTransitionResult {
   const machine = getMachine(doc, machineId);
   const state = machine.states[currentStateId];
   if (!state) throw new Error(`State "${currentStateId}" does not exist in machine "${machineId}"`);
@@ -240,22 +240,22 @@ export function transitionStateMachine(
   };
 }
 
-function getMachine(doc: ElucimV2Document, machineId: string): ElucimV2StateMachine {
+function getMachine(doc: ElucimDocument, machineId: string): ElucimStateMachine {
   const machine = doc.stateMachines?.[machineId];
   if (!machine) throw new Error(`State machine "${machineId}" does not exist`);
   return machine;
 }
 
-function getInitialStateId(machine: ElucimV2StateMachine): string {
+function getInitialStateId(machine: ElucimStateMachine): string {
   const entryTransition = machine.transitions?.find(transition => transition.from === 'entry' && transition.to !== 'entry' && transition.to !== 'exit');
   return entryTransition?.to ?? machine.entry;
 }
 
-function getEntryTransition(machine: ElucimV2StateMachine): ElucimV2Transition | undefined {
+function getEntryTransition(machine: ElucimStateMachine): ElucimTransition | undefined {
   return machine.transitions?.find(transition => transition.from === 'entry');
 }
 
-function findEntryTransition(machine: ElucimV2StateMachine, event: string | ElucimV2StateEvent): ElucimV2Transition | undefined {
+function findEntryTransition(machine: ElucimStateMachine, event: string | ElucimStateEvent): ElucimTransition | undefined {
   const eventName = typeof event === 'string' ? event : event.name;
   const key = typeof event === 'string' ? undefined : event.key;
   return (machine.transitions ?? []).find(transition => {
@@ -264,18 +264,18 @@ function findEntryTransition(machine: ElucimV2StateMachine, event: string | Eluc
   });
 }
 
-function resolveTransitionTarget(machine: ElucimV2StateMachine, transition: ElucimV2Transition): string | 'exit' {
+function resolveTransitionTarget(machine: ElucimStateMachine, transition: ElucimTransition): string | 'exit' {
   if (transition.to === 'exit') return 'exit';
   if (transition.to === 'entry') return getInitialStateId(machine);
   return transition.to;
 }
 
 function enterState(
-  doc: ElucimV2Document,
-  machine: ElucimV2StateMachine,
+  doc: ElucimDocument,
+  machine: ElucimStateMachine,
   stateId: string,
   details: { event: string; previousStateId?: string; activeTransitionId?: string; statePath?: string[] },
-): ElucimV2StateMachineRun {
+): ElucimStateMachineRun {
   if (!machine.states[stateId]) throw new Error(`State "${stateId}" does not exist in machine "${machine.id}"`);
   const timelineId = machine.states[stateId].timeline;
   return {
@@ -291,17 +291,17 @@ function enterState(
   };
 }
 
-function getStateTimelineDuration(doc: ElucimV2Document, machine: ElucimV2StateMachine, stateId: string): number {
+function getStateTimelineDuration(doc: ElucimDocument, machine: ElucimStateMachine, stateId: string): number {
   const timelineId = machine.states[stateId]?.timeline;
   return timelineId ? doc.timelines?.[timelineId]?.duration ?? 0 : 0;
 }
 
 function settleImmediateTransitions(
-  doc: ElucimV2Document,
-  machine: ElucimV2StateMachine,
-  run: ElucimV2StateMachineRun,
+  doc: ElucimDocument,
+  machine: ElucimStateMachine,
+  run: ElucimStateMachineRun,
   visited = new Set<string>(),
-): ElucimV2StateMachineRun {
+): ElucimStateMachineRun {
   if (run.stateId === 'entry' || run.exited || run.finished || run.playing || run.timelineId) return run;
   if (visited.has(run.stateId)) return run;
   const transition = findTransition(machine, run.stateId, 'complete');
@@ -325,7 +325,7 @@ function settleImmediateTransitions(
   }), visited);
 }
 
-function snapshot(machine: ElucimV2StateMachine, stateId: string): ElucimV2StateSnapshot {
+function snapshot(machine: ElucimStateMachine, stateId: string): ElucimStateSnapshot {
   const state = machine.states[stateId];
   if (!state) throw new Error(`State "${stateId}" does not exist in machine "${machine.id}"`);
   const eventTransitions = machine.transitions
@@ -348,7 +348,7 @@ function snapshot(machine: ElucimV2StateMachine, stateId: string): ElucimV2State
   };
 }
 
-function findTransition(machine: ElucimV2StateMachine, stateId: string, event: string | ElucimV2StateEvent): ElucimV2Transition | undefined {
+function findTransition(machine: ElucimStateMachine, stateId: string, event: string | ElucimStateEvent): ElucimTransition | undefined {
   const eventName = typeof event === 'string' ? event : event.name;
   const key = typeof event === 'string' ? undefined : event.key;
   if (eventName === 'complete' || eventName === 'next') {

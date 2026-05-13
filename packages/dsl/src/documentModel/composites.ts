@@ -1,7 +1,7 @@
 import type { ElementBounds } from './polish';
-import type { ElucimV2Element, ElucimV2Timeline } from './types';
+import type { ElucimElement, ElucimTimeline } from './types';
 
-export type ElucimCompositeElement = ElucimV2Element;
+export type ElucimCompositeElement = ElucimElement;
 export type ElucimConnectorAnchor = 'left' | 'right' | 'top' | 'bottom' | 'center';
 export type ElucimConnectorCurve = 'straight' | 'smooth';
 export type ElucimTextAlign = 'left' | 'center' | 'right';
@@ -191,7 +191,7 @@ export interface ElucimProgressiveRevealGroupPresetSpec {
 
 export interface ElucimProgressiveRevealGroupPreset {
   elements: ElucimCompositeElement[];
-  timeline: ElucimV2Timeline;
+  timeline: ElucimTimeline;
 }
 
 export function createConnectorPreset(spec: ElucimConnectorPresetSpec): ElucimCompositeElement[] {

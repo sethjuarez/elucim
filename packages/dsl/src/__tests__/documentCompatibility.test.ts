@@ -108,7 +108,7 @@ describe('Elucim Document compatibility foundation', () => {
   });
 
   it('migrates a renderable player into normalized elements with stable IDs', () => {
-    const v1: RenderableDocument = {
+    const renderable: RenderableDocument = {
       version: '1.0',
       root: {
         type: 'player',
@@ -128,7 +128,7 @@ describe('Elucim Document compatibility foundation', () => {
       },
     };
 
-    const doc = createDocumentFromRenderable(v1);
+    const doc = createDocumentFromRenderable(renderable);
 
     expect(doc.version).toBe('2.0');
     expect(doc.scene.children).toEqual(['card']);
@@ -140,7 +140,7 @@ describe('Elucim Document compatibility foundation', () => {
   });
 
   it('deduplicates repeated renderable IDs during migration', () => {
-    const v1: RenderableDocument = {
+    const renderable: RenderableDocument = {
       version: '1.0',
       root: {
         type: 'scene',
@@ -152,7 +152,7 @@ describe('Elucim Document compatibility foundation', () => {
       },
     };
 
-    const doc = createDocumentFromRenderable(v1);
+    const doc = createDocumentFromRenderable(renderable);
 
     expect(doc.scene.children).toEqual(['label', 'label-2']);
     expect(doc.elements.label.id).toBe('label');
@@ -174,16 +174,16 @@ describe('Elucim Document compatibility foundation', () => {
       },
     });
 
-    const v1 = createRenderableDocument(doc);
+    const renderable = createRenderableDocument(doc);
 
-    expect(v1.version).toBe('1.0');
-    expect(v1.root.type).toBe('player');
-    expect((v1.root as any).children[0]).toMatchObject({
+    expect(renderable.version).toBe('1.0');
+    expect(renderable.root.type).toBe('player');
+    expect((renderable.root as any).children[0]).toMatchObject({
       type: 'group',
       id: 'card',
       children: [{ type: 'text', id: 'title', content: 'Revenue' }],
     });
-    expect(validate(v1).valid).toBe(true);
+    expect(validate(renderable).valid).toBe(true);
   });
 
   it('normalizes legacy rootless documents to Elucim Documents', () => {
@@ -202,19 +202,19 @@ describe('Elucim Document compatibility foundation', () => {
   });
 
   it('exposes an official renderable compatibility adapter for canonical and legacy docs', () => {
-    const v1 = toRenderableDocument({
+    const renderable = toRenderableDocument({
       version: 1,
       title: 'Legacy visual',
       elements: [{ type: 'circle', cx: 100, cy: 100, r: 40 }],
     });
 
-    expect(v1.version).toBe('1.0');
-    expect(v1.root.type).toBe('player');
-    expect(validate(v1).valid).toBe(true);
+    expect(renderable.version).toBe('1.0');
+    expect(renderable.root.type).toBe('player');
+    expect(validate(renderable).valid).toBe(true);
   });
 
   it('applies default state-machine start frames in the renderable compatibility adapter', () => {
-    const v1 = toRenderableDocument({
+    const renderable = toRenderableDocument({
       version: '2.0',
       scene: { type: 'player', children: ['title'] },
       elements: {
@@ -238,8 +238,8 @@ describe('Elucim Document compatibility foundation', () => {
       },
     });
 
-    expect(v1.root.type).toBe('player');
-    if (v1.root.type !== 'player') throw new Error('Expected player root');
-    expect(v1.root.children[0]).toMatchObject({ id: 'title', opacity: 0 });
+    expect(renderable.root.type).toBe('player');
+    if (renderable.root.type !== 'player') throw new Error('Expected player root');
+    expect(renderable.root.children[0]).toMatchObject({ id: 'title', opacity: 0 });
   });
 });

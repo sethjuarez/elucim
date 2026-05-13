@@ -1,8 +1,8 @@
 import type { ElkExtendedEdge, ElkNode } from 'elkjs/lib/elk-api';
-import type { ElucimV2Command } from './commands';
+import type { ElucimCommand } from './commands';
 import { applyCommand } from './commands';
 import { collectElementBounds, type ElementBounds } from './polish';
-import type { ElucimV2Document, ElucimV2Element } from './types';
+import type { ElucimDocument, ElucimElement } from './types';
 import type { ElucimDocumentNudge, ElucimDocumentNudgeResult } from './nudges';
 
 export type ElucimSemanticLayoutDirection = 'RIGHT' | 'DOWN';
@@ -16,7 +16,7 @@ export interface ElucimSemanticLayoutPlan {
   id: string;
   title: string;
   description: string;
-  commands: ElucimV2Command[];
+  commands: ElucimCommand[];
   affectedElementIds: string[];
 }
 
@@ -44,7 +44,7 @@ const LAYER_SPACING = 120;
 const CONNECTOR_SNAP_DISTANCE = 80;
 
 export async function suggestSemanticLayoutNudges(
-  doc: ElucimV2Document,
+  doc: ElucimDocument,
   options: ElucimSemanticLayoutOptions = {},
 ): Promise<ElucimDocumentNudge[]> {
   const plan = await planSemanticLayout(doc, options);
@@ -60,7 +60,7 @@ export async function suggestSemanticLayoutNudges(
 }
 
 export async function planSemanticLayout(
-  doc: ElucimV2Document,
+  doc: ElucimDocument,
   options: ElucimSemanticLayoutOptions = {},
 ): Promise<ElucimSemanticLayoutPlan | undefined> {
   const virtual = extractVirtualLayout(doc, options);
@@ -84,7 +84,7 @@ export async function planSemanticLayout(
   };
 }
 
-export function applySemanticLayoutNudge(doc: ElucimV2Document, nudge: ElucimDocumentNudge): ElucimDocumentNudgeResult {
+export function applySemanticLayoutNudge(doc: ElucimDocument, nudge: ElucimDocumentNudge): ElucimDocumentNudgeResult {
   let current = doc;
   const summaries: string[] = [];
   for (const command of nudge.commands) {
@@ -95,7 +95,7 @@ export function applySemanticLayoutNudge(doc: ElucimV2Document, nudge: ElucimDoc
   return { document: current, summaries };
 }
 
-function extractVirtualLayout(doc: ElucimV2Document, options: ElucimSemanticLayoutOptions): VirtualLayout {
+function extractVirtualLayout(doc: ElucimDocument, options: ElucimSemanticLayoutOptions): VirtualLayout {
   const elementIds = new Set(Object.keys(doc.elements));
   const boundsById = new Map(collectElementBounds(doc).map(bounds => [bounds.id, bounds]));
   const edges = [
@@ -119,7 +119,7 @@ function extractVirtualLayout(doc: ElucimV2Document, options: ElucimSemanticLayo
   };
 }
 
-function extractIntentEdges(doc: ElucimV2Document, elementIds: Set<string>): VirtualEdge[] {
+function extractIntentEdges(doc: ElucimDocument, elementIds: Set<string>): VirtualEdge[] {
   const edges: VirtualEdge[] = [];
   for (const element of Object.values(doc.elements)) {
     const intent = element.intent;
@@ -147,11 +147,11 @@ function extractIntentEdges(doc: ElucimV2Document, elementIds: Set<string>): Vir
   return edges;
 }
 
-function isSemanticConnector(element: ElucimV2Element): boolean {
+function isSemanticConnector(element: ElucimElement): boolean {
   return element.role === 'connector' || element.intent?.role === 'connector';
 }
 
-function extractRankEdges(doc: ElucimV2Document, elementIds: Set<string>): VirtualEdge[] {
+function extractRankEdges(doc: ElucimDocument, elementIds: Set<string>): VirtualEdge[] {
   const ranked = Object.values(doc.elements)
     .filter(element => elementIds.has(element.id) && typeof element.layout?.rank === 'number' && Number.isFinite(element.layout.rank))
     .sort((a, b) => (a.layout!.rank! - b.layout!.rank!) || a.id.localeCompare(b.id));
@@ -165,7 +165,7 @@ function extractRankEdges(doc: ElucimV2Document, elementIds: Set<string>): Virtu
   return edges;
 }
 
-function extractConnectorEdges(doc: ElucimV2Document, boundsById: Map<string, ElementBounds>): VirtualEdge[] {
+function extractConnectorEdges(doc: ElucimDocument, boundsById: Map<string, ElementBounds>): VirtualEdge[] {
   const edges: VirtualEdge[] = [];
   const candidateBounds = Array.from(boundsById.values());
   for (const element of Object.values(doc.elements)) {
@@ -207,7 +207,7 @@ function toElkGraph(virtual: VirtualLayout, direction: ElucimSemanticLayoutDirec
   };
 }
 
-function buildLayoutCommands(doc: ElucimV2Document, virtual: VirtualLayout, result: ElkNode): ElucimV2Command[] {
+function buildLayoutCommands(doc: ElucimDocument, virtual: VirtualLayout, result: ElkNode): ElucimCommand[] {
   const originalBounds = unionBounds(virtual.nodes.map(node => node.bounds));
   const resultNodes = result.children ?? [];
   const resultBounds = unionBounds(resultNodes
@@ -217,7 +217,7 @@ function buildLayoutCommands(doc: ElucimV2Document, virtual: VirtualLayout, resu
   const dx = originalBounds.x + originalBounds.width / 2 - (resultBounds.x + resultBounds.width / 2);
   const dy = originalBounds.y + originalBounds.height / 2 - (resultBounds.y + resultBounds.height / 2);
   const nodeById = new Map(virtual.nodes.map(node => [node.id, node]));
-  const commands: ElucimV2Command[] = [];
+  const commands: ElucimCommand[] = [];
   const movedIds = new Set<string>();
   const nodeDeltas = new Map<string, { dx: number; dy: number }>();
 
@@ -237,11 +237,11 @@ function buildLayoutCommands(doc: ElucimV2Document, virtual: VirtualLayout, resu
 }
 
 function moveAttachedSemanticConnectors(
-  doc: ElucimV2Document,
+  doc: ElucimDocument,
   nodeDeltas: Map<string, { dx: number; dy: number }>,
   movedIds: Set<string>,
-): ElucimV2Command[] {
-  const commands: ElucimV2Command[] = [];
+): ElucimCommand[] {
+  const commands: ElucimCommand[] = [];
   for (const element of Object.values(doc.elements)) {
     if (!isSemanticConnector(element)) continue;
     const sourceDeltas = (element.intent?.flowFrom ?? []).map(id => nodeDeltas.get(id)).filter((delta): delta is { dx: number; dy: number } => Boolean(delta));
@@ -262,10 +262,10 @@ function moveAttachedSemanticConnectors(
 }
 
 function connectorEndpointPatch(
-  element: ElucimV2Element,
+  element: ElucimElement,
   sourceDelta: { dx: number; dy: number } | undefined,
   targetDelta: { dx: number; dy: number } | undefined,
-): Extract<ElucimV2Command, { op: 'updateElement' }>['patch'] | undefined {
+): Extract<ElucimCommand, { op: 'updateElement' }>['patch'] | undefined {
   const props = element.props;
   if (sourceDelta === undefined && targetDelta === undefined) return undefined;
   if (typeof props.x1 !== 'number' && typeof props.y1 !== 'number' && typeof props.x2 !== 'number' && typeof props.y2 !== 'number') return undefined;
@@ -293,7 +293,7 @@ function averageDelta(deltas: Array<{ dx: number; dy: number }>): { dx: number; 
   };
 }
 
-function moveElementByDelta(doc: ElucimV2Document, id: string, dx: number, dy: number, movedIds: Set<string>): ElucimV2Command[] {
+function moveElementByDelta(doc: ElucimDocument, id: string, dx: number, dy: number, movedIds: Set<string>): ElucimCommand[] {
   if (movedIds.has(id)) return [];
   const element = doc.elements[id];
   if (!element || element.layout?.locked) return [];
@@ -309,7 +309,7 @@ function moveElementByDelta(doc: ElucimV2Document, id: string, dx: number, dy: n
   return ownCommand;
 }
 
-function movementPatch(element: ElucimV2Element, dx: number, dy: number): Extract<ElucimV2Command, { op: 'updateElement' }>['patch'] | undefined {
+function movementPatch(element: ElucimElement, dx: number, dy: number): Extract<ElucimCommand, { op: 'updateElement' }>['patch'] | undefined {
   const layoutX = numberProp(element.layout?.x);
   const layoutY = numberProp(element.layout?.y);
   if (layoutX !== undefined || layoutY !== undefined) {

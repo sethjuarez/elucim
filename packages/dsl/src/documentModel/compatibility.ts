@@ -1,18 +1,18 @@
-import type { ElucimDocument, ElementNode, PlayerNode, SceneNode } from '../schema/types';
-import type { ElucimV2Document, ElucimV2Element, ElucimV2Scene } from './types';
+import type { ElucimDocument as RenderableDocument, ElementNode, PlayerNode, SceneNode } from '../schema/types';
+import type { ElucimDocument, ElucimElement, ElucimScene } from './types';
 import { getDocumentLinearDuration } from './duration';
 import { getInitialStateSnapshot, getStateMachineVisualFrames } from './stateMachine';
 import { applyTimelineFrames } from './timeline';
 
-export interface NormalizeToV2Result {
-  document: ElucimV2Document;
-  inputFormat: 'v2' | 'v1' | 'legacy-v1' | 'legacy-rootless';
+export interface NormalizeDocumentResult {
+  document: ElucimDocument;
+  inputFormat: 'document' | 'renderable' | 'legacy-renderable' | 'legacy-rootless';
   migrated: boolean;
   warnings: string[];
 }
 
 interface MigrationState {
-  elements: Record<string, ElucimV2Element>;
+  elements: Record<string, ElucimElement>;
   usedIds: Set<string>;
 }
 
@@ -23,25 +23,25 @@ const LAYOUT_KEYS = new Set([
   'rotation', 'rotationOrigin', 'scale', 'translate', 'zIndex',
 ]);
 
-export function normalizeToV2(doc: unknown): NormalizeToV2Result {
-  if (isV2Document(doc)) {
-    return { document: doc, inputFormat: 'v2', migrated: false, warnings: [] };
+export function normalizeDocument(doc: unknown): NormalizeDocumentResult {
+  if (isCanonicalDocument(doc)) {
+    return { document: doc, inputFormat: 'document', migrated: false, warnings: [] };
   }
-  if (isV1Document(doc)) {
-    return { document: migrateV1ToV2(doc), inputFormat: 'v1', migrated: true, warnings: [] };
+  if (isRenderableDocument(doc)) {
+    return { document: createDocumentFromRenderable(doc), inputFormat: 'renderable', migrated: true, warnings: [] };
   }
-  if (isLegacyV1WithRoot(doc)) {
+  if (isLegacyRenderableWithRoot(doc)) {
     return {
-      document: migrateV1ToV2({ ...(doc as Record<string, unknown>), version: '1.0' } as ElucimDocument),
-      inputFormat: 'legacy-v1',
+      document: createDocumentFromRenderable({ ...(doc as Record<string, unknown>), version: '1.0' } as RenderableDocument),
+      inputFormat: 'legacy-renderable',
       migrated: true,
       warnings: ['Coerced legacy numeric/string version 1 to Elucim version "1.0".'],
     };
   }
   if (isLegacyRootlessDocument(doc)) {
-    const v1 = legacyRootlessToV1(doc);
+    const renderable = legacyRootlessToRenderable(doc);
     return {
-      document: migrateV1ToV2(v1),
+      document: createDocumentFromRenderable(renderable),
       inputFormat: 'legacy-rootless',
       migrated: true,
       warnings: ['Converted legacy rootless visual into an Elucim player document.'],
@@ -50,23 +50,23 @@ export function normalizeToV2(doc: unknown): NormalizeToV2Result {
   throw new Error(`Unsupported Elucim document format: ${describeFormat(doc)}`);
 }
 
-export function toRenderableV1(doc: unknown): ElucimDocument {
-  if (isV1Document(doc)) return doc;
-  return migrateV2ToV1(applyDefaultStateMachineInitialFrame(normalizeToV2(doc).document));
+export function toRenderableDocument(doc: unknown): RenderableDocument {
+  if (isRenderableDocument(doc)) return doc;
+  return createRenderableDocument(applyDefaultStateMachineInitialFrame(normalizeDocument(doc).document));
 }
 
-export function migrateV1ToV2(doc: ElucimDocument): ElucimV2Document {
+export function createDocumentFromRenderable(doc: RenderableDocument): ElucimDocument {
   if (doc.version !== '1.0') {
-    throw new Error(`Expected Elucim v1 document, got version "${(doc as { version?: unknown }).version}"`);
+    throw new Error(`Expected renderable Elucim document, got version "${(doc as { version?: unknown }).version}"`);
   }
   if (doc.root.type === 'presentation') {
-    throw new Error('v1 presentation migration to v2 is not implemented yet');
+    throw new Error('Presentation-to-canonical document import is not implemented yet');
   }
 
   const root = doc.root as SceneNode | PlayerNode;
   const state: MigrationState = { elements: {}, usedIds: new Set() };
   const children = root.children.map((child, index) => migrateElement(child, `root.${child.type}[${index}]`, undefined, state));
-  const scene: ElucimV2Scene = {
+  const scene: ElucimScene = {
     type: root.type,
     preset: root.preset,
     width: root.width,
@@ -87,12 +87,12 @@ export function migrateV1ToV2(doc: ElucimDocument): ElucimV2Document {
     elements: state.elements,
     metadata: {
       polishLevel: 'draft',
-      notes: [`Migrated from Elucim v1 normalized tree structure. Legacy root duration was ${root.durationInFrames} frames; v2 derives time from timelines, state machines, and export policy.`],
+      notes: [`Migrated from a renderable Elucim tree structure. Legacy root duration was ${root.durationInFrames} frames; canonical documents derive time from timelines, state machines, and export policy.`],
     },
   };
 }
 
-export function migrateV2ToV1(doc: ElucimV2Document): ElucimDocument {
+export function createRenderableDocument(doc: ElucimDocument): RenderableDocument {
   const children = doc.scene.children.map(id => restoreElement(doc, id));
   return {
     version: '1.0',
@@ -114,7 +114,7 @@ export function migrateV2ToV1(doc: ElucimV2Document): ElucimDocument {
   };
 }
 
-function applyDefaultStateMachineInitialFrame(doc: ElucimV2Document): ElucimV2Document {
+function applyDefaultStateMachineInitialFrame(doc: ElucimDocument): ElucimDocument {
   if (!doc.defaultStateMachine || !doc.stateMachines?.[doc.defaultStateMachine]) return doc;
   const snapshot = getInitialStateSnapshot(doc, doc.defaultStateMachine);
   const frames = getStateMachineVisualFrames(doc, doc.defaultStateMachine, {
@@ -127,9 +127,9 @@ function applyDefaultStateMachineInitialFrame(doc: ElucimV2Document): ElucimV2Do
   return frames.length > 0 ? applyTimelineFrames(doc, frames) : doc;
 }
 
-function restoreElement(doc: ElucimV2Document, id: string): ElementNode {
+function restoreElement(doc: ElucimDocument, id: string): ElementNode {
   const element = doc.elements[id];
-  if (!element) throw new Error(`Cannot restore missing v2 element "${id}"`);
+  if (!element) throw new Error(`Cannot restore missing document element "${id}"`);
   const restored = {
     ...element.props,
     ...element.layout,
@@ -149,7 +149,7 @@ function migrateElement(element: ElementNode, fallbackId: string, parentId: stri
   const props = omitKeys(raw, new Set(['id', 'children']));
   const layout = extractLayout(raw);
 
-  const nextElement: ElucimV2Element = {
+  const nextElement: ElucimElement = {
     id,
     type: String(raw.type),
     props,
@@ -161,7 +161,7 @@ function migrateElement(element: ElementNode, fallbackId: string, parentId: stri
   return id;
 }
 
-function legacyRootlessToV1(doc: Record<string, unknown>): ElucimDocument {
+function legacyRootlessToRenderable(doc: Record<string, unknown>): RenderableDocument {
   const elements = Array.isArray(doc.elements) ? doc.elements : [];
   const title = typeof doc.title === 'string' ? doc.title : undefined;
   const children = elements.map((element, index) => normalizeLegacyElement(element, index));
@@ -215,15 +215,15 @@ function normalizeLegacyElement(element: unknown, index: number): ElementNode {
   return { ...raw, id, type, ...children } as unknown as ElementNode;
 }
 
-function isV2Document(doc: unknown): doc is ElucimV2Document {
+function isCanonicalDocument(doc: unknown): doc is ElucimDocument {
   return !!doc && typeof doc === 'object' && (doc as { version?: unknown }).version === '2.0';
 }
 
-function isV1Document(doc: unknown): doc is ElucimDocument {
+function isRenderableDocument(doc: unknown): doc is RenderableDocument {
   return !!doc && typeof doc === 'object' && (doc as { version?: unknown }).version === '1.0' && 'root' in doc;
 }
 
-function isLegacyV1WithRoot(doc: unknown): boolean {
+function isLegacyRenderableWithRoot(doc: unknown): boolean {
   return !!doc && typeof doc === 'object'
     && ((doc as { version?: unknown }).version === 1 || (doc as { version?: unknown }).version === '1')
     && 'root' in doc;

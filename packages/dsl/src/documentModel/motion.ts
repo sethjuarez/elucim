@@ -1,11 +1,11 @@
 import type {
-  ElucimV2AnimatableProperty,
-  ElucimV2Document,
-  ElucimV2Element,
-  ElucimV2Keyframe,
-  ElucimV2StateMachine,
-  ElucimV2Timeline,
-  ElucimV2TimelineTrack,
+  ElucimAnimatableProperty,
+  ElucimDocument,
+  ElucimElement,
+  ElucimKeyframe,
+  ElucimStateMachine,
+  ElucimTimeline,
+  ElucimTimelineTrack,
 } from './types';
 import { applyTimelineFrame } from './timeline';
 
@@ -104,8 +104,8 @@ export interface ElucimStateSnapshotMotionSpec {
 }
 
 export interface ElucimStateSnapshotMotion {
-  timelines: Record<string, ElucimV2Timeline>;
-  stateMachine: ElucimV2StateMachine;
+  timelines: Record<string, ElucimTimeline>;
+  stateMachine: ElucimStateMachine;
 }
 
 export type ElucimMotionLintCode =
@@ -195,7 +195,7 @@ export function planMotionBeats(spec: ElucimMotionBeatPlanSpec = {}): ElucimMoti
   });
 }
 
-export function createSemanticMotionTimeline(doc: ElucimV2Document, spec: ElucimSemanticMotionPresetSpec): ElucimV2Timeline {
+export function createSemanticMotionTimeline(doc: ElucimDocument, spec: ElucimSemanticMotionPresetSpec): ElucimTimeline {
   const duration = spec.reducedMotion ? Math.min(spec.duration ?? 36, 18) : spec.duration ?? defaultPresetDuration(spec.preset);
   const targets = resolveMotionTargets(doc, spec);
   if (targets.length === 0) throw new Error(`Motion preset "${spec.preset}" requires at least one existing target.`);
@@ -211,7 +211,7 @@ export function createSemanticMotionTimeline(doc: ElucimV2Document, spec: Elucim
   };
 }
 
-export function createAutoStaggerTimeline(doc: ElucimV2Document, spec: ElucimAutoStaggerMotionSpec): ElucimV2Timeline {
+export function createAutoStaggerTimeline(doc: ElucimDocument, spec: ElucimAutoStaggerMotionSpec): ElucimTimeline {
   const targets = orderTargets(doc, resolveMotionTargets(doc, spec), spec.orderBy ?? 'rank');
   if (targets.length === 0) throw new Error('createAutoStaggerTimeline requires at least one existing target.');
   return createSemanticMotionTimeline(doc, {
@@ -226,9 +226,9 @@ export function createAutoStaggerTimeline(doc: ElucimV2Document, spec: ElucimAut
 export function createStateSnapshotMotion(spec: ElucimStateSnapshotMotionSpec): ElucimStateSnapshotMotion {
   if (spec.snapshots.length === 0) throw new Error('createStateSnapshotMotion requires at least one snapshot.');
   const duration = spec.transitionDuration ?? 24;
-  const timelines: Record<string, ElucimV2Timeline> = {};
-  const states: ElucimV2StateMachine['states'] = {};
-  const transitions: NonNullable<ElucimV2StateMachine['transitions']> = [];
+  const timelines: Record<string, ElucimTimeline> = {};
+  const states: ElucimStateMachine['states'] = {};
+  const transitions: NonNullable<ElucimStateMachine['transitions']> = [];
   spec.snapshots.forEach((snapshot, index) => {
     const timelineId = sanitizeId(`${spec.id}-${snapshot.id}`);
     const previous = spec.snapshots[Math.max(0, index - 1)];
@@ -255,7 +255,7 @@ export function createStateSnapshotMotion(spec: ElucimStateSnapshotMotionSpec): 
   };
 }
 
-export function lintMotion(doc: ElucimV2Document, options: ElucimMotionLintOptions = {}): ElucimMotionLintReport {
+export function lintMotion(doc: ElucimDocument, options: ElucimMotionLintOptions = {}): ElucimMotionLintReport {
   const issues: ElucimMotionLintIssue[] = [];
   const minTransitionFrames = options.minTransitionFrames ?? 6;
   const maxSimultaneousChanges = options.maxSimultaneousChanges ?? 6;
@@ -361,7 +361,7 @@ export function lintMotion(doc: ElucimV2Document, options: ElucimMotionLintOptio
   return { valid: !issues.some(issue => issue.severity === 'error'), score: Math.max(0, 100 - penalty), issues };
 }
 
-export function previewBeatDiffs(doc: ElucimV2Document, options: ElucimBeatPreviewOptions): ElucimBeatPreviewDiff[] {
+export function previewBeatDiffs(doc: ElucimDocument, options: ElucimBeatPreviewOptions): ElucimBeatPreviewDiff[] {
   const timeline = doc.timelines?.[options.timelineId];
   if (!timeline) throw new Error(`Timeline "${options.timelineId}" does not exist`);
   const frames = options.frames ?? (options.beats?.map(beat => Math.min(timeline.duration, beat.start + beat.duration)) ?? [0, Math.round(timeline.duration / 2), timeline.duration]);
@@ -387,7 +387,7 @@ export function previewBeatDiffs(doc: ElucimV2Document, options: ElucimBeatPrevi
   });
 }
 
-export function createReducedMotionDocument(doc: ElucimV2Document, options: ElucimReducedMotionOptions = {}): ElucimV2Document {
+export function createReducedMotionDocument(doc: ElucimDocument, options: ElucimReducedMotionOptions = {}): ElucimDocument {
   const mode = options.mode ?? 'static';
   const next = cloneDocument(doc);
   if (mode === 'static') {
@@ -428,21 +428,21 @@ export function createReducedMotionDocument(doc: ElucimV2Document, options: Eluc
   };
 }
 
-export function holdFinalFrame(doc: ElucimV2Document, timelineId?: string): ElucimV2Document {
+export function holdFinalFrame(doc: ElucimDocument, timelineId?: string): ElucimDocument {
   const id = timelineId ?? Object.keys(doc.timelines ?? {})[0];
   if (!id || !doc.timelines?.[id]) throw new Error('holdFinalFrame requires an existing timeline.');
   return applyTimelineFrame(doc, id, doc.timelines[id].duration);
 }
 
 function buildPresetTracks(
-  doc: ElucimV2Document,
+  doc: ElucimDocument,
   spec: ElucimSemanticMotionPresetSpec,
   targets: string[],
   start: number,
   end: number,
   stagger: number,
   reducedMotion: boolean,
-): ElucimV2TimelineTrack[] {
+): ElucimTimelineTrack[] {
   if (spec.preset === 'tracePath') {
     const connectorId = spec.connectorId ?? targets.find(id => isConnector(doc.elements[id])) ?? targets[0];
     return [
@@ -495,7 +495,7 @@ function buildPresetTracks(
   });
 }
 
-function resolveMotionTargets(doc: ElucimV2Document, spec: { targets?: string[]; from?: string; to?: string; connectorId?: string; group?: string }): string[] {
+function resolveMotionTargets(doc: ElucimDocument, spec: { targets?: string[]; from?: string; to?: string; connectorId?: string; group?: string }): string[] {
   const ids = new Set(Object.keys(doc.elements));
   const explicit = [spec.from, spec.to, spec.connectorId, ...(spec.targets ?? [])].filter((id): id is string => Boolean(id));
   if (explicit.length > 0) return [...new Set(explicit.filter(id => ids.has(id)))];
@@ -507,7 +507,7 @@ function resolveMotionTargets(doc: ElucimV2Document, spec: { targets?: string[];
   return [...doc.scene.children].filter(id => ids.has(id));
 }
 
-function orderTargets(doc: ElucimV2Document, targets: string[], orderBy: 'document' | 'rank' | 'group'): string[] {
+function orderTargets(doc: ElucimDocument, targets: string[], orderBy: 'document' | 'rank' | 'group'): string[] {
   if (orderBy === 'document') return [...targets];
   return [...targets].sort((a, b) => {
     const aElement = doc.elements[a];
@@ -517,8 +517,8 @@ function orderTargets(doc: ElucimV2Document, targets: string[], orderBy: 'docume
   });
 }
 
-function snapshotToTracks(previous: ElucimStateSnapshot, snapshot: ElucimStateSnapshot, duration: number): ElucimV2TimelineTrack[] {
-  const tracks: ElucimV2TimelineTrack[] = [];
+function snapshotToTracks(previous: ElucimStateSnapshot, snapshot: ElucimStateSnapshot, duration: number): ElucimTimelineTrack[] {
+  const tracks: ElucimTimelineTrack[] = [];
   for (const [target, value] of Object.entries(snapshot.values)) {
     const previousValue = previous.values[target] ?? {};
     for (const [property, nextValue] of Object.entries(value.props ?? {})) {
@@ -536,7 +536,7 @@ function snapshotToTracks(previous: ElucimStateSnapshot, snapshot: ElucimStateSn
   return tracks;
 }
 
-function track(target: string, property: ElucimV2AnimatableProperty, keyframes: ElucimV2Keyframe[]): ElucimV2TimelineTrack {
+function track(target: string, property: ElucimAnimatableProperty, keyframes: ElucimKeyframe[]): ElucimTimelineTrack {
   return { target, property, keyframes };
 }
 
@@ -568,11 +568,11 @@ function sanitizeId(value: string): string {
   return id || 'motion';
 }
 
-function isConnector(element: ElucimV2Element | undefined): boolean {
+function isConnector(element: ElucimElement | undefined): boolean {
   return element?.role === 'connector' || element?.intent?.role === 'connector' || element?.type === 'line' || element?.type === 'bezierCurve';
 }
 
-function trackHasNoChange(motionTrack: ElucimV2TimelineTrack): boolean {
+function trackHasNoChange(motionTrack: ElucimTimelineTrack): boolean {
   if (motionTrack.keyframes.length < 2) return true;
   const first = motionTrack.keyframes[0].value;
   return motionTrack.keyframes.every(keyframe => JSON.stringify(keyframe.value) === JSON.stringify(first));
@@ -592,11 +592,11 @@ function distance(a: [number, number], b: [number, number]): number {
   return Math.hypot(b[0] - a[0], b[1] - a[1]);
 }
 
-function isVisibleElement(element: ElucimV2Element): boolean {
+function isVisibleElement(element: ElucimElement): boolean {
   return (numeric(element.props.opacity) ?? 1) > 0.01 && element.props.visible !== false && element.props.display !== 'none' && element.props.visibility !== 'hidden';
 }
 
-function diffElementValues(before: ElucimV2Document, after: ElucimV2Document): ElucimBeatPreviewDiff['changes'] {
+function diffElementValues(before: ElucimDocument, after: ElucimDocument): ElucimBeatPreviewDiff['changes'] {
   const changes: ElucimBeatPreviewDiff['changes'] = [];
   for (const [target, element] of Object.entries(after.elements)) {
     const previous = before.elements[target];
@@ -606,7 +606,7 @@ function diffElementValues(before: ElucimV2Document, after: ElucimV2Document): E
       if (JSON.stringify(beforeValue) !== JSON.stringify(value)) changes.push({ target, property, before: beforeValue, after: value });
     }
     for (const [property, value] of Object.entries(element.layout ?? {})) {
-      const beforeValue = previous.layout?.[property as keyof NonNullable<ElucimV2Element['layout']>];
+      const beforeValue = previous.layout?.[property as keyof NonNullable<ElucimElement['layout']>];
       if (JSON.stringify(beforeValue) !== JSON.stringify(value)) changes.push({ target, property, before: beforeValue, after: value });
     }
   }
@@ -623,7 +623,7 @@ function summarizeBeatDiff(beatId: string, changes: ElucimBeatPreviewDiff['chang
   return `${beatId}: ${parts.join(', ')}.`;
 }
 
-function compressTrack(motionTrack: ElucimV2TimelineTrack, maxDuration: number): ElucimV2TimelineTrack {
+function compressTrack(motionTrack: ElucimTimelineTrack, maxDuration: number): ElucimTimelineTrack {
   const last = motionTrack.keyframes[motionTrack.keyframes.length - 1];
   return {
     ...motionTrack,
@@ -634,6 +634,6 @@ function compressTrack(motionTrack: ElucimV2TimelineTrack, maxDuration: number):
   };
 }
 
-function cloneDocument(doc: ElucimV2Document): ElucimV2Document {
-  return JSON.parse(JSON.stringify(doc)) as ElucimV2Document;
+function cloneDocument(doc: ElucimDocument): ElucimDocument {
+  return JSON.parse(JSON.stringify(doc)) as ElucimDocument;
 }

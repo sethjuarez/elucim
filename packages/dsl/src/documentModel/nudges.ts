@@ -1,24 +1,24 @@
-import type { ElucimV2Command } from './commands';
+import type { ElucimCommand } from './commands';
 import { applyCommand } from './commands';
 import { getDocumentLinearDuration } from './duration';
-import type { ElucimV2Document } from './types';
+import type { ElucimDocument } from './types';
 import { analyzePolish, getSmoothConnectorCandidates, graphNeedsLayout, layoutGraphElementLayered, POLISH_MIN_TEXT_SIZE, POLISH_TARGET_TITLE_SIZE, type ElucimPolishCategory } from './polish';
 
 export interface ElucimDocumentNudge {
   id: string;
   title: string;
   description: string;
-  commands: ElucimV2Command[];
+  commands: ElucimCommand[];
   confidence: 'safe' | 'review';
   category?: ElucimPolishCategory;
 }
 
 export interface ElucimDocumentNudgeResult {
-  document: ElucimV2Document;
+  document: ElucimDocument;
   summaries: string[];
 }
 
-export function suggestDocumentNudges(doc: ElucimV2Document): ElucimDocumentNudge[] {
+export function suggestDocumentNudges(doc: ElucimDocument): ElucimDocumentNudge[] {
   const nudges: ElucimDocumentNudge[] = [];
   if (doc.metadata?.polishLevel !== 'refined' && doc.metadata?.polishLevel !== 'final') {
     nudges.push({
@@ -99,7 +99,7 @@ export function suggestDocumentNudges(doc: ElucimV2Document): ElucimDocumentNudg
   return nudges;
 }
 
-export function applyNudge(doc: ElucimV2Document, nudge: ElucimDocumentNudge): ElucimDocumentNudgeResult {
+export function applyNudge(doc: ElucimDocument, nudge: ElucimDocumentNudge): ElucimDocumentNudgeResult {
   let current = doc;
   const summaries: string[] = [];
   for (const command of nudge.commands) {
@@ -110,8 +110,8 @@ export function applyNudge(doc: ElucimV2Document, nudge: ElucimDocumentNudge): E
   return { document: current, summaries };
 }
 
-function buildSafePolishNudge(doc: ElucimV2Document): ElucimDocumentNudge | undefined {
-  const commands: ElucimV2Command[] = [];
+function buildSafePolishNudge(doc: ElucimDocument): ElucimDocumentNudge | undefined {
+  const commands: ElucimCommand[] = [];
   for (const element of Object.values(doc.elements)) {
     if ((element.type === 'text' || element.props.type === 'text') && typeof element.props.fontSize === 'number' && element.props.fontSize < POLISH_MIN_TEXT_SIZE) {
       commands.push({ op: 'updateElement', id: element.id, patch: { props: { fontSize: POLISH_MIN_TEXT_SIZE } } });
@@ -128,7 +128,7 @@ function buildSafePolishNudge(doc: ElucimV2Document): ElucimDocumentNudge | unde
   };
 }
 
-function buildTitleHierarchyNudge(doc: ElucimV2Document): ElucimDocumentNudge | undefined {
+function buildTitleHierarchyNudge(doc: ElucimDocument): ElucimDocumentNudge | undefined {
   const title = Object.values(doc.elements).find(element => (element.type === 'text' || element.props.type === 'text')
     && (element.role === 'title' || element.intent?.role === 'title' || /title|headline|heading/i.test(element.id)))
     ?? Object.values(doc.elements).find(element => element.type === 'text' || element.props.type === 'text');
@@ -155,7 +155,7 @@ function buildTitleHierarchyNudge(doc: ElucimV2Document): ElucimDocumentNudge | 
   };
 }
 
-function buildIntroTimeline(doc: ElucimV2Document, rootChildren: string[]) {
+function buildIntroTimeline(doc: ElucimDocument, rootChildren: string[]) {
   const targets = rootChildren.slice(0, 8);
   if (targets.length === 0) return undefined;
   const stagger = 6;

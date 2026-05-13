@@ -16,7 +16,7 @@ const doc: ElucimDocument = {
   },
 };
 
-describe('v2 agent-readable services', () => {
+describe('agent-readable document services', () => {
   it('summarizes compact document structure for agents', () => {
     const summary = summarizeDocument(doc);
 

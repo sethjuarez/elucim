@@ -1,19 +1,19 @@
 import type { ScenePreset, EasingSpec } from '../schema/types';
 
-export type ElucimV2Version = '2.0';
+export type ElucimVersion = '2.0';
 
-export interface ElucimV2Document {
+export interface ElucimDocument {
   $schema?: string;
-  version: ElucimV2Version;
-  scene: ElucimV2Scene;
-  elements: Record<string, ElucimV2Element>;
-  timelines?: Record<string, ElucimV2Timeline>;
-  stateMachines?: Record<string, ElucimV2StateMachine>;
+  version: ElucimVersion;
+  scene: ElucimScene;
+  elements: Record<string, ElucimElement>;
+  timelines?: Record<string, ElucimTimeline>;
+  stateMachines?: Record<string, ElucimStateMachine>;
   defaultStateMachine?: string;
-  metadata?: ElucimV2Metadata;
+  metadata?: ElucimMetadata;
 }
 
-export interface ElucimV2Scene {
+export interface ElucimScene {
   type: 'scene' | 'player';
   preset?: ScenePreset;
   width?: number;
@@ -26,7 +26,7 @@ export interface ElucimV2Scene {
   children: string[];
 }
 
-export interface ElucimV2Metadata {
+export interface ElucimMetadata {
   title?: string;
   intent?: string;
   polishLevel?: 'draft' | 'refined' | 'final';
@@ -34,7 +34,7 @@ export interface ElucimV2Metadata {
   notes?: string[];
 }
 
-export interface ElucimV2Intent {
+export interface ElucimIntent {
   role?: string;
   description?: string;
   importance?: 'primary' | 'secondary' | 'supporting' | 'decorative';
@@ -48,7 +48,7 @@ export interface ElucimV2Intent {
   hints?: string[];
 }
 
-export interface ElucimV2Layout {
+export interface ElucimLayout {
   x?: number;
   y?: number;
   width?: number;
@@ -63,18 +63,18 @@ export interface ElucimV2Layout {
   locked?: boolean;
 }
 
-export interface ElucimV2Element {
+export interface ElucimElement {
   id: string;
   type: string;
   parentId?: string;
   children?: string[];
   role?: string;
-  intent?: ElucimV2Intent;
-  layout?: ElucimV2Layout;
+  intent?: ElucimIntent;
+  layout?: ElucimLayout;
   props: Record<string, unknown>;
 }
 
-export type ElucimV2AnimatableProperty =
+export type ElucimAnimatableProperty =
   | 'opacity'
   | 'translate'
   | 'scale'
@@ -82,60 +82,60 @@ export type ElucimV2AnimatableProperty =
   | 'fill'
   | 'stroke';
 
-export interface ElucimV2Keyframe {
+export interface ElucimKeyframe {
   frame: number;
   value: unknown;
   easing?: EasingSpec;
 }
 
-export interface ElucimV2TimelineTrack {
+export interface ElucimTimelineTrack {
   target: string;
-  property: ElucimV2AnimatableProperty;
-  keyframes: ElucimV2Keyframe[];
+  property: ElucimAnimatableProperty;
+  keyframes: ElucimKeyframe[];
 }
 
-export interface ElucimV2Timeline {
+export interface ElucimTimeline {
   id: string;
   duration: number;
-  tracks: ElucimV2TimelineTrack[];
+  tracks: ElucimTimelineTrack[];
 }
 
-export interface ElucimV2StateMachine {
+export interface ElucimStateMachine {
   id: string;
   entry: string;
-  inputs?: Record<string, ElucimV2StateMachineInput>;
-  states: Record<string, ElucimV2State>;
-  transitions?: ElucimV2Transition[];
-  layout?: ElucimV2StateMachineLayout;
+  inputs?: Record<string, ElucimStateMachineInput>;
+  states: Record<string, ElucimState>;
+  transitions?: ElucimTransition[];
+  layout?: ElucimStateMachineLayout;
 }
 
-export type ElucimV2StateMachineInput =
+export type ElucimStateMachineInput =
   | { type: 'trigger' }
   | { type: 'boolean'; default?: boolean }
   | { type: 'number'; default?: number };
 
-export interface ElucimV2StateMachineLayout {
-  entry?: ElucimV2GraphPosition;
-  states?: Record<string, ElucimV2GraphPosition>;
-  viewport?: ElucimV2GraphViewport;
+export interface ElucimStateMachineLayout {
+  entry?: ElucimGraphPosition;
+  states?: Record<string, ElucimGraphPosition>;
+  viewport?: ElucimGraphViewport;
 }
 
-export interface ElucimV2GraphPosition {
+export interface ElucimGraphPosition {
   x: number;
   y: number;
 }
 
-export interface ElucimV2GraphViewport {
+export interface ElucimGraphViewport {
   x: number;
   y: number;
   zoom: number;
 }
 
-export interface ElucimV2State {
+export interface ElucimState {
   timeline?: string;
 }
 
-export interface ElucimV2Transition {
+export interface ElucimTransition {
   id: string;
   from: string | 'entry' | 'any';
   to: string | 'entry' | 'exit';

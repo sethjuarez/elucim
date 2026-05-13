@@ -68,9 +68,9 @@ Generators: `spring({ stiffness, damping, mass })`, `cubicBezier(x1, y1, x2, y2)
 
 ## DSL
 
-The public DSL shape for new documents is the normalized v2 `ElucimDocument`: `version: "2.0"`, a single `scene`, an ID-keyed `elements` registry, optional `timelines`, optional `stateMachines`, and optional `metadata`. Legacy v1 render-tree documents with `version: "1.0"` and `root` are still migratable, but agents should not author new documents in that shape.
+The public DSL shape for new documents is the canonical `ElucimDocument`: `version: "2.0"`, a single `scene`, an ID-keyed `elements` registry, optional `timelines`, optional `stateMachines`, and optional `metadata`. Legacy render-tree documents with `version: "1.0"` and `root` are still migratable, but agents should not author new documents in that shape.
 
-Do not put `durationInFrames` on a v2 `scene`. In v2, timelines, state machines, and explicit export policies own time.
+Do not put `durationInFrames` on a document `scene`. Timelines, state machines, and explicit export policies own time.
 
 ```json
 {
