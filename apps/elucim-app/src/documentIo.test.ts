@@ -3,7 +3,7 @@ import { createNewDocument } from './sampleDocument';
 import { ensureElucimExtension, getDisplayName, parseDocument, serializeDocument } from './documentIo';
 
 describe('document IO', () => {
-  it('round-trips v2 Elucim documents', () => {
+  it('round-trips native Elucim Documents', () => {
     const document = createNewDocument();
     const serialized = serializeDocument(document);
     const parsed = parseDocument(serialized);
