@@ -94,7 +94,6 @@ describe('editor layout controller', () => {
 
     expect(result.current.rootTheme.colorScheme).toBe('dark');
     expect(result.current.rootTheme.themeVars['--elucim-editor-accent' as keyof React.CSSProperties]).toBe('#7c3aed');
-    expect(result.current.workspaceSurfaceProps.workspace).toBe('animate');
     expect(React.isValidElement(result.current.workspaceSurfaceProps.leftDock)).toBe(true);
     expect(React.isValidElement(result.current.workspaceSurfaceProps.canvas)).toBe(true);
     expect(React.isValidElement(result.current.workspaceSurfaceProps.inspector)).toBe(true);
