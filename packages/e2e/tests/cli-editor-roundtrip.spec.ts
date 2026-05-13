@@ -124,12 +124,12 @@ test.describe('CLI to editor round trip', () => {
       const cliDocument = await makeCliAuthoredDocument(dir);
       await loadDocumentInEditor(page, cliDocument);
 
-      await page.getByRole('tab', { name: 'Design workspace' }).click();
+      await page.getByRole('tab', { name: 'Objects' }).click();
       await expect(page.getByRole('treeitem').filter({ hasText: 'concept-card' })).toBeVisible();
       await expect(page.getByRole('treeitem').filter({ hasText: 'concept-title' })).toBeVisible();
       await expect(page.locator('[data-editor-id="concept-card"]')).toBeVisible();
 
-      await page.getByRole('tab', { name: 'State Machine workspace' }).click();
+      await page.getByRole('tab', { name: 'State machines motion tab' }).click();
       await expect(page.getByLabel('State machine graph presentation')).toBeVisible();
       const conceptCard = page.locator('[data-measure-id="concept-card"] [data-testid="elucim-rect"]').first();
       expect(Number(await conceptCard.getAttribute('opacity'))).toBeLessThan(0.01);
@@ -138,7 +138,6 @@ test.describe('CLI to editor round trip', () => {
       await expect(page.getByText(/Previewing intro/)).toBeVisible();
       await expect.poll(async () => Number(await conceptCard.getAttribute('opacity')), { timeout: 6000 }).toBeGreaterThan(0.99);
 
-      await page.getByRole('tab', { name: 'Design workspace' }).click();
       await page.getByRole('tab', { name: 'Create' }).click();
       await page.getByTitle('Rectangle').click();
       await expect(page.locator('[data-editor-id^="rect-"]').first()).toBeVisible();
@@ -168,11 +167,11 @@ test.describe('CLI to editor round trip', () => {
     const fixtureDocument = JSON.parse(await readFile(animatedFixturePath, 'utf8'));
     await loadDocumentInEditor(page, fixtureDocument);
 
-    await page.getByRole('tab', { name: 'Design workspace' }).click();
+    await page.getByRole('tab', { name: 'Objects' }).click();
     await expect(page.getByRole('treeitem', { name: /agent-card group/ })).toBeVisible();
     await expect(page.getByRole('treeitem', { name: /agent-card-title title/ })).toBeVisible();
 
-    await page.getByRole('tab', { name: 'State Machine workspace' }).click();
+    await page.getByRole('tab', { name: 'State machines motion tab' }).click();
     await expect(page.getByLabel('State machine graph presentation')).toBeVisible();
     const cardBackground = page.locator('[data-measure-id="agent-card"] [data-testid="elucim-rect"]').first();
     expect(Number(await cardBackground.getAttribute('opacity'))).toBeLessThan(0.01);
@@ -181,7 +180,6 @@ test.describe('CLI to editor round trip', () => {
     await expect(page.getByText(/Previewing intro/)).toBeVisible();
     await expect.poll(async () => Number(await cardBackground.getAttribute('opacity')), { timeout: 6000 }).toBeGreaterThan(0.99);
 
-    await page.getByRole('tab', { name: 'Design workspace' }).click();
     await page.getByRole('button', { name: 'Exit state machine preview mode' }).click();
     await page.getByRole('tab', { name: 'Create' }).click();
     await page.getByTitle('Circle').click();
