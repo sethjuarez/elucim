@@ -2729,7 +2729,6 @@ function StateMachineTimelineGraph({
   const states = useMemo(() => Object.entries(machine.states), [machine.states]);
   const transitions = useMemo(() => machine.transitions ?? [], [machine.transitions]);
   const graphTransitions = useMemo(() => transitions.filter(transition => transition.from !== 'any' && transition.from !== 'entry'), [transitions]);
-  const editableTransitionControls = useMemo(() => transitions.filter(transition => transition.from !== 'any'), [transitions]);
   const exitTransitions = useMemo(() => graphTransitions.filter(transition => transition.to === 'exit'), [graphTransitions]);
   const [layoutDirection, setLayoutDirection] = useState<GraphLayoutDirection>('horizontal');
   const flowInstanceRef = useRef<ReactFlowInstance<Node<StateMachineGraphNodeData>, Edge<StateMachineGraphEdgeData>> | null>(null);
@@ -3090,43 +3089,8 @@ function StateMachineTimelineGraph({
             color: v('--elucim-editor-fg'),
           }}
         />
-        {editableTransitionControls.length > 0 && (
-          <div
-            aria-label={`Transition edge controls for ${machine.id}`}
-            style={{
-              position: 'absolute',
-              right: 8,
-              bottom: 8,
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'flex-end',
-              gap: 4,
-              maxWidth: '65%',
-              pointerEvents: 'auto',
-            }}
-          >
-            {editableTransitionControls.map(transition => {
-              const selected = selectedTransitionEvent === transition.id;
-              return (
-                <button
-                  key={transition.id}
-                  type="button"
-                  aria-label={`Edit ${transitionTriggerLabel(transition)} transition from ${transition.from}`}
-                  aria-pressed={selected}
-                  onClick={() => onSelectTransition(transition.from, transition.id)}
-                  style={chromeTabButtonStyle(selected)}
-                >
-                  {transitionTriggerLabel(transition)}
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
-      <div style={{ display: 'grid', gap: 5, padding: '6px 8px', borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-surface') }}>
-        <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, fontWeight: 700 }}>
-          Events live on transition edges. Select an edge to edit its event, then fire that event while its source state is active.
-        </div>
+      <div style={{ padding: '6px 8px', borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-surface') }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
           <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
              Events for {eventSourceStateId ?? 'preview'}:
