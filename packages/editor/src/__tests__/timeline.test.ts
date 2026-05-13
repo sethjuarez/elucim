@@ -191,6 +191,7 @@ describe('canonical timeline clip rows', () => {
 
     expect(screen.getByText(/intro - 30f - 1 track/)).toBeTruthy();
     expect(screen.getByText('r1.opacity')).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Timeline playback controls' })).toBeTruthy();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Go to intro r1.opacity keyframe 30' }).at(-1)!);
     await waitFor(() => expect(latestFrame).toBe(30));
