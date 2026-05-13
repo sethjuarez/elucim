@@ -21,7 +21,7 @@ export function App() {
 }
 ```
 
-This opens the full editor shell with workspace tabs, an Objects/Create dock, canvas, inspector, zoom controls, minimap, and the motion panel.
+This opens the full editor shell with an Objects/Create/Polish dock, canvas, inspector, zoom controls, minimap, and the motion panel.
 
 <img class="theme-img-dark" src="/images/editor/editor-overview-dark.png" alt="Elucim editor in dark mode showing dense canvas, Objects, inspector, and motion panel" />
 <img class="theme-img-light" src="/images/editor/editor-overview-light.png" alt="Elucim editor in light mode showing dense canvas, Objects, inspector, and motion panel" />
@@ -87,36 +87,39 @@ export function App() {
 
 `initialFrame` can be a frame number or `'last'`, which is useful when opening generated documents with reveal timelines.
 
-## Workspace model
+## Editor model
 
-The editor is organized around four workspaces:
+The editor no longer asks you to switch between broad Design, Animate, State Machine, and Polish workspace presets. The persistent shell keeps the same core surfaces visible so the document model stays obvious:
 
-| Workspace | Use it for |
-|-----------|------------|
-| **Design** | Arrange Objects, browse scene structure, add templates, edit static properties, group, align, and distribute. |
-| **Animate** | Create and edit timelines, tracks, keyframes, easing, and sampled timeline preview frames. |
-| **State Machine** | Wire timelines into Entry/state/Exit flows, transitions, trigger inputs, keyboard/click events, and preview behavior. |
-| **Polish** | Review metadata, selected-element intent, validation warnings, compatibility notes, and suggested document nudges. |
+| Surface | Use it for |
+|---------|------------|
+| **Objects** | Browse the scene tree, select Objects, inspect generated IDs, understand groups, and reorder scene structure. |
+| **Create** | Add template Objects to the scene. Templates become normal Elucim Document elements. |
+| **Polish** | Review scene metadata, selected-object intent, validation warnings, compatibility notes, polish diagnostics, and suggested document nudges. |
+| **Inspector** | Edit the selected canvas or Object's static properties, layout, style, transforms, and group details. |
+| **Timeline** | Edit animation timelines, property tracks, keyframes, easing, and preview frames. |
+| **Animations motion tab** | Author timeline-based motion for Objects. |
+| **State machines motion tab** | Wire timelines into Entry/state/Exit flows, transitions, trigger inputs, keyboard/click events, and preview behavior. |
 
-Normalized documents open in **Animate** by default so existing timelines are immediately visible. New blank editor sessions start in **Design**.
+Normalized documents open with motion visible so existing animations are immediately inspectable. New blank editor sessions emphasize Objects and the inspector first.
 
 ## Layout
 
-The current editor shell is a docked workspace UI:
+The current editor shell is a docked scene-editing UI:
 
 | Region | Purpose |
 |--------|---------|
-| **Top bar** | Workspace tabs plus show/hide toggles for left panel, inspector, and timeline. |
-| **Left dock** | `Objects` tab for scene structure and `Create` tab for element templates. |
+| **Top bar** | Show/hide toggles for the left panel, inspector, and timeline. |
+| **Left dock** | `Objects` for scene structure, `Create` for element templates, and `Polish` for diagnostics and nudges. |
 | **Canvas** | Pan/zoom stage with grid, selection overlay, context menu, minimap, and zoom controls. |
 | **Inspector** | Contextual properties for the canvas or selected element. |
-| **Motion panel** | Timeline editor or state-machine graph, depending on workspace/tab. |
+| **Motion panel** | Animations and State machines motion tabs for timeline editing and state-machine graphs. |
 
 The left dock, inspector, and timeline are resizable. Hidden regions can be restored from the top bar or the collapsed rail.
 
 ## Creating elements
 
-Open the **Create** tab in the left dock and choose from the template palette:
+Open **Create** in the left dock and choose from the template palette:
 
 | Category | Templates |
 |----------|-----------|
@@ -127,7 +130,7 @@ Open the **Create** tab in the left dock and choose from the template palette:
 | **Math** | Axes, Function Plot, Vector, Vector Field, Matrix |
 | **Data** | Bar Chart, Graph |
 
-Templates insert normal scene elements with sensible tokenized colors. Select the new element and use the inspector for static properties, then use timelines/state machines for motion.
+Templates insert normal scene Objects with sensible tokenized colors. Select the new Object and use the inspector for static properties, then use timelines/state machines for motion.
 
 ## Selecting and arranging
 
@@ -144,8 +147,8 @@ Templates insert normal scene elements with sensible tokenized colors. Select th
 
 Motion is not authored as wrapper JSX. Use:
 
-1. **Timelines** for property tracks and keyframes on `opacity`, `translate`, `scale`, `rotate`, `fill`, or `stroke`.
-2. **State machines** to decide when timelines run and how users can move through animated states.
+1. **Animations** in the motion panel for timeline property tracks and keyframes on `opacity`, `translate`, `scale`, `rotate`, `fill`, or `stroke`.
+2. **State machines** in the motion panel to decide when timelines run and how users can move through animated states.
 3. **Preview controls** to scrub frames, play animation, or trigger state-machine events.
 
 <img class="theme-img-dark" src="/images/editor/editor-timeline.png" alt="Dense editor timeline with animation tracks and keyframes" />
