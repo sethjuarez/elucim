@@ -402,6 +402,7 @@ describe('canonical timeline clip rows', () => {
     expect(screen.getByText(/Previewing idle via onStart from entry \(idle\)/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Trigger focus event from idle' })).toBeTruthy();
     expect(screen.queryByText(/Events live on transition edges/)).toBeNull();
+    expect(screen.queryByText(/Events for preview/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Run Next transition from idle' })).toBeNull();
     expect(screen.getByText('Next auto-runs -> focused')).toBeTruthy();
   });
