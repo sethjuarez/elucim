@@ -5,7 +5,7 @@ import type { EditorRootProps } from '../chrome/EditorRoot';
 import type { EditorWorkspaceSurfaceProps } from '../chrome/EditorWorkspaceSurface';
 import type { EditorState } from '../state/types';
 import { useEditorState } from '../state/EditorProvider';
-import { resolveEditorThemeVars, type EditorWorkspace, useEditorShellState } from '../shell/editorShell';
+import { applyWorkspaceSelection, resolveEditorThemeVars, type EditorWorkspace, useEditorShellState } from '../shell/editorShell';
 import { EditorCanvasPanel } from '../canvas/EditorCanvasPanel';
 import { useEditorPreviewController, type EditorStateMachinePreviewMode, type EditorTimelinePreviewCallbacks } from '../canvas/editorPreviewController';
 import { LeftDock } from '../dock/LeftDock';
@@ -71,6 +71,7 @@ export function useEditorLayoutComposition({
   onDocumentChange,
 }: EditorLayoutCompositionOptions): EditorLayoutComposition {
   const { state, commitDocumentChange, stopPlayback } = useEditorLayoutController(onDocumentChange);
+  const { dispatch } = useEditorState();
   const activeDocument = documentModel ?? state.canonicalDocument;
   const shell = useEditorShellState({
     hasActiveDocument: Boolean(activeDocument),
@@ -80,6 +81,22 @@ export function useEditorLayoutComposition({
   const { themeVars, colorScheme } = resolveEditorThemeVars(theme, editorTheme, state.themeOverrides);
   const liveDocument = activeDocument;
   const { previewDocument, stateMachinePreviewMode, timelinePreviewCallbacks } = useEditorPreviewController(liveDocument);
+  const anchorCanvasForLeftOffsetChange = useCallback((currentLeftOffset: number, nextLeftOffset: number) => {
+    const delta = currentLeftOffset - nextLeftOffset;
+    if (delta !== 0) {
+      dispatch({ type: 'SET_VIEWPORT', viewport: { x: state.viewport.x + delta } });
+    }
+  }, [dispatch, state.viewport.x]);
+  const handleWorkspaceSelect = useCallback((workspace: EditorWorkspace) => {
+    const nextShell = applyWorkspaceSelection(shell, workspace);
+    anchorCanvasForLeftOffsetChange(shell.leftVisible ? shell.leftWidth : 0, nextShell.leftVisible ? nextShell.leftWidth : 0);
+    shell.selectWorkspace(workspace);
+  }, [anchorCanvasForLeftOffsetChange, shell]);
+  const handleLeftVisibleChange = useCallback((updater: React.SetStateAction<boolean>) => {
+    const nextVisible = typeof updater === 'function' ? updater(shell.leftVisible) : updater;
+    anchorCanvasForLeftOffsetChange(shell.leftVisible ? shell.leftWidth : 0, nextVisible ? shell.leftWidth : 0);
+    shell.setLeftVisible(nextVisible);
+  }, [anchorCanvasForLeftOffsetChange, shell]);
   const slots = buildEditorLayoutSlots({
     activeDocument,
     liveDocument,
@@ -103,10 +120,9 @@ export function useEditorLayoutComposition({
       leftWidth: shell.leftWidth,
       rightWidth: shell.rightWidth,
       timelineHeight: shell.timelineHeight,
-      selectedCount: state.selectedIds.length,
       stateMachineWorkspaceActive: shell.stateMachineWorkspaceActive,
-      onWorkspaceSelect: shell.selectWorkspace,
-      onLeftVisibleChange: shell.setLeftVisible,
+      onWorkspaceSelect: handleWorkspaceSelect,
+      onLeftVisibleChange: handleLeftVisibleChange,
       onRightVisibleChange: shell.setRightVisible,
       onTimelineVisibleChange: shell.setTimelineVisible,
       onLeftResizeStart: shell.startSideResize('left'),

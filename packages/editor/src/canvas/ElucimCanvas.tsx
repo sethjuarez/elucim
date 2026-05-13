@@ -4,7 +4,7 @@ import { renderElement } from '@elucim/dsl';
 import type { RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
 import { resolveColor, DARK_THEME, LIGHT_THEME, normalizeTheme, themeToVars, type ElucimTheme } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
-import { CANVAS_ID, getElementId } from '../state/types';
+import { getElementId } from '../state/types';
 import { findElementById } from '../state/reducer';
 import { getElementBounds, type BoundingBox } from '../utils/bounds';
 import { SelectionOverlay } from './SelectionOverlay';
@@ -20,6 +20,7 @@ import { ZoomControls } from './ZoomControls';
 import { exportEditorDocumentToJson, importFromJson } from '../utils/io';
 import { ContextMenu } from './ContextMenu';
 import type { ContextMenuItem } from './ContextMenu';
+import { buildElementContextMenuItems } from './contextMenuItems';
 
 export interface ElucimCanvasProps {
   className?: string;
@@ -39,15 +40,6 @@ export interface ElucimCanvasProps {
   editorColorScheme?: string;
   /** Explicit content theme — when provided, used for scene CSS vars instead of built-in presets. */
   contentTheme?: ElucimTheme;
-}
-
-function groupableIds(root: ElucimDocument['root'], ids: string[]): string[] {
-  const realIds = ids.filter(id => id !== CANVAS_ID);
-  const locations = realIds.map(id => findElementById(root as any, id)).filter(Boolean);
-  if (locations.length < 2) return [];
-  const parent = locations[0]?.parent;
-  if (!parent || locations.some(loc => loc?.parent !== parent)) return [];
-  return realIds;
 }
 
 function shouldPreservePointerFocus(target: EventTarget | null): boolean {
@@ -488,159 +480,17 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
       dispatch({ type: 'SELECT', ids: [editorId] });
     }
 
-    const ids = editorId && !selectedIds.includes(editorId) ? [editorId] : [...selectedIds];
-    const realIds = ids.filter(id => id !== CANVAS_ID);
-    const idsToGroup = groupableIds(root, ids);
-    const hasSelection = realIds.length > 0;
-    const singleEl = hasSelection ? children.find((c, i) => elementIds[i] === ids[0]) : undefined;
-    const isGroup = singleEl?.type === 'group';
-
-    const items: ContextMenuItem[] = [
-      {
-        label: 'Group',
-        shortcut: 'Ctrl+G',
-        disabled: idsToGroup.length < 2,
-        onClick: () => dispatch({ type: 'GROUP_ELEMENTS', ids: idsToGroup }),
-        separator: false,
-      },
-      {
-        label: 'Ungroup',
-        shortcut: 'Ctrl+Shift+G',
-        disabled: !isGroup,
-        onClick: () => { if (ids[0]) dispatch({ type: 'UNGROUP', id: ids[0] }); },
-        separator: false,
-      },
-      { label: '', onClick: () => {}, separator: true },
-      {
-        label: 'Duplicate',
-        shortcut: 'Ctrl+D',
-        disabled: !hasSelection,
-        onClick: () => dispatch({ type: 'DUPLICATE_ELEMENTS', ids }),
-        separator: false,
-      },
-      {
-        label: 'Copy',
-        shortcut: 'Ctrl+C',
-        disabled: !hasSelection,
-        onClick: () => { /* handled by keyboard */ },
-        separator: false,
-      },
-      {
-        label: 'Paste',
-        shortcut: 'Ctrl+V',
-        disabled: false,
-        onClick: () => { /* handled by keyboard */ },
-        separator: false,
-      },
-      {
-        label: 'Delete',
-        shortcut: 'Del',
-        disabled: !hasSelection,
-        onClick: () => dispatch({ type: 'DELETE_ELEMENTS', ids }),
-        separator: false,
-      },
-      { label: '', onClick: () => {}, separator: true },
-      {
-        label: 'Bring Forward',
-        shortcut: 'Ctrl+]',
-        disabled: !hasSelection,
-        onClick: () => dispatch({ type: 'BRING_FORWARD', ids }),
-        separator: false,
-      },
-      {
-        label: 'Send Backward',
-        shortcut: 'Ctrl+[',
-        disabled: !hasSelection,
-        onClick: () => dispatch({ type: 'SEND_BACKWARD', ids }),
-        separator: false,
-      },
-      {
-        label: 'Bring to Front',
-        shortcut: 'Ctrl+Shift+]',
-        disabled: !hasSelection,
-        onClick: () => dispatch({ type: 'BRING_TO_FRONT', ids }),
-        separator: false,
-      },
-      {
-        label: 'Send to Back',
-        shortcut: 'Ctrl+Shift+[',
-        disabled: !hasSelection,
-        onClick: () => dispatch({ type: 'SEND_TO_BACK', ids }),
-        separator: false,
-      },
-      { label: '', onClick: () => {}, separator: true },
-      ...(ids.length >= 2 ? [
-        {
-          label: 'Align Left',
-          disabled: false,
-          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'left' as const }),
-          separator: false,
-        },
-        {
-          label: 'Align Right',
-          disabled: false,
-          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'right' as const }),
-          separator: false,
-        },
-        {
-          label: 'Align Top',
-          disabled: false,
-          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'top' as const }),
-          separator: false,
-        },
-        {
-          label: 'Align Bottom',
-          disabled: false,
-          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'bottom' as const }),
-          separator: false,
-        },
-        {
-          label: 'Align Center ↔',
-          disabled: false,
-          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'center-h' as const }),
-          separator: false,
-        },
-        {
-          label: 'Align Center ↕',
-          disabled: false,
-          onClick: () => dispatch({ type: 'ALIGN_ELEMENTS', ids, direction: 'center-v' as const }),
-          separator: false,
-        },
-        { label: '', onClick: () => {}, separator: true },
-      ] : []),
-      ...(ids.length >= 3 ? [
-        {
-          label: 'Distribute Horizontal',
-          disabled: false,
-          onClick: () => dispatch({ type: 'DISTRIBUTE_ELEMENTS', ids, direction: 'horizontal' as const }),
-          separator: false,
-        },
-        {
-          label: 'Distribute Vertical',
-          disabled: false,
-          onClick: () => dispatch({ type: 'DISTRIBUTE_ELEMENTS', ids, direction: 'vertical' as const }),
-          separator: false,
-        },
-        { label: '', onClick: () => {}, separator: true },
-      ] : []),
-      {
-        label: 'Select All',
-        shortcut: 'Ctrl+A',
-        disabled: children.length === 0,
-        onClick: () => dispatch({ type: 'SELECT', ids: [...elementIds] }),
-        separator: false,
-      },
-      {
-        label: 'Deselect All',
-        shortcut: 'Esc',
-        disabled: !hasSelection,
-        onClick: () => dispatch({ type: 'DESELECT_ALL' }),
-        separator: false,
-      },
-    ];
+    const items = buildElementContextMenuItems({
+      root,
+      children,
+      elementIds,
+      selectedIds,
+      contextElementId: editorId ?? undefined,
+      dispatch,
+    });
 
     setContextMenu({ x: e.clientX, y: e.clientY, items });
-  }, [selectedIds, children, elementIds, dispatch]);
+  }, [selectedIds, root, children, elementIds, dispatch]);
 
   const handleOverlayDoubleClick = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     const target = e.target as SVGElement;

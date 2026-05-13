@@ -24,6 +24,7 @@ import {
   Play, Pause, SkipBack, SkipForward, StepBack, StepForward,
   ZoomIn, ZoomOut, Maximize,
   Pin, PinOff, ChevronDown, ChevronRight, GripVertical,
+  PanelLeft, PanelLeftClose, PanelRight, PanelRightClose, PanelBottom, PanelBottomClose,
   Save, FolderOpen, Copy, Spline, Pentagon,
   Group, Ungroup, Layers, Palette,
   Axis3d, SquareFunction, MoveUpRight, Grid3x3, Wind,
@@ -92,6 +93,12 @@ export interface EditorIcons {
   FitToView: IconComponent;
   // Panel chrome
   Pin: PinIconComponent;
+  PanelLeft: IconComponent;
+  PanelLeftClose: IconComponent;
+  PanelRight: IconComponent;
+  PanelRightClose: IconComponent;
+  PanelBottom: IconComponent;
+  PanelBottomClose: IconComponent;
   ChevronDown: IconComponent;
   ChevronRight: IconComponent;
   DragHandle: IconComponent;
@@ -155,6 +162,12 @@ export const DEFAULT_ICONS: EditorIcons = {
   Pin: (p?: PinIconProps) => p?.pinned
     ? <Pin size={p?.size ?? PC} fill="currentColor" />
     : <PinOff size={p?.size ?? PC} />,
+  PanelLeft:        (p) => <PanelLeft size={p?.size ?? PC} />,
+  PanelLeftClose:   (p) => <PanelLeftClose size={p?.size ?? PC} />,
+  PanelRight:       (p) => <PanelRight size={p?.size ?? PC} />,
+  PanelRightClose:  (p) => <PanelRightClose size={p?.size ?? PC} />,
+  PanelBottom:      (p) => <PanelBottom size={p?.size ?? PC} />,
+  PanelBottomClose: (p) => <PanelBottomClose size={p?.size ?? PC} />,
   ChevronDown:  (p) => <ChevronDown size={p?.size ?? PC} />,
   ChevronRight: (p) => <ChevronRight size={p?.size ?? PC} />,
   DragHandle:   (p) => <GripVertical size={p?.size ?? PC} />,
@@ -243,6 +256,12 @@ export const IconZoomIn = DEFAULT_ICONS.ZoomIn;
 export const IconZoomOut = DEFAULT_ICONS.ZoomOut;
 export const IconFitToView = DEFAULT_ICONS.FitToView;
 export const IconPin = DEFAULT_ICONS.Pin;
+export const IconPanelLeft = DEFAULT_ICONS.PanelLeft;
+export const IconPanelLeftClose = DEFAULT_ICONS.PanelLeftClose;
+export const IconPanelRight = DEFAULT_ICONS.PanelRight;
+export const IconPanelRightClose = DEFAULT_ICONS.PanelRightClose;
+export const IconPanelBottom = DEFAULT_ICONS.PanelBottom;
+export const IconPanelBottomClose = DEFAULT_ICONS.PanelBottomClose;
 export const IconChevronDown = DEFAULT_ICONS.ChevronDown;
 export const IconChevronRight = DEFAULT_ICONS.ChevronRight;
 export const IconDragHandle = DEFAULT_ICONS.DragHandle;

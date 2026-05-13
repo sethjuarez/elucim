@@ -18,7 +18,6 @@ describe('EditorWorkspaceSurface', () => {
       leftWidth: 252,
       rightWidth: 286,
       timelineHeight: 340,
-      selectedCount: 2,
       stateMachineWorkspaceActive: false,
       onWorkspaceSelect: vi.fn(),
       onLeftVisibleChange: vi.fn(),
@@ -34,7 +33,6 @@ describe('EditorWorkspaceSurface', () => {
     }));
 
     expect(screen.getByRole('tab', { name: 'Animate workspace' }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByText('2 selected')).toBeTruthy();
     expect(screen.getByText('Objects dock')).toBeTruthy();
     expect(screen.getByText('Canvas slot')).toBeTruthy();
     expect(screen.getByText('Inspector slot')).toBeTruthy();
@@ -42,12 +40,14 @@ describe('EditorWorkspaceSurface', () => {
     expect(screen.getByRole('separator', { name: 'Resize timeline' })).toBeTruthy();
   });
 
-  it('supports top-bar updater toggles and collapsed rail visibility changes', () => {
+  it('supports top-bar updater toggles without duplicate canvas controls', () => {
     const onWorkspaceSelect = vi.fn();
     const onLeftVisibleChange = vi.fn((value: boolean | ((current: boolean) => boolean)) => (
       typeof value === 'function' ? value(false) : value
     ));
-    const onTimelineVisibleChange = vi.fn((value: boolean | ((current: boolean) => boolean)) => value);
+    const onTimelineVisibleChange = vi.fn((value: boolean | ((current: boolean) => boolean)) => (
+      typeof value === 'function' ? value(false) : value
+    ));
 
     render(React.createElement(EditorWorkspaceSurface, {
       workspace: 'design',
@@ -57,7 +57,6 @@ describe('EditorWorkspaceSurface', () => {
       leftWidth: 252,
       rightWidth: 286,
       timelineHeight: 340,
-      selectedCount: 0,
       stateMachineWorkspaceActive: false,
       onWorkspaceSelect,
       onLeftVisibleChange,
@@ -72,14 +71,13 @@ describe('EditorWorkspaceSurface', () => {
       timeline: React.createElement('div', {}, 'Timeline slot'),
     }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show Left panel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Show left panel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Show timeline' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
 
     expect(onLeftVisibleChange.mock.results[0].value).toBe(true);
-    expect(onLeftVisibleChange).toHaveBeenCalledWith(true);
-    expect(onTimelineVisibleChange).toHaveBeenCalledWith(true);
+    expect(screen.getAllByRole('button', { name: 'Show left panel' })).toHaveLength(1);
+    expect(onTimelineVisibleChange.mock.results[0].value).toBe(true);
     expect(onWorkspaceSelect).toHaveBeenCalledWith('polish');
     expect(screen.queryByText('Timeline slot')).toBeNull();
   });

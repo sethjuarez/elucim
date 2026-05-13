@@ -1,18 +1,13 @@
 import type React from 'react';
 import { v } from '../theme/tokens';
-import { CollapsedPanelRail } from './CollapsedPanelRail';
 import { PanelResizeHandle } from './PanelResizeHandle';
 
 export interface EditorMainGridProps {
   leftVisible: boolean;
   rightVisible: boolean;
-  timelineVisible: boolean;
   leftWidth: number;
   rightWidth: number;
   stateMachineWorkspaceActive: boolean;
-  onLeftVisibleChange: (visible: boolean) => void;
-  onRightVisibleChange: (visible: boolean) => void;
-  onTimelineVisibleChange: (visible: boolean) => void;
   onLeftResizeStart: (event: React.PointerEvent<HTMLDivElement>) => void;
   onRightResizeStart: (event: React.PointerEvent<HTMLDivElement>) => void;
   leftDock: React.ReactNode;
@@ -32,13 +27,9 @@ export function buildEditorGridColumns(
 export function EditorMainGrid({
   leftVisible,
   rightVisible,
-  timelineVisible,
   leftWidth,
   rightWidth,
   stateMachineWorkspaceActive,
-  onLeftVisibleChange,
-  onRightVisibleChange,
-  onTimelineVisibleChange,
   onLeftResizeStart,
   onRightResizeStart,
   leftDock,
@@ -72,14 +63,6 @@ export function EditorMainGrid({
       </aside>
 
       <main style={{ position: 'relative', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
-        <CollapsedPanelRail
-          leftVisible={leftVisible}
-          rightVisible={rightVisible}
-          timelineVisible={timelineVisible}
-          onShowLeft={() => onLeftVisibleChange(true)}
-          onShowRight={() => onRightVisibleChange(true)}
-          onShowTimeline={() => onTimelineVisibleChange(true)}
-        />
         {canvas}
       </main>
 

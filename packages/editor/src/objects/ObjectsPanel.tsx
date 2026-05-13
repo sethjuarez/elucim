@@ -4,6 +4,9 @@ import { useEditorState } from '../state/EditorProvider';
 import { CANVAS_ID, getElementId } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
+import { ContextMenu } from '../canvas/ContextMenu';
+import type { ContextMenuItem } from '../canvas/ContextMenu';
+import { buildElementContextMenuItems } from '../canvas/contextMenuItems';
 
 export interface ObjectsPanelProps {
   className?: string;
@@ -85,7 +88,9 @@ export function ObjectsPanel({ className, style, document: documentModel }: Obje
   const [editValue, setEditValue] = useState('');
   const [dragging, setDragging] = useState<DragState | null>(null);
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; items: ContextMenuItem[] } | null>(null);
   const rows = getRows(children, collapsedIds);
+  const elementIds = children.map((element, index) => getElementId(element, index));
   const rootSelected = state.selectedIds.length === 1 && state.selectedIds[0] === CANVAS_ID;
 
   const toggleCollapsed = useCallback((id: string) => {
@@ -130,6 +135,26 @@ export function ObjectsPanel({ className, style, document: documentModel }: Obje
     const newIndex = nextDisplayRows.length - 1 - newDisplayIndex;
     dispatch({ type: 'REORDER_ELEMENT', id: dragging.id, newIndex });
   }, [dispatch, dragging, rows]);
+
+  const openContextMenu = useCallback((event: React.MouseEvent<HTMLElement>, id: string) => {
+    event.preventDefault();
+    event.currentTarget.focus({ preventScroll: true });
+    if (!state.selectedIds.includes(id)) {
+      dispatch({ type: 'SELECT', ids: [id] });
+    }
+    setContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      items: buildElementContextMenuItems({
+        root,
+        children,
+        elementIds,
+        selectedIds: state.selectedIds,
+        contextElementId: id,
+        dispatch,
+      }),
+    });
+  }, [children, dispatch, elementIds, root, state.selectedIds]);
 
   return (
     <div
@@ -196,8 +221,13 @@ export function ObjectsPanel({ className, style, document: documentModel }: Obje
               }}
               onClick={event => {
                 event.currentTarget.focus({ preventScroll: true });
-                dispatch({ type: 'SELECT', ids: [row.id] });
+                if (event.ctrlKey || event.metaKey || event.shiftKey) {
+                  dispatch({ type: 'SELECT_TOGGLE', id: row.id });
+                } else {
+                  dispatch({ type: 'SELECT', ids: [row.id] });
+                }
               }}
+              onContextMenu={event => openContextMenu(event, row.id)}
               onDoubleClick={() => beginRename(row.id, row.label)}
               style={{
                 display: 'flex',
@@ -290,6 +320,14 @@ export function ObjectsPanel({ className, style, document: documentModel }: Obje
           );
         })}
       </div>
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenu.items}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 }

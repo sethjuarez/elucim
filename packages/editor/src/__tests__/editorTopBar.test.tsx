@@ -9,13 +9,12 @@ import { EditorTopBar } from '../chrome/EditorTopBar';
 describe('EditorTopBar', () => {
   afterEach(() => cleanup());
 
-  it('renders branding, workspace tabs, panel toggles, and selection count', () => {
+  it('renders branding, workspace tabs, and ordered panel toggles', () => {
     render(React.createElement(EditorTopBar, {
       workspace: 'animate',
       leftVisible: true,
       rightVisible: false,
       timelineVisible: true,
-      selectedCount: 2,
       onWorkspaceSelect: vi.fn(),
       onLeftVisibleChange: vi.fn(),
       onRightVisibleChange: vi.fn(),
@@ -28,10 +27,15 @@ describe('EditorTopBar', () => {
     expect(screen.getByRole('tab', { name: 'Design workspace' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'State Machine workspace' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Polish workspace' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Hide Left panel' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Hide left panel' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Show Inspector' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Hide Timeline' })).toBeTruthy();
-    expect(screen.getByText('2 selected')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Hide timeline' })).toBeTruthy();
+    expect(screen.queryByText(/selected/)).toBeNull();
+    expect(screen.getAllByRole('button').slice(-3).map(button => button.getAttribute('aria-label'))).toEqual([
+      'Hide left panel',
+      'Hide timeline',
+      'Show Inspector',
+    ]);
   });
 
   it('emits workspace and panel toggle requests through typed callbacks', () => {
@@ -45,7 +49,6 @@ describe('EditorTopBar', () => {
       leftVisible: true,
       rightVisible: true,
       timelineVisible: false,
-      selectedCount: 0,
       onWorkspaceSelect,
       onLeftVisibleChange,
       onRightVisibleChange,
@@ -53,14 +56,13 @@ describe('EditorTopBar', () => {
     }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Hide Left panel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Hide left panel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Hide Inspector' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Show Timeline' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show timeline' }));
 
     expect(onWorkspaceSelect).toHaveBeenCalledWith('states');
     expect(onLeftVisibleChange.mock.calls[0][0](true)).toBe(false);
     expect(onRightVisibleChange.mock.calls[0][0](true)).toBe(false);
     expect(onTimelineVisibleChange.mock.calls[0][0](false)).toBe(true);
-    expect(screen.getByText('No selection')).toBeTruthy();
   });
 });
