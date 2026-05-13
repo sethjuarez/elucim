@@ -18,7 +18,15 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
   const [semanticLayoutNudges, setSemanticLayoutNudges] = useState<ElucimDocumentNudge[]>([]);
   const [semanticLayoutError, setSemanticLayoutError] = useState<string | null>(null);
   const [semanticLayoutLoading, setSemanticLayoutLoading] = useState(false);
-  const [nudgeResult, setNudgeResult] = useState<{ title: string; summaries: string[]; error?: string } | null>(null);
+  const [nudgeResult, setNudgeResult] = useState<{
+    title: string;
+    summaries: string[];
+    affectedAreas: string[];
+    confidence: ElucimDocumentNudge['confidence'];
+    commandCount: number;
+    previewSummaries: string[];
+    error?: string;
+  } | null>(null);
   const documentNudges = useMemo(() => currentDocument
     ? suggestDocumentNudges(currentDocument)
     : [], [currentDocument]);
@@ -95,13 +103,15 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
     const baseDocument = currentDocument;
     const nudge = nudgeCandidates.find(candidate => candidate.id === nudgeId);
     if (!baseDocument || !nudge) return;
+    const affectedAreas = summarizeAffectedAreas(nudge);
+    const previewSummaries = nudgePreviews.get(nudge.id) ?? [];
     try {
       const result = applyNudge(baseDocument, nudge);
       onDocumentChange?.(result.document);
-      setNudgeResult({ title: nudge.title, summaries: result.summaries });
+      setNudgeResult({ title: nudge.title, summaries: result.summaries, affectedAreas, confidence: nudge.confidence, commandCount: nudge.commands.length, previewSummaries });
       setDismissedNudgeIds(previous => new Set(previous).add(nudge.id));
     } catch (error) {
-      setNudgeResult({ title: nudge.title, summaries: [], error: error instanceof Error ? error.message : String(error) });
+      setNudgeResult({ title: nudge.title, summaries: [], affectedAreas, confidence: nudge.confidence, commandCount: nudge.commands.length, previewSummaries, error: error instanceof Error ? error.message : String(error) });
     }
   };
 
@@ -135,9 +145,23 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
           {nudgeResult.error ? (
             <div>{nudgeResult.error}</div>
           ) : (
-            <ul style={{ margin: 0, paddingLeft: 16 }}>
-              {nudgeResult.summaries.map((summary, index) => <li key={index}>{summary}</li>)}
-            </ul>
+            <>
+              <div style={{ display: 'grid', gap: 2 }}>
+                <div><strong>Impact:</strong> {formatAffectedAreas(nudgeResult.affectedAreas)}</div>
+                <div><strong>Confidence:</strong> {nudgeResult.confidence === 'safe' ? 'Safe' : 'Review before publishing'} · {nudgeResult.commandCount} change{nudgeResult.commandCount === 1 ? '' : 's'}</div>
+              </div>
+              <div style={{ color: v('--elucim-editor-text-muted') }}>
+                Result is visible in {formatAffectedAreas(nudgeResult.affectedAreas)}.
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                {nudgeResult.summaries.map((summary, index) => <li key={index}>{summary}</li>)}
+              </ul>
+              {nudgeResult.previewSummaries.length > 0 && (
+                <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10 }}>
+                  Matched preview: {nudgeResult.previewSummaries.join(' ')}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -265,13 +289,17 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
                 </span>
               </div>
               <div style={{ color: v('--elucim-editor-text-secondary'), lineHeight: 1.35 }}>{nudge.description}</div>
+              <div style={{ display: 'grid', gap: 2, color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
+                <span><strong>Impact:</strong> {formatAffectedAreas(summarizeAffectedAreas(nudge))}</span>
+                <span><strong>Review level:</strong> {nudge.confidence === 'safe' ? 'Safe deterministic change' : 'Review the result after applying'} · {nudge.commands.length} change{nudge.commands.length === 1 ? '' : 's'}</span>
+              </div>
               <ul style={{ margin: 0, paddingLeft: 16, color: v('--elucim-editor-text-muted'), fontSize: 10, lineHeight: 1.35 }}>
                 {nudge.commands.map((command, index) => <li key={index}>{summarizeNudgeCommand(command)}</li>)}
               </ul>
               {(nudgePreviews.get(nudge.id)?.length ?? 0) > 0 && (
                 <div style={{ borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`, paddingTop: 4 }}>
                   <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, fontWeight: 700, marginBottom: 2 }}>
-                    Previewed changes
+                    What will change
                   </div>
                   <ul style={{ margin: 0, paddingLeft: 16, color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
                     {nudgePreviews.get(nudge.id)?.map((summary, index) => <li key={index}>{summary}</li>)}
@@ -378,7 +406,46 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
   );
 }
 
-function summarizeNudgeCommand(command: ReturnType<typeof suggestDocumentNudges>[number]['commands'][number]): string {
+function summarizeAffectedAreas(nudge: ElucimDocumentNudge): string[] {
+  const areas = new Set<string>();
+  for (const command of nudge.commands) {
+    areas.add(commandAffectedArea(command));
+  }
+  return Array.from(areas);
+}
+
+function commandAffectedArea(command: ElucimDocumentNudge['commands'][number]): string {
+  switch (command.op) {
+    case 'updateMetadata':
+      return 'Scene metadata';
+    case 'addElement':
+      return `Object "${command.element.id}"`;
+    case 'updateElement':
+    case 'deleteElement':
+    case 'moveElement':
+    case 'reorderElement':
+    case 'reparentElement':
+      return `Object "${command.id}"`;
+    case 'upsertTimeline':
+      return `Timeline "${command.timeline.id}"`;
+    case 'deleteTimeline':
+      return `Timeline "${command.id}"`;
+    case 'applyTimelineFrame':
+      return `Timeline "${command.timelineId}"`;
+    default: {
+      const exhaustiveCommand: never = command;
+      return String(exhaustiveCommand);
+    }
+  }
+}
+
+function formatAffectedAreas(areas: string[]): string {
+  if (areas.length === 0) return 'the document';
+  if (areas.length <= 3) return areas.join(', ');
+  return `${areas.slice(0, 3).join(', ')} and ${areas.length - 3} more`;
+}
+
+function summarizeNudgeCommand(command: ElucimDocumentNudge['commands'][number]): string {
   switch (command.op) {
     case 'updateMetadata':
       return `Update metadata: ${Object.keys(command.metadata ?? {}).join(', ')}`;
