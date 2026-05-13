@@ -1,18 +1,17 @@
-import React, { useMemo, useRef } from 'react';
+import React from 'react';
 import type { RenderableDocument, ElucimDocument } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import { ImageResolverProvider, type ImageResolverFn } from '@elucim/core';
-import { EditorProvider, useEditorState } from './state/EditorProvider';
+import { useEditorState } from './state/EditorProvider';
 import { ImagePickerProvider, type BrowseImageFn } from './image/ImagePickerProvider';
 import { EditorCanvasPanel } from './canvas/EditorCanvasPanel';
 import { useEditorPreviewController } from './canvas/editorPreviewController';
 import { Inspector } from './inspector/Inspector';
 import { EditorTimelinePanel } from './timeline/EditorTimelinePanel';
-import { EditorErrorBoundary } from './panels/EditorErrorBoundary';
 import { LeftDock } from './dock/LeftDock';
 import { PanelShell } from './panels/PanelShell';
-import { normalizeInitialDocument } from './document/documentCompatibility';
-import { DocumentChangeEmitter, InitialDocumentModelSync, resolveInitialFrame, type ElucimEditorChangeDetails } from './document/documentLifecycle';
+import { EditorDocumentRuntime } from './document/EditorDocumentRuntime';
+import type { ElucimEditorChangeDetails } from './document/documentLifecycle';
 import { EditorRoot } from './chrome/EditorRoot';
 import { EditorWorkspaceSurface } from './chrome/EditorWorkspaceSurface';
 import { resolveEditorThemeVars, useEditorShellState } from './shell/editorShell';
@@ -62,27 +61,23 @@ export interface ElucimEditorProps {
  * Persistent shell with hierarchy, stage, inspector, and timeline.
  */
 export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange, onCompatibilityWarnings, onBrowseImage, imageResolver }: ElucimEditorProps) {
-  const normalizedInitialDocument = useMemo(() => normalizeInitialDocument(initialDocument), [initialDocument]);
-  const initialDocumentModel = initialDocument?.version === '2.0' ? initialDocument : undefined;
-  const lastEmittedDocumentModel = useRef<ElucimDocument | undefined>(undefined);
-  const handleDocumentChange = (document: ElucimDocument, details: ElucimEditorChangeDetails) => {
-    lastEmittedDocumentModel.current = document;
-    onDocumentChange?.(document, details);
-  };
-  const handleCompatibilityWarnings = (warnings: string[]) => {
-    onCompatibilityWarnings?.(warnings);
-  };
-  // Resolve 'last' to the actual final frame number
-  const resolvedFrame = resolveInitialFrame(initialFrame, normalizedInitialDocument);
-
   let inner = (
-    <EditorErrorBoundary>
-      <EditorProvider initialDocument={normalizedInitialDocument} initialCanonicalDocument={initialDocumentModel} initialFrame={resolvedFrame}>
-        <InitialDocumentModelSync document={initialDocumentModel} lastEmittedDocumentRef={lastEmittedDocumentModel} />
-        <DocumentChangeEmitter onChange={handleDocumentChange} onWarnings={handleCompatibilityWarnings} />
-        <ElucimEditorLayout theme={theme} editorTheme={editorTheme} className={className} style={style} onDocumentChange={document => handleDocumentChange(document, { changedFormat: false, warnings: [] })} />
-      </EditorProvider>
-    </EditorErrorBoundary>
+    <EditorDocumentRuntime
+      initialDocument={initialDocument}
+      initialFrame={initialFrame}
+      onDocumentChange={onDocumentChange}
+      onCompatibilityWarnings={onCompatibilityWarnings}
+    >
+      {handleDocumentChange => (
+        <ElucimEditorLayout
+          theme={theme}
+          editorTheme={editorTheme}
+          className={className}
+          style={style}
+          onDocumentChange={handleDocumentChange}
+        />
+      )}
+    </EditorDocumentRuntime>
   );
 
   if (imageResolver) {
