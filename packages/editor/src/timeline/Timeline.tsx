@@ -1669,7 +1669,9 @@ function TimelineClipRows({
               >
                 <span style={{ minWidth: 0, display: 'grid', gap: 2 }}>
                   <strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{machine.id}</strong>
-                  <span style={{ color: v('--elucim-editor-text-muted'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{Object.keys(machine.states).length} state{Object.keys(machine.states).length === 1 ? '' : 's'}</span>
+                  <span style={{ color: v('--elucim-editor-text-muted'), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {Object.keys(machine.states).length} state{Object.keys(machine.states).length === 1 ? '' : 's'} · {(machine.transitions ?? []).length} transition{(machine.transitions ?? []).length === 1 ? '' : 's'}
+                  </span>
                 </span>
                 {onStateMachineDelete && (
                   <button
@@ -1729,8 +1731,28 @@ function TimelineClipRows({
           onConnectStates={(sourceStateId, targetStateId) => addMachineTransition(selectedMachine, sourceStateId, targetStateId)}
         />
       ) : (
-        <div style={{ height: '100%', display: 'grid', placeItems: 'center', color: v('--elucim-editor-text-muted'), fontSize: 11 }}>
-          Use the add button in the State machines header to create a state machine.
+        <div style={{ height: '100%', display: 'grid', placeItems: 'center', padding: 16, color: v('--elucim-editor-text-muted'), fontSize: 11 }}>
+          <div style={{ maxWidth: 360, display: 'grid', gap: 10, padding: 14, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 10, background: v('--elucim-editor-surface'), lineHeight: 1.4 }}>
+            <div>
+              <div style={{ color: v('--elucim-editor-fg'), fontSize: 13, fontWeight: 800 }}>Create a state machine</div>
+              <div>State machines turn animation clips into interactive flows with Entry, states, transitions, and Exit.</div>
+            </div>
+            <div style={{ display: 'grid', gap: 4 }}>
+              <span>1. Create a machine.</span>
+              <span>2. Add states and assign animations.</span>
+              <span>3. Drag connector handles to create transitions, then preview events.</span>
+            </div>
+            {onAddStateMachine && (
+              <button
+                type="button"
+                aria-label="Create first state machine"
+                onClick={onAddStateMachine}
+                style={{ justifySelf: 'start', border: `1px solid ${v('--elucim-editor-accent')}`, borderRadius: 6, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', padding: '5px 8px', fontWeight: 700 }}
+              >
+                Create state machine
+              </button>
+            )}
+          </div>
         </div>
       ) : visibleClips.length === 0 ? (
         <div style={{ height: '100%', display: 'grid', placeItems: 'center', color: v('--elucim-editor-text-muted'), fontSize: 11 }}>
@@ -2549,19 +2571,19 @@ function StateMachineTimelineGraph({
     setFlowNodes(currentNodes => applyNodeChanges(changes, currentNodes) as Node<StateMachineGraphNodeData>[]);
   }, []);
   const entryTransition = getEntryTransition(machine);
-    const entryEdgeActive = previewStatus?.activeTransitionId === entryTransition?.id;
-    const entryEdge: Edge<StateMachineGraphEdgeData> = {
+  const entryEdgeActive = previewStatus?.activeTransitionId === entryTransition?.id;
+  const entryEdge: Edge<StateMachineGraphEdgeData> = {
     id: `${ENTRY_NODE_ID}:${machine.entry}`,
     source: ENTRY_NODE_ID,
     target: entryTransition?.to && entryTransition.to !== 'exit' ? entryTransition.to : machine.entry,
     sourceHandle: layoutDirection === 'horizontal' ? 'source-right' : 'source-bottom',
     targetHandle: layoutDirection === 'horizontal' ? 'target-left' : 'target-top',
     type: 'stateTransition',
-     markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12, color: v('--elucim-editor-accent') },
-     data: { label: entryTransition ? transitionTriggerLabel(entryTransition) : 'onStart', selected: entryEdgeActive, backEdge: false, direction: layoutDirection, stateId: 'entry', eventName: entryTransition?.id ?? 'entry', onSelect: entryTransition ? () => onSelectTransition('entry', entryTransition.id) : undefined },
+    markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12, color: v('--elucim-editor-accent') },
+    data: { label: entryTransition ? transitionTriggerLabel(entryTransition) : 'onStart', detail: `-> ${entryTransition?.to ?? machine.entry}`, selected: entryEdgeActive, backEdge: false, direction: layoutDirection, stateId: 'entry', eventName: entryTransition?.id ?? 'entry', onSelect: entryTransition ? () => onSelectTransition('entry', entryTransition.id) : undefined },
   };
   const edges: Edge<StateMachineGraphEdgeData>[] = [entryEdge, ...graphTransitions.map(transition => {
-     const selected = selectedTransitionEvent === transition.id || previewStatus?.activeTransitionId === transition.id;
+    const selected = selectedTransitionEvent === transition.id || previewStatus?.activeTransitionId === transition.id;
     const sourceRankPosition = dagPositions.get(transition.from) ?? { x: 0, y: 0 };
     const targetRankPosition = transition.to === 'exit'
       ? exitNodePosition(statePositions, layoutDirection)
@@ -2572,6 +2594,7 @@ function StateMachineTimelineGraph({
       ? targetRankPosition.x >= sourceRankPosition.x
       : targetRankPosition.y >= sourceRankPosition.y;
     const label = transitionTriggerLabel(transition);
+    const targetLabel = transition.to === 'exit' ? 'Exit' : transition.to === 'entry' ? 'Entry' : transition.to;
     return {
       id: transition.id,
       source: transition.from,
@@ -2588,6 +2611,7 @@ function StateMachineTimelineGraph({
       },
       data: {
         label,
+        detail: `-> ${targetLabel}`,
         selected,
         backEdge: !forward,
         direction: layoutDirection,
@@ -2752,6 +2776,29 @@ function StateMachineTimelineGraph({
             <LayoutDirectionIcon direction="vertical" />
           </button>
         </div>
+        {!previewStatus && (
+          <div
+            aria-label="State machine authoring guidance"
+            style={{
+              position: 'absolute',
+              left: 8,
+              bottom: 8,
+              maxWidth: 420,
+              zIndex: 5,
+              padding: '6px 8px',
+              border: `1px solid ${v('--elucim-editor-border-subtle')}`,
+              borderRadius: 8,
+              background: `color-mix(in srgb, ${v('--elucim-editor-surface')} 90%, transparent)`,
+              color: v('--elucim-editor-text-secondary'),
+              fontSize: 10,
+              lineHeight: 1.35,
+              pointerEvents: 'none',
+              boxShadow: `0 8px 18px color-mix(in srgb, ${v('--elucim-editor-bg')} 50%, transparent)`,
+            }}
+          >
+            Click a state or transition to edit it. Drag from a state connector to create a transition, then use Preview to test events.
+          </div>
+        )}
         <ReactFlow
           key={machine.id}
           nodes={flowNodes}
@@ -2875,6 +2922,10 @@ function StateMachineMotionInspector({
                 : `Event "${trigger}" becomes a preview button while "${selectedTransition.from}" is active.`}
           </div>
         </div>
+        <div style={{ display: 'grid', gap: 4, padding: 6, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 8, background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 8%, ${v('--elucim-editor-input-bg')})`, color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
+          <strong style={{ color: v('--elucim-editor-fg'), fontSize: 11 }}>Transition editing</strong>
+          <span>Choose Event for user-driven moves or Next for automatic flow after the source animation. onKey captures Space as a key; Tab still moves focus.</span>
+        </div>
         <div style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
           Source
           <div aria-label={`Transition ${selectedTransition.id} source`} style={{ ...inspectorInputStyle, display: 'flex', alignItems: 'center' }}>
@@ -2948,7 +2999,7 @@ function StateMachineMotionInspector({
                   style={inspectorInputStyle}
                 />
                 <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10 }}>
-                  Press the key to capture it, like G, Space, Enter, Escape, or ArrowLeft.
+                  Press the key to capture it, like G, Space, Enter, Escape, or ArrowLeft. Tab moves focus.
                 </div>
               </label>
             )}
@@ -2983,12 +3034,26 @@ function StateMachineMotionInspector({
 
   if (selectedStateId && state) {
     const selectedStateTransitions = (machine.transitions ?? []).filter(transition => transition.from === selectedStateId || transition.from === 'any');
+    const outgoingStateTransitions = selectedStateTransitions.filter(transition => transition.from === selectedStateId);
+    const stateGuidance = [
+      !state.timeline ? 'Assign an animation so this state changes the canvas during preview.' : undefined,
+      outgoingStateTransitions.length === 0 ? 'Drag a connector handle to another state to create a transition.' : undefined,
+    ].filter((item): item is string => Boolean(item));
     return (
       <aside style={motionInspectorPanelStyle}>
         <div>
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>Selected state</div>
           <div style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{selectedStateId}</div>
+          <div style={{ color: v('--elucim-editor-text-secondary'), fontSize: 10 }}>
+            States play one animation clip and expose outgoing transitions.
+          </div>
         </div>
+        {stateGuidance.length > 0 && (
+          <div style={{ display: 'grid', gap: 4, padding: 6, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 8, background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 8%, ${v('--elucim-editor-input-bg')})`, color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
+            <strong style={{ color: v('--elucim-editor-fg'), fontSize: 11 }}>Next steps for this state</strong>
+            {stateGuidance.map(item => <span key={item}>{item}</span>)}
+          </div>
+        )}
         <button
           type="button"
           aria-label={`Preview state ${selectedStateId}`}
@@ -3062,6 +3127,12 @@ function StateMachineMotionInspector({
       <div style={{ display: 'grid', gap: 4, padding: 6, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 8, background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 8%, ${v('--elucim-editor-input-bg')})`, color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
         <strong style={{ color: v('--elucim-editor-fg'), fontSize: 11 }}>Graph model</strong>
         <span>Entry starts here. State cards play animations. Next/Event transitions move between states. Exit stops the machine.</span>
+      </div>
+      <div style={{ display: 'grid', gap: 4, padding: 6, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 8, background: v('--elucim-editor-input-bg'), color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
+        <strong style={{ color: v('--elucim-editor-fg'), fontSize: 11 }}>Authoring checklist</strong>
+        <span>Select a state to assign an animation.</span>
+        <span>Drag connector handles to create transitions.</span>
+        <span>Click transition labels to edit triggers and targets.</span>
       </div>
       <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
         Machine name
