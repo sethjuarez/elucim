@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.21.0](https://github.com/sethjuarez/elucim/compare/core-v0.20.0...core-v0.21.0) (2026-05-13)
+
+
+### Bug Fixes
+
+* animate grouped object opacity ([4a6a243](https://github.com/sethjuarez/elucim/commit/4a6a2431a30bd8668876590320346afe927e7c50))
+
 ## [0.20.0](https://github.com/sethjuarez/elucim/compare/core-v0.19.0...core-v0.20.0) (2026-05-08)
 
 

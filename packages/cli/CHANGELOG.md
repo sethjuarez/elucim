@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.21.0](https://github.com/sethjuarez/elucim/compare/cli-v0.20.0...cli-v0.21.0) (2026-05-13)
+
+
+### Features
+
+* add agent state machine cli workflow ([ff51e10](https://github.com/sethjuarez/elucim/commit/ff51e10d0d5f4ef16ae4e5b94ca8ba9396dedcd3))
+* add cli editor roundtrip coverage ([b94610b](https://github.com/sethjuarez/elucim/commit/b94610b7aacd5edefb19906ae705838f0c30847e))
+* enrich agent cli operation catalog ([7f455e1](https://github.com/sethjuarez/elucim/commit/7f455e1f234571f0ae064d10f1013cf7c4e72a1e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/dsl bumped to 0.21.0
+
 ## [0.20.0](https://github.com/sethjuarez/elucim/compare/cli-v0.19.0...cli-v0.20.0) (2026-05-08)
 
 
