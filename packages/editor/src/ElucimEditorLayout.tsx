@@ -1,11 +1,9 @@
 import React from 'react';
 import type { ElucimDocument } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
-import { useEditorPreviewController } from './canvas/editorPreviewController';
 import { EditorRoot } from './chrome/EditorRoot';
 import { EditorWorkspaceSurface } from './chrome/EditorWorkspaceSurface';
-import { buildEditorLayoutSlots, useEditorLayoutController } from './layout/editorLayoutController';
-import { resolveEditorThemeVars, useEditorShellState } from './shell/editorShell';
+import { useEditorLayoutComposition } from './layout/editorLayoutController';
 
 export interface ElucimEditorLayoutProps {
   theme?: ElucimTheme;
@@ -24,67 +22,16 @@ export interface ElucimEditorLayoutProps {
  * keeping the standard editor shell, scrollbar styles, and theme injection.
  */
 export function ElucimEditorLayout({ theme, editorTheme, className, style, document: documentModel, onDocumentChange }: ElucimEditorLayoutProps) {
-  const { state, commitDocumentChange, stopPlayback } = useEditorLayoutController(onDocumentChange);
-  const activeDocument = documentModel ?? state.canonicalDocument;
-  const shell = useEditorShellState({
-    hasActiveDocument: Boolean(activeDocument),
-    isPlaying: state.isPlaying,
-    stopPlayback,
-  });
-  const {
-    workspace,
-    leftVisible,
-    rightVisible,
-    timelineVisible,
-    leftWidth,
-    rightWidth,
-    timelineHeight,
-    setLeftVisible,
-    setRightVisible,
-    setTimelineVisible,
-    preferredLeftTab,
-    stateMachineWorkspaceActive,
-    selectWorkspace,
-    startSideResize,
-    startTimelineResize,
-  } = shell;
-  const { themeVars, colorScheme } = resolveEditorThemeVars(theme, editorTheme, state.themeOverrides);
-  const liveDocument = activeDocument;
-  const { previewDocument, stateMachinePreviewMode, timelinePreviewCallbacks } = useEditorPreviewController(liveDocument);
-  const slots = buildEditorLayoutSlots({
-    activeDocument,
-    liveDocument,
-    workspace,
-    preferredLeftTab,
-    previewDocument,
-    previewMode: stateMachinePreviewMode,
-    timelinePreviewCallbacks,
-    colorScheme,
-    contentTheme: theme,
-    onDocumentChange: commitDocumentChange,
+  const { rootTheme, workspaceSurfaceProps } = useEditorLayoutComposition({
+    theme,
+    editorTheme,
+    document: documentModel,
+    onDocumentChange,
   });
 
   return (
-    <EditorRoot className={className} style={style} themeVars={themeVars} colorScheme={colorScheme}>
-      <EditorWorkspaceSurface
-        workspace={workspace}
-        leftVisible={leftVisible}
-        rightVisible={rightVisible}
-        timelineVisible={timelineVisible}
-        leftWidth={leftWidth}
-        rightWidth={rightWidth}
-        timelineHeight={timelineHeight}
-        selectedCount={state.selectedIds.length}
-        stateMachineWorkspaceActive={stateMachineWorkspaceActive}
-        onWorkspaceSelect={selectWorkspace}
-        onLeftVisibleChange={setLeftVisible}
-        onRightVisibleChange={setRightVisible}
-        onTimelineVisibleChange={setTimelineVisible}
-        onLeftResizeStart={startSideResize('left')}
-        onRightResizeStart={startSideResize('right')}
-        onTimelineResizeStart={startTimelineResize}
-        {...slots}
-      />
+    <EditorRoot className={className} style={style} {...rootTheme}>
+      <EditorWorkspaceSurface {...workspaceSurfaceProps} />
     </EditorRoot>
   );
 }
