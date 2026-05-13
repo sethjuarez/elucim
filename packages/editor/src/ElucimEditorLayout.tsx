@@ -1,16 +1,11 @@
 import React from 'react';
 import type { ElucimDocument } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
-import { EditorCanvasPanel } from './canvas/EditorCanvasPanel';
 import { useEditorPreviewController } from './canvas/editorPreviewController';
 import { EditorRoot } from './chrome/EditorRoot';
 import { EditorWorkspaceSurface } from './chrome/EditorWorkspaceSurface';
-import { LeftDock } from './dock/LeftDock';
-import { Inspector } from './inspector/Inspector';
-import { PanelShell } from './panels/PanelShell';
-import { useEditorState } from './state/EditorProvider';
+import { buildEditorLayoutSlots, useEditorLayoutController } from './layout/editorLayoutController';
 import { resolveEditorThemeVars, useEditorShellState } from './shell/editorShell';
-import { EditorTimelinePanel } from './timeline/EditorTimelinePanel';
 
 export interface ElucimEditorLayoutProps {
   theme?: ElucimTheme;
@@ -29,12 +24,12 @@ export interface ElucimEditorLayoutProps {
  * keeping the standard editor shell, scrollbar styles, and theme injection.
  */
 export function ElucimEditorLayout({ theme, editorTheme, className, style, document: documentModel, onDocumentChange }: ElucimEditorLayoutProps) {
-  const { state, dispatch } = useEditorState();
+  const { state, commitDocumentChange, stopPlayback } = useEditorLayoutController(onDocumentChange);
   const activeDocument = documentModel ?? state.canonicalDocument;
   const shell = useEditorShellState({
     hasActiveDocument: Boolean(activeDocument),
     isPlaying: state.isPlaying,
-    stopPlayback: () => dispatch({ type: 'SET_PLAYING', playing: false }),
+    stopPlayback,
   });
   const {
     workspace,
@@ -54,12 +49,20 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
     startTimelineResize,
   } = shell;
   const { themeVars, colorScheme } = resolveEditorThemeVars(theme, editorTheme, state.themeOverrides);
-  const commitDocumentChange = (document: ElucimDocument) => {
-    dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [] });
-    onDocumentChange?.(document);
-  };
   const liveDocument = activeDocument;
   const { previewDocument, stateMachinePreviewMode, timelinePreviewCallbacks } = useEditorPreviewController(liveDocument);
+  const slots = buildEditorLayoutSlots({
+    activeDocument,
+    liveDocument,
+    workspace,
+    preferredLeftTab,
+    previewDocument,
+    previewMode: stateMachinePreviewMode,
+    timelinePreviewCallbacks,
+    colorScheme,
+    contentTheme: theme,
+    onDocumentChange: commitDocumentChange,
+  });
 
   return (
     <EditorRoot className={className} style={style} themeVars={themeVars} colorScheme={colorScheme}>
@@ -80,28 +83,7 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
         onLeftResizeStart={startSideResize('left')}
         onRightResizeStart={startSideResize('right')}
         onTimelineResizeStart={startTimelineResize}
-        leftDock={<LeftDock document={activeDocument} onDocumentChange={commitDocumentChange} preferredTab={preferredLeftTab} />}
-        canvas={(
-          <EditorCanvasPanel
-            previewDocument={previewDocument}
-            previewMode={stateMachinePreviewMode}
-            editorColorScheme={colorScheme}
-            contentTheme={theme}
-          />
-        )}
-        inspector={(
-          <PanelShell title="Inspector">
-            <Inspector showCanvasDuration={!activeDocument} />
-          </PanelShell>
-        )}
-        timeline={(
-          <EditorTimelinePanel
-            document={liveDocument}
-            workspace={workspace}
-            onDocumentChange={commitDocumentChange}
-            {...timelinePreviewCallbacks}
-          />
-        )}
+        {...slots}
       />
     </EditorRoot>
   );
