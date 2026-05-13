@@ -204,6 +204,12 @@ describe('canonical document editor persistence', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Apply nudge Mark document as refined' }));
 
     expect(await screen.findByText('Applied Mark document as refined')).toBeTruthy();
+    expect(screen.getAllByText('Impact:').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Scene metadata').length).toBeGreaterThan(0);
+    expect(screen.getByText('Confidence:')).toBeTruthy();
+    expect(screen.getByText(/Safe · 1 change/)).toBeTruthy();
+    expect(screen.getByText('Result is visible in Scene metadata.')).toBeTruthy();
+    expect(screen.getByText('Matched preview: Updated document metadata.')).toBeTruthy();
     expect(screen.getByText('Updated document metadata.')).toBeTruthy();
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
@@ -229,7 +235,10 @@ describe('canonical document editor persistence', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Polish' }));
 
-    expect(screen.getAllByText('Previewed changes').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('What will change').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Impact:').length).toBeGreaterThan(0);
+    expect(screen.getByText('Object "title"')).toBeTruthy();
+    expect(screen.getAllByText('Review level:').length).toBeGreaterThan(0);
     expect(screen.getByText('Updated document metadata.')).toBeTruthy();
   });
 
