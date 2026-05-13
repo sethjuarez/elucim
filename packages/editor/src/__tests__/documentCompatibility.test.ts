@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
 import { validateDocument } from '@elucim/dsl';
-import { createDocumentFromEditorState, normalizeInitialDocument } from '../document/documentCompatibility';
+import { createDocumentFromEditorState, normalizeInitialDocument, resolveInitialDocumentModel } from '../document/documentCompatibility';
 
 const renderableDocument: RenderableDocument = {
   version: '1.0',
@@ -58,6 +58,11 @@ describe('editor document compatibility helpers', () => {
     expect(normalized?.version).toBe('1.0');
     expect(normalized?.root.type).toBe('player');
     expect((normalized?.root as any).children[0]).toMatchObject({ type: 'rect', id: 'card', x: 80, y: 96 });
+  });
+
+  it('resolves the canonical initial document model only for Elucim Documents', () => {
+    expect(resolveInitialDocumentModel(renderableDocument)).toBeUndefined();
+    expect(resolveInitialDocumentModel(canonicalDocument)).toBe(canonicalDocument);
   });
 
   it('rejects invalid canonical Elucim Documents before projection', () => {

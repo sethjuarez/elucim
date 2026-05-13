@@ -14,6 +14,10 @@ export function normalizeInitialDocument(document: RenderableDocument | ElucimDo
   return createRenderableDocument(document);
 }
 
+export function resolveInitialDocumentModel(document: RenderableDocument | ElucimDocument | undefined): ElucimDocument | undefined {
+  return document?.version === '1.0' ? undefined : document;
+}
+
 export function createDocumentFromEditorState(doc: RenderableDocument): ElucimDocument {
   return createDocumentFromRenderable(doc);
 }
