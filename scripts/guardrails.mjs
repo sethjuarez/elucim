@@ -19,12 +19,33 @@ const cssChromeRoots = [
   'packages/editor/src',
 ];
 const literalColorPattern = /#[0-9a-fA-F]{3,8}|rgba?\(/;
+const editorColorLiteralAllowlist = new Set([
+  'theme/tokens.ts',
+  'inspector/colorUtils.ts',
+  'inspector/Inspector.tsx',
+  'inspector/ArrayEditor.tsx',
+  'canvas/ElucimCanvas.tsx',
+  'state/types.ts',
+  'toolbar/Toolbar.tsx',
+  'toolbar/EditorMenuBar.tsx',
+]);
 
 function listFiles(entryPath, extensions) {
   const absolute = resolve(repoRoot, entryPath);
   const stat = statSync(absolute);
   if (stat.isFile()) return extensions.some(extension => absolute.endsWith(extension)) ? [absolute] : [];
   return readdirSync(absolute).flatMap(entry => listFiles(resolve(entryPath, entry), extensions));
+}
+
+function listFilesSkipping(entryPath, extensions, skippedDirectories) {
+  const absolute = resolve(repoRoot, entryPath);
+  const stat = statSync(absolute);
+  if (stat.isFile()) return extensions.some(extension => absolute.endsWith(extension)) ? [absolute] : [];
+  return readdirSync(absolute).flatMap(entry => (
+    skippedDirectories.has(entry)
+      ? []
+      : listFilesSkipping(resolve(entryPath, entry), extensions, skippedDirectories)
+  ));
 }
 
 function lineColumn(source, index) {
@@ -78,6 +99,24 @@ function assertCssLiteralsStayInTokenDeclarations() {
   }
 }
 
+function assertEditorColorLiteralsStayInTokenBoundaries() {
+  const offenders = [];
+  const editorSrcRoot = resolve(repoRoot, 'packages/editor/src');
+  for (const file of listFilesSkipping('packages/editor/src', ['.ts', '.tsx'], new Set(['__tests__']))) {
+    const filePath = relative(editorSrcRoot, file).replace(/\\/g, '/');
+    if (editorColorLiteralAllowlist.has(filePath)) continue;
+    const source = readFileSync(file, 'utf8');
+    for (const match of source.matchAll(new RegExp(literalColorPattern, 'g'))) {
+      const { line, column } = lineColumn(source, match.index);
+      offenders.push(`${relative(repoRoot, file)}:${line}:${column} uses literal "${match[0]}" outside token/theme boundaries`);
+    }
+  }
+  if (offenders.length > 0) {
+    throw new Error(`Editor chrome color literals must stay behind token/theme boundaries:\n${offenders.join('\n')}`);
+  }
+}
+
 assertNoPublicVersionTerms();
 assertCssLiteralsStayInTokenDeclarations();
+assertEditorColorLiteralsStayInTokenBoundaries();
 console.log('Guardrails passed: public document language and chrome CSS token usage.');
