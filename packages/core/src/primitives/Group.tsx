@@ -5,6 +5,8 @@ import { withTransform, sortByZIndex, type SpatialProps, type BaseElementProps }
 export interface GroupProps extends AnimationProps, SpatialProps, BaseElementProps {
   /** Child elements */
   children: React.ReactNode;
+  /** Base opacity. Default: 1 */
+  opacity?: number;
 }
 
 /**
@@ -22,12 +24,13 @@ export function Group({
   rotationOrigin,
   scale,
   translate,
+  opacity: baseOpacity = 1,
 }: GroupProps) {
   const anim = useAnimation({ fadeIn, fadeOut, easing });
   const sorted = sortByZIndex(children);
 
   const el = (
-    <g data-testid="elucim-group" opacity={anim.opacity}>
+    <g data-testid="elucim-group" opacity={baseOpacity * anim.opacity}>
       {sorted}
     </g>
   );
