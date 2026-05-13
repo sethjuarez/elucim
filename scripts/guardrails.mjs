@@ -5,9 +5,11 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const publicTerminologyRoots = [
   'README.md',
+  'packages/core/README.md',
   'packages/dsl/README.md',
   'packages/editor/README.md',
   'docs/src/content/docs',
+  'docs/public',
 ];
 const bannedPublicDocumentTerms = [
   /\bv1\b/i,
@@ -22,6 +24,23 @@ const cssChromeRoots = [
   'apps/elucim-app/src',
   'docs/src/styles',
   'packages/editor/src',
+];
+const implementationTerminologyRoots = [
+  'apps/elucim-app/src',
+  'packages/cli/src',
+  'packages/dsl/src',
+  'packages/editor/src',
+];
+const bannedImplementationDocumentTerms = [
+  /\bv1\b/i,
+  /\bv2\b/i,
+  /\bElucimV2\b/,
+  /\bvalidateV2\b/,
+  /\bmigrateV[12]ToV[12]\b/,
+  /\btoRenderableV1\b/,
+  /\bNormalizeToV2\b/,
+  /\bnormalizeToV2\b/,
+  /(?:^|[\\/])v2(?:[\\/]|$)/i,
 ];
 const literalColorPattern = /#[0-9a-fA-F]{3,8}|rgba?\(/;
 const editorColorLiteralAllowlist = new Set([
@@ -84,7 +103,7 @@ function assertNoPublicVersionTerms() {
     }
   }
   if (offenders.length > 0) {
-    throw new Error(`Public docs must use "Elucim Document" language instead of v1/v2/bridge implementation terminology:\n${offenders.join('\n')}`);
+    throw new Error(`Public docs must use "Elucim Document" language instead of versioned/bridge implementation terminology:\n${offenders.join('\n')}`);
   }
 }
 
@@ -140,8 +159,28 @@ function assertEditorColorLiteralsStayInTokenBoundaries() {
   }
 }
 
+function assertNoImplementationVersionTerms() {
+  const offenders = [];
+  for (const root of implementationTerminologyRoots) {
+    for (const file of listFilesSkipping(root, ['.ts', '.tsx', '.mjs'], new Set(['dist']))) {
+      const source = readFileSync(file, 'utf8');
+      for (const pattern of bannedImplementationDocumentTerms) {
+        const globalPattern = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`);
+        for (const match of source.matchAll(globalPattern)) {
+          const { line, column } = lineColumn(source, match.index);
+          offenders.push(`${relative(repoRoot, file)}:${line}:${column} contains "${match[0]}"`);
+        }
+      }
+    }
+  }
+  if (offenders.length > 0) {
+    throw new Error(`Implementation code must use canonical Elucim Document names instead of versioned compatibility terminology:\n${offenders.join('\n')}`);
+  }
+}
+
 assertNoPublicVersionTerms();
 assertNoPublicObjectOrderTerms();
+assertNoImplementationVersionTerms();
 assertCssLiteralsStayInTokenDeclarations();
 assertEditorColorLiteralsStayInTokenBoundaries();
-console.log('Guardrails passed: public document/Object language and chrome CSS token usage.');
+console.log('Guardrails passed: canonical document/Object language and chrome CSS token usage.');

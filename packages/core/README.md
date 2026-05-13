@@ -86,7 +86,7 @@ All primitives support universal spatial transform props:
 
 Stacking follows sibling order: elements rendered later paint on top.
 
-These compose with frame-driven values — use static `rotation={45}` for a fixed rotation, or derive `rotation` from `useCurrentFrame()` / `interpolate()` for custom React animation. For authored timelines and state machines, use `@elucim/dsl` v2 and the editor.
+These compose with frame-driven values — use static `rotation={45}` for a fixed rotation, or derive `rotation` from `useCurrentFrame()` / `interpolate()` for custom React animation. For authored timelines and state machines, use Elucim Documents through `@elucim/dsl` and the editor.
 
 ### 📊 Math Visualizations
 

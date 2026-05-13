@@ -192,7 +192,7 @@ stateMachines:
     expect(container.querySelector('[data-testid="elucim-text"]')?.getAttribute('opacity')).toBe('0');
   });
 
-  it('renders v2 poster frames after applying timeline data', () => {
+  it('renders document poster frames after applying timeline data', () => {
     const { container } = render(
       <DslRenderer
         poster="last"

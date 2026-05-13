@@ -1,4 +1,4 @@
-import type { ElucimV2Document, ElucimV2Element, ElucimV2Transition } from './types';
+import type { ElucimDocument, ElucimElement, ElucimTransition } from './types';
 import type { ValidationError, ValidationResult } from '../validator/validate';
 
 const VALID_ROOT_TYPES = new Set(['scene', 'player']);
@@ -7,14 +7,14 @@ const RESERVED_EVENT_NAMES = new Set(['complete', 'entry', 'exit', 'next']);
 const LEGACY_WRAPPER_ELEMENT_TYPES = new Set(['sequence', 'fadein', 'fadeout', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
 const LEGACY_ANIMATION_PROPS = new Set(['fadeIn', 'fadeOut', 'draw', 'write']);
 
-export function validateV2(doc: unknown): ValidationResult {
+export function validateDocument(doc: unknown): ValidationResult {
   const errors: ValidationError[] = [];
   if (!doc || typeof doc !== 'object') {
     errors.push({ path: '', message: 'Document must be an object', severity: 'error' });
     return result(errors);
   }
 
-  const d = doc as Partial<ElucimV2Document>;
+  const d = doc as Partial<ElucimDocument>;
   if (d.version !== '2.0') {
     errors.push({ path: 'version', message: `Expected version "2.0", got "${String((d as { version?: unknown }).version)}"`, severity: 'error' });
   }
@@ -38,25 +38,25 @@ export function validateV2(doc: unknown): ValidationResult {
     return result(errors);
   }
 
-  const elements = d.elements as Record<string, ElucimV2Element>;
+  const elements = d.elements as Record<string, ElucimElement>;
   for (const [id, element] of Object.entries(elements)) {
     validateElement(id, element, errors);
   }
-  validateReferences(d as ElucimV2Document, errors);
-  validateTimelines(d as ElucimV2Document, errors);
-  validateStateMachines(d as ElucimV2Document, errors);
-  validateDefaultStateMachine(d as ElucimV2Document, errors);
+  validateReferences(d as ElucimDocument, errors);
+  validateTimelines(d as ElucimDocument, errors);
+  validateStateMachines(d as ElucimDocument, errors);
+  validateDefaultStateMachine(d as ElucimDocument, errors);
 
   return result(errors);
 }
 
-function validateDefaultStateMachine(doc: ElucimV2Document, errors: ValidationError[]) {
+function validateDefaultStateMachine(doc: ElucimDocument, errors: ValidationError[]) {
   if (doc.defaultStateMachine && !doc.stateMachines?.[doc.defaultStateMachine]) {
     errors.push({ path: 'defaultStateMachine', message: `Unknown default state machine "${doc.defaultStateMachine}"`, severity: 'error' });
   }
 }
 
-function validateElement(id: string, element: ElucimV2Element, errors: ValidationError[]) {
+function validateElement(id: string, element: ElucimElement, errors: ValidationError[]) {
   const path = `elements.${id}`;
   if (!element || typeof element !== 'object') {
     errors.push({ path, message: 'Element must be an object', severity: 'error' });
@@ -94,7 +94,7 @@ function validateElement(id: string, element: ElucimV2Element, errors: Validatio
   validateLayout(element, path, errors);
 }
 
-function validateIntent(element: ElucimV2Element, path: string, errors: ValidationError[]) {
+function validateIntent(element: ElucimElement, path: string, errors: ValidationError[]) {
   if (element.intent === undefined) return;
   if (!element.intent || typeof element.intent !== 'object' || Array.isArray(element.intent)) {
     errors.push({ path: `${path}.intent`, message: 'Element intent must be an object', severity: 'error' });
@@ -113,7 +113,7 @@ function validateIntent(element: ElucimV2Element, path: string, errors: Validati
   }
 }
 
-function validateLayout(element: ElucimV2Element, path: string, errors: ValidationError[]) {
+function validateLayout(element: ElucimElement, path: string, errors: ValidationError[]) {
   if (element.layout === undefined) return;
   if (!element.layout || typeof element.layout !== 'object' || Array.isArray(element.layout)) {
     errors.push({ path: `${path}.layout`, message: 'Element layout must be an object', severity: 'error' });
@@ -127,7 +127,7 @@ function validateLayout(element: ElucimV2Element, path: string, errors: Validati
   }
 }
 
-function validateReferences(doc: ElucimV2Document, errors: ValidationError[]) {
+function validateReferences(doc: ElucimDocument, errors: ValidationError[]) {
   const ids = new Set(Object.keys(doc.elements ?? {}));
   doc.scene?.children?.forEach((id, index) => {
     if (!ids.has(id)) {
@@ -182,7 +182,7 @@ function validateStringArray(value: unknown, path: string, errors: ValidationErr
   });
 }
 
-function validateTimelines(doc: ElucimV2Document, errors: ValidationError[]) {
+function validateTimelines(doc: ElucimDocument, errors: ValidationError[]) {
   const ids = new Set(Object.keys(doc.elements ?? {}));
   for (const [timelineId, timeline] of Object.entries(doc.timelines ?? {})) {
     if (timeline.id !== timelineId) {
@@ -225,7 +225,7 @@ function validateTimelines(doc: ElucimV2Document, errors: ValidationError[]) {
   }
 }
 
-function validateStateMachines(doc: ElucimV2Document, errors: ValidationError[]) {
+function validateStateMachines(doc: ElucimDocument, errors: ValidationError[]) {
   const timelineIds = new Set(Object.keys(doc.timelines ?? {}));
   for (const [machineId, machine] of Object.entries(doc.stateMachines ?? {})) {
     if (machine.id !== machineId) {
@@ -307,7 +307,7 @@ function validateStateMachines(doc: ElucimV2Document, errors: ValidationError[])
 function validateTransition(
   machineId: string,
   transitionIndex: number,
-  transition: ElucimV2Transition,
+  transition: ElucimTransition,
   states: Record<string, unknown>,
   _timelineIds: Set<string>,
   errors: ValidationError[],

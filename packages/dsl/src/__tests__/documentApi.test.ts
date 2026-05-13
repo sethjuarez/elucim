@@ -19,7 +19,7 @@ import {
 } from '../index';
 
 describe('canonical Elucim Document API', () => {
-  it('exposes document, element, timeline, state machine, and command types without v1/v2 naming', () => {
+  it('exposes document, element, timeline, state machine, and command types without versioned naming', () => {
     const element: ElucimElement = {
       id: 'title',
       type: 'text',

@@ -1,8 +1,8 @@
-import type { ElucimV2Document } from './types';
-import { validateV2 } from './validateV2';
+import type { ElucimDocument } from './types';
+import { validateDocument } from './validateDocument';
 import type { ValidationError, ValidationResult } from '../validator/validate';
 
-export interface ElucimV2ElementSummary {
+export interface ElucimElementSummary {
   id: string;
   type: string;
   parentId?: string;
@@ -11,7 +11,7 @@ export interface ElucimV2ElementSummary {
   layout?: Record<string, unknown>;
 }
 
-export interface ElucimV2DocumentSummary {
+export interface ElucimDocumentSummary {
   version: '2.0';
   scene: {
     type: 'scene' | 'player';
@@ -20,13 +20,13 @@ export interface ElucimV2DocumentSummary {
     children: string[];
   };
   elementCount: number;
-  elements: ElucimV2ElementSummary[];
+  elements: ElucimElementSummary[];
   timelines: string[];
   stateMachines: string[];
   issues: ValidationError[];
 }
 
-export interface ElucimV2RepairHint {
+export interface ElucimRepairHint {
   path: string;
   message: string;
   code:
@@ -42,8 +42,8 @@ export interface ElucimV2RepairHint {
   suggestions?: string[];
 }
 
-export interface ElucimV2AgentValidationResult extends ValidationResult {
-  repairHints: ElucimV2RepairHint[];
+export interface ElucimAgentValidationResult extends ValidationResult {
+  repairHints: ElucimRepairHint[];
 }
 
 export interface JsonPatchOperation {
@@ -52,8 +52,8 @@ export interface JsonPatchOperation {
   value?: unknown;
 }
 
-export function summarizeDocument(doc: ElucimV2Document): ElucimV2DocumentSummary {
-  const validation = validateV2(doc);
+export function summarizeDocument(doc: ElucimDocument): ElucimDocumentSummary {
+  const validation = validateDocument(doc);
   return {
     version: '2.0',
     scene: {
@@ -77,8 +77,8 @@ export function summarizeDocument(doc: ElucimV2Document): ElucimV2DocumentSummar
   };
 }
 
-export function validateForAgent(doc: unknown): ElucimV2AgentValidationResult {
-  const validation = validateV2(doc);
+export function validateForAgent(doc: unknown): ElucimAgentValidationResult {
+  const validation = validateDocument(doc);
   const legacyHint = isLegacyRootlessDocument(doc)
     ? [{
       path: '',
@@ -93,13 +93,13 @@ export function validateForAgent(doc: unknown): ElucimV2AgentValidationResult {
   };
 }
 
-export function diffDocuments(before: ElucimV2Document, after: ElucimV2Document): JsonPatchOperation[] {
+export function diffDocuments(before: ElucimDocument, after: ElucimDocument): JsonPatchOperation[] {
   const patches: JsonPatchOperation[] = [];
   diffValue(before, after, '', patches);
   return patches;
 }
 
-function toRepairHint(error: ValidationError, doc: unknown): ElucimV2RepairHint {
+function toRepairHint(error: ValidationError, doc: unknown): ElucimRepairHint {
   const knownIds = doc && typeof doc === 'object' && 'elements' in doc && typeof (doc as { elements?: unknown }).elements === 'object'
     ? Object.keys((doc as { elements: Record<string, unknown> }).elements)
     : [];

@@ -400,14 +400,13 @@ function AnimatedParallelogram() {
   const frame = useCurrentFrame();
   const opacity = interpolate(frame, [0, 20], [0, 0.4]);
   const ox = 300, oy = 250, s = 50;
-  // v1 = (3,2), v2 = (-2,3)
-  const v1End = [ox + 3 * s, oy - 2 * s];
-  const v2End = [ox - 2 * s, oy - 3 * s];
+  const vectorAEnd = [ox + 3 * s, oy - 2 * s];
+  const vectorBEnd = [ox - 2 * s, oy - 3 * s];
   const sum = [ox + 1 * s, oy - 5 * s];
   return (
     <g opacity={opacity}>
-      <line x1={v1End[0]} y1={v1End[1]} x2={sum[0]} y2={sum[1]} stroke="#ffe66d" strokeWidth={1} strokeDasharray="6 4" />
-      <line x1={v2End[0]} y1={v2End[1]} x2={sum[0]} y2={sum[1]} stroke="#ffe66d" strokeWidth={1} strokeDasharray="6 4" />
+      <line x1={vectorAEnd[0]} y1={vectorAEnd[1]} x2={sum[0]} y2={sum[1]} stroke="#ffe66d" strokeWidth={1} strokeDasharray="6 4" />
+      <line x1={vectorBEnd[0]} y1={vectorBEnd[1]} x2={sum[0]} y2={sum[1]} stroke="#ffe66d" strokeWidth={1} strokeDasharray="6 4" />
     </g>
   );
 }
@@ -876,7 +875,7 @@ const mathDemoDsl: ElucimDocument = {
   elements: {
     axes: { id: 'axes', type: 'axes', props: { type: 'axes', domain: [-5, 5], range: [-2, 2], origin: [400, 200], scale: 60, showGrid: true } },
     plot: { id: 'plot', type: 'functionPlot', props: { type: 'functionPlot', fn: 'sin(x)', domain: [-5, 5], origin: [400, 200], scale: 60, color: '#4a9eff' } },
-    vector: { id: 'vector', type: 'vector', props: { type: 'vector', from: [0, 0], to: [2, 1], origin: [400, 200], scale: 60, color: '#ffe66d', label: 'v1' } },
+    vector: { id: 'vector', type: 'vector', props: { type: 'vector', from: [0, 0], to: [2, 1], origin: [400, 200], scale: 60, color: '#ffe66d', label: 'u' } },
   },
 };
 
