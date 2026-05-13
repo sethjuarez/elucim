@@ -19,7 +19,7 @@ test.describe('core editor workflows', () => {
 
     await page.getByRole('tab', { name: 'Create' }).click();
     await page.getByTitle('Rectangle').click();
-    await page.getByRole('tab', { name: 'Hierarchy' }).click();
+    await page.getByRole('tab', { name: 'Objects' }).click();
 
     await expect.poll(() => objects.count()).toBe(initialCount + 1);
     await expect(page.getByRole('treeitem').filter({ hasText: /^rect-\d+/ }).first()).toBeVisible();

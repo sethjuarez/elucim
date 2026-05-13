@@ -33,7 +33,7 @@ export function LeftDock({ document, onDocumentChange, preferredTab }: { documen
           background: v('--elucim-editor-input-bg'),
         }}
       >
-        <DockTab label="Hierarchy" selected={tab === 'objects'} onClick={() => setTab('objects')} />
+        <DockTab label="Objects" selected={tab === 'objects'} onClick={() => setTab('objects')} />
         <DockTab label="Create" selected={tab === 'create'} onClick={() => setTab('create')} />
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
