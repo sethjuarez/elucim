@@ -1,18 +1,18 @@
 export type {
-  ElucimV2Document as ElucimDocument,
-  ElucimV2Scene,
-  ElucimV2Element,
-  ElucimV2Metadata,
-  ElucimV2Intent,
-  ElucimV2Layout,
-  ElucimV2Timeline,
-  ElucimV2TimelineTrack,
-  ElucimV2Keyframe,
-  ElucimV2StateMachine,
-  ElucimV2StateMachineInput,
-  ElucimV2State,
-  ElucimV2Transition,
-} from './v2/types';
+  ElucimDocument,
+  ElucimElement,
+  ElucimIntent,
+  ElucimKeyframe,
+  ElucimLayout,
+  ElucimMetadata,
+  ElucimScene,
+  ElucimState,
+  ElucimStateMachine,
+  ElucimStateMachineInput,
+  ElucimTimeline,
+  ElucimTimelineTrack,
+  ElucimTransition,
+} from './document';
 
 export { DslRenderer, type DslRendererProps, type DslRendererRef } from './renderer/DslRenderer';
 export type { ElucimTheme, ImageResolverFn } from '@elucim/core';
