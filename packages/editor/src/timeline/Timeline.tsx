@@ -29,7 +29,8 @@ export interface TimelineProps {
 
 const TRACK_HEIGHT = 30;
 const RULER_HEIGHT = 24;
-const CLIP_HEADER_HEIGHT = 46;
+const CLIP_HEADER_HEIGHT = 52;
+const CLIP_HEADER_METADATA_HEIGHT = 28;
 const LABEL_WIDTH = 156;
 const MOTION_RAIL_WIDTH = 34;
 const MOTION_LIST_WIDTH = 140;
@@ -1949,7 +1950,7 @@ function TimelineClipRows({
             <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', padding: '0 8px', color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
               Tracks
             </div>
-            <div style={{ minWidth: 0, display: 'grid', gridTemplateRows: '20px 1fr', position: 'relative' }}>
+            <div style={{ minWidth: 0, display: 'grid', gridTemplateRows: `${CLIP_HEADER_METADATA_HEIGHT}px 1fr`, position: 'relative' }}>
               <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', paddingRight: 8 }}>
                 <div style={{ color: v('--elucim-editor-text-secondary'), fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                   {clip.id} - {clip.duration}f - {clip.tracks.length} track{clip.tracks.length === 1 ? '' : 's'}
@@ -1958,7 +1959,7 @@ function TimelineClipRows({
               <div
                 style={{
                   position: 'absolute',
-                  top: -5,
+                  top: -8,
                   left: '50%',
                   transform: 'translateX(-50%)',
                   zIndex: 4,
