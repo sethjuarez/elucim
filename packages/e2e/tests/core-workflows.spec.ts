@@ -28,7 +28,7 @@ test.describe('core editor workflows', () => {
 
   test('previews animations embedded in the state machine', async ({ page }) => {
     await openEditor(page);
-    await page.getByRole('tab', { name: 'State Machine workspace' }).click();
+    await page.getByRole('tab', { name: 'State machines motion tab' }).click();
     await expect(page.getByLabel('State machine graph walkthrough')).toBeVisible();
 
     const introRect = page.locator('[data-measure-id="rect-1"] [data-testid="elucim-rect"]').first();

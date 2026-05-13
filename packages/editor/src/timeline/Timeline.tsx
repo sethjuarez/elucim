@@ -8,6 +8,57 @@ import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 import { clampFrame, clientXToRatio, frameToPercent as timelineFrameToPercent, ratioToFrame } from '../interactions/coordinates';
 import { startRafDrag } from '../interactions/rafDrag';
+import { AnimationBar } from './AnimationBar';
+import {
+  CLIP_HEADER_HEIGHT,
+  EASING_OPTIONS,
+  ENTRY_EVENT_PRESETS,
+  ENTRY_NODE_ID,
+  EVENT_PRESET_SET,
+  EVENT_PRESETS,
+  EXIT_NODE_ID,
+  LABEL_WIDTH,
+  MOTION_DETAILS_WIDTH,
+  MOTION_LIST_WIDTH,
+  MOTION_RAIL_WIDTH,
+  RULER_HEIGHT,
+  TRACK_HEIGHT,
+} from './constants';
+import {
+  createUniqueTransitionId,
+  displayKeyName,
+  getEntryTargetStateId,
+  getEntryTransition,
+  getEntryTriggerTransitions,
+  getPreviewTransition,
+  getStateCompleteTransition,
+  getStateTriggerTransitions,
+  isAvailableTransitionTrigger,
+  previewEventLabel,
+  pruneUnusedTriggerInputs,
+  resolveTransitionTarget,
+  transitionTriggerLabel,
+} from './stateMachineHelpers';
+import {
+  canvasOverlayButtonStyle,
+  chromeTabButtonStyle,
+  inspectorInputStyle,
+  motionInspectorPanelStyle,
+  motionListActionButtonStyle,
+  verticalMotionButtonStyle,
+} from './styles';
+import { TimelineInspector } from './TimelineInspector';
+import { TimelinePlaybackControls } from './TimelinePlaybackControls';
+import { getAnimationUpdateProp, getAnimationValues, getRows } from './timelineRows';
+import type {
+  GraphLayoutDirection,
+  SelectedMotionItem,
+  SelectedStateMachineItem,
+  SelectedTimelineItem,
+  StateMachineGraphEdgeData,
+  StateMachineGraphNodeData,
+  StateMachinePreviewState,
+} from './types';
 
 export interface TimelineProps {
   className?: string;
@@ -25,273 +76,6 @@ export interface TimelineProps {
   onStateMachinePreviewClickChange?: (handler: (() => boolean) | undefined) => void;
   onStateMachinePreviewKeyDownChange?: (handler: ((key: string) => boolean) | undefined) => void;
   onStateMachinePreviewExitChange?: (handler: (() => void) | undefined) => void;
-}
-
-const TRACK_HEIGHT = 30;
-const RULER_HEIGHT = 24;
-const CLIP_HEADER_HEIGHT = 46;
-const LABEL_WIDTH = 156;
-const MOTION_RAIL_WIDTH = 34;
-const MOTION_LIST_WIDTH = 140;
-const MOTION_DETAILS_WIDTH = 300;
-const PLAYBACK_BUTTON_SIZE = 24;
-const PLAYBACK_PRIMARY_BUTTON_SIZE = 30;
-const EASING_OPTIONS = ['linear', 'easeInQuad', 'easeOutQuad', 'easeInOutQuad', 'easeInCubic', 'easeOutCubic', 'easeInOutCubic', 'easeInSine', 'easeOutSine', 'easeInOutSine', 'easeOutElastic', 'easeOutBounce', 'easeInBack', 'easeOutBack'];
-const ANIMATABLE_PROPERTIES = ['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke'] as const;
-const WRAPPER_TYPES = new Set(['fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
-type GraphLayoutDirection = 'horizontal' | 'vertical';
-
-function displayKeyName(key: string): string | undefined {
-  if (key === 'Tab') return undefined;
-  if (key === ' ') return 'Space';
-  if (key.length === 1) return key.toUpperCase();
-  return key;
-}
-
-interface StateMachinePreviewState {
-  machineId: string;
-  stateId: string;
-  timelineId?: string;
-  event?: string;
-  previousStateId?: string;
-  activeTransitionId?: string;
-  logicalStatePath?: string[];
-  exited?: boolean;
-  finished?: boolean;
-}
-interface StateMachineGraphNodeData extends Record<string, unknown> {
-  kind: 'entry' | 'state' | 'exit';
-  stateId: string;
-  timeline?: string;
-  selected: boolean;
-  direction: GraphLayoutDirection;
-  canDelete?: boolean;
-  onDelete?: () => void;
-}
-
-interface StateMachineGraphEdgeData extends Record<string, unknown> {
-  label: string;
-  detail?: string;
-  selected: boolean;
-  backEdge: boolean;
-  direction: GraphLayoutDirection;
-  onSelect?: () => void;
-}
-
-const ENTRY_NODE_ID = '__entry__';
-const EXIT_NODE_ID = '__exit__';
-
-function getStateTriggerTransitions(machine: ElucimStateMachine, stateId: string): ElucimTransition[] {
-  return (machine.transitions ?? []).filter(transition => (transition.from === stateId || transition.from === 'any') && transition.trigger);
-}
-
-function getEntryTriggerTransitions(machine: ElucimStateMachine): ElucimTransition[] {
-  return (machine.transitions ?? []).filter(transition => transition.from === 'entry' && transition.trigger);
-}
-
-function getStateCompleteTransition(machine: ElucimStateMachine, stateId: string): ElucimTransition | undefined {
-  return (machine.transitions ?? []).find(transition => transition.from === stateId && transition.exitTime !== undefined);
-}
-
-function getEntryTransition(machine: ElucimStateMachine): ElucimTransition | undefined {
-  return (machine.transitions ?? []).find(transition => transition.from === 'entry');
-}
-
-function getEntryTargetStateId(machine: ElucimStateMachine): string | undefined {
-  const entryTarget = getEntryTransition(machine)?.to;
-  if (entryTarget && entryTarget !== 'entry' && entryTarget !== 'exit' && machine.states[entryTarget]) return entryTarget;
-  return machine.states[machine.entry] ? machine.entry : Object.keys(machine.states)[0];
-}
-
-function resolveTransitionTarget(machine: ElucimStateMachine, transition: ElucimTransition): string | 'exit' | undefined {
-  if (transition.to === 'exit') return 'exit';
-  if (transition.to === 'entry') return getEntryTargetStateId(machine);
-  return machine.states[transition.to] ? transition.to : undefined;
-}
-
-function getPreviewTransition(machine: ElucimStateMachine, stateId: string, eventName: string, key?: string): ElucimTransition | undefined {
-  if (eventName === 'complete' || eventName === 'next') return getStateCompleteTransition(machine, stateId);
-  return (machine.transitions ?? []).find(transition => {
-    if ((transition.from !== stateId && transition.from !== 'any') || transition.trigger !== eventName) return false;
-    return eventName !== 'onKey' || key === undefined || (transition.key ?? '').toLowerCase() === key.toLowerCase();
-  });
-}
-
-function previewEventLabel(transition: ElucimTransition): string {
-  switch (transition.trigger) {
-    case 'onClick':
-      return 'Click';
-    case 'reset':
-      return 'Reset';
-    case 'onKey':
-      return transition.key ? `Press ${transition.key}` : 'Press key';
-    default:
-      return transition.trigger ?? transition.id;
-  }
-}
-
-function createUniqueTransitionId(machine: ElucimStateMachine, preferred: string): string {
-  const existing = new Set((machine.transitions ?? []).map(transition => transition.id));
-  if (!existing.has(preferred)) return preferred;
-  let index = 2;
-  while (existing.has(`${preferred}-${index}`)) index += 1;
-  return `${preferred}-${index}`;
-}
-
-function pruneUnusedTriggerInputs(
-  inputs: ElucimStateMachine['inputs'],
-  transitions: ElucimTransition[] | undefined,
-): ElucimStateMachine['inputs'] {
-  if (!inputs) return undefined;
-  const usedTriggers = new Set((transitions ?? []).map(transition => transition.trigger).filter((trigger): trigger is string => Boolean(trigger)));
-  const nextInputs = Object.fromEntries(Object.entries(inputs).filter(([inputId, input]) => input.type !== 'trigger' || usedTriggers.has(inputId)));
-  return Object.keys(nextInputs).length > 0 ? nextInputs : undefined;
-}
-
-const RESERVED_STATE_EVENT_NAMES = new Set(['complete', 'entry', 'exit', 'next']);
-const EVENT_PRESETS = ['onClick', 'reset', 'onKey'] as const;
-const ENTRY_EVENT_PRESETS = ['onStart', 'onClick', 'onKey'] as const;
-const EVENT_PRESET_SET = new Set<string>([...EVENT_PRESETS, ...ENTRY_EVENT_PRESETS]);
-
-function isAvailableTransitionTrigger(machine: ElucimStateMachine, transition: ElucimTransition, trigger: string): boolean {
-  if (!trigger || RESERVED_STATE_EVENT_NAMES.has(trigger)) return false;
-  return !(machine.transitions ?? []).some(current => {
-    if (current.id === transition.id || current.from !== transition.from || current.exitTime !== undefined || current.trigger !== trigger) return false;
-    if (trigger === 'onKey') return (current.key ?? '').toLowerCase() === (transition.key ?? '').toLowerCase();
-    return true;
-  });
-}
-
-function transitionTriggerLabel(transition: ElucimTransition): string {
-  if (transition.from === 'entry') return transition.trigger ?? 'onStart';
-  if (transition.trigger === 'onKey') return transition.key ? `Key: ${transition.key}` : 'Key';
-  if (transition.trigger && EVENT_PRESET_SET.has(transition.trigger)) return transition.trigger;
-  return transition.exitTime !== undefined ? 'Next' : `Event: ${transition.trigger ?? transition.id}`;
-}
-
-const chromeTabButtonStyle = (active: boolean, disabled = false): React.CSSProperties => ({
-  minHeight: 24,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 5,
-  border: `1px solid ${active ? v('--elucim-editor-accent') : v('--elucim-editor-border-subtle')}`,
-  borderRadius: 999,
-  background: active ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 14%, transparent)` : 'transparent',
-  color: disabled ? v('--elucim-editor-text-disabled') : active ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  fontSize: 10,
-  fontWeight: 700,
-  padding: '3px 9px',
-});
-const verticalMotionButtonStyle = (active: boolean, disabled = false): React.CSSProperties => ({
-  width: 24,
-  height: 24,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  border: `1px solid ${active ? v('--elucim-editor-accent') : v('--elucim-editor-border-subtle')}`,
-  borderRadius: 7,
-  background: active ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 16%, transparent)` : 'transparent',
-  color: disabled ? v('--elucim-editor-text-disabled') : active ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  fontSize: 11,
-  fontWeight: 800,
-  padding: 0,
-});
-
-const motionListActionButtonStyle = (active: boolean, visible = true): React.CSSProperties => ({
-  width: 22,
-  height: 22,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  border: `1px solid ${active ? v('--elucim-editor-accent') : v('--elucim-editor-border-subtle')}`,
-  borderRadius: 6,
-  background: active ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 14%, transparent)` : 'transparent',
-  color: active ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
-  cursor: 'pointer',
-  opacity: visible ? 1 : 0,
-  pointerEvents: visible ? 'auto' : 'none',
-  padding: 0,
-});
-const canvasOverlayButtonStyle = (active: boolean, disabled = false): React.CSSProperties => ({
-  width: 28,
-  height: 28,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  border: `1px solid ${active ? v('--elucim-editor-accent') : v('--elucim-editor-border-subtle')}`,
-  borderRadius: 7,
-  background: active
-    ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 18%, ${v('--elucim-editor-input-bg')})`
-    : `color-mix(in srgb, ${v('--elucim-editor-input-bg')} 88%, transparent)`,
-  color: disabled ? v('--elucim-editor-text-disabled') : active ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  padding: 0,
-});
-
-interface SelectedTimelineItem {
-  type: 'animation';
-  timelineId: string;
-  trackIndex?: number;
-  keyframeIndex?: number;
-}
-
-interface SelectedStateMachineItem {
-  type: 'stateMachine';
-  machineId: string;
-  stateId?: string;
-  transitionEvent?: string;
-}
-
-type SelectedMotionItem = SelectedTimelineItem | SelectedStateMachineItem;
-
-interface TrackRow {
-  element: ElementNode;
-  id: string;
-  label: string;
-  rootIndex: number;
-  depth: number;
-  hasChildren: boolean;
-  isTopLevel: boolean;
-}
-
-function getChildren(element: ElementNode): ElementNode[] {
-  return 'children' in element && Array.isArray((element as any).children) ? (element as any).children : [];
-}
-
-function getRows(elements: ElementNode[], expandedIds: Set<string>, parentPath = 'root', depth = 0): TrackRow[] {
-  return elements.flatMap((element, index) => {
-    const id = getElementId(element, index, parentPath);
-    const children = getChildren(element);
-    const label = ('id' in element && element.id) ? element.id : `${element.type}[${index}]`;
-    const row: TrackRow = {
-      element,
-      id,
-      label,
-      rootIndex: depth === 0 ? index : -1,
-      depth,
-      hasChildren: children.length > 0,
-      isTopLevel: depth === 0,
-    };
-    return expandedIds.has(id)
-      ? [row, ...getRows(children, expandedIds, id, depth + 1)]
-      : [row];
-  });
-}
-
-function getAnimationValues(element: ElementNode): { fadeIn: number; fadeOut: number; draw: number } {
-  const el = element as any;
-  if (el.type === 'fadeIn') return { fadeIn: el.duration ?? 0, fadeOut: 0, draw: 0 };
-  if (el.type === 'fadeOut') return { fadeIn: 0, fadeOut: el.duration ?? 0, draw: 0 };
-  if (el.type === 'draw' || el.type === 'write') return { fadeIn: 0, fadeOut: 0, draw: el.duration ?? 0 };
-  if (WRAPPER_TYPES.has(el.type)) return { fadeIn: 0, fadeOut: 0, draw: el.duration ?? 0 };
-  return { fadeIn: el.fadeIn ?? 0, fadeOut: el.fadeOut ?? 0, draw: el.draw ?? 0 };
-}
-
-function getAnimationUpdateProp(element: ElementNode, prop: 'fadeIn' | 'fadeOut' | 'draw'): 'fadeIn' | 'fadeOut' | 'draw' | 'duration' {
-  return WRAPPER_TYPES.has(element.type) ? 'duration' : prop;
 }
 
 function createUniqueTimelineId(existing: Record<string, ElucimTimeline> | undefined, preferred: string): string {
@@ -2283,170 +2067,6 @@ function TimelineClipRows({
   );
 }
 
-function TimelineInspector({
-  clip,
-  track,
-  keyframe,
-  selectedItem,
-  elementIds,
-  onRenameClip,
-  onUpdateDuration,
-  onUpdateTrack,
-  onUpdateKeyframe,
-  onDeleteKeyframe,
-}: {
-  clip?: ElucimTimeline;
-  track?: ElucimTimeline['tracks'][number];
-  keyframe?: ElucimTimeline['tracks'][number]['keyframes'][number];
-  selectedItem: SelectedTimelineItem | null;
-  elementIds: string[];
-  onRenameClip?: (clip: ElucimTimeline, nextId: string) => void;
-  onUpdateDuration: (clip: ElucimTimeline, duration: number) => void;
-  onUpdateTrack: (clip: ElucimTimeline, trackIndex: number, patch: Partial<ElucimTimeline['tracks'][number]>) => void;
-  onUpdateKeyframe: (clip: ElucimTimeline, trackIndex: number, keyframeIndex: number, patch: { frame?: number; value?: unknown }) => void;
-  onDeleteKeyframe: (clip: ElucimTimeline, trackIndex: number, keyframeIndex: number) => void;
-}) {
-  if (!clip) {
-    return <div style={{ ...motionInspectorPanelStyle, color: v('--elucim-editor-text-muted'), fontSize: 11 }}>Select a timeline to edit details.</div>;
-  }
-  const commitKeyframeFrame = (value: string) => {
-    if (!keyframe || selectedItem?.trackIndex === undefined || selectedItem.keyframeIndex === undefined) return;
-    if (value.trim() === '') return;
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric)) return;
-    const frame = Math.max(0, Math.min(clip.duration, Math.round(numeric)));
-    if (frame !== keyframe.frame) onUpdateKeyframe(clip, selectedItem.trackIndex, selectedItem.keyframeIndex, { frame });
-  };
-  const commitKeyframeValue = (value: string) => {
-    if (!keyframe || selectedItem?.trackIndex === undefined || selectedItem.keyframeIndex === undefined) return;
-    const nextValue = parseKeyframeValue(value);
-    if (nextValue !== keyframe.value) onUpdateKeyframe(clip, selectedItem.trackIndex, selectedItem.keyframeIndex, { value: nextValue });
-  };
-  const commitDuration = (value: string) => {
-    if (value.trim() === '') return;
-    const numeric = Number(value);
-    if (Number.isFinite(numeric) && numeric !== clip.duration) onUpdateDuration(clip, numeric);
-  };
-  return (
-    <aside style={motionInspectorPanelStyle}>
-      <div>
-        <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>Animation details</div>
-        <div style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{clip.id}</div>
-        <div style={{ color: v('--elucim-editor-text-secondary'), fontSize: 10 }}>{clip.tracks.length} track{clip.tracks.length === 1 ? '' : 's'}</div>
-      </div>
-      <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-        Name
-        <input
-          key={clip.id}
-          aria-label={`Rename animation ${clip.id}`}
-          defaultValue={clip.id}
-          onBlur={event => onRenameClip?.(clip, event.currentTarget.value)}
-          onKeyDown={event => {
-            if (event.key === 'Enter') event.currentTarget.blur();
-          }}
-          style={inspectorInputStyle}
-        />
-      </label>
-      <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-        Duration
-        <input
-          key={`${clip.id}-${clip.duration}-duration`}
-          aria-label={`Animation ${clip.id} duration`}
-          type="number"
-          min={1}
-          defaultValue={clip.duration}
-          onBlur={event => commitDuration(event.currentTarget.value)}
-          onKeyDown={event => {
-            if (event.key === 'Enter') event.currentTarget.blur();
-            if (event.key === 'Escape') {
-              event.currentTarget.value = String(clip.duration);
-              event.currentTarget.blur();
-            }
-          }}
-          style={inspectorInputStyle}
-        />
-      </label>
-      {track && selectedItem?.trackIndex !== undefined && (
-        <>
-          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-            Target
-            <select
-              aria-label={`${clip.id} track ${selectedItem.trackIndex + 1} target`}
-              value={track.target}
-              onChange={event => onUpdateTrack(clip, selectedItem.trackIndex!, { target: event.target.value })}
-              style={inspectorInputStyle}
-            >
-              {elementIds.map(id => <option key={id} value={id}>{id}</option>)}
-            </select>
-          </label>
-          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-            Property
-            <select
-              aria-label={`${clip.id} track ${selectedItem.trackIndex + 1} property`}
-              value={track.property}
-              onChange={event => onUpdateTrack(clip, selectedItem.trackIndex!, { property: event.target.value as ElucimTimeline['tracks'][number]['property'] })}
-              style={inspectorInputStyle}
-            >
-              {ANIMATABLE_PROPERTIES.map(property => <option key={property} value={property}>{property}</option>)}
-            </select>
-          </label>
-        </>
-      )}
-      {keyframe && selectedItem?.trackIndex !== undefined && selectedItem.keyframeIndex !== undefined && (
-        <div style={{ display: 'grid', gap: 6, paddingTop: 6, borderTop: `1px solid ${v('--elucim-editor-border-subtle')}` }}>
-          <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>Keyframe</div>
-          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-            Frame
-            <input
-              key={`${clip.id}-${selectedItem.trackIndex}-${selectedItem.keyframeIndex}-${keyframe.frame}-frame`}
-              aria-label={`${clip.id} ${track?.target}.${track?.property} keyframe ${selectedItem.keyframeIndex + 1} frame`}
-              type="number"
-              min={0}
-              max={clip.duration}
-              defaultValue={keyframe.frame}
-              onBlur={event => commitKeyframeFrame(event.currentTarget.value)}
-              onKeyDown={event => {
-                if (event.key === 'Enter') event.currentTarget.blur();
-                if (event.key === 'Escape') {
-                  event.currentTarget.value = String(keyframe.frame);
-                  event.currentTarget.blur();
-                }
-              }}
-              style={inspectorInputStyle}
-            />
-          </label>
-          <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
-            Value
-            <input
-              key={`${clip.id}-${selectedItem.trackIndex}-${selectedItem.keyframeIndex}-${String(keyframe.value)}-value`}
-              aria-label={`${clip.id} ${track?.target}.${track?.property} keyframe ${selectedItem.keyframeIndex + 1} value`}
-              defaultValue={String(keyframe.value)}
-              onBlur={event => commitKeyframeValue(event.currentTarget.value)}
-              onKeyDown={event => {
-                if (event.key === 'Enter') event.currentTarget.blur();
-                if (event.key === 'Escape') {
-                  event.currentTarget.value = String(keyframe.value);
-                  event.currentTarget.blur();
-                }
-              }}
-              style={inspectorInputStyle}
-            />
-          </label>
-          <button
-            type="button"
-            aria-label={`Remove ${clip.id} ${track?.target}.${track?.property} keyframe ${selectedItem.keyframeIndex + 1}`}
-            onClick={() => onDeleteKeyframe(clip, selectedItem.trackIndex!, selectedItem.keyframeIndex!)}
-            style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer', padding: '4px 6px', textAlign: 'left' }}
-          >
-            Remove keyframe
-          </button>
-        </div>
-      )}
-      {!track && <div style={{ color: v('--elucim-editor-text-muted'), lineHeight: 1.4 }}>Select a track row to edit its target and property. Select a diamond keyframe to edit frame/value.</div>}
-    </aside>
-  );
-}
-
 function createStateMachineDagLayout(
   states: [string, ElucimStateMachine['states'][string]][],
   transitions: { from: string; to: string }[],
@@ -3460,183 +3080,6 @@ function StateMachineMotionInspector({
   );
 }
 
-function parseKeyframeValue(value: string): unknown {
-  const numeric = Number(value);
-  return value.trim() !== '' && Number.isFinite(numeric) ? numeric : value;
-}
-
-const inspectorInputStyle: React.CSSProperties = {
-  background: v('--elucim-editor-surface'),
-  color: v('--elucim-editor-fg'),
-  border: `1px solid ${v('--elucim-editor-border')}`,
-  borderRadius: 4,
-  padding: '4px 6px',
-  fontSize: 11,
-};
-
-const motionInspectorPanelStyle: React.CSSProperties = {
-  borderLeft: `1px solid ${v('--elucim-editor-border')}`,
-  padding: 10,
-  display: 'grid',
-  gap: 8,
-  alignContent: 'start',
-  background: v('--elucim-editor-input-bg'),
-  minHeight: 0,
-  overflowY: 'auto',
-};
-
 function framePercent(frame: number, durationInFrames: number): number {
   return durationInFrames > 0 ? (Math.max(0, Math.min(frame, durationInFrames)) / durationInFrames) * 100 : 0;
-}
-
-function AnimationBar({ left, width, color, title, onEdgeDrag, onClick, edgeSide = 'right' }: {
-  left: number; width: number; color: string; title: string;
-  onEdgeDrag: (e: React.PointerEvent) => void;
-  onClick: () => void;
-  edgeSide?: 'left' | 'right';
-}) {
-  return (
-    <div
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      title={title}
-      style={{
-        position: 'absolute',
-        left: `${left}%`,
-        top: 4,
-        width: `${width}%`,
-        height: TRACK_HEIGHT - 8,
-        background: `color-mix(in srgb, ${color} 40%, transparent)`,
-        borderRadius: 2,
-        cursor: 'pointer',
-      }}
-    >
-      {/* Drag handle on the moveable edge */}
-      <div
-        onPointerDown={onEdgeDrag}
-        style={{
-          position: 'absolute',
-          ...(edgeSide === 'left' ? { left: -2 } : { right: -2 }),
-          top: 0,
-          width: 5,
-          height: '100%',
-          cursor: 'ew-resize',
-          background: `color-mix(in srgb, ${color} 80%, transparent)`,
-          borderRadius: edgeSide === 'left' ? '2px 0 0 2px' : '0 2px 2px 0',
-        }}
-      />
-    </div>
-  );
-}
-
-function TimelinePlaybackControls({
-  currentFrame,
-  maxFrame,
-  fps,
-  isPlaying,
-  icons,
-  onStart,
-  onStepBackward,
-  onTogglePlay,
-  onStepForward,
-  onEnd,
-}: {
-  currentFrame: number;
-  maxFrame: number;
-  fps: number;
-  isPlaying: boolean;
-  icons: {
-    skipStart: React.ReactNode;
-    stepBackward: React.ReactNode;
-    playPause: React.ReactNode;
-    stepForward: React.ReactNode;
-    skipEnd: React.ReactNode;
-  };
-  onStart: () => void;
-  onStepBackward: () => void;
-  onTogglePlay: () => void;
-  onStepForward: () => void;
-  onEnd: () => void;
-}) {
-  const frameNumberWidth = `${Math.max(2, String(maxFrame).length)}ch`;
-  return (
-    <div
-      role="group"
-      aria-label="Timeline playback controls"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-        minWidth: 0,
-      }}
-    >
-      <div
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 3,
-          padding: 2,
-          border: `1px solid ${v('--elucim-editor-border-subtle')}`,
-          borderRadius: 999,
-          background: `color-mix(in srgb, ${v('--elucim-editor-input-bg')} 72%, transparent)`,
-        }}
-      >
-        <TimelineButton icon={icons.skipStart} title="Start" onClick={onStart} size={PLAYBACK_BUTTON_SIZE} variant="ghost" />
-        <TimelineButton icon={icons.stepBackward} title="Step back" onClick={onStepBackward} size={PLAYBACK_BUTTON_SIZE} variant="ghost" />
-        <TimelineButton icon={icons.playPause} title={isPlaying ? 'Pause' : 'Play'} onClick={onTogglePlay} active={isPlaying} size={PLAYBACK_PRIMARY_BUTTON_SIZE} variant="primary" />
-        <TimelineButton icon={icons.stepForward} title="Step forward" onClick={onStepForward} size={PLAYBACK_BUTTON_SIZE} variant="ghost" />
-        <TimelineButton icon={icons.skipEnd} title="End" onClick={onEnd} size={PLAYBACK_BUTTON_SIZE} variant="ghost" />
-      </div>
-      <div
-        aria-label={`Frame ${currentFrame} of ${maxFrame} at ${fps} frames per second`}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'baseline',
-          gap: 5,
-          color: v('--elucim-editor-text-secondary'),
-          fontVariantNumeric: 'tabular-nums',
-          fontSize: 10,
-          whiteSpace: 'nowrap',
-        }}
-      >
-        <span style={{ width: frameNumberWidth, color: v('--elucim-editor-fg'), fontWeight: 700, textAlign: 'right' }}>{currentFrame}</span>
-        <span>/</span>
-        <span style={{ width: frameNumberWidth }}>{maxFrame}</span>
-        <span style={{ color: v('--elucim-editor-text-muted') }}>{fps}fps</span>
-      </div>
-    </div>
-  );
-}
-
-function TimelineButton({ icon, title, onClick, active, size = 28, variant = 'default' }: {
-  icon: React.ReactNode; title: string; onClick: () => void; active?: boolean; size?: number; variant?: 'default' | 'ghost' | 'primary';
-}) {
-  const primary = variant === 'primary';
-  const ghost = variant === 'ghost';
-  return (
-    <button
-      type="button"
-      aria-label={title}
-      title={title}
-      onClick={onClick}
-      style={{
-        width: size,
-        height: size,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: ghost ? 'none' : `1px solid ${active ? v('--elucim-editor-accent') : v('--elucim-editor-border-subtle')}`,
-        borderRadius: 999,
-        background: active
-          ? `color-mix(in srgb, ${v('--elucim-editor-accent')} ${primary ? '28%' : '20%'}, transparent)`
-          : primary
-            ? v('--elucim-editor-input-bg')
-            : 'transparent',
-        color: active ? v('--elucim-editor-accent') : v('--elucim-editor-fg'),
-        cursor: 'pointer',
-        padding: 0,
-      }}
-    >
-      {icon}
-    </button>
-  );
 }
