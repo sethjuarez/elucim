@@ -13,10 +13,8 @@ import { LeftDock } from './dock/LeftDock';
 import { PanelShell } from './panels/PanelShell';
 import { normalizeInitialDocument } from './document/documentCompatibility';
 import { DocumentChangeEmitter, InitialDocumentModelSync, resolveInitialFrame, type ElucimEditorChangeDetails } from './document/documentLifecycle';
-import { EditorMainGrid } from './chrome/EditorMainGrid';
 import { EditorRoot } from './chrome/EditorRoot';
-import { EditorTimelineDock } from './chrome/EditorTimelineDock';
-import { EditorTopBar } from './chrome/EditorTopBar';
+import { EditorWorkspaceSurface } from './chrome/EditorWorkspaceSurface';
 import { resolveEditorThemeVars, useEditorShellState } from './shell/editorShell';
 
 export type { ElucimEditorChangeDetails } from './document/documentLifecycle';
@@ -148,30 +146,23 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
 
   return (
     <EditorRoot className={className} style={style} themeVars={themeVars} colorScheme={colorScheme}>
-      <EditorTopBar
+      <EditorWorkspaceSurface
         workspace={workspace}
-        leftVisible={leftVisible}
-        rightVisible={rightVisible}
-        timelineVisible={timelineVisible}
-        selectedCount={state.selectedIds.length}
-        onWorkspaceSelect={selectWorkspace}
-        onLeftVisibleChange={setLeftVisible}
-        onRightVisibleChange={setRightVisible}
-        onTimelineVisibleChange={setTimelineVisible}
-      />
-
-      <EditorMainGrid
         leftVisible={leftVisible}
         rightVisible={rightVisible}
         timelineVisible={timelineVisible}
         leftWidth={leftWidth}
         rightWidth={rightWidth}
+        timelineHeight={timelineHeight}
+        selectedCount={state.selectedIds.length}
         stateMachineWorkspaceActive={stateMachineWorkspaceActive}
+        onWorkspaceSelect={selectWorkspace}
         onLeftVisibleChange={setLeftVisible}
         onRightVisibleChange={setRightVisible}
         onTimelineVisibleChange={setTimelineVisible}
         onLeftResizeStart={startSideResize('left')}
         onRightResizeStart={startSideResize('right')}
+        onTimelineResizeStart={startTimelineResize}
         leftDock={<LeftDock document={activeDocument} onDocumentChange={commitDocumentChange} preferredTab={preferredLeftTab} />}
         canvas={(
           <EditorCanvasPanel
@@ -186,16 +177,15 @@ export function ElucimEditorLayout({ theme, editorTheme, className, style, docum
             <Inspector showCanvasDuration={!activeDocument} />
           </PanelShell>
         )}
+        timeline={(
+          <EditorTimelinePanel
+            document={liveDocument}
+            workspace={workspace}
+            onDocumentChange={commitDocumentChange}
+            {...timelinePreviewCallbacks}
+          />
+        )}
       />
-
-      <EditorTimelineDock visible={timelineVisible} stateMachineWorkspaceActive={stateMachineWorkspaceActive} timelineHeight={timelineHeight} onResizeStart={startTimelineResize}>
-        <EditorTimelinePanel
-          document={liveDocument}
-          workspace={workspace}
-          onDocumentChange={commitDocumentChange}
-          {...timelinePreviewCallbacks}
-        />
-      </EditorTimelineDock>
     </EditorRoot>
   );
 }
