@@ -5,13 +5,13 @@ import { CANVAS_ID, getElementId } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 
-export interface HierarchyPanelProps {
+export interface ObjectsPanelProps {
   className?: string;
   style?: React.CSSProperties;
   document?: ElucimDocument;
 }
 
-interface HierarchyRow {
+interface ObjectRow {
   element: ElementNode;
   id: string;
   label: string;
@@ -39,7 +39,7 @@ function getChildren(element: ElementNode): ElementNode[] {
     : [];
 }
 
-function getRows(elements: ElementNode[], collapsedIds: Set<string>, parentPath = 'root', depth = 0): HierarchyRow[] {
+function getRows(elements: ElementNode[], collapsedIds: Set<string>, parentPath = 'root', depth = 0): ObjectRow[] {
   return elements.map((element, index) => {
     const id = getElementId(element, index, parentPath);
     const children = getChildren(element);
@@ -72,10 +72,10 @@ function getTypeColor(type: string): string {
 }
 
 /**
- * Persistent scene hierarchy inspired by motion-design editors.
+ * Persistent Objects tree inspired by motion-design editors.
  * Keeps nested groups and animation wrappers visible without opening the inspector.
  */
-export function HierarchyPanel({ className, style, document: documentModel }: HierarchyPanelProps) {
+export function ObjectsPanel({ className, style, document: documentModel }: ObjectsPanelProps) {
   const { state, dispatch } = useEditorState();
   const icons = useEditorIcons();
   const activeDocument = documentModel;
@@ -116,7 +116,7 @@ export function HierarchyPanel({ className, style, document: documentModel }: Hi
     return event.clientY < bounds.top + bounds.height / 2 ? 'before' : 'after';
   }, []);
 
-  const finishDrop = useCallback((row: HierarchyRow, position: 'before' | 'after') => {
+  const finishDrop = useCallback((row: ObjectRow, position: 'before' | 'after') => {
     if (!dragging || dragging.id === row.id || dragging.parentPath !== row.parentPath) return;
     const siblingRows = rows.filter(candidate => candidate.parentPath === row.parentPath);
     const draggingDisplayIndex = siblingRows.findIndex(candidate => candidate.id === dragging.id);
@@ -134,7 +134,7 @@ export function HierarchyPanel({ className, style, document: documentModel }: Hi
 
   return (
     <div
-      className={`elucim-editor-hierarchy ${className ?? ''}`}
+      className={`elucim-editor-objects ${className ?? ''}`}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -144,7 +144,7 @@ export function HierarchyPanel({ className, style, document: documentModel }: Hi
       }}
     >
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '4px 4px 8px' }}>
-        <HierarchyButton
+        <ObjectTreeButton
           label="Canvas"
           type="scene"
           selected={rootSelected}
@@ -295,7 +295,7 @@ export function HierarchyPanel({ className, style, document: documentModel }: Hi
   );
 }
 
-function HierarchyButton({
+function ObjectTreeButton({
   label,
   type,
   selected,

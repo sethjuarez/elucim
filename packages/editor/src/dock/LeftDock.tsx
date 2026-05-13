@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ElucimDocument } from '@elucim/dsl';
-import { HierarchyPanel } from '../hierarchy/HierarchyPanel';
+import { ObjectsPanel } from '../objects/ObjectsPanel';
 import { PanelShell } from '../panels/PanelShell';
 import { PolishPanel } from '../panels/PolishPanel';
 import { Toolbar } from '../toolbar/Toolbar';
@@ -37,7 +37,7 @@ export function LeftDock({ document, onDocumentChange, preferredTab }: { documen
         <DockTab label="Create" selected={tab === 'create'} onClick={() => setTab('create')} />
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-        {tab === 'create' ? <Toolbar /> : <HierarchyPanel document={document} />}
+        {tab === 'create' ? <Toolbar /> : <ObjectsPanel document={document} />}
       </div>
     </section>
   );
