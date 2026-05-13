@@ -57,9 +57,8 @@ describe('StateMachinePanel', () => {
   it('previews state machines in the motion graph', () => {
     render(React.createElement(ElucimEditor, { initialDocument: documentModel }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
 
-    expect(screen.queryByText('Animation timeline')).toBeNull();
     expect(screen.getByRole('tab', { name: 'State machines motion tab' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('tab', { name: 'Animations motion tab' })).toBeTruthy();
     expect(screen.getByLabelText('State machine graph deck')).toBeTruthy();
@@ -69,9 +68,9 @@ describe('StateMachinePanel', () => {
     expect(screen.getByRole('button', { name: 'Preview state machine deck' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Play state machine deck' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Preview state idle animation' })).toBeNull();
-    expect(screen.getByText('Preview starts at idle at 0.5x')).toBeTruthy();
+    expect(screen.getByText('Preview starts at idle')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Trigger start event from idle' })).toBeNull();
-    expect(screen.getByText('Events live on transition edges. Select an edge to edit its event, then fire that event while its source state is active.')).toBeTruthy();
+    expect(screen.queryByText('Events live on transition edges. Select an edge to edit its event, then fire that event while its source state is active.')).toBeNull();
     expect(screen.queryByText('Event inputs')).toBeNull();
     expect(screen.getAllByText('idle').length).toBeGreaterThan(0);
     expect(screen.getAllByText('idle').length).toBeGreaterThan(0);
@@ -81,29 +80,28 @@ describe('StateMachinePanel', () => {
   it('opens normalized documents in the animate workspace with animations visible', () => {
     render(React.createElement(ElucimEditor, { initialDocument: documentModel }));
 
-    expect(screen.getByRole('tab', { name: 'Animate workspace' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('tab', { name: 'Animations motion tab' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByLabelText('Animation clips')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Select animation idle' })).toBeTruthy();
   });
 
-  it('stops animation playback when leaving the animate workspace', async () => {
+  it('stops animation playback when switching to state machines', async () => {
     render(React.createElement(ElucimEditor, { initialDocument: documentModel }));
 
     fireEvent.click(screen.getByTitle('Play'));
     expect(await screen.findByTitle('Pause')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
 
     await waitFor(() => expect(screen.queryByTitle('Pause')).toBeNull());
   });
 
-  it('uses the bottom motion area for the state machine workspace', () => {
+  it('uses the bottom motion area for state machines', () => {
     render(React.createElement(ElucimEditor, { initialDocument: documentModel }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
 
-    expect(screen.getByRole('tab', { name: 'State Machine workspace' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'State machines motion tab' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByLabelText('State machine graph deck')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Select state machine deck' })).toBeTruthy();
 
@@ -129,7 +127,7 @@ describe('StateMachinePanel', () => {
       onDocumentChange,
     }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
     const entryNode = container.querySelector('.react-flow__node[data-id="__entry__"]');
     const node = container.querySelector('.react-flow__node[data-id="idle"]');
     expect(entryNode).toBeTruthy();
@@ -141,7 +139,7 @@ describe('StateMachinePanel', () => {
     const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Polish' }));
     fireEvent.change(screen.getByLabelText('Polish level'), { target: { value: 'refined' } });
 
     await waitFor(() => expect(onDocumentChange).toHaveBeenCalled());
@@ -149,10 +147,9 @@ describe('StateMachinePanel', () => {
     expect(onDocumentChange.mock.calls.at(-1)?.[0].timelines?.intro).toBeTruthy();
     expect(onDocumentChange.mock.calls.at(-1)?.[0].stateMachines?.deck).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Objects' }));
     fireEvent.click(screen.getAllByText('title')[0]);
-    fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Polish' }));
     fireEvent.change(screen.getByLabelText('Selected role'), { target: { value: 'hero' } });
 
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].elements.title.intent.role).toBe('hero'));
@@ -177,7 +174,7 @@ describe('StateMachinePanel', () => {
       },
     }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Polish' }));
 
     expect(screen.getByText('Document compatibility warnings')).toBeTruthy();
     expect(screen.getByText(/Timeline "ghostTimeline"/)).toBeTruthy();
@@ -190,7 +187,7 @@ describe('StateMachinePanel', () => {
       onDocumentChange,
     }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add state machine' }));
 
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].stateMachines?.['state-machine']).toBeTruthy());
@@ -199,7 +196,7 @@ describe('StateMachinePanel', () => {
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].stateMachines['state-machine'].states.state).toBeTruthy());
     expect(screen.queryByRole('button', { name: 'Add transition from state' })).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove state state' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove selected state state' }));
 
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
@@ -212,7 +209,7 @@ describe('StateMachinePanel', () => {
     const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
     fireEvent.change(screen.getByLabelText('Rename state machine deck'), { target: { value: 'Deck Flow' } });
     fireEvent.blur(screen.getByLabelText('Rename state machine deck'));
 
@@ -240,7 +237,7 @@ describe('StateMachinePanel', () => {
     const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
     fireEvent.doubleClick(screen.getByRole('button', { name: 'Select state machine deck' }));
     const renameInput = await screen.findByLabelText('Rename state machine deck inline');
     fireEvent.change(renameInput, { target: { value: 'Deck Flow' } });
@@ -257,7 +254,7 @@ describe('StateMachinePanel', () => {
     const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
     fireEvent.click(screen.getByLabelText('Select graph state idle'));
     fireEvent.click(screen.getByRole('button', { name: 'Edit Event: start transition from idle' }));
     fireEvent.change(screen.getByLabelText('Rename transition trigger start'), { target: { value: 'begin' } });
@@ -283,7 +280,8 @@ describe('StateMachinePanel', () => {
     const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: documentModel, onDocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
+    fireEvent.click(screen.getByLabelText('Select graph state idle'));
     fireEvent.click(screen.getByRole('button', { name: 'Edit Event: start transition from idle' }));
 
     expect(screen.getByLabelText('Transition idle-start source').textContent).toBe('idle');
@@ -334,9 +332,9 @@ describe('StateMachinePanel', () => {
       onDocumentChange,
     }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'State Machine workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
     fireEvent.click(screen.getByLabelText('Select graph state intro'));
-    fireEvent.click(screen.getByRole('button', { name: 'Remove state intro' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove selected state intro' }));
 
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;

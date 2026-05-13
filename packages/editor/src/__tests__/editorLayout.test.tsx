@@ -29,7 +29,7 @@ describe('ElucimEditorLayout module', () => {
 
     expect(container.firstElementChild?.className).toBe('elucim-editor embedded-editor');
     expect(screen.getByText('Elucim')).toBeTruthy();
-    expect(screen.getByRole('tab', { name: 'Design workspace' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Hide left panel' })).toBeTruthy();
     expect(screen.getAllByText('Canvas').length).toBeGreaterThan(0);
   });
 });

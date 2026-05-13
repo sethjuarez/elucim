@@ -5,7 +5,7 @@ import type { EditorRootProps } from '../chrome/EditorRoot';
 import type { EditorWorkspaceSurfaceProps } from '../chrome/EditorWorkspaceSurface';
 import type { EditorState } from '../state/types';
 import { useEditorState } from '../state/EditorProvider';
-import { applyWorkspaceSelection, resolveEditorThemeVars, type EditorWorkspace, useEditorShellState } from '../shell/editorShell';
+import { resolveEditorThemeVars, type EditorWorkspace, useEditorShellState } from '../shell/editorShell';
 import { EditorCanvasPanel } from '../canvas/EditorCanvasPanel';
 import { useEditorPreviewController, type EditorStateMachinePreviewMode, type EditorTimelinePreviewCallbacks } from '../canvas/editorPreviewController';
 import { LeftDock } from '../dock/LeftDock';
@@ -87,11 +87,6 @@ export function useEditorLayoutComposition({
       dispatch({ type: 'SET_VIEWPORT', viewport: { x: state.viewport.x + delta } });
     }
   }, [dispatch, state.viewport.x]);
-  const handleWorkspaceSelect = useCallback((workspace: EditorWorkspace) => {
-    const nextShell = applyWorkspaceSelection(shell, workspace);
-    anchorCanvasForLeftOffsetChange(shell.leftVisible ? shell.leftWidth : 0, nextShell.leftVisible ? nextShell.leftWidth : 0);
-    shell.selectWorkspace(workspace);
-  }, [anchorCanvasForLeftOffsetChange, shell]);
   const handleLeftVisibleChange = useCallback((updater: React.SetStateAction<boolean>) => {
     const nextVisible = typeof updater === 'function' ? updater(shell.leftVisible) : updater;
     anchorCanvasForLeftOffsetChange(shell.leftVisible ? shell.leftWidth : 0, nextVisible ? shell.leftWidth : 0);
@@ -113,7 +108,6 @@ export function useEditorLayoutComposition({
   return {
     rootTheme: { themeVars, colorScheme },
     workspaceSurfaceProps: {
-      workspace: shell.workspace,
       leftVisible: shell.leftVisible,
       rightVisible: shell.rightVisible,
       timelineVisible: shell.timelineVisible,
@@ -121,7 +115,6 @@ export function useEditorLayoutComposition({
       rightWidth: shell.rightWidth,
       timelineHeight: shell.timelineHeight,
       stateMachineWorkspaceActive: shell.stateMachineWorkspaceActive,
-      onWorkspaceSelect: handleWorkspaceSelect,
       onLeftVisibleChange: handleLeftVisibleChange,
       onRightVisibleChange: shell.setRightVisible,
       onTimelineVisibleChange: shell.setTimelineVisible,

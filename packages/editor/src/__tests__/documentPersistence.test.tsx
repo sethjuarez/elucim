@@ -72,7 +72,7 @@ describe('canonical document editor persistence', () => {
 
     render(React.createElement(ElucimEditor, { initialDocument: normalized.document, onDocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show Inspector' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Objects' }));
     fireEvent.click(screen.getAllByText('caption')[0]);
     fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'After' } });
@@ -126,7 +126,7 @@ describe('canonical document editor persistence', () => {
 
     render(React.createElement(ElucimEditor, { initialDocument: documentWithLayout, onDocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show Inspector' }));
     fireEvent.click(screen.getByRole('tab', { name: 'Objects' }));
     fireEvent.click(screen.getAllByText('title')[0]);
     fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'Updated title' } });
@@ -155,7 +155,7 @@ describe('canonical document editor persistence', () => {
 
     render(React.createElement(ControlledEditor));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Design workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show Inspector' }));
     const sceneWidthInput = screen.getByLabelText('Width') as HTMLInputElement;
     fireEvent.change(sceneWidthInput, { target: { value: '1' } });
     expect(onDocumentChange).not.toHaveBeenCalled();
@@ -170,8 +170,6 @@ describe('canonical document editor persistence', () => {
     onDocumentChange.mockClear();
 
     expect(screen.getByText('Duration is defined by timelines, state-machine preview, or export policy.')).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Animate workspace' }));
 
     const keyframe = await screen.findByRole('button', { name: 'Go to intro title.opacity keyframe 30' });
     const lane = keyframe.parentElement!;
@@ -202,7 +200,7 @@ describe('canonical document editor persistence', () => {
     const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: canonicalFixture, onDocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Polish' }));
     fireEvent.click(screen.getByRole('button', { name: 'Apply nudge Mark document as refined' }));
 
     await waitFor(() => {
@@ -216,7 +214,7 @@ describe('canonical document editor persistence', () => {
     const onDocumentChange = vi.fn();
     render(React.createElement(ElucimEditor, { initialDocument: canonicalFixture, onDocumentChange }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Polish' }));
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss nudge Mark document as refined' }));
 
     expect(screen.queryByRole('button', { name: 'Apply nudge Mark document as refined' })).toBeNull();
@@ -226,7 +224,7 @@ describe('canonical document editor persistence', () => {
   it('shows previewed nudge command results before applying', () => {
     render(React.createElement(ElucimEditor, { initialDocument: canonicalFixture }));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Polish workspace' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Polish' }));
 
     expect(screen.getAllByText('Previewed changes').length).toBeGreaterThan(0);
     expect(screen.getByText('Updated document metadata.')).toBeTruthy();

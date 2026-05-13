@@ -105,7 +105,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
   return (
     <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 10, fontSize: 11 }}>
       <div style={{ color: v('--elucim-editor-text-secondary'), lineHeight: 1.45 }}>
-        Polish is for scene metadata, selected-element intent, suggestions, and document diagnostics. Use the State Machine workspace to author interactive state graphs.
+        Polish is for scene metadata, selected-element intent, suggestions, and document diagnostics. Use the State machines motion tab to author interactive state graphs.
       </div>
 
       {document && (
@@ -115,8 +115,8 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
           </div>
           <div style={{ color: v('--elucim-editor-text-secondary'), lineHeight: 1.4 }}>
             {machineIds.length === 0
-              ? 'No state machines yet. Open the State Machine workspace and use Add state machine to create one.'
-              : `${machineIds.length} state machine${machineIds.length === 1 ? '' : 's'} in this scene. Open the State Machine workspace to edit the graph, states, and transitions.`}
+              ? 'No state machines yet. Open the State machines motion tab and use Add state machine to create one.'
+              : `${machineIds.length} state machine${machineIds.length === 1 ? '' : 's'} in this scene. Open the State machines motion tab to edit the graph, states, and transitions.`}
           </div>
         </div>
       )}
@@ -338,7 +338,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
       )}
 
       <div style={{ color: v('--elucim-editor-text-muted'), lineHeight: 1.45 }}>
-        Selected element: {selectedLabel ?? 'none'}. Use timeline-backed nudges or the State Machine workspace for motion.
+        Selected element: {selectedLabel ?? 'none'}. Use timeline-backed nudges or the State machines motion tab for motion.
       </div>
     </div>
   );

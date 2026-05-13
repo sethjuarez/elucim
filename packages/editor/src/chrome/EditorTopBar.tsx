@@ -1,25 +1,19 @@
-import type { EditorWorkspace } from '../shell/editorShell';
 import { v } from '../theme/tokens';
 import { PanelToggle } from './PanelToggle';
-import { WorkspaceTab } from './WorkspaceTab';
 
 export interface EditorTopBarProps {
-  workspace: EditorWorkspace;
   leftVisible: boolean;
   rightVisible: boolean;
   timelineVisible: boolean;
-  onWorkspaceSelect: (workspace: EditorWorkspace) => void;
   onLeftVisibleChange: (updater: (value: boolean) => boolean) => void;
   onRightVisibleChange: (updater: (value: boolean) => boolean) => void;
   onTimelineVisibleChange: (updater: (value: boolean) => boolean) => void;
 }
 
 export function EditorTopBar({
-  workspace,
   leftVisible,
   rightVisible,
   timelineVisible,
-  onWorkspaceSelect,
   onLeftVisibleChange,
   onRightVisibleChange,
   onTimelineVisibleChange,
@@ -42,14 +36,8 @@ export function EditorTopBar({
         <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10 }}>
           Scene editor
         </div>
-        <div role="tablist" aria-label="Editor workspace" style={{ display: 'flex', gap: 4, marginLeft: 12 }}>
-          <WorkspaceTab label="Design" selected={workspace === 'design'} onClick={() => onWorkspaceSelect('design')} />
-          <WorkspaceTab label="Animate" selected={workspace === 'animate'} onClick={() => onWorkspaceSelect('animate')} />
-          <WorkspaceTab label="State Machine" selected={workspace === 'states'} onClick={() => onWorkspaceSelect('states')} />
-          <WorkspaceTab label="Polish" selected={workspace === 'polish'} onClick={() => onWorkspaceSelect('polish')} />
-        </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
         <PanelToggle label="left panel" panel="left" active={leftVisible} onClick={() => onLeftVisibleChange(value => !value)} />
         <PanelToggle label="timeline" panel="bottom" active={timelineVisible} onClick={() => onTimelineVisibleChange(value => !value)} />
         <PanelToggle label="Inspector" panel="right" active={rightVisible} onClick={() => onRightVisibleChange(value => !value)} />
