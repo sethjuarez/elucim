@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.22.0](https://github.com/sethjuarez/elucim/compare/cli-v0.21.1...cli-v0.22.0) (2026-05-13)
+
+
+### Miscellaneous
+
+* **cli:** Synchronize elucim versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/dsl bumped to 0.22.0
+
 ## [0.21.1](https://github.com/sethjuarez/elucim/compare/cli-v0.21.0...cli-v0.21.1) (2026-05-13)
 
 
