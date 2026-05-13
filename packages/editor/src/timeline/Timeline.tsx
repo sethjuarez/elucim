@@ -1952,18 +1952,8 @@ function TimelineClipRows({
               borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
             }}
           >
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 4, alignItems: 'center', minWidth: 0, padding: '0 6px' }}>
-                {onTimelineChange && (
-                  <button
-                    type="button"
-                    aria-label={`Add track to animation ${clip.id}`}
-                    title="Add track"
-                    onClick={() => addTrack(clip)}
-                    style={{ height: 24, border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 999, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 13, fontWeight: 800, lineHeight: 1, padding: 0 }}
-                  >
-                    {icons.Add({ size: 13 })}
-                  </button>
-                )}
+            <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', padding: '0 8px', color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+              Tracks
             </div>
             <div style={{ minWidth: 0, display: 'grid', gridTemplateRows: '20px 1fr' }}>
               <div style={{ minWidth: 0, display: 'flex', alignItems: 'end', gap: 8 }}>
@@ -2190,6 +2180,45 @@ function TimelineClipRows({
               </div>
             </div>
           ))}
+          {onTimelineChange && (
+            <div
+              style={{
+                height: TRACK_HEIGHT,
+                display: 'flex',
+                alignItems: 'center',
+                borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
+              }}
+            >
+              <div style={{ width: LABEL_WIDTH, flexShrink: 0, padding: '0 6px' }}>
+                <button
+                  type="button"
+                  aria-label={`Add track to animation ${clip.id}`}
+                  title="Add track"
+                  onClick={() => addTrack(clip)}
+                  style={{
+                    width: '100%',
+                    height: 22,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 5,
+                    border: `1px dashed ${v('--elucim-editor-border')}`,
+                    borderRadius: 4,
+                    background: 'transparent',
+                    color: v('--elucim-editor-text-secondary'),
+                    cursor: 'pointer',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: 0,
+                  }}
+                >
+                  {icons.Add({ size: 12 })}
+                  <span>Track</span>
+                </button>
+              </div>
+              <div style={{ flex: 1, height: '100%' }} />
+            </div>
+          )}
         </div>
       ))}
         </div>
