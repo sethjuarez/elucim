@@ -61,3 +61,22 @@ export {
   toRenderableV1 as toRenderableDocument,
 } from './v2/migrate';
 export { validateV2 as validateDocument } from './v2/validateV2';
+export {
+  getDocumentLinearDuration,
+  getMaxTimelineDuration,
+  resolveExportFrameCount,
+} from './v2/duration';
+export {
+  applyTimelineFrame,
+  applyTimelineFrames,
+  evaluateTimeline,
+} from './v2/timeline';
+export {
+  advanceStateMachineRunFrame,
+  dispatchStateMachineRunEvent,
+  getInitialStateSnapshot,
+  getStateMachineRunVisualFrames,
+  getStateMachineVisualFrames,
+  startStateMachineRun,
+  transitionStateMachine,
+} from './v2/stateMachine';

@@ -1,8 +1,8 @@
 import { renderToSvgString } from './renderToSvgString';
 import { resolveColor, SEMANTIC_TOKENS } from './resolveColor';
-import { toRenderableV1 as toRenderableDocument } from '../v2/migrate';
+import { toRenderableDocument } from '../document';
 import type { ElucimDocument as RenderableDocument } from '../schema/types';
-import type { ElucimV2Document as ElucimDocument } from '../v2/types';
+import type { ElucimDocument } from '../document';
 
 /**
  * Strip all CSS functions that are invalid in standalone SVGs loaded via Image:
