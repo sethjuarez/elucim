@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { act } from 'react';
 import ReactDOM from 'react-dom/client';
-import { act } from 'react-dom/test-utils';
 import { describe, it, expect } from 'vitest';
 import { BezierCurve, type BezierCurveProps } from '../primitives/BezierCurve';
 import { ElucimContext } from '../context';
