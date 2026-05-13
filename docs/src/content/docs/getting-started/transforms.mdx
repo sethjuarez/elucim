@@ -1,6 +1,6 @@
 ---
 title: Transforms & Composition
-description: How rotation, scale, translate, hierarchy order, and Group compose uniformly across all primitives.
+description: How rotation, scale, translate, Object order, and Group compose uniformly across all primitives.
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
@@ -77,7 +77,7 @@ An `[dx, dy]` pixel offset applied before rotation and scale:
 { layout: { translate: [50, 20] }, props: { type: 'circle', cx: 100, cy: 100, r: 30, stroke: '$warning', fill: 'none' } }
 ```
 
-## Stacking with hierarchy order
+## Stacking with Object order
 
 SVG follows the **painter's model**: siblings declared later paint on top of earlier siblings. In normalized documents, that means order in `scene.children` and each group element's `children` array is the stacking order.
 
@@ -93,7 +93,7 @@ Key rules:
 - Later siblings render later (on top)
 - Root stacking is controlled by `scene.children`
 - Group stacking is controlled by that group's `children`
-- Move elements up/down in the editor hierarchy, or use agent order commands, to change stacking
+- Move Objects up/down in the editor Objects panel, or use agent order commands, to change stacking
 
 ## Grouping
 
