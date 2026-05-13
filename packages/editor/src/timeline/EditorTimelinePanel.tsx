@@ -24,7 +24,17 @@ export function applyStateMachineDocumentChange(
   document: ElucimDocument,
   stateMachines: Record<string, ElucimStateMachine> | undefined,
 ): ElucimDocument {
-  return { ...document, ...(stateMachines ? { stateMachines } : { stateMachines: undefined }) };
+  const defaultStateMachine =
+    stateMachines && Object.keys(stateMachines).length > 0
+      ? stateMachines[document.defaultStateMachine ?? '']
+        ? document.defaultStateMachine
+        : Object.keys(stateMachines)[0]
+      : undefined;
+  return {
+    ...document,
+    ...(stateMachines ? { stateMachines } : { stateMachines: undefined }),
+    defaultStateMachine,
+  };
 }
 
 export function applyMotionDocumentChange(
@@ -32,10 +42,17 @@ export function applyMotionDocumentChange(
   timelines: Record<string, ElucimTimeline> | undefined,
   stateMachines: Record<string, ElucimStateMachine> | undefined,
 ): ElucimDocument {
+  const defaultStateMachine =
+    stateMachines && Object.keys(stateMachines).length > 0
+      ? stateMachines[document.defaultStateMachine ?? '']
+        ? document.defaultStateMachine
+        : Object.keys(stateMachines)[0]
+      : undefined;
   return {
     ...document,
     ...(timelines ? { timelines } : { timelines: undefined }),
     ...(stateMachines ? { stateMachines } : { stateMachines: undefined }),
+    defaultStateMachine,
   };
 }
 

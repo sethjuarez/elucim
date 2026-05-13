@@ -68,9 +68,11 @@ describe('StateMachinePanel', () => {
     expect(screen.getByRole('button', { name: 'Preview state machine deck' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Play state machine deck' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Preview state idle animation' })).toBeNull();
-    expect(screen.getByLabelText('State machine authoring guidance').textContent).toContain('Drag from a state connector');
-    expect(screen.getByText('Authoring checklist')).toBeTruthy();
-    expect(screen.getByText('Preview starts at idle')).toBeTruthy();
+    expect(screen.queryByLabelText('State machine authoring guidance')).toBeNull();
+    expect(screen.queryByText('Authoring checklist')).toBeNull();
+    expect(screen.queryByText('Preview starts at idle')).toBeNull();
+    expect(screen.queryByText('-> idle')).toBeNull();
+    expect(screen.queryByText('-> intro')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Trigger start event from idle' })).toBeNull();
     expect(screen.queryByText('Events live on transition edges. Select an edge to edit its event, then fire that event while its source state is active.')).toBeNull();
     expect(screen.queryByText('Event inputs')).toBeNull();
@@ -200,9 +202,9 @@ describe('StateMachinePanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add state to state-machine' }));
 
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].stateMachines['state-machine'].states.state).toBeTruthy());
-    expect(screen.getByText('Next steps for this state')).toBeTruthy();
-    expect(screen.getByText('Assign an animation so this state changes the canvas during preview.')).toBeTruthy();
-    expect(screen.getByText('Drag a connector handle to another state to create a transition.')).toBeTruthy();
+    expect(screen.queryByText('Next steps for this state')).toBeNull();
+    expect(screen.queryByText('Assign an animation so this state changes the canvas during preview.')).toBeNull();
+    expect(screen.queryByText('Drag a connector handle to another state to create a transition.')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Add transition from state' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove selected state state' }));
@@ -210,7 +212,7 @@ describe('StateMachinePanel', () => {
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
       expect(latest.stateMachines?.['state-machine'].states.state).toBeUndefined();
-      expect(latest.stateMachines?.['state-machine'].entry).toBe('idle');
+      expect(latest.stateMachines?.['state-machine'].entry).toBe('start');
     });
   });
 
@@ -298,23 +300,24 @@ describe('StateMachinePanel', () => {
     expect(screen.getByLabelText('Transition idle-start source').textContent).toBe('idle');
     expect(screen.getByLabelText('Transition idle-start type')).toBeTruthy();
     expect(screen.getByLabelText('Transition idle-start target state')).toBeTruthy();
+    expect(screen.queryByRole('option', { name: 'Entry' })).toBeNull();
     expect(screen.getByLabelText('Transition idle-start event preset')).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('Transition idle-start event preset'), { target: { value: 'onKey' } });
     const keyInput = await screen.findByLabelText('Transition idle-start key');
     fireEvent.keyDown(keyInput, { key: ' ', code: 'Space' });
-    fireEvent.change(screen.getByLabelText('Transition idle-start target state'), { target: { value: 'entry' } });
+    fireEvent.change(screen.getByLabelText('Transition idle-start target state'), { target: { value: 'exit' } });
 
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
-      expect(latest.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'entry', trigger: 'onKey', key: 'Space' });
+      expect(latest.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'exit', trigger: 'onKey', key: 'Space' });
     });
 
     fireEvent.change(screen.getByLabelText('Transition idle-start type'), { target: { value: 'next' } });
 
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
-      expect(latest.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'entry', exitTime: 1 });
+      expect(latest.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'exit', exitTime: 1 });
       expect(latest.stateMachines?.deck.transitions?.[0].trigger).toBeUndefined();
       expect(latest.stateMachines?.deck.transitions?.[0].key).toBeUndefined();
     });

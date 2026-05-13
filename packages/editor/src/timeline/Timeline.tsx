@@ -60,6 +60,9 @@ import type {
   StateMachinePreviewState,
 } from './types';
 
+const TIMELINE_SCROLLBAR_GUTTER = 6;
+const TIMELINE_RIGHT_GAP = 12;
+
 export interface TimelineProps {
   className?: string;
   style?: React.CSSProperties;
@@ -264,10 +267,10 @@ export function Timeline({
     const id = createUniqueStateMachineId(activeStateMachines, 'state-machine');
     updateStateMachine({
       id,
-      entry: 'idle',
-      states: { idle: {} },
+      entry: 'start',
+      states: { start: {} },
       inputs: { onStart: { type: 'trigger' } },
-      transitions: [{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }],
+      transitions: [{ id: 'entry-start', from: 'entry', to: 'start', trigger: 'onStart' }],
     });
   }, [updateStateMachine, activeStateMachines]);
 
@@ -1759,15 +1762,16 @@ function TimelineClipRows({
           Use the add button in the Animations header to create an animation.
         </div>
       ) : visibleClips.map(clip => (
-        <div key={clip.id} style={{ position: 'relative' }}>
+        <div key={clip.id} style={{ height: '100%', minHeight: 0, position: 'relative', display: 'flex', flexDirection: 'column' }}>
           <div
             style={{
               height: CLIP_HEADER_HEIGHT,
               display: 'grid',
-              gridTemplateColumns: `${LABEL_WIDTH}px minmax(0, 1fr)`,
+              gridTemplateColumns: `${LABEL_WIDTH}px minmax(0, 1fr) ${TIMELINE_SCROLLBAR_GUTTER + TIMELINE_RIGHT_GAP}px`,
               alignItems: 'stretch',
               background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 8%, transparent)`,
               borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
+              flexShrink: 0,
             }}
           >
             <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', padding: '0 8px', color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
@@ -1826,14 +1830,28 @@ function TimelineClipRows({
                 </div>
               </div>
             </div>
+            <div aria-hidden="true" />
           </div>
+          <div
+            data-elucim-animation-track-scroll
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowX: 'hidden',
+              overflowY: 'auto',
+              scrollbarGutter: 'stable',
+              paddingRight: TIMELINE_RIGHT_GAP,
+              boxSizing: 'border-box',
+              position: 'relative',
+            }}
+          >
           <div
             aria-hidden="true"
             style={{
               position: 'absolute',
               left: LABEL_WIDTH,
-              right: 0,
-              top: CLIP_HEADER_HEIGHT,
+              right: TIMELINE_RIGHT_GAP,
+              top: 0,
               height: clip.tracks.length * TRACK_HEIGHT,
               pointerEvents: 'none',
               zIndex: 1,
@@ -2034,6 +2052,7 @@ function TimelineClipRows({
               <div style={{ flex: 1, height: '100%' }} />
             </div>
           )}
+          </div>
         </div>
       ))}
           </div>
@@ -2172,6 +2191,42 @@ function exitNodePosition(statePositions: Map<string, { x: number; y: number }>,
 function StateMachineGraphNode({ data }: NodeProps<Node<StateMachineGraphNodeData>>) {
   const icons = useEditorIcons();
   const direction = data.direction;
+  const portPosition = (position: Position): React.CSSProperties => {
+    switch (position) {
+      case Position.Left:
+        return { position: 'absolute', left: -5, top: '50%', transform: 'translate(-50%, -50%)' };
+      case Position.Right:
+        return { position: 'absolute', right: -5, top: '50%', transform: 'translate(50%, -50%)' };
+      case Position.Top:
+        return { position: 'absolute', left: '50%', top: -5, transform: 'translate(-50%, -50%)' };
+      case Position.Bottom:
+        return { position: 'absolute', left: '50%', bottom: -5, transform: 'translate(-50%, 50%)' };
+      default:
+        return {};
+    }
+  };
+  const activePort = (axis: 'horizontal' | 'vertical', position: Position): React.CSSProperties => ({
+    ...portPosition(position),
+    width: 10,
+    height: 10,
+    border: `2px solid ${v('--elucim-editor-accent')}`,
+    borderRadius: 999,
+    boxSizing: 'border-box',
+    background: v('--elucim-editor-input-bg'),
+    opacity: direction === axis ? 1 : 0,
+    pointerEvents: direction === axis ? 'auto' as const : 'none' as const,
+  });
+  const mutedPort = (axis: 'horizontal' | 'vertical', position: Position): React.CSSProperties => ({
+    ...portPosition(position),
+    width: 10,
+    height: 10,
+    border: `2px solid ${v('--elucim-editor-text-muted')}`,
+    borderRadius: 999,
+    boxSizing: 'border-box',
+    background: v('--elucim-editor-input-bg'),
+    opacity: direction === axis ? 1 : 0,
+    pointerEvents: direction === axis ? 'auto' as const : 'none' as const,
+  });
   if (data.kind === 'entry') {
     return (
       <div
@@ -2190,13 +2245,12 @@ function StateMachineGraphNode({ data }: NodeProps<Node<StateMachineGraphNodeDat
           textTransform: 'uppercase',
           letterSpacing: 0.5,
           userSelect: 'none',
+          position: 'relative',
         }}
       >
         Entry
-        <Handle id="source-right" type="source" position={Position.Right} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'horizontal' ? 1 : 0, pointerEvents: 'none' }} />
-        <Handle id="target-left" type="target" position={Position.Left} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'horizontal' ? 1 : 0, pointerEvents: 'none' }} />
-        <Handle id="source-bottom" type="source" position={Position.Bottom} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'vertical' ? 1 : 0, pointerEvents: 'none' }} />
-        <Handle id="target-top" type="target" position={Position.Top} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'vertical' ? 1 : 0, pointerEvents: 'none' }} />
+        <Handle id="source-right" type="source" position={Position.Right} style={activePort('horizontal', Position.Right)} />
+        <Handle id="source-bottom" type="source" position={Position.Bottom} style={activePort('vertical', Position.Bottom)} />
       </div>
     );
   }
@@ -2218,11 +2272,12 @@ function StateMachineGraphNode({ data }: NodeProps<Node<StateMachineGraphNodeDat
           textTransform: 'uppercase',
           letterSpacing: 0.5,
           userSelect: 'none',
+          position: 'relative',
         }}
       >
         Exit
-        <Handle id="target-left" type="target" position={Position.Left} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-text-muted')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'horizontal' ? 1 : 0, pointerEvents: 'none' }} />
-        <Handle id="target-top" type="target" position={Position.Top} style={{ width: 9, height: 9, border: `2px solid ${v('--elucim-editor-text-muted')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'vertical' ? 1 : 0, pointerEvents: 'none' }} />
+        <Handle id="target-left" type="target" position={Position.Left} style={mutedPort('horizontal', Position.Left)} />
+        <Handle id="target-top" type="target" position={Position.Top} style={mutedPort('vertical', Position.Top)} />
       </div>
     );
   }
@@ -2248,25 +2303,25 @@ function StateMachineGraphNode({ data }: NodeProps<Node<StateMachineGraphNodeDat
         id="target-left"
         type="target"
         position={Position.Left}
-        style={{ width: 11, height: 11, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'horizontal' ? 1 : 0, pointerEvents: direction === 'horizontal' ? 'auto' : 'none' }}
+        style={activePort('horizontal', Position.Left)}
       />
       <Handle
         id="source-right"
         type="source"
         position={Position.Right}
-        style={{ width: 11, height: 11, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'horizontal' ? 1 : 0, pointerEvents: direction === 'horizontal' ? 'auto' : 'none', cursor: 'crosshair' }}
+        style={{ ...activePort('horizontal', Position.Right), cursor: 'crosshair' }}
       />
       <Handle
         id="target-top"
         type="target"
         position={Position.Top}
-        style={{ width: 11, height: 11, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'vertical' ? 1 : 0, pointerEvents: direction === 'vertical' ? 'auto' : 'none' }}
+        style={activePort('vertical', Position.Top)}
       />
       <Handle
         id="source-bottom"
         type="source"
         position={Position.Bottom}
-        style={{ width: 11, height: 11, border: `2px solid ${v('--elucim-editor-accent')}`, background: v('--elucim-editor-input-bg'), opacity: direction === 'vertical' ? 1 : 0, pointerEvents: direction === 'vertical' ? 'auto' : 'none', cursor: 'crosshair' }}
+        style={{ ...activePort('vertical', Position.Bottom), cursor: 'crosshair' }}
       />
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
         <div style={{ fontWeight: 750, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.stateId}</div>
@@ -2310,19 +2365,23 @@ function StateMachineGraphEdge({
   id,
   sourceX,
   sourceY,
+  sourcePosition,
   targetX,
   targetY,
+  targetPosition,
   markerEnd,
   data,
 }: EdgeProps<Edge<StateMachineGraphEdgeData>>) {
   const direction = data?.direction ?? 'horizontal';
+  const span = direction === 'horizontal' ? Math.abs(targetX - sourceX) : Math.abs(targetY - sourceY);
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     targetX,
     targetY,
-    sourcePosition: direction === 'horizontal' ? Position.Right : Position.Bottom,
-    targetPosition: direction === 'horizontal' ? Position.Left : Position.Top,
+    sourcePosition: sourcePosition ?? (direction === 'horizontal' ? Position.Right : Position.Bottom),
+    targetPosition: targetPosition ?? (direction === 'horizontal' ? Position.Left : Position.Top),
+    offset: Math.max(4, Math.min(20, span / 2 - 1)),
   });
   const selected = Boolean(data?.selected);
   const backEdge = Boolean(data?.backEdge);
@@ -2366,9 +2425,6 @@ function StateMachineGraphEdge({
           }}
         >
           <div>{String(data?.label ?? '')}</div>
-          {data?.detail && (
-            <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, fontWeight: 700, marginTop: 2 }}>{data.detail}</div>
-          )}
         </button>
       </EdgeLabelRenderer>
     </>
@@ -2392,6 +2448,27 @@ function LayoutDirectionIcon({ direction }: { direction: GraphLayoutDirection })
       <circle cx={horizontal ? 11 : 7} cy={horizontal ? 7 : 11} r="2" fill="currentColor" />
     </svg>
   );
+}
+
+function stateMachineNodesEqual(
+  left: Node<StateMachineGraphNodeData>[],
+  right: Node<StateMachineGraphNodeData>[]
+) {
+  if (left.length !== right.length) return false;
+  return left.every((leftNode, index) => {
+    const rightNode = right[index];
+    if (!rightNode || leftNode.id !== rightNode.id || leftNode.type !== rightNode.type) return false;
+    if (leftNode.position.x !== rightNode.position.x || leftNode.position.y !== rightNode.position.y) return false;
+    if (leftNode.selected !== rightNode.selected || leftNode.draggable !== rightNode.draggable || leftNode.selectable !== rightNode.selectable) return false;
+    return (
+      leftNode.data.kind === rightNode.data.kind &&
+      leftNode.data.stateId === rightNode.data.stateId &&
+      leftNode.data.timeline === rightNode.data.timeline &&
+      leftNode.data.selected === rightNode.data.selected &&
+      leftNode.data.direction === rightNode.data.direction &&
+      leftNode.data.canDelete === rightNode.data.canDelete
+    );
+  });
 }
 
 function StateMachineTimelineGraph({
@@ -2477,7 +2554,7 @@ function StateMachineTimelineGraph({
       : previewStatus.stateId === 'entry'
       ? `Waiting at Entry for ${exposedEvents.join(' or ') || 'a start event'}`
       : `${previewStatus.playing ? 'Previewing' : 'Preview'} ${previewStatus.stateId}${previewStatus.previousStateId ? ` via ${previewStatus.event} from ${previewStatus.previousStateId}` : ''}${previewStatus.timelineId ? ` (${previewStatus.timelineId}) ${Math.round(previewStatus.frame)}/${previewStatus.duration ?? 0}` : ' has no animation'}`
-    : `Preview starts at ${machine.entry}`;
+    : '';
   const [localPositions, setLocalPositions] = useState(() => new Map(graphPositions));
   const previousMachineIdRef = useRef(machine.id);
   useEffect(() => {
@@ -2562,10 +2639,13 @@ function StateMachineTimelineGraph({
   }, [exitTransitions.length, graphPositions, layoutDirection, localPositions, machine.entry, onDeleteState, previewStatus?.stateId, selectedStateId, selectedTransitionEvent, statePositions, states]);
   const [flowNodes, setFlowNodes] = useState(nodes);
   useEffect(() => {
-    setFlowNodes(currentNodes => nodes.map(node => {
-      const existing = currentNodes.find(currentNode => currentNode.id === node.id);
-      return existing && isDraggingNodeRef.current ? { ...existing, ...node, position: existing.position } : node;
-    }));
+    setFlowNodes(currentNodes => {
+      const nextNodes = nodes.map(node => {
+        const existing = currentNodes.find(currentNode => currentNode.id === node.id);
+        return existing && isDraggingNodeRef.current ? { ...existing, ...node, position: existing.position } : node;
+      });
+      return stateMachineNodesEqual(currentNodes, nextNodes) ? currentNodes : nextNodes;
+    });
   }, [nodes]);
   const handleNodesChange: OnNodesChange = useCallback((changes) => {
     setFlowNodes(currentNodes => applyNodeChanges(changes, currentNodes) as Node<StateMachineGraphNodeData>[]);
@@ -2580,7 +2660,7 @@ function StateMachineTimelineGraph({
     targetHandle: layoutDirection === 'horizontal' ? 'target-left' : 'target-top',
     type: 'stateTransition',
     markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12, color: v('--elucim-editor-accent') },
-    data: { label: entryTransition ? transitionTriggerLabel(entryTransition) : 'onStart', detail: `-> ${entryTransition?.to ?? machine.entry}`, selected: entryEdgeActive, backEdge: false, direction: layoutDirection, stateId: 'entry', eventName: entryTransition?.id ?? 'entry', onSelect: entryTransition ? () => onSelectTransition('entry', entryTransition.id) : undefined },
+    data: { label: entryTransition ? transitionTriggerLabel(entryTransition) : 'onStart', selected: entryEdgeActive, backEdge: false, direction: layoutDirection, stateId: 'entry', eventName: entryTransition?.id ?? 'entry', onSelect: entryTransition ? () => onSelectTransition('entry', entryTransition.id) : undefined },
   };
   const edges: Edge<StateMachineGraphEdgeData>[] = [entryEdge, ...graphTransitions.map(transition => {
     const selected = selectedTransitionEvent === transition.id || previewStatus?.activeTransitionId === transition.id;
@@ -2594,7 +2674,6 @@ function StateMachineTimelineGraph({
       ? targetRankPosition.x >= sourceRankPosition.x
       : targetRankPosition.y >= sourceRankPosition.y;
     const label = transitionTriggerLabel(transition);
-    const targetLabel = transition.to === 'exit' ? 'Exit' : transition.to === 'entry' ? 'Entry' : transition.to;
     return {
       id: transition.id,
       source: transition.from,
@@ -2611,7 +2690,6 @@ function StateMachineTimelineGraph({
       },
       data: {
         label,
-        detail: `-> ${targetLabel}`,
         selected,
         backEdge: !forward,
         direction: layoutDirection,
@@ -2678,7 +2756,8 @@ function StateMachineTimelineGraph({
   }, [onMoveViewport]);
   const handleConnect: OnConnect = (connection) => {
     if (!connection.source || !connection.target) return;
-    const eventName = onConnectStates(connection.source, connection.target === EXIT_NODE_ID ? 'exit' : connection.target === ENTRY_NODE_ID ? 'entry' : connection.target);
+    if (connection.target === ENTRY_NODE_ID) return;
+    const eventName = onConnectStates(connection.source, connection.target === EXIT_NODE_ID ? 'exit' : connection.target);
     if (eventName) onSelectTransition(connection.source, eventName);
   };
   const handlePaneClick = () => {
@@ -2692,7 +2771,7 @@ function StateMachineTimelineGraph({
       aria-label={`State machine graph ${machine.id}`}
       tabIndex={0}
       onKeyDown={handlePreviewKeyDown}
-      style={{ height: '100%', minHeight: 180, display: 'grid', gridTemplateRows: 'minmax(0, 1fr) auto', background: v('--elucim-editor-input-bg'), outline: 'none' }}
+      style={{ height: '100%', minHeight: 180, display: 'grid', gridTemplateRows: 'minmax(0, 1fr)', position: 'relative', background: v('--elucim-editor-input-bg'), outline: 'none' }}
     >
       <div
         aria-label={`State machine graph canvas ${machine.id}`}
@@ -2776,29 +2855,6 @@ function StateMachineTimelineGraph({
             <LayoutDirectionIcon direction="vertical" />
           </button>
         </div>
-        {!previewStatus && (
-          <div
-            aria-label="State machine authoring guidance"
-            style={{
-              position: 'absolute',
-              left: 8,
-              bottom: 8,
-              maxWidth: 420,
-              zIndex: 5,
-              padding: '6px 8px',
-              border: `1px solid ${v('--elucim-editor-border-subtle')}`,
-              borderRadius: 8,
-              background: `color-mix(in srgb, ${v('--elucim-editor-surface')} 90%, transparent)`,
-              color: v('--elucim-editor-text-secondary'),
-              fontSize: 10,
-              lineHeight: 1.35,
-              pointerEvents: 'none',
-              boxShadow: `0 8px 18px color-mix(in srgb, ${v('--elucim-editor-bg')} 50%, transparent)`,
-            }}
-          >
-            Click a state or transition to edit it. Drag from a state connector to create a transition, then use Preview to test events.
-          </div>
-        )}
         <ReactFlow
           key={machine.id}
           nodes={flowNodes}
@@ -2842,28 +2898,48 @@ function StateMachineTimelineGraph({
           }}
         />
       </div>
-      <div style={{ minHeight: 40, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', padding: '6px 8px', borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-surface') }}>
-        <span aria-live="polite" style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', flex: '1 1 220px', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {statusText}
-        </span>
-        {previewStatus && exposedTransitions.map(transition => (
-          <button
-            key={transition.id}
-            type="button"
-            aria-label={`Trigger ${transition.trigger} event from ${eventSourceStateId}`}
-            disabled={!eventSourceStateId}
-            onClick={() => eventSourceStateId && onTriggerEvent(eventSourceStateId, transition.trigger!, transition.key)}
-            style={chromeTabButtonStyle(false)}
-          >
-            {previewEventLabel(transition)}
-          </button>
-        ))}
-        {previewStatus && onCompleteTarget && (
-          <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, whiteSpace: 'nowrap' }}>
-            Next auto-runs {'->'} {onCompleteTarget}
-          </span>
-        )}
-      </div>
+      {previewStatus && (
+        <div
+          aria-live="polite"
+          style={{
+            position: 'absolute',
+            left: 8,
+            bottom: 8,
+            zIndex: 5,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            maxWidth: 'calc(100% - 16px)',
+            padding: '4px 6px',
+            border: `1px solid ${v('--elucim-editor-border-subtle')}`,
+            borderRadius: 8,
+            background: `color-mix(in srgb, ${v('--elucim-editor-input-bg')} 88%, transparent)`,
+            color: v('--elucim-editor-text-muted'),
+            fontSize: 11,
+            fontWeight: 700,
+            overflow: 'hidden',
+          }}
+        >
+          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{statusText}</span>
+          {exposedTransitions.map(transition => (
+            <button
+              key={transition.id}
+              type="button"
+              aria-label={`Trigger ${transition.trigger} event from ${eventSourceStateId}`}
+              disabled={!eventSourceStateId}
+              onClick={() => eventSourceStateId && onTriggerEvent(eventSourceStateId, transition.trigger!, transition.key)}
+              style={chromeTabButtonStyle(false)}
+            >
+              {previewEventLabel(transition)}
+            </button>
+          ))}
+          {onCompleteTarget && (
+            <span style={{ color: v('--elucim-editor-text-muted'), whiteSpace: 'nowrap' }}>
+              Next auto-runs {'->'} {onCompleteTarget}
+            </span>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -3013,7 +3089,6 @@ function StateMachineMotionInspector({
             onChange={event => onUpdateTransition(machine, selectedTransition.id, { to: event.target.value })}
             style={inspectorInputStyle}
           >
-            {selectedTransition.from !== 'entry' && <option value="entry">Entry</option>}
             {selectedTransition.from !== 'entry' && <option value="exit">Exit machine</option>}
             {stateIds.map(id => <option key={id} value={id}>{id}</option>)}
           </select>
@@ -3034,11 +3109,6 @@ function StateMachineMotionInspector({
 
   if (selectedStateId && state) {
     const selectedStateTransitions = (machine.transitions ?? []).filter(transition => transition.from === selectedStateId || transition.from === 'any');
-    const outgoingStateTransitions = selectedStateTransitions.filter(transition => transition.from === selectedStateId);
-    const stateGuidance = [
-      !state.timeline ? 'Assign an animation so this state changes the canvas during preview.' : undefined,
-      outgoingStateTransitions.length === 0 ? 'Drag a connector handle to another state to create a transition.' : undefined,
-    ].filter((item): item is string => Boolean(item));
     return (
       <aside style={motionInspectorPanelStyle}>
         <div>
@@ -3048,12 +3118,6 @@ function StateMachineMotionInspector({
             States play one animation clip and expose outgoing transitions.
           </div>
         </div>
-        {stateGuidance.length > 0 && (
-          <div style={{ display: 'grid', gap: 4, padding: 6, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 8, background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 8%, ${v('--elucim-editor-input-bg')})`, color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
-            <strong style={{ color: v('--elucim-editor-fg'), fontSize: 11 }}>Next steps for this state</strong>
-            {stateGuidance.map(item => <span key={item}>{item}</span>)}
-          </div>
-        )}
         <button
           type="button"
           aria-label={`Preview state ${selectedStateId}`}
@@ -3123,16 +3187,6 @@ function StateMachineMotionInspector({
         <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>State machine details</div>
         <div style={{ color: v('--elucim-editor-fg'), fontWeight: 700 }}>{machine.id}</div>
         <div style={{ color: v('--elucim-editor-text-secondary'), fontSize: 10 }}>{stateIds.length} state{stateIds.length === 1 ? '' : 's'}</div>
-      </div>
-      <div style={{ display: 'grid', gap: 4, padding: 6, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 8, background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 8%, ${v('--elucim-editor-input-bg')})`, color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
-        <strong style={{ color: v('--elucim-editor-fg'), fontSize: 11 }}>Graph model</strong>
-        <span>Entry starts here. State cards play animations. Next/Event transitions move between states. Exit stops the machine.</span>
-      </div>
-      <div style={{ display: 'grid', gap: 4, padding: 6, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 8, background: v('--elucim-editor-input-bg'), color: v('--elucim-editor-text-secondary'), fontSize: 10, lineHeight: 1.35 }}>
-        <strong style={{ color: v('--elucim-editor-fg'), fontSize: 11 }}>Authoring checklist</strong>
-        <span>Select a state to assign an animation.</span>
-        <span>Drag connector handles to create transitions.</span>
-        <span>Click transition labels to edit triggers and targets.</span>
       </div>
       <label style={{ display: 'grid', gap: 3, color: v('--elucim-editor-text-secondary') }}>
         Machine name
