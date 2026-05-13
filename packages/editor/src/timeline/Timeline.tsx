@@ -514,7 +514,7 @@ export function Timeline({
   const previewStateAnimation = useCallback((machineId: string, stateId: string, details?: { event?: string; previousStateId?: string; activeTransitionId?: string }) => {
     const timelineId = activeStateMachines?.[machineId]?.states[stateId]?.timeline;
     handleActiveTimelineChange(timelineId);
-    setPlaybackSpeed(0.5);
+    setPlaybackSpeed(1);
     setStateMachinePreview({ machineId, stateId, timelineId, event: details?.event ?? 'start', previousStateId: details?.previousStateId, activeTransitionId: details?.activeTransitionId, logicalStatePath: [stateId] });
     dispatch({ type: 'SET_FRAME', frame: 0 });
     dispatch({ type: 'SET_PLAYING', playing: Boolean(timelineId) });
@@ -564,7 +564,7 @@ export function Timeline({
 
     const timelineId = machine.states[targetStateId]?.timeline;
     handleActiveTimelineChange(timelineId);
-    setPlaybackSpeed(0.5);
+    setPlaybackSpeed(1);
     setStateMachinePreview({
       machineId,
       stateId: targetStateId,
@@ -2832,8 +2832,8 @@ function StateMachineTimelineGraph({
       ? `Finished ${previewStatus.stateId}; restart preview to run from Entry`
       : previewStatus.stateId === 'entry'
       ? `Waiting at Entry for ${exposedEvents.join(' or ') || 'a start event'}`
-      : `${previewStatus.playing ? 'Previewing' : 'Preview'} ${previewStatus.stateId}${previewStatus.previousStateId ? ` via ${previewStatus.event} from ${previewStatus.previousStateId}` : ''}${previewStatus.timelineId ? ` (${previewStatus.timelineId}) ${Math.round(previewStatus.frame)}/${previewStatus.duration ?? 0}` : ' has no animation'} at ${previewStatus.speed}x`
-    : `Preview starts at ${machine.entry} at 0.5x`;
+      : `${previewStatus.playing ? 'Previewing' : 'Preview'} ${previewStatus.stateId}${previewStatus.previousStateId ? ` via ${previewStatus.event} from ${previewStatus.previousStateId}` : ''}${previewStatus.timelineId ? ` (${previewStatus.timelineId}) ${Math.round(previewStatus.frame)}/${previewStatus.duration ?? 0}` : ' has no animation'}`
+    : `Preview starts at ${machine.entry}`;
   const [localPositions, setLocalPositions] = useState(() => new Map(graphPositions));
   const previousMachineIdRef = useRef(machine.id);
   useEffect(() => {
