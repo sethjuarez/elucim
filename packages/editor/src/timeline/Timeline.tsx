@@ -2978,7 +2978,7 @@ function StateMachineTimelineGraph({
       aria-label={`State machine graph ${machine.id}`}
       tabIndex={0}
       onKeyDown={handlePreviewKeyDown}
-      style={{ height: '100%', minHeight: 180, display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr) auto', background: v('--elucim-editor-input-bg') }}
+      style={{ height: '100%', minHeight: 180, display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr)', background: v('--elucim-editor-input-bg'), outline: 'none' }}
     >
       <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap', padding: '6px 8px', borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-surface') }}>
         <button
@@ -3001,6 +3001,23 @@ function StateMachineTimelineGraph({
         <span aria-live="polite" style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, fontWeight: 700, padding: '0 6px', whiteSpace: 'nowrap', flex: '1 1 220px', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {statusText}
         </span>
+        {previewStatus && exposedTransitions.map(transition => (
+          <button
+            key={transition.id}
+            type="button"
+            aria-label={`Trigger ${transition.trigger} event from ${eventSourceStateId}`}
+            disabled={!eventSourceStateId}
+            onClick={() => eventSourceStateId && onTriggerEvent(eventSourceStateId, transition.trigger!, transition.key)}
+            style={chromeTabButtonStyle(false)}
+          >
+            {previewEventLabel(transition)}
+          </button>
+        ))}
+        {previewStatus && onCompleteTarget && (
+          <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, whiteSpace: 'nowrap' }}>
+            Next auto-runs {'->'} {onCompleteTarget}
+          </span>
+        )}
         <button
           type="button"
           aria-label={`Add state to ${machine.id}`}
@@ -3089,30 +3106,6 @@ function StateMachineTimelineGraph({
             color: v('--elucim-editor-fg'),
           }}
         />
-      </div>
-      <div style={{ padding: '6px 8px', borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-surface') }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-          <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
-             Events for {eventSourceStateId ?? 'preview'}:
-          </span>
-          {exposedTransitions.length > 0 ? exposedTransitions.map(transition => (
-            <button
-              key={transition.id}
-              type="button"
-              aria-label={`Trigger ${transition.trigger} event from ${eventSourceStateId}`}
-              disabled={!eventSourceStateId}
-              onClick={() => eventSourceStateId && onTriggerEvent(eventSourceStateId, transition.trigger!, transition.key)}
-              style={chromeTabButtonStyle(false)}
-            >
-              {previewEventLabel(transition)}
-            </button>
-          )) : (
-            <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11 }}>none</span>
-          )}
-          <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, whiteSpace: 'nowrap' }}>
-            {onCompleteTarget ? `Next auto-runs -> ${onCompleteTarget}` : 'no Next transition'}
-          </span>
-        </div>
       </div>
     </section>
   );

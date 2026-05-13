@@ -38,6 +38,20 @@ export const EDITOR_ROOT_SCOPED_STYLES = `
           outline: 1px solid ${v('--elucim-editor-accent')};
           outline-offset: -1px;
         }
+        .elucim-editor .react-flow:focus,
+        .elucim-editor .react-flow__pane:focus,
+        .elucim-editor .react-flow__renderer:focus,
+        .elucim-editor .react-flow__viewport:focus,
+        .elucim-editor .react-flow__node:focus,
+        .elucim-editor .react-flow__edge:focus {
+          outline: none;
+        }
+        .elucim-editor .react-flow__node.selected,
+        .elucim-editor .react-flow__node:focus-visible,
+        .elucim-editor .react-flow__edge.selected,
+        .elucim-editor .react-flow__edge:focus-visible {
+          box-shadow: none;
+        }
       `;
 
 export function buildEditorRootClassName(className?: string): string {
