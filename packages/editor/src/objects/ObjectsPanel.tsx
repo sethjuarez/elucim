@@ -67,7 +67,6 @@ function getTypeColor(type: string): string {
   if (['fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel'].includes(type)) {
     return v('--elucim-editor-warning');
   }
-  if (['text', 'latex'].includes(type)) return v('--elucim-editor-success');
   return v('--elucim-editor-text-secondary');
 }
 
@@ -213,7 +212,7 @@ export function ObjectsPanel({ className, style, document: documentModel }: Obje
                   : undefined,
                 opacity: dragging?.id === row.id ? 0.55 : 1,
                 color: selected ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
-                cursor: editingId === row.id ? 'text' : 'grab',
+                cursor: editingId === row.id ? 'text' : 'default',
               }}
             >
               <span style={{ width: row.depth * 12, flexShrink: 0 }} />

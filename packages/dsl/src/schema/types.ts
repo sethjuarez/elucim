@@ -85,6 +85,7 @@ export interface GroupNode {
   fadeIn?: number;
   fadeOut?: number;
   easing?: EasingSpec;
+  opacity?: number;
   rotation?: number;
   rotationOrigin?: [number, number];
   scale?: number | [number, number];

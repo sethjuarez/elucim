@@ -29,6 +29,38 @@ const documentModel: ElucimDocument = {
   },
 };
 
+const groupedDocument: ElucimDocument = {
+  version: '2.0',
+  scene: { type: 'player', width: 800, height: 600, children: ['group'] },
+  elements: {
+    group: {
+      id: 'group',
+      type: 'group',
+      props: { type: 'group', opacity: 0 },
+      children: ['card', 'label'],
+    },
+    card: {
+      id: 'card',
+      type: 'rect',
+      parentId: 'group',
+      props: { type: 'rect', x: 0, y: 0, width: 100, height: 60 },
+    },
+    label: {
+      id: 'label',
+      type: 'text',
+      parentId: 'group',
+      props: { type: 'text', x: 12, y: 36, content: 'Grouped' },
+    },
+  },
+  timelines: {
+    intro: {
+      id: 'intro',
+      duration: 30,
+      tracks: [{ target: 'group', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 30, value: 1 }] }],
+    },
+  },
+};
+
 describe('useEditorPreviewController', () => {
   it('wraps state-machine function handlers before storing them in React state', () => {
     const { result } = renderHook(() => useEditorPreviewController(documentModel));
@@ -71,6 +103,18 @@ describe('useEditorPreviewController', () => {
     const card = result.current.previewDocument?.root.children[0] as { opacity?: number };
     expect(result.current.previewDocument?.version).toBe('1.0');
     expect(card.opacity).toBe(1);
+  });
+
+  it('resolves opacity keyframes that target grouped objects', () => {
+    const { result } = renderHook(() => useEditorPreviewController(groupedDocument));
+
+    act(() => {
+      result.current.timelinePreviewCallbacks.onPreviewTimelineFramesChange([{ timelineId: 'intro', frame: 30 }]);
+    });
+
+    const group = result.current.previewDocument?.root.children[0] as { opacity?: number; children?: unknown[] };
+    expect(group.opacity).toBe(1);
+    expect(group.children).toHaveLength(2);
   });
 
   it('keeps the resolved preview projection stable when inputs do not change', () => {

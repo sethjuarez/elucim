@@ -162,6 +162,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           key={key}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
+          opacity={node.opacity}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
         >
