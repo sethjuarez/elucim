@@ -1,11 +1,9 @@
 import type React from 'react';
-import type { EditorWorkspace } from '../shell/editorShell';
 import { EditorMainGrid } from './EditorMainGrid';
 import { EditorTimelineDock } from './EditorTimelineDock';
 import { EditorTopBar } from './EditorTopBar';
 
 export interface EditorWorkspaceSurfaceProps {
-  workspace: EditorWorkspace;
   leftVisible: boolean;
   rightVisible: boolean;
   timelineVisible: boolean;
@@ -13,7 +11,6 @@ export interface EditorWorkspaceSurfaceProps {
   rightWidth: number;
   timelineHeight: number;
   stateMachineWorkspaceActive: boolean;
-  onWorkspaceSelect: (workspace: EditorWorkspace) => void;
   onLeftVisibleChange: React.Dispatch<React.SetStateAction<boolean>>;
   onRightVisibleChange: React.Dispatch<React.SetStateAction<boolean>>;
   onTimelineVisibleChange: React.Dispatch<React.SetStateAction<boolean>>;
@@ -27,7 +24,6 @@ export interface EditorWorkspaceSurfaceProps {
 }
 
 export function EditorWorkspaceSurface({
-  workspace,
   leftVisible,
   rightVisible,
   timelineVisible,
@@ -35,7 +31,6 @@ export function EditorWorkspaceSurface({
   rightWidth,
   timelineHeight,
   stateMachineWorkspaceActive,
-  onWorkspaceSelect,
   onLeftVisibleChange,
   onRightVisibleChange,
   onTimelineVisibleChange,
@@ -50,11 +45,9 @@ export function EditorWorkspaceSurface({
   return (
     <>
       <EditorTopBar
-        workspace={workspace}
         leftVisible={leftVisible}
         rightVisible={rightVisible}
         timelineVisible={timelineVisible}
-        onWorkspaceSelect={onWorkspaceSelect}
         onLeftVisibleChange={onLeftVisibleChange}
         onRightVisibleChange={onRightVisibleChange}
         onTimelineVisibleChange={onTimelineVisibleChange}

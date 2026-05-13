@@ -1,23 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { ElucimDocument } from '@elucim/dsl';
 import { ObjectsPanel } from '../objects/ObjectsPanel';
-import { PanelShell } from '../panels/PanelShell';
 import { PolishPanel } from '../panels/PolishPanel';
 import { Toolbar } from '../toolbar/Toolbar';
 import { v } from '../theme/tokens';
 
 export function LeftDock({ document, onDocumentChange, preferredTab }: { document?: ElucimDocument; onDocumentChange?: (document: ElucimDocument) => void; preferredTab?: 'objects' | 'create' | 'polish' }) {
-  const [tab, setTab] = useState<'objects' | 'create'>('objects');
+  const [tab, setTab] = useState<'objects' | 'create' | 'polish'>('objects');
   useEffect(() => {
-    if (preferredTab === 'objects' || preferredTab === 'create') setTab(preferredTab);
+    if (preferredTab === 'objects' || preferredTab === 'create' || preferredTab === 'polish') setTab(preferredTab);
   }, [preferredTab]);
-  if (preferredTab === 'polish') {
-    return (
-      <PanelShell title="Polish">
-        <PolishPanel document={document} onDocumentChange={onDocumentChange} />
-      </PanelShell>
-    );
-  }
   return (
     <section style={{ minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div
@@ -25,7 +17,7 @@ export function LeftDock({ document, onDocumentChange, preferredTab }: { documen
         aria-label="Left editor panel"
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: '1fr 1fr 1fr',
           gap: 0,
           padding: '0 8px',
           borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
@@ -35,9 +27,14 @@ export function LeftDock({ document, onDocumentChange, preferredTab }: { documen
       >
         <DockTab label="Objects" selected={tab === 'objects'} onClick={() => setTab('objects')} />
         <DockTab label="Create" selected={tab === 'create'} onClick={() => setTab('create')} />
+        <DockTab label="Polish" selected={tab === 'polish'} onClick={() => setTab('polish')} />
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-        {tab === 'create' ? <Toolbar /> : <ObjectsPanel document={document} />}
+        {tab === 'create'
+          ? <Toolbar />
+          : tab === 'polish'
+            ? <PolishPanel document={document} onDocumentChange={onDocumentChange} />
+            : <ObjectsPanel document={document} />}
       </div>
     </section>
   );

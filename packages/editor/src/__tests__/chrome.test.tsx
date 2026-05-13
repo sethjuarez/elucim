@@ -6,21 +6,9 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PanelToggle } from '../chrome/PanelToggle';
 import { PanelResizeHandle } from '../chrome/PanelResizeHandle';
-import { WorkspaceTab } from '../chrome/WorkspaceTab';
 
 describe('editor chrome components', () => {
   afterEach(() => cleanup());
-
-  it('exposes workspace tabs with stable tab semantics', () => {
-    const onClick = vi.fn();
-
-    render(<WorkspaceTab label="Design" selected={true} onClick={onClick} />);
-
-    const tab = screen.getByRole('tab', { name: 'Design workspace', selected: true });
-    fireEvent.click(tab);
-
-    expect(onClick).toHaveBeenCalledTimes(1);
-  });
 
   it('exposes panel toggles with pressed state and show/hide labels', () => {
     const { rerender } = render(<PanelToggle label="Inspector" active={true} onClick={() => {}} />);

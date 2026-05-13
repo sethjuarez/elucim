@@ -1235,14 +1235,14 @@ function TimelineClipRows({
   useEffect(() => {
     const previousCount = previousStateMachineCount.current;
     previousStateMachineCount.current = stateMachines.length;
-    if (preferredMotionType === 'stateMachine' && previousCount === 0 && stateMachines[0]) {
+    if (activeMotionType === 'stateMachine' && previousCount === 0 && stateMachines[0]) {
       selectMotionItem({ type: 'stateMachine', machineId: stateMachines[0].id });
     }
-  }, [preferredMotionType, selectMotionItem, stateMachines]);
+  }, [activeMotionType, selectMotionItem, stateMachines]);
   useEffect(() => {
     if (selectedItem?.type === 'animation' && clips.some(clip => clip.id === selectedItem.timelineId)) return;
     if (selectedItem?.type === 'stateMachine' && stateMachines.some(machine => machine.id === selectedItem.machineId)) return;
-    if (preferredMotionType === 'stateMachine' && stateMachines[0]) {
+    if (activeMotionType === 'stateMachine' && stateMachines[0]) {
       selectMotionItem({ type: 'stateMachine', machineId: stateMachines[0].id });
     } else {
       const lastAnimation = lastAnimationItem.current && clips.some(clip => clip.id === lastAnimationItem.current?.timelineId)
@@ -1252,7 +1252,7 @@ function TimelineClipRows({
       if (fallback) selectMotionItem(fallback);
       else setSelectedItem(null);
     }
-  }, [clips, preferredMotionType, selectMotionItem, selectedItem, stateMachines]);
+  }, [activeMotionType, clips, selectMotionItem, selectedItem, stateMachines]);
   const selectedClip = activeMotionType === 'animation' && selectedItem?.type === 'animation' ? clips.find(clip => clip.id === selectedItem.timelineId) : undefined;
   useEffect(() => {
     onActiveTimelineChange?.(activeMotionType === 'animation' ? selectedClip?.id : stateMachinePreview?.timelineId);
@@ -2261,6 +2261,7 @@ function TimelineClipRows({
             onSetTransitionKind={setMachineTransitionKind}
             onDeleteTransition={deleteMachineTransition}
             onDeleteState={deleteMachineState}
+            onSelectTransition={(stateId, transitionEvent) => selectMotionItem({ type: 'stateMachine', machineId: selectedMachine.id, stateId, transitionEvent })}
             onPreviewState={onPreviewState}
           />
         ) : onTimelineChange && (
@@ -3214,6 +3215,7 @@ function StateMachineMotionInspector({
   onSetTransitionKind,
   onDeleteTransition,
   onDeleteState,
+  onSelectTransition,
   onPreviewState,
 }: {
   machine: ElucimStateMachine;
@@ -3229,6 +3231,7 @@ function StateMachineMotionInspector({
   onSetTransitionKind: (machine: ElucimStateMachine, transitionId: string, kind: 'event' | 'next') => void;
   onDeleteTransition: (machine: ElucimStateMachine, transitionId: string) => void;
   onDeleteState: (machine: ElucimStateMachine, stateId: string) => void;
+  onSelectTransition: (stateId: string, transitionEvent: string) => void;
   onPreviewState: (machineId: string, stateId: string) => void;
 }) {
   const stateIds = Object.keys(machine.states);
@@ -3359,6 +3362,7 @@ function StateMachineMotionInspector({
   }
 
   if (selectedStateId && state) {
+    const selectedStateTransitions = (machine.transitions ?? []).filter(transition => transition.from === selectedStateId || transition.from === 'any');
     return (
       <aside style={motionInspectorPanelStyle}>
         <div>
@@ -3398,6 +3402,22 @@ function StateMachineMotionInspector({
             {timelineIds.map(id => <option key={id} value={id}>{id}</option>)}
           </select>
         </label>
+        {selectedStateTransitions.length > 0 && (
+          <div style={{ display: 'grid', gap: 4, color: v('--elucim-editor-text-secondary') }}>
+            Transitions
+            {selectedStateTransitions.map(transition => (
+              <button
+                key={transition.id}
+                type="button"
+                aria-label={`Edit ${transitionTriggerLabel(transition)} transition from ${transition.from}`}
+                onClick={() => onSelectTransition(transition.from, transition.id)}
+                style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer', padding: '4px 6px', textAlign: 'left' }}
+              >
+                {transitionTriggerLabel(transition)}
+              </button>
+            ))}
+          </div>
+        )}
         {stateIds.length > 1 && (
           <button
             type="button"
