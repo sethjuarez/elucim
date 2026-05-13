@@ -14,11 +14,12 @@ import type {
   ElucimTimeline,
   ElucimTimelineTrack,
 } from './document';
-import { applyCommand } from './v2/commands';
-import { applyNudge, suggestDocumentNudges, type ElucimDocumentNudge } from './v2/nudges';
-import { inspectPolishHeuristics, type ElucimPolishHeuristicReport, type ElucimPolishReport } from './v2/polish';
 import {
+  applyCommand,
+  applyNudge,
+  applyTimelineFrame,
   createAutoLayoutGroupPreset,
+  createAutoStaggerTimeline,
   createBadgePreset,
   createBoundaryPreset,
   createCardGridPreset,
@@ -26,52 +27,49 @@ import {
   createConnectorPreset,
   createDecisionNodePreset,
   createProgressiveRevealGroupPreset,
+  createReducedMotionDocument,
   createQueueStackPreset,
+  createSemanticMotionTimeline,
+  createStateSnapshotMotion,
   createTimelineRoadmapPreset,
   createStepCardPreset,
   createTextBlockPreset,
+  diffDocuments,
+  holdFinalFrame,
+  inspectPolishHeuristics,
+  lintMotion,
+  planMotionBeats,
+  planSemanticLayout,
+  previewBeatDiffs,
+  summarizeDocument,
+  suggestDocumentNudges,
+  suggestSemanticLayoutNudges,
+  validateForAgent,
   type ElucimAutoLayoutGroupPresetSpec,
+  type ElucimAutoStaggerMotionSpec,
   type ElucimBadgePresetSpec,
+  type ElucimBeatPreviewOptions,
   type ElucimBoundaryPresetSpec,
   type ElucimCardGridPresetSpec,
   type ElucimComparisonTablePresetSpec,
   type ElucimConnectorPresetSpec,
   type ElucimDecisionNodePresetSpec,
+  type ElucimDocumentNudge,
+  type ElucimMotionBeatPlanSpec,
+  type ElucimPolishHeuristicReport,
+  type ElucimPolishReport,
   type ElucimProgressiveRevealGroupPresetSpec,
   type ElucimQueueStackPresetSpec,
+  type ElucimReducedMotionOptions,
+  type ElucimSemanticLayoutOptions,
+  type ElucimSemanticLayoutPlan,
+  type ElucimSemanticMotionPresetSpec,
+  type ElucimStateSnapshotMotionSpec,
   type ElucimStepCardPresetSpec,
   type ElucimTimelineRoadmapPresetSpec,
   type ElucimTextBlockPresetSpec,
-} from './v2/composites';
-import {
-  planSemanticLayout,
-  suggestSemanticLayoutNudges,
-  type ElucimSemanticLayoutOptions,
-  type ElucimSemanticLayoutPlan,
-} from './v2/semanticLayout';
-import { applyTimelineFrame } from './v2/timeline';
-import {
-  createAutoStaggerTimeline,
-  createReducedMotionDocument,
-  createSemanticMotionTimeline,
-  createStateSnapshotMotion,
-  holdFinalFrame,
-  lintMotion,
-  planMotionBeats,
-  previewBeatDiffs,
-  type ElucimAutoStaggerMotionSpec,
-  type ElucimBeatPreviewOptions,
-  type ElucimMotionBeatPlanSpec,
-  type ElucimReducedMotionOptions,
-  type ElucimSemanticMotionPresetSpec,
-  type ElucimStateSnapshotMotionSpec,
-} from './v2/motion';
-import {
-  diffDocuments,
-  summarizeDocument,
-  validateForAgent,
   type JsonPatchOperation,
-} from './v2/services';
+} from './agentDocument';
 
 export type AgentDocument = ElucimDocument;
 export type AgentValidationResult = ElucimAgentValidationResult;
