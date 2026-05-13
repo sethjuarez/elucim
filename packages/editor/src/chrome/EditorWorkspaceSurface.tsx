@@ -12,7 +12,6 @@ export interface EditorWorkspaceSurfaceProps {
   leftWidth: number;
   rightWidth: number;
   timelineHeight: number;
-  selectedCount: number;
   stateMachineWorkspaceActive: boolean;
   onWorkspaceSelect: (workspace: EditorWorkspace) => void;
   onLeftVisibleChange: React.Dispatch<React.SetStateAction<boolean>>;
@@ -35,7 +34,6 @@ export function EditorWorkspaceSurface({
   leftWidth,
   rightWidth,
   timelineHeight,
-  selectedCount,
   stateMachineWorkspaceActive,
   onWorkspaceSelect,
   onLeftVisibleChange,
@@ -56,7 +54,6 @@ export function EditorWorkspaceSurface({
         leftVisible={leftVisible}
         rightVisible={rightVisible}
         timelineVisible={timelineVisible}
-        selectedCount={selectedCount}
         onWorkspaceSelect={onWorkspaceSelect}
         onLeftVisibleChange={onLeftVisibleChange}
         onRightVisibleChange={onRightVisibleChange}
@@ -66,13 +63,9 @@ export function EditorWorkspaceSurface({
       <EditorMainGrid
         leftVisible={leftVisible}
         rightVisible={rightVisible}
-        timelineVisible={timelineVisible}
         leftWidth={leftWidth}
         rightWidth={rightWidth}
         stateMachineWorkspaceActive={stateMachineWorkspaceActive}
-        onLeftVisibleChange={onLeftVisibleChange}
-        onRightVisibleChange={onRightVisibleChange}
-        onTimelineVisibleChange={onTimelineVisibleChange}
         onLeftResizeStart={onLeftResizeStart}
         onRightResizeStart={onRightResizeStart}
         leftDock={leftDock}

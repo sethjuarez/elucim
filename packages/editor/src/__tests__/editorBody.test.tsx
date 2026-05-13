@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildEditorGridColumns, EditorMainGrid } from '../chrome/EditorMainGrid';
 import { buildTimelineDockStyle, EditorTimelineDock } from '../chrome/EditorTimelineDock';
@@ -16,21 +16,13 @@ describe('EditorMainGrid', () => {
     expect(buildEditorGridColumns(true, 300, false, 286)).toBe('300px minmax(260px, 1fr) 0px');
   });
 
-  it('renders visible slots, resize handles, and collapsed rail controls', () => {
-    const onLeftVisibleChange = vi.fn();
-    const onRightVisibleChange = vi.fn();
-    const onTimelineVisibleChange = vi.fn();
-
+  it('renders visible slots and resize handles without canvas panel toggles', () => {
     const { container } = render(React.createElement(EditorMainGrid, {
       leftVisible: false,
       rightVisible: true,
-      timelineVisible: false,
       leftWidth: 252,
       rightWidth: 286,
       stateMachineWorkspaceActive: false,
-      onLeftVisibleChange,
-      onRightVisibleChange,
-      onTimelineVisibleChange,
       onLeftResizeStart: vi.fn(),
       onRightResizeStart: vi.fn(),
       leftDock: React.createElement('div', {}, 'Objects dock'),
@@ -43,13 +35,8 @@ describe('EditorMainGrid', () => {
     expect(screen.getByText('Canvas slot')).toBeTruthy();
     expect(screen.getByText('Inspector slot')).toBeTruthy();
     expect(screen.getByRole('separator', { name: 'Resize inspector' })).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Show left panel' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Show timeline' }));
-
-    expect(onLeftVisibleChange).toHaveBeenCalledWith(true);
-    expect(onTimelineVisibleChange).toHaveBeenCalledWith(true);
-    expect(onRightVisibleChange).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Show left panel' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Show timeline' })).toBeNull();
   });
 });
 

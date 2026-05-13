@@ -95,10 +95,24 @@ describe('editor layout controller', () => {
     expect(result.current.rootTheme.colorScheme).toBe('dark');
     expect(result.current.rootTheme.themeVars['--elucim-editor-accent' as keyof React.CSSProperties]).toBe('#7c3aed');
     expect(result.current.workspaceSurfaceProps.workspace).toBe('animate');
-    expect(result.current.workspaceSurfaceProps.selectedCount).toBe(1);
     expect(React.isValidElement(result.current.workspaceSurfaceProps.leftDock)).toBe(true);
     expect(React.isValidElement(result.current.workspaceSurfaceProps.canvas)).toBe(true);
     expect(React.isValidElement(result.current.workspaceSurfaceProps.inspector)).toBe(true);
     expect(React.isValidElement(result.current.workspaceSurfaceProps.timeline)).toBe(true);
+  });
+
+  it('anchors the canvas viewport when the left panel is hidden', () => {
+    const { result } = renderHook(() => {
+      const composition = useEditorLayoutComposition({ document: documentModel });
+      const { state } = useEditorState();
+      return { composition, state };
+    }, { wrapper });
+
+    act(() => {
+      result.current.composition.workspaceSurfaceProps.onLeftVisibleChange(value => !value);
+    });
+
+    expect(result.current.composition.workspaceSurfaceProps.leftVisible).toBe(false);
+    expect(result.current.state.viewport.x).toBe(252);
   });
 });

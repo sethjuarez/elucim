@@ -2260,6 +2260,7 @@ function TimelineClipRows({
             onRenameTransition={renameMachineTransition}
             onSetTransitionKind={setMachineTransitionKind}
             onDeleteTransition={deleteMachineTransition}
+            onDeleteState={deleteMachineState}
             onPreviewState={onPreviewState}
           />
         ) : onTimelineChange && (
@@ -3212,6 +3213,7 @@ function StateMachineMotionInspector({
   onRenameTransition,
   onSetTransitionKind,
   onDeleteTransition,
+  onDeleteState,
   onPreviewState,
 }: {
   machine: ElucimStateMachine;
@@ -3226,6 +3228,7 @@ function StateMachineMotionInspector({
   onRenameTransition: (machine: ElucimStateMachine, transitionId: string, nextTrigger: string) => void;
   onSetTransitionKind: (machine: ElucimStateMachine, transitionId: string, kind: 'event' | 'next') => void;
   onDeleteTransition: (machine: ElucimStateMachine, transitionId: string) => void;
+  onDeleteState: (machine: ElucimStateMachine, stateId: string) => void;
   onPreviewState: (machineId: string, stateId: string) => void;
 }) {
   const stateIds = Object.keys(machine.states);
@@ -3395,6 +3398,16 @@ function StateMachineMotionInspector({
             {timelineIds.map(id => <option key={id} value={id}>{id}</option>)}
           </select>
         </label>
+        {stateIds.length > 1 && (
+          <button
+            type="button"
+            aria-label={`Remove selected state ${selectedStateId}`}
+            onClick={() => onDeleteState(machine, selectedStateId)}
+            style={{ border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-text-secondary'), cursor: 'pointer', padding: '4px 6px', textAlign: 'left' }}
+          >
+            Remove state
+          </button>
+        )}
       </aside>
     );
   }

@@ -459,6 +459,53 @@ describe('canonical timeline clip rows', () => {
     expect(screen.getByText(/Previewing focused via focus from idle \(focus\)/)).toBeTruthy();
   });
 
+  it('removes a selected state from the inspector panel', async () => {
+    let latestMachines: any = {
+      walkthrough: {
+        id: 'walkthrough',
+        entry: 'idle',
+        inputs: { focus: { type: 'trigger' } },
+        states: {
+          idle: { timeline: 'idle' },
+          focused: { timeline: 'focus' },
+        },
+        transitions: [
+          { id: 'idle-focus', from: 'idle', to: 'focused', trigger: 'focus' },
+          { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+        ],
+      },
+    };
+    const renderTimeline = () => React.createElement(
+      EditorProvider,
+      {
+        initialDocument: {
+          version: '1.0',
+          root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+        },
+      },
+      React.createElement(Timeline, {
+        timelines: {
+          idle: { id: 'idle', duration: 1, tracks: [] },
+          focus: { id: 'focus', duration: 1, tracks: [] },
+        },
+        stateMachines: latestMachines,
+        preferredMotionType: 'stateMachine',
+        onStateMachinesChange: stateMachines => {
+          latestMachines = stateMachines;
+        },
+      }),
+    );
+    const { rerender } = render(renderTimeline());
+
+    fireEvent.click(screen.getByLabelText('Select graph state focused'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove selected state focused' }));
+
+    await waitFor(() => expect(latestMachines.walkthrough.states.focused).toBeUndefined());
+    expect(latestMachines.walkthrough.transitions).toEqual([{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }]);
+    rerender(renderTimeline());
+    expect(screen.queryByRole('button', { name: 'Remove selected state focused' })).toBeNull();
+  });
+
   it('stops playback when switching from animations to state machines', async () => {
     let latestPlaying = false;
 

@@ -8,7 +8,6 @@ export interface EditorTopBarProps {
   leftVisible: boolean;
   rightVisible: boolean;
   timelineVisible: boolean;
-  selectedCount: number;
   onWorkspaceSelect: (workspace: EditorWorkspace) => void;
   onLeftVisibleChange: (updater: (value: boolean) => boolean) => void;
   onRightVisibleChange: (updater: (value: boolean) => boolean) => void;
@@ -20,7 +19,6 @@ export function EditorTopBar({
   leftVisible,
   rightVisible,
   timelineVisible,
-  selectedCount,
   onWorkspaceSelect,
   onLeftVisibleChange,
   onRightVisibleChange,
@@ -52,12 +50,9 @@ export function EditorTopBar({
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <PanelToggle label="Left panel" active={leftVisible} onClick={() => onLeftVisibleChange(value => !value)} />
-        <PanelToggle label="Inspector" active={rightVisible} onClick={() => onRightVisibleChange(value => !value)} />
-        <PanelToggle label="Timeline" active={timelineVisible} onClick={() => onTimelineVisibleChange(value => !value)} />
-        <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, fontVariantNumeric: 'tabular-nums', minWidth: 76, textAlign: 'right' }}>
-          {selectedCount === 0 ? 'No selection' : `${selectedCount} selected`}
-        </div>
+        <PanelToggle label="left panel" panel="left" active={leftVisible} onClick={() => onLeftVisibleChange(value => !value)} />
+        <PanelToggle label="timeline" panel="bottom" active={timelineVisible} onClick={() => onTimelineVisibleChange(value => !value)} />
+        <PanelToggle label="Inspector" panel="right" active={rightVisible} onClick={() => onRightVisibleChange(value => !value)} />
       </div>
     </div>
   );
