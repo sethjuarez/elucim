@@ -1,5 +1,21 @@
 # @elucim/dsl
 
+## [0.21.1](https://github.com/sethjuarez/elucim/compare/dsl-v0.21.0...dsl-v0.21.1) (2026-05-13)
+
+
+### Bug Fixes
+
+* **editor:** release editor polish improvements ([3a368a4](https://github.com/sethjuarez/elucim/commit/3a368a41097f40dbe321c2efb2bd3bc0ff37c232))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.21.1
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.21.1
+
 ## [0.21.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.20.0...dsl-v0.21.0) (2026-05-13)
 
 

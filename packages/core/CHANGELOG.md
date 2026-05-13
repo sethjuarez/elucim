@@ -1,5 +1,12 @@
 # @elucim/core
 
+## [0.21.1](https://github.com/sethjuarez/elucim/compare/core-v0.21.0...core-v0.21.1) (2026-05-13)
+
+
+### Bug Fixes
+
+* **editor:** release editor polish improvements ([3a368a4](https://github.com/sethjuarez/elucim/commit/3a368a41097f40dbe321c2efb2bd3bc0ff37c232))
+
 ## [0.21.0](https://github.com/sethjuarez/elucim/compare/core-v0.20.0...core-v0.21.0) (2026-05-13)
 
 
