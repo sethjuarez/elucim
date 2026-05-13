@@ -18,6 +18,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
   const [semanticLayoutNudges, setSemanticLayoutNudges] = useState<ElucimDocumentNudge[]>([]);
   const [semanticLayoutError, setSemanticLayoutError] = useState<string | null>(null);
   const [semanticLayoutLoading, setSemanticLayoutLoading] = useState(false);
+  const [nudgeResult, setNudgeResult] = useState<{ title: string; summaries: string[]; error?: string } | null>(null);
   const documentNudges = useMemo(() => currentDocument
     ? suggestDocumentNudges(currentDocument)
     : [], [currentDocument]);
@@ -94,8 +95,14 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
     const baseDocument = currentDocument;
     const nudge = nudgeCandidates.find(candidate => candidate.id === nudgeId);
     if (!baseDocument || !nudge) return;
-    onDocumentChange?.(applyNudge(baseDocument, nudge).document);
-    setDismissedNudgeIds(previous => new Set(previous).add(nudge.id));
+    try {
+      const result = applyNudge(baseDocument, nudge);
+      onDocumentChange?.(result.document);
+      setNudgeResult({ title: nudge.title, summaries: result.summaries });
+      setDismissedNudgeIds(previous => new Set(previous).add(nudge.id));
+    } catch (error) {
+      setNudgeResult({ title: nudge.title, summaries: [], error: error instanceof Error ? error.message : String(error) });
+    }
   };
 
   const dismissEditorNudge = (nudgeId: string) => {
@@ -108,7 +115,34 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
         Polish is for scene metadata, selected-element intent, suggestions, and document diagnostics. Use the State machines motion tab to author interactive state graphs.
       </div>
 
-      {document && (
+      {nudgeResult && (
+        <div
+          role="status"
+          style={{
+            padding: 8,
+            border: `1px solid ${nudgeResult.error ? v('--elucim-editor-warning') : v('--elucim-editor-success')}`,
+            borderRadius: 6,
+            background: `color-mix(in srgb, ${nudgeResult.error ? v('--elucim-editor-warning') : v('--elucim-editor-success')} 10%, transparent)`,
+            color: nudgeResult.error ? v('--elucim-editor-warning') : v('--elucim-editor-text-secondary'),
+            display: 'grid',
+            gap: 4,
+            lineHeight: 1.35,
+          }}
+        >
+          <div style={{ color: nudgeResult.error ? v('--elucim-editor-warning') : v('--elucim-editor-fg'), fontWeight: 700 }}>
+            {nudgeResult.error ? `Could not apply ${nudgeResult.title}` : `Applied ${nudgeResult.title}`}
+          </div>
+          {nudgeResult.error ? (
+            <div>{nudgeResult.error}</div>
+          ) : (
+            <ul style={{ margin: 0, paddingLeft: 16 }}>
+              {nudgeResult.summaries.map((summary, index) => <li key={index}>{summary}</li>)}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {currentDocument && (
         <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             Motion
@@ -121,7 +155,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
         </div>
       )}
 
-      {document && (
+      {currentDocument && (
         <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             Scene metadata
@@ -130,7 +164,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
             Polish level
             <select
               aria-label="Polish level"
-              value={document.metadata?.polishLevel ?? 'draft'}
+              value={currentDocument.metadata?.polishLevel ?? 'draft'}
               onChange={event => updateMetadata({ polishLevel: event.target.value as NonNullable<ElucimDocument['metadata']>['polishLevel'] })}
               style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
             >
@@ -143,7 +177,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
             Intent
             <input
               aria-label="Document intent"
-              value={document.metadata?.intent ?? ''}
+              value={currentDocument.metadata?.intent ?? ''}
               onChange={event => updateMetadata({ intent: event.target.value })}
               placeholder="What this visual should communicate"
               style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
@@ -153,7 +187,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
             Generated/source
             <input
               aria-label="Generated by"
-              value={document.metadata?.generatedBy ?? ''}
+              value={currentDocument.metadata?.generatedBy ?? ''}
               onChange={event => updateMetadata({ generatedBy: event.target.value })}
               placeholder="Designer, user, agent name"
               style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4 }}
@@ -163,7 +197,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
             Notes
             <textarea
               aria-label="Document notes"
-              value={(document.metadata?.notes ?? []).join('\n')}
+              value={(currentDocument.metadata?.notes ?? []).join('\n')}
               onChange={event => updateMetadata({ notes: event.target.value.split('\n').map(note => note.trim()).filter(Boolean) })}
               placeholder="One note per line"
               rows={3}
@@ -173,7 +207,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
         </div>
       )}
 
-      {document && polishReport && (
+      {currentDocument && polishReport && (
         <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'baseline' }}>
             <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
@@ -217,7 +251,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
         </div>
       )}
 
-      {document && nudgeCandidates.length > 0 && (
+      {currentDocument && nudgeCandidates.length > 0 && (
         <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             Polish suggestions
@@ -267,7 +301,7 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
         </div>
       )}
 
-      {document && selectedDocumentElement && (
+      {currentDocument && selectedDocumentElement && (
         <div style={{ padding: 8, border: `1px solid ${v('--elucim-editor-border-subtle')}`, borderRadius: 6, background: v('--elucim-editor-input-bg'), display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 }}>
             Selected intent
