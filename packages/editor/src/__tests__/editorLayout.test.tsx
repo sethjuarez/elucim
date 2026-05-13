@@ -32,4 +32,16 @@ describe('ElucimEditorLayout module', () => {
     expect(screen.getByRole('button', { name: 'Hide left panel' })).toBeTruthy();
     expect(screen.getAllByText('Canvas').length).toBeGreaterThan(0);
   });
+
+  it('can hide standalone header chrome for embedded hosts', () => {
+    render((
+      <EditorProvider initialDocument={createDefaultDocument()}>
+        <ElucimEditorLayout showHeader={false} />
+      </EditorProvider>
+    ));
+
+    expect(screen.queryByText('Elucim')).toBeNull();
+    expect(screen.queryByText('Scene editor')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Hide left panel' })).toBeTruthy();
+  });
 });

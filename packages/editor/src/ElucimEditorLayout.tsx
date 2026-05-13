@@ -8,6 +8,8 @@ import { useEditorLayoutComposition } from './layout/editorLayoutController';
 export interface ElucimEditorLayoutProps {
   theme?: ElucimTheme;
   editorTheme?: Record<string, string>;
+  /** Show standalone editor header/branding. Host apps can hide it when embedding. */
+  showHeader?: boolean;
   className?: string;
   style?: React.CSSProperties;
   /** Canonical Elucim Document model used by timeline and state-machine panels. */
@@ -21,10 +23,11 @@ export interface ElucimEditorLayoutProps {
  * custom composition (e.g. adding panels inside the editor context) while
  * keeping the standard editor shell, scrollbar styles, and theme injection.
  */
-export function ElucimEditorLayout({ theme, editorTheme, className, style, document: documentModel, onDocumentChange }: ElucimEditorLayoutProps) {
+export function ElucimEditorLayout({ theme, editorTheme, showHeader = true, className, style, document: documentModel, onDocumentChange }: ElucimEditorLayoutProps) {
   const { rootTheme, workspaceSurfaceProps } = useEditorLayoutComposition({
     theme,
     editorTheme,
+    showHeader,
     document: documentModel,
     onDocumentChange,
   });

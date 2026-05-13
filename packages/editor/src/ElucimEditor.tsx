@@ -27,6 +27,8 @@ export interface ElucimEditorProps {
    * These override any values auto-derived from `theme`.
    */
   editorTheme?: Record<string, string>;
+  /** Show standalone editor header/branding. Set false when embedding in host chrome. */
+  showHeader?: boolean;
   /** Called whenever the document changes. Receives the updated normalized document. */
   onDocumentChange?: (document: ElucimDocument, details: ElucimEditorChangeDetails) => void;
   /** Called when normalized output has warnings host apps may want to display. */
@@ -52,7 +54,7 @@ export interface ElucimEditorProps {
  * A visual editor for creating and editing Elucim animated scenes.
  * Persistent shell with Objects, stage, inspector, and timeline.
  */
-export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, className, style, onDocumentChange, onCompatibilityWarnings, onBrowseImage, imageResolver }: ElucimEditorProps) {
+export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme, showHeader = true, className, style, onDocumentChange, onCompatibilityWarnings, onBrowseImage, imageResolver }: ElucimEditorProps) {
   let inner = (
     <EditorDocumentRuntime
       initialDocument={initialDocument}
@@ -64,6 +66,7 @@ export function ElucimEditor({ initialDocument, initialFrame, theme, editorTheme
         <ElucimEditorLayout
           theme={theme}
           editorTheme={editorTheme}
+          showHeader={showHeader}
           className={className}
           style={style}
           onDocumentChange={handleDocumentChange}

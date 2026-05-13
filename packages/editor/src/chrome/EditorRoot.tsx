@@ -67,6 +67,7 @@ export function buildEditorRootStyle(
     ...themeVars,
     display: 'flex',
     flexDirection: 'column',
+    position: 'relative',
     background: v('--elucim-editor-bg'),
     color: v('--elucim-editor-fg'),
     fontFamily: 'system-ui, -apple-system, sans-serif',

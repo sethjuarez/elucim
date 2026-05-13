@@ -30,13 +30,13 @@ export function PanelToggle({
       title={accessibleLabel}
       onClick={onClick}
       style={{
-        height: 22,
-        minWidth: icon ? 22 : undefined,
+        height: 24,
+        minWidth: icon ? 24 : undefined,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
         border: `1px solid ${active ? v('--elucim-editor-border') : v('--elucim-editor-border-subtle')}`,
-        borderRadius: 4,
+        borderRadius: 6,
         background: active ? 'transparent' : v('--elucim-editor-input-bg'),
         color: active ? v('--elucim-editor-text-secondary') : v('--elucim-editor-text-muted'),
         cursor: 'pointer',

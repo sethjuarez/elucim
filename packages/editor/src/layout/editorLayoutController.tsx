@@ -12,6 +12,7 @@ import { LeftDock } from '../dock/LeftDock';
 import { Inspector } from '../inspector/Inspector';
 import { PanelShell } from '../panels/PanelShell';
 import { EditorTimelinePanel } from '../timeline/EditorTimelinePanel';
+import { PanelToggle } from '../chrome/PanelToggle';
 
 export interface EditorLayoutController {
   state: EditorState;
@@ -30,6 +31,8 @@ export interface EditorLayoutSlotsOptions {
   colorScheme?: string;
   contentTheme?: ElucimTheme;
   onDocumentChange: (document: ElucimDocument) => void;
+  onLeftClose?: () => void;
+  onRightClose?: () => void;
 }
 
 export interface EditorLayoutSlots {
@@ -42,6 +45,7 @@ export interface EditorLayoutSlots {
 export interface EditorLayoutCompositionOptions {
   theme?: ElucimTheme;
   editorTheme?: Record<string, string>;
+  showHeader?: boolean;
   document?: ElucimDocument;
   onDocumentChange?: (document: ElucimDocument) => void;
 }
@@ -67,6 +71,7 @@ export function useEditorLayoutController(onDocumentChange?: (document: ElucimDo
 export function useEditorLayoutComposition({
   theme,
   editorTheme,
+  showHeader = true,
   document: documentModel,
   onDocumentChange,
 }: EditorLayoutCompositionOptions): EditorLayoutComposition {
@@ -103,11 +108,14 @@ export function useEditorLayoutComposition({
     colorScheme,
     contentTheme: theme,
     onDocumentChange: commitDocumentChange,
+    onLeftClose: () => handleLeftVisibleChange(false),
+    onRightClose: () => shell.setRightVisible(false),
   });
 
   return {
     rootTheme: { themeVars, colorScheme },
     workspaceSurfaceProps: {
+      showHeader,
       leftVisible: shell.leftVisible,
       rightVisible: shell.rightVisible,
       timelineVisible: shell.timelineVisible,
@@ -137,9 +145,11 @@ export function buildEditorLayoutSlots({
   colorScheme,
   contentTheme,
   onDocumentChange,
+  onLeftClose,
+  onRightClose,
 }: EditorLayoutSlotsOptions): EditorLayoutSlots {
   return {
-    leftDock: <LeftDock document={activeDocument} onDocumentChange={onDocumentChange} preferredTab={preferredLeftTab} />,
+    leftDock: <LeftDock document={activeDocument} onDocumentChange={onDocumentChange} onClose={onLeftClose} preferredTab={preferredLeftTab} />,
     canvas: (
       <EditorCanvasPanel
         previewDocument={previewDocument}
@@ -149,7 +159,10 @@ export function buildEditorLayoutSlots({
       />
     ),
     inspector: (
-      <PanelShell title="Inspector">
+      <PanelShell
+        title="Inspector"
+        actions={onRightClose ? <PanelToggle label="Inspector" panel="right" active onClick={onRightClose} /> : undefined}
+      >
         <Inspector showCanvasDuration={!activeDocument} />
       </PanelShell>
     ),

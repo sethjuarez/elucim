@@ -2,8 +2,10 @@ import type React from 'react';
 import { EditorMainGrid } from './EditorMainGrid';
 import { EditorTimelineDock } from './EditorTimelineDock';
 import { EditorTopBar } from './EditorTopBar';
+import { PanelToggle } from './PanelToggle';
 
 export interface EditorWorkspaceSurfaceProps {
+  showHeader?: boolean;
   leftVisible: boolean;
   rightVisible: boolean;
   timelineVisible: boolean;
@@ -24,6 +26,7 @@ export interface EditorWorkspaceSurfaceProps {
 }
 
 export function EditorWorkspaceSurface({
+  showHeader = true,
   leftVisible,
   rightVisible,
   timelineVisible,
@@ -44,14 +47,7 @@ export function EditorWorkspaceSurface({
 }: EditorWorkspaceSurfaceProps) {
   return (
     <>
-      <EditorTopBar
-        leftVisible={leftVisible}
-        rightVisible={rightVisible}
-        timelineVisible={timelineVisible}
-        onLeftVisibleChange={onLeftVisibleChange}
-        onRightVisibleChange={onRightVisibleChange}
-        onTimelineVisibleChange={onTimelineVisibleChange}
-      />
+      {showHeader && <EditorTopBar />}
 
       <EditorMainGrid
         leftVisible={leftVisible}
@@ -65,12 +61,38 @@ export function EditorWorkspaceSurface({
         canvas={canvas}
         inspector={inspector}
       />
+      <div
+        aria-label="Collapsed editor panels"
+        style={{
+          position: 'absolute',
+          inset: showHeader ? '34px 0 0 0' : 0,
+          pointerEvents: 'none',
+          zIndex: 12,
+        }}
+      >
+        {!leftVisible && (
+          <div style={{ position: 'absolute', left: 8, top: 10, pointerEvents: 'auto' }}>
+            <PanelToggle label="left panel" panel="left" active={false} onClick={() => onLeftVisibleChange(true)} />
+          </div>
+        )}
+        {!rightVisible && (
+          <div style={{ position: 'absolute', right: 8, top: 10, pointerEvents: 'auto' }}>
+            <PanelToggle label="Inspector" panel="right" active={false} onClick={() => onRightVisibleChange(true)} />
+          </div>
+        )}
+        {!timelineVisible && (
+          <div style={{ position: 'absolute', left: '50%', bottom: 8, transform: 'translateX(-50%)', pointerEvents: 'auto' }}>
+            <PanelToggle label="timeline" panel="bottom" active={false} onClick={() => onTimelineVisibleChange(true)} />
+          </div>
+        )}
+      </div>
 
       <EditorTimelineDock
         visible={timelineVisible}
         stateMachineWorkspaceActive={stateMachineWorkspaceActive}
         timelineHeight={timelineHeight}
         onResizeStart={onTimelineResizeStart}
+        onClose={() => onTimelineVisibleChange(false)}
       >
         {timeline}
       </EditorTimelineDock>

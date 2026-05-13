@@ -4,8 +4,9 @@ import { ObjectsPanel } from '../objects/ObjectsPanel';
 import { PolishPanel } from '../panels/PolishPanel';
 import { Toolbar } from '../toolbar/Toolbar';
 import { v } from '../theme/tokens';
+import { PanelToggle } from '../chrome/PanelToggle';
 
-export function LeftDock({ document, onDocumentChange, preferredTab }: { document?: ElucimDocument; onDocumentChange?: (document: ElucimDocument) => void; preferredTab?: 'objects' | 'create' | 'polish' }) {
+export function LeftDock({ document, onDocumentChange, onClose, preferredTab }: { document?: ElucimDocument; onDocumentChange?: (document: ElucimDocument) => void; onClose?: () => void; preferredTab?: 'objects' | 'create' | 'polish' }) {
   const [tab, setTab] = useState<'objects' | 'create' | 'polish'>('objects');
   useEffect(() => {
     if (preferredTab === 'objects' || preferredTab === 'create' || preferredTab === 'polish') setTab(preferredTab);
@@ -17,9 +18,11 @@ export function LeftDock({ document, onDocumentChange, preferredTab }: { documen
         aria-label="Left editor panel"
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: 0,
-          padding: '0 8px',
+          gridTemplateColumns: onClose ? '1fr 1fr 1fr auto' : '1fr 1fr 1fr',
+          alignItems: 'center',
+          gap: 6,
+          minHeight: 34,
+          padding: '3px 8px 3px 10px',
           borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
           flexShrink: 0,
           background: v('--elucim-editor-input-bg'),
@@ -28,6 +31,7 @@ export function LeftDock({ document, onDocumentChange, preferredTab }: { documen
         <DockTab label="Objects" selected={tab === 'objects'} onClick={() => setTab('objects')} />
         <DockTab label="Create" selected={tab === 'create'} onClick={() => setTab('create')} />
         <DockTab label="Polish" selected={tab === 'polish'} onClick={() => setTab('polish')} />
+        {onClose && <PanelToggle label="left panel" panel="left" active onClick={onClose} />}
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
         {tab === 'create'
@@ -56,7 +60,7 @@ function DockTab({
       aria-selected={selected}
       onClick={onClick}
       style={{
-        height: 26,
+        height: 28,
         border: 'none',
         borderBottom: `2px solid ${selected ? v('--elucim-editor-accent') : 'transparent'}`,
         borderRadius: 0,
