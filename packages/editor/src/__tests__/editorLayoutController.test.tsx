@@ -5,7 +5,7 @@ import React from 'react';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ElucimDocument } from '@elucim/dsl';
-import { buildEditorLayoutSlots, useEditorLayoutController } from '../layout/editorLayoutController';
+import { buildEditorLayoutSlots, useEditorLayoutComposition, useEditorLayoutController } from '../layout/editorLayoutController';
 import { EditorProvider, useEditorState } from '../state/EditorProvider';
 import { createDefaultDocument } from '../state/types';
 
@@ -84,5 +84,21 @@ describe('editor layout controller', () => {
     expect(React.isValidElement(slots.canvas)).toBe(true);
     expect(React.isValidElement(slots.inspector)).toBe(true);
     expect(React.isValidElement(slots.timeline)).toBe(true);
+  });
+
+  it('composes root theme data and workspace surface props for the layout', () => {
+    const { result } = renderHook(() => useEditorLayoutComposition({
+      document: documentModel,
+      editorTheme: { accent: '#7c3aed' },
+    }), { wrapper });
+
+    expect(result.current.rootTheme.colorScheme).toBe('dark');
+    expect(result.current.rootTheme.themeVars['--elucim-editor-accent' as keyof React.CSSProperties]).toBe('#7c3aed');
+    expect(result.current.workspaceSurfaceProps.workspace).toBe('animate');
+    expect(result.current.workspaceSurfaceProps.selectedCount).toBe(1);
+    expect(React.isValidElement(result.current.workspaceSurfaceProps.leftDock)).toBe(true);
+    expect(React.isValidElement(result.current.workspaceSurfaceProps.canvas)).toBe(true);
+    expect(React.isValidElement(result.current.workspaceSurfaceProps.inspector)).toBe(true);
+    expect(React.isValidElement(result.current.workspaceSurfaceProps.timeline)).toBe(true);
   });
 });

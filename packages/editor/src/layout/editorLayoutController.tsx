@@ -1,11 +1,13 @@
 import React, { useCallback } from 'react';
 import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
+import type { EditorRootProps } from '../chrome/EditorRoot';
+import type { EditorWorkspaceSurfaceProps } from '../chrome/EditorWorkspaceSurface';
 import type { EditorState } from '../state/types';
 import { useEditorState } from '../state/EditorProvider';
-import type { EditorWorkspace } from '../shell/editorShell';
+import { resolveEditorThemeVars, type EditorWorkspace, useEditorShellState } from '../shell/editorShell';
 import { EditorCanvasPanel } from '../canvas/EditorCanvasPanel';
-import type { EditorStateMachinePreviewMode, EditorTimelinePreviewCallbacks } from '../canvas/editorPreviewController';
+import { useEditorPreviewController, type EditorStateMachinePreviewMode, type EditorTimelinePreviewCallbacks } from '../canvas/editorPreviewController';
 import { LeftDock } from '../dock/LeftDock';
 import { Inspector } from '../inspector/Inspector';
 import { PanelShell } from '../panels/PanelShell';
@@ -37,6 +39,18 @@ export interface EditorLayoutSlots {
   timeline: React.ReactNode;
 }
 
+export interface EditorLayoutCompositionOptions {
+  theme?: ElucimTheme;
+  editorTheme?: Record<string, string>;
+  document?: ElucimDocument;
+  onDocumentChange?: (document: ElucimDocument) => void;
+}
+
+export interface EditorLayoutComposition {
+  rootTheme: Pick<EditorRootProps, 'themeVars' | 'colorScheme'>;
+  workspaceSurfaceProps: EditorWorkspaceSurfaceProps;
+}
+
 export function useEditorLayoutController(onDocumentChange?: (document: ElucimDocument) => void): EditorLayoutController {
   const { state, dispatch } = useEditorState();
   const commitDocumentChange = useCallback((document: ElucimDocument) => {
@@ -48,6 +62,59 @@ export function useEditorLayoutController(onDocumentChange?: (document: ElucimDo
   }, [dispatch]);
 
   return { state, commitDocumentChange, stopPlayback };
+}
+
+export function useEditorLayoutComposition({
+  theme,
+  editorTheme,
+  document: documentModel,
+  onDocumentChange,
+}: EditorLayoutCompositionOptions): EditorLayoutComposition {
+  const { state, commitDocumentChange, stopPlayback } = useEditorLayoutController(onDocumentChange);
+  const activeDocument = documentModel ?? state.canonicalDocument;
+  const shell = useEditorShellState({
+    hasActiveDocument: Boolean(activeDocument),
+    isPlaying: state.isPlaying,
+    stopPlayback,
+  });
+  const { themeVars, colorScheme } = resolveEditorThemeVars(theme, editorTheme, state.themeOverrides);
+  const liveDocument = activeDocument;
+  const { previewDocument, stateMachinePreviewMode, timelinePreviewCallbacks } = useEditorPreviewController(liveDocument);
+  const slots = buildEditorLayoutSlots({
+    activeDocument,
+    liveDocument,
+    workspace: shell.workspace,
+    preferredLeftTab: shell.preferredLeftTab,
+    previewDocument,
+    previewMode: stateMachinePreviewMode,
+    timelinePreviewCallbacks,
+    colorScheme,
+    contentTheme: theme,
+    onDocumentChange: commitDocumentChange,
+  });
+
+  return {
+    rootTheme: { themeVars, colorScheme },
+    workspaceSurfaceProps: {
+      workspace: shell.workspace,
+      leftVisible: shell.leftVisible,
+      rightVisible: shell.rightVisible,
+      timelineVisible: shell.timelineVisible,
+      leftWidth: shell.leftWidth,
+      rightWidth: shell.rightWidth,
+      timelineHeight: shell.timelineHeight,
+      selectedCount: state.selectedIds.length,
+      stateMachineWorkspaceActive: shell.stateMachineWorkspaceActive,
+      onWorkspaceSelect: shell.selectWorkspace,
+      onLeftVisibleChange: shell.setLeftVisible,
+      onRightVisibleChange: shell.setRightVisible,
+      onTimelineVisibleChange: shell.setTimelineVisible,
+      onLeftResizeStart: shell.startSideResize('left'),
+      onRightResizeStart: shell.startSideResize('right'),
+      onTimelineResizeStart: shell.startTimelineResize,
+      ...slots,
+    },
+  };
 }
 
 export function buildEditorLayoutSlots({
