@@ -13,6 +13,10 @@ const bannedPublicDocumentTerms = [
   /\bv1\b/i,
   /\bv2\b/i,
 ];
+const bannedPublicObjectOrderTerms = [
+  /\bhierarchy order\b/i,
+  /\beditor hierarchy\b/i,
+];
 const cssChromeRoots = [
   'apps/elucim-app/src',
   'docs/src/styles',
@@ -83,6 +87,25 @@ function assertNoPublicVersionTerms() {
   }
 }
 
+function assertNoPublicObjectOrderTerms() {
+  const offenders = [];
+  for (const root of publicTerminologyRoots) {
+    for (const file of listFiles(root, ['.md', '.mdx'])) {
+      const source = stripMarkdownCodeFences(readFileSync(file, 'utf8'));
+      for (const pattern of bannedPublicObjectOrderTerms) {
+        const globalPattern = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`);
+        for (const match of source.matchAll(globalPattern)) {
+          const { line, column } = lineColumn(source, match.index);
+          offenders.push(`${relative(repoRoot, file)}:${line}:${column} contains "${match[0]}"`);
+        }
+      }
+    }
+  }
+  if (offenders.length > 0) {
+    throw new Error(`Public docs must describe editor stacking as Object order, not hierarchy order/editor hierarchy:\n${offenders.join('\n')}`);
+  }
+}
+
 function assertCssLiteralsStayInTokenDeclarations() {
   const offenders = [];
   for (const file of cssChromeRoots.flatMap(root => listFiles(root, ['.css']))) {
@@ -117,6 +140,7 @@ function assertEditorColorLiteralsStayInTokenBoundaries() {
 }
 
 assertNoPublicVersionTerms();
+assertNoPublicObjectOrderTerms();
 assertCssLiteralsStayInTokenDeclarations();
 assertEditorColorLiteralsStayInTokenBoundaries();
-console.log('Guardrails passed: public document language and chrome CSS token usage.');
+console.log('Guardrails passed: public document/Object language and chrome CSS token usage.');
