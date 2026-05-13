@@ -65,6 +65,8 @@ interface StateMachineGraphNodeData extends Record<string, unknown> {
   timeline?: string;
   selected: boolean;
   direction: GraphLayoutDirection;
+  canDelete?: boolean;
+  onDelete?: () => void;
 }
 
 interface StateMachineGraphEdgeData extends Record<string, unknown> {
@@ -211,6 +213,21 @@ const motionListActionButtonStyle = (active: boolean, visible = true): React.CSS
   cursor: 'pointer',
   opacity: visible ? 1 : 0,
   pointerEvents: visible ? 'auto' : 'none',
+  padding: 0,
+});
+const canvasOverlayButtonStyle = (active: boolean, disabled = false): React.CSSProperties => ({
+  width: 28,
+  height: 28,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: `1px solid ${active ? v('--elucim-editor-accent') : v('--elucim-editor-border-subtle')}`,
+  borderRadius: 7,
+  background: active
+    ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 18%, ${v('--elucim-editor-input-bg')})`
+    : `color-mix(in srgb, ${v('--elucim-editor-input-bg')} 88%, transparent)`,
+  color: disabled ? v('--elucim-editor-text-disabled') : active ? v('--elucim-editor-fg') : v('--elucim-editor-text-secondary'),
+  cursor: disabled ? 'not-allowed' : 'pointer',
   padding: 0,
 });
 
@@ -1888,7 +1905,7 @@ function TimelineClipRows({
             );
           })}
         </div>
-        <div style={{ minHeight: 0, overflow: 'hidden', paddingRight: 10, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ minHeight: 0, overflow: 'hidden', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
       {activeMotionType === 'stateMachine' ? selectedMachine ? (
         <StateMachineTimelineGraph
@@ -1905,7 +1922,7 @@ function TimelineClipRows({
           onApplyLayout={(entryPosition, statePositions) => applyMachineGraphLayout(selectedMachine, entryPosition, statePositions)}
           onMoveViewport={viewport => moveMachineViewport(selectedMachine, viewport)}
           onAddState={() => addMachineState(selectedMachine)}
-          onDeleteState={selectedStateId ? () => deleteMachineState(selectedMachine, selectedStateId) : undefined}
+          onDeleteState={stateId => deleteMachineState(selectedMachine, stateId)}
           onPreviewMachine={() => playStateMachine(selectedMachine)}
           onResetPreview={() => resetStateMachinePreview(selectedMachine)}
           onPreviewState={stateId => onPreviewState(selectedMachine.id, stateId)}
@@ -2509,6 +2526,7 @@ function exitNodePosition(statePositions: Map<string, { x: number; y: number }>,
 }
 
 function StateMachineGraphNode({ data }: NodeProps<Node<StateMachineGraphNodeData>>) {
+  const icons = useEditorIcons();
   const direction = data.direction;
   if (data.kind === 'entry') {
     return (
@@ -2608,6 +2626,34 @@ function StateMachineGraphNode({ data }: NodeProps<Node<StateMachineGraphNodeDat
       />
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
         <div style={{ fontWeight: 750, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.stateId}</div>
+        {data.selected && data.canDelete && data.onDelete && (
+          <button
+            type="button"
+            aria-label={`Remove state ${data.stateId}`}
+            title="Remove state"
+            onPointerDown={event => event.stopPropagation()}
+            onClick={event => {
+              event.stopPropagation();
+              data.onDelete?.();
+            }}
+            style={{
+              width: 18,
+              height: 18,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `1px solid ${v('--elucim-editor-border-subtle')}`,
+              borderRadius: 5,
+              background: 'transparent',
+              color: v('--elucim-editor-text-secondary'),
+              cursor: 'pointer',
+              padding: 0,
+              flexShrink: 0,
+            }}
+          >
+            {icons.Remove({ size: 11 })}
+          </button>
+        )}
       </div>
       <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 9, marginTop: 3 }}>
         {data.timeline ? data.timeline : 'no animation'}
@@ -2685,6 +2731,25 @@ function StateMachineGraphEdge({
   );
 }
 
+function LayoutDirectionIcon({ direction }: { direction: GraphLayoutDirection }) {
+  const horizontal = direction === 'horizontal';
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <line
+        x1={horizontal ? 3 : 7}
+        y1={horizontal ? 7 : 3}
+        x2={horizontal ? 11 : 7}
+        y2={horizontal ? 7 : 11}
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <circle cx={horizontal ? 3 : 7} cy={horizontal ? 7 : 3} r="2" fill="currentColor" />
+      <circle cx={horizontal ? 11 : 7} cy={horizontal ? 7 : 11} r="2" fill="currentColor" />
+    </svg>
+  );
+}
+
 function StateMachineTimelineGraph({
   machine,
   selectedStateId,
@@ -2716,7 +2781,7 @@ function StateMachineTimelineGraph({
   onApplyLayout: (entryPosition: { x: number; y: number }, statePositions: Map<string, { x: number; y: number }>) => void;
   onMoveViewport: (viewport: ReactFlowViewport) => void;
   onAddState: () => void;
-  onDeleteState?: () => void;
+  onDeleteState: (stateId: string) => void;
   onPreviewMachine: () => void;
   onResetPreview: () => void;
   onPreviewState: (stateId: string) => void;
@@ -2726,6 +2791,7 @@ function StateMachineTimelineGraph({
   onTriggerEvent: (stateId: string, eventName: string, key?: string) => boolean;
   onConnectStates: (sourceStateId: string, targetStateId: string) => string | undefined;
 }) {
+  const icons = useEditorIcons();
   const states = useMemo(() => Object.entries(machine.states), [machine.states]);
   const transitions = useMemo(() => machine.transitions ?? [], [machine.transitions]);
   const graphTransitions = useMemo(() => transitions.filter(transition => transition.from !== 'any' && transition.from !== 'entry'), [transitions]);
@@ -2829,6 +2895,8 @@ function StateMachineTimelineGraph({
         timeline: state.timeline,
         selected,
         direction: layoutDirection,
+        canDelete: selectedStateId === stateId && states.length > 1,
+        onDelete: () => onDeleteState(stateId),
       },
       selected,
       draggable: true,
@@ -2847,7 +2915,7 @@ function StateMachineTimelineGraph({
         }
       : null;
     return exitNode ? [entryNode, ...stateNodes, exitNode] : [entryNode, ...stateNodes];
-  }, [exitTransitions.length, graphPositions, layoutDirection, localPositions, machine.entry, previewStatus?.stateId, selectedStateId, selectedTransitionEvent, statePositions, states]);
+  }, [exitTransitions.length, graphPositions, layoutDirection, localPositions, machine.entry, onDeleteState, previewStatus?.stateId, selectedStateId, selectedTransitionEvent, statePositions, states]);
   const [flowNodes, setFlowNodes] = useState(nodes);
   useEffect(() => {
     setFlowNodes(currentNodes => nodes.map(node => {
@@ -2978,82 +3046,8 @@ function StateMachineTimelineGraph({
       aria-label={`State machine graph ${machine.id}`}
       tabIndex={0}
       onKeyDown={handlePreviewKeyDown}
-      style={{ height: '100%', minHeight: 180, display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr)', background: v('--elucim-editor-input-bg'), outline: 'none' }}
+      style={{ height: '100%', minHeight: 180, display: 'grid', gridTemplateRows: 'minmax(0, 1fr) auto', background: v('--elucim-editor-input-bg'), outline: 'none' }}
     >
-      <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap', padding: '6px 8px', borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-surface') }}>
-        <button
-          type="button"
-          aria-label={`Preview state machine ${machine.id}`}
-          onClick={onPreviewMachine}
-          style={chromeTabButtonStyle(false)}
-        >
-          Preview
-        </button>
-        <button
-          type="button"
-          aria-label={`Restart state machine preview ${machine.id}`}
-          onClick={onResetPreview}
-          disabled={!previewStatus}
-          style={chromeTabButtonStyle(false)}
-        >
-          Restart preview
-        </button>
-        <span aria-live="polite" style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, fontWeight: 700, padding: '0 6px', whiteSpace: 'nowrap', flex: '1 1 220px', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {statusText}
-        </span>
-        {previewStatus && exposedTransitions.map(transition => (
-          <button
-            key={transition.id}
-            type="button"
-            aria-label={`Trigger ${transition.trigger} event from ${eventSourceStateId}`}
-            disabled={!eventSourceStateId}
-            onClick={() => eventSourceStateId && onTriggerEvent(eventSourceStateId, transition.trigger!, transition.key)}
-            style={chromeTabButtonStyle(false)}
-          >
-            {previewEventLabel(transition)}
-          </button>
-        ))}
-        {previewStatus && onCompleteTarget && (
-          <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, whiteSpace: 'nowrap' }}>
-            Next auto-runs {'->'} {onCompleteTarget}
-          </span>
-        )}
-        <button
-          type="button"
-          aria-label={`Add state to ${machine.id}`}
-          onClick={onAddState}
-          style={chromeTabButtonStyle(false)}
-        >
-          + State
-        </button>
-        <button
-          type="button"
-          aria-label={selectedStateId ? `Remove state ${selectedStateId}` : 'Remove selected state'}
-          disabled={!selectedStateId || Object.keys(machine.states).length <= 1}
-          onClick={onDeleteState}
-          style={chromeTabButtonStyle(false)}
-        >
-          - State
-        </button>
-        <button
-          type="button"
-          aria-label="Use horizontal state machine layout"
-          aria-pressed={layoutDirection === 'horizontal'}
-          onClick={() => applyDagLayout('horizontal')}
-          style={chromeTabButtonStyle(layoutDirection === 'horizontal')}
-        >
-          Horizontal
-        </button>
-        <button
-          type="button"
-          aria-label="Use vertical state machine layout"
-          aria-pressed={layoutDirection === 'vertical'}
-          onClick={() => applyDagLayout('vertical')}
-          style={chromeTabButtonStyle(layoutDirection === 'vertical')}
-        >
-          Vertical
-        </button>
-      </div>
       <div
         aria-label={`State machine graph canvas ${machine.id}`}
         style={{
@@ -3064,6 +3058,78 @@ function StateMachineTimelineGraph({
           background: v('--elucim-editor-input-bg'),
         }}
       >
+        <div
+          aria-label={`State machine canvas controls for ${machine.id}`}
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            display: 'inline-flex',
+            gap: 4,
+            zIndex: 5,
+          }}
+        >
+          <button
+            type="button"
+            aria-label={`Preview state machine ${machine.id}`}
+            title="Preview"
+            onClick={onPreviewMachine}
+            style={canvasOverlayButtonStyle(false)}
+          >
+            {icons.Play({ size: 13 })}
+          </button>
+          <button
+            type="button"
+            aria-label={`Restart state machine preview ${machine.id}`}
+            title="Restart preview"
+            onClick={onResetPreview}
+            disabled={!previewStatus}
+            style={canvasOverlayButtonStyle(false, !previewStatus)}
+          >
+            {icons.SkipStart({ size: 13 })}
+          </button>
+          <button
+            type="button"
+            aria-label={`Add state to ${machine.id}`}
+            title="Add state"
+            onClick={onAddState}
+            style={canvasOverlayButtonStyle(false)}
+          >
+            {icons.Add({ size: 13 })}
+          </button>
+        </div>
+        <div
+          aria-label={`State machine layout controls for ${machine.id}`}
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            display: 'inline-flex',
+            gap: 4,
+            zIndex: 5,
+          }}
+        >
+          <button
+            type="button"
+            aria-label="Use horizontal state machine layout"
+            aria-pressed={layoutDirection === 'horizontal'}
+            title="Horizontal layout"
+            onClick={() => applyDagLayout('horizontal')}
+            style={canvasOverlayButtonStyle(layoutDirection === 'horizontal')}
+          >
+            <LayoutDirectionIcon direction="horizontal" />
+          </button>
+          <button
+            type="button"
+            aria-label="Use vertical state machine layout"
+            aria-pressed={layoutDirection === 'vertical'}
+            title="Vertical layout"
+            onClick={() => applyDagLayout('vertical')}
+            style={canvasOverlayButtonStyle(layoutDirection === 'vertical')}
+          >
+            <LayoutDirectionIcon direction="vertical" />
+          </button>
+        </div>
         <ReactFlow
           key={machine.id}
           nodes={flowNodes}
@@ -3106,6 +3172,28 @@ function StateMachineTimelineGraph({
             color: v('--elucim-editor-fg'),
           }}
         />
+      </div>
+      <div style={{ minHeight: 40, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', padding: '6px 8px', borderTop: `1px solid ${v('--elucim-editor-border-subtle')}`, background: v('--elucim-editor-surface') }}>
+        <span aria-live="polite" style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', flex: '1 1 220px', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {statusText}
+        </span>
+        {previewStatus && exposedTransitions.map(transition => (
+          <button
+            key={transition.id}
+            type="button"
+            aria-label={`Trigger ${transition.trigger} event from ${eventSourceStateId}`}
+            disabled={!eventSourceStateId}
+            onClick={() => eventSourceStateId && onTriggerEvent(eventSourceStateId, transition.trigger!, transition.key)}
+            style={chromeTabButtonStyle(false)}
+          >
+            {previewEventLabel(transition)}
+          </button>
+        ))}
+        {previewStatus && onCompleteTarget && (
+          <span style={{ color: v('--elucim-editor-text-muted'), fontSize: 11, whiteSpace: 'nowrap' }}>
+            Next auto-runs {'->'} {onCompleteTarget}
+          </span>
+        )}
       </div>
     </section>
   );
