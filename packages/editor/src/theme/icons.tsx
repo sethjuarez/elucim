@@ -19,6 +19,7 @@ import {
   Square, Circle, Image, Minus, MoveRight,
   Type, Sigma,
   BarChart3, Network,
+  Plus, Sparkles, X,
   Undo2, Redo2,
   Play, Pause, SkipBack, SkipForward, StepBack, StepForward,
   ZoomIn, ZoomOut, Maximize,
@@ -76,6 +77,9 @@ export interface EditorIcons {
   Ungroup: IconComponent;
   Sequence: IconComponent;
   // Timeline / playback
+  Add: IconComponent;
+  AutoIntro: IconComponent;
+  Remove: IconComponent;
   Play: IconComponent;
   Pause: IconComponent;
   StepForward: IconComponent;
@@ -132,6 +136,9 @@ export const DEFAULT_ICONS: EditorIcons = {
   Sequence: (p) => <Layers size={p?.size ?? TB} />,
 
   // Timeline / playback (14px)
+  Add:          (p) => <Plus size={p?.size ?? TL} />,
+  AutoIntro:    (p) => <Sparkles size={p?.size ?? TL} />,
+  Remove:       (p) => <X size={p?.size ?? TL} />,
   Play:         (p) => <Play size={p?.size ?? TL} fill="currentColor" />,
   Pause:        (p) => <Pause size={p?.size ?? TL} fill="currentColor" />,
   StepForward:  (p) => <StepForward size={p?.size ?? TL} fill="currentColor" />,
@@ -223,6 +230,9 @@ export const IconRedo = DEFAULT_ICONS.Redo;
 export const IconGroup = DEFAULT_ICONS.Group;
 export const IconUngroup = DEFAULT_ICONS.Ungroup;
 export const IconSequence = DEFAULT_ICONS.Sequence;
+export const IconAdd = DEFAULT_ICONS.Add;
+export const IconAutoIntro = DEFAULT_ICONS.AutoIntro;
+export const IconRemove = DEFAULT_ICONS.Remove;
 export const IconPlay = DEFAULT_ICONS.Play;
 export const IconPause = DEFAULT_ICONS.Pause;
 export const IconStepForward = DEFAULT_ICONS.StepForward;
