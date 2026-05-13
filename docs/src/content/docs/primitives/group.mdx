@@ -25,6 +25,10 @@ The `group` primitive is a composable container that collects child elements int
 
 Group children render in their `children` array order. Later children paint on top.
 
+:::note
+Groups are transform/fade containers. Animating `opacity`, `translate`, `scale`, or `rotate` on a group affects the whole composite visual. Paint properties such as `fill` and `stroke` belong to drawable child objects, so apply those tracks to the children or use shared color tokens when a grouped visual needs to recolor together.
+:::
+
 ## Code Examples
 
 ### Basic grouping
