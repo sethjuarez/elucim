@@ -68,6 +68,8 @@ describe('StateMachinePanel', () => {
     expect(screen.getByRole('button', { name: 'Preview state machine deck' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Play state machine deck' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Preview state idle animation' })).toBeNull();
+    expect(screen.getByLabelText('State machine authoring guidance').textContent).toContain('Drag from a state connector');
+    expect(screen.getByText('Authoring checklist')).toBeTruthy();
     expect(screen.getByText('Preview starts at idle')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Trigger start event from idle' })).toBeNull();
     expect(screen.queryByText('Events live on transition edges. Select an edge to edit its event, then fire that event while its source state is active.')).toBeNull();
@@ -188,12 +190,19 @@ describe('StateMachinePanel', () => {
     }));
 
     fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
+    expect(screen.getByText('Create a state machine')).toBeTruthy();
+    expect(screen.getByText('State machines turn animation clips into interactive flows with Entry, states, transitions, and Exit.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Create first state machine' })).toBeTruthy();
+
     fireEvent.click(screen.getByRole('button', { name: 'Add state machine' }));
 
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].stateMachines?.['state-machine']).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Add state to state-machine' }));
 
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].stateMachines['state-machine'].states.state).toBeTruthy());
+    expect(screen.getByText('Next steps for this state')).toBeTruthy();
+    expect(screen.getByText('Assign an animation so this state changes the canvas during preview.')).toBeTruthy();
+    expect(screen.getByText('Drag a connector handle to another state to create a transition.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Add transition from state' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove selected state state' }));
@@ -284,19 +293,21 @@ describe('StateMachinePanel', () => {
     fireEvent.click(screen.getByLabelText('Select graph state idle'));
     fireEvent.click(screen.getByRole('button', { name: 'Edit Event: start transition from idle' }));
 
+    expect(screen.getByText('Transition editing')).toBeTruthy();
+    expect(screen.getByText('Choose Event for user-driven moves or Next for automatic flow after the source animation. onKey captures Space as a key; Tab still moves focus.')).toBeTruthy();
     expect(screen.getByLabelText('Transition idle-start source').textContent).toBe('idle');
     expect(screen.getByLabelText('Transition idle-start type')).toBeTruthy();
     expect(screen.getByLabelText('Transition idle-start target state')).toBeTruthy();
     expect(screen.getByLabelText('Transition idle-start event preset')).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText('Transition idle-start event preset'), { target: { value: 'onKey' } });
-    fireEvent.change(await screen.findByLabelText('Transition idle-start key'), { target: { value: 'A' } });
-    fireEvent.blur(screen.getByLabelText('Transition idle-start key'));
+    const keyInput = await screen.findByLabelText('Transition idle-start key');
+    fireEvent.keyDown(keyInput, { key: ' ', code: 'Space' });
     fireEvent.change(screen.getByLabelText('Transition idle-start target state'), { target: { value: 'entry' } });
 
     await waitFor(() => {
       const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument;
-      expect(latest.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'entry', trigger: 'onKey', key: 'A' });
+      expect(latest.stateMachines?.deck.transitions?.[0]).toMatchObject({ from: 'idle', to: 'entry', trigger: 'onKey', key: 'Space' });
     });
 
     fireEvent.change(screen.getByLabelText('Transition idle-start type'), { target: { value: 'next' } });

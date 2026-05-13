@@ -6,6 +6,7 @@ async function openStateMachineWorkspace(page: Page) {
   await page.goto(EDITOR_URL);
   await page.getByRole('tab', { name: 'State machines motion tab' }).click();
   await expect(page.getByLabel('State machine graph walkthrough')).toBeVisible();
+  await expect(page.getByLabel('State machine authoring guidance')).toContainText('Drag from a state connector');
 }
 
 function graphNode(page: Page, id: string): Locator {
@@ -117,10 +118,12 @@ test.describe('Editor state-machine interactions', () => {
     await openStateMachineWorkspace(page);
 
     await page.getByRole('button', { name: 'Edit onStart transition from entry' }).click();
+    await expect(page.getByText('-> idle').first()).toBeVisible();
     await expect(page.getByText(/controls how the machine leaves Entry/)).toBeVisible();
     await page.getByLabel(/Transition entry-start event preset/).selectOption('onClick');
 
     await page.getByRole('button', { name: 'Preview state machine walkthrough' }).click();
+    await expect(page.getByLabel('State machine authoring guidance')).not.toBeVisible();
     await expect(page.getByText(/Waiting at Entry for Click/)).toBeVisible();
     await expect(page.getByLabel('Preview mode canvas')).toContainText(/Preview mode/);
     await expect(page.getByRole('button', { name: 'Exit state machine preview mode' })).toBeVisible();
@@ -132,6 +135,7 @@ test.describe('Editor state-machine interactions', () => {
     await expect(page.getByText(/Previewing idle via onClick from entry/)).toBeVisible();
     await page.getByRole('button', { name: 'Exit state machine preview mode' }).click();
     await expect(page.getByLabel('Preview mode canvas')).not.toBeVisible();
+    await expect(page.getByLabel('State machine authoring guidance')).toBeVisible();
   });
 
   test('waits for an onClick state transition after the source animation completes', async ({ page }) => {
