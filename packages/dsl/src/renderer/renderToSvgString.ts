@@ -2,9 +2,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 import { renderRoot } from './renderElements';
 import { validate } from '../validator/validate';
-import { toRenderableV1 as toRenderableDocument } from '../v2/migrate';
+import { toRenderableDocument } from '../document';
 import type { ElucimDocument as RenderableDocument } from '../schema/types';
-import type { ElucimV2Document as ElucimDocument } from '../v2/types';
+import type { ElucimDocument } from '../document';
 
 export interface RenderToSvgStringOptions {
   width?: number;

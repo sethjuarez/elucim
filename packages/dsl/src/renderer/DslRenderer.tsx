@@ -1,11 +1,15 @@
 import React, { forwardRef, useImperativeHandle, useMemo, useRef, useSyncExternalStore } from 'react';
 import { validate } from '../validator/validate';
 import type { ElucimDocument as RenderableDocument } from '../schema/types';
-import type { ElucimV2Document as ElucimDocument } from '../v2/types';
-import { migrateV2ToV1 as createRenderableDocument, toRenderableV1 as toRenderableDocument } from '../v2/migrate';
-import { getDocumentLinearDuration } from '../v2/duration';
-import { applyTimelineFrames, type ElucimV2TimelineFrameSelection } from '../v2/timeline';
-import { getInitialStateSnapshot, getStateMachineVisualFrames } from '../v2/stateMachine';
+import type { ElucimDocument, ElucimTimelineFrameSelection } from '../document';
+import {
+  applyTimelineFrames,
+  createRenderableDocument,
+  getDocumentLinearDuration,
+  getInitialStateSnapshot,
+  getStateMachineVisualFrames,
+  toRenderableDocument,
+} from '../document';
 import { renderRoot } from './renderElements';
 import { useStateMachineRuntime } from './useStateMachineRuntime';
 import {
@@ -299,19 +303,19 @@ function resolvePoster(poster: 'first' | 'last' | number, dsl: RenderableDocumen
 
 function resolvePosterRenderableDsl(poster: 'first' | 'last' | number, dsl: ElucimDocument | RenderableDocument): RenderableDocument | undefined {
   if (dsl.version !== '2.0') return undefined;
-  const frame = resolveV2PosterFrame(poster, dsl);
-  const frames = getV2PosterTimelineFrames(dsl, frame);
+  const frame = resolveDocumentPosterFrame(poster, dsl);
+  const frames = getPosterTimelineFrames(dsl, frame);
   const posterDoc = frames.length > 0 ? applyTimelineFrames(dsl, frames) : dsl;
   return createRenderableDocument(posterDoc);
 }
 
-function resolveV2PosterFrame(poster: 'first' | 'last' | number, dsl: ElucimDocument): number {
+function resolveDocumentPosterFrame(poster: 'first' | 'last' | number, dsl: ElucimDocument): number {
   if (poster === 'first') return 0;
   if (poster === 'last') return getDocumentLinearDuration(dsl);
   return Math.max(0, poster);
 }
 
-function getV2PosterTimelineFrames(dsl: ElucimDocument, frame: number): ElucimV2TimelineFrameSelection[] {
+function getPosterTimelineFrames(dsl: ElucimDocument, frame: number): ElucimTimelineFrameSelection[] {
   const machineId = dsl.defaultStateMachine;
   if (machineId && dsl.stateMachines?.[machineId]) {
     const snapshot = getInitialStateSnapshot(dsl, machineId);

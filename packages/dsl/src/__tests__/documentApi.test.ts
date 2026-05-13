@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyTimelineFrames,
   applyCommand,
   createDocumentFromRenderable,
   createRenderableDocument,
+  getStateMachineRunVisualFrames,
   normalizeDocument,
+  startStateMachineRun,
   summarizeDocument,
   toRenderableDocument,
   validateDocument,
@@ -14,7 +17,6 @@ import {
   type ElucimStateMachine,
   type ElucimTimeline,
 } from '../index';
-import type { ElucimV2Document } from '../v2/types';
 
 describe('canonical Elucim Document API', () => {
   it('exposes document, element, timeline, state machine, and command types without v1/v2 naming', () => {
@@ -45,13 +47,17 @@ describe('canonical Elucim Document API', () => {
       defaultStateMachine: 'presentation',
     };
     const command: ElucimCommand = { op: 'updateMetadata', metadata: { title: 'Canonical document API' } };
-    const aliasCheck: ElucimDocument = document as ElucimV2Document;
+    const aliasCheck: ElucimDocument = document;
 
     const result = applyCommand(document, command);
     const summary: ElucimDocumentSummary = summarizeDocument(result.document);
+    const run = startStateMachineRun(document, 'presentation');
+    const visualFrames = getStateMachineRunVisualFrames(document, run);
+    const firstVisualFrame = applyTimelineFrames(document, visualFrames);
 
     expect(validateDocument(result.document).valid).toBe(true);
     expect(aliasCheck.scene.children).toEqual(['title']);
+    expect(firstVisualFrame.elements.title.props.opacity).toBe(0);
     expect(summary.elementCount).toBe(1);
     expect(summary.timelines).toEqual(['intro']);
     expect(summary.stateMachines).toEqual(['presentation']);

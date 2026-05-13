@@ -1,18 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ElucimDocument } from '../schema/types';
-import type { ElucimV2Document } from '../v2/types';
-import { migrateV2ToV1 as createRenderableDocument } from '../v2/migrate';
-import { applyTimelineFrames } from '../v2/timeline';
+import type { ElucimDocument as RenderableDocument } from '../schema/types';
+import type { ElucimDocument, ElucimStateMachineRun } from '../document';
 import {
   advanceStateMachineRunFrame,
+  applyTimelineFrames,
+  createRenderableDocument,
   dispatchStateMachineRunEvent,
   getStateMachineRunVisualFrames,
   startStateMachineRun,
-  type ElucimV2StateMachineRun,
-} from '../v2/stateMachine';
+} from '../document';
 
 interface StateMachineRuntimeOptions {
-  dsl: ElucimDocument | ElucimV2Document;
+  dsl: RenderableDocument | ElucimDocument;
   valid: boolean;
   poster?: 'first' | 'last' | number;
   loop?: boolean;
@@ -21,7 +20,7 @@ interface StateMachineRuntimeOptions {
 
 interface StateMachineRuntime {
   enabled: boolean;
-  renderableDsl?: ElucimDocument;
+  renderableDsl?: RenderableDocument;
   frameOverride?: number;
   getTotalFrames(): number;
   seekToFrame(frame: number): void;
@@ -43,47 +42,47 @@ export function useStateMachineRuntime({
   loop,
   onPlayStateChange,
 }: StateMachineRuntimeOptions): StateMachineRuntime {
-  const v2StateMachineDoc = useMemo(() => getV2StateMachineDocument(dsl), [dsl]);
-  const stateMachineId = v2StateMachineDoc?.defaultStateMachine;
-  const enabled = valid && poster === undefined && Boolean(stateMachineId && v2StateMachineDoc?.stateMachines?.[stateMachineId]);
-  const shouldLoop = loop ?? v2StateMachineDoc?.scene.loop ?? false;
-  const [run, setRun] = useState<ElucimV2StateMachineRun | null>(null);
+  const stateMachineDocument = useMemo(() => getStateMachineDocument(dsl), [dsl]);
+  const stateMachineId = stateMachineDocument?.defaultStateMachine;
+  const enabled = valid && poster === undefined && Boolean(stateMachineId && stateMachineDocument?.stateMachines?.[stateMachineId]);
+  const shouldLoop = loop ?? stateMachineDocument?.scene.loop ?? false;
+  const [run, setRun] = useState<ElucimStateMachineRun | null>(null);
   const effectiveRun = useMemo(() => {
-    if (!enabled || !v2StateMachineDoc || !stateMachineId) return null;
-    return run?.machineId === stateMachineId ? run : startStateMachineRun(v2StateMachineDoc, stateMachineId);
-  }, [enabled, run, stateMachineId, v2StateMachineDoc]);
+    if (!enabled || !stateMachineDocument || !stateMachineId) return null;
+    return run?.machineId === stateMachineId ? run : startStateMachineRun(stateMachineDocument, stateMachineId);
+  }, [enabled, run, stateMachineDocument, stateMachineId]);
 
   useEffect(() => {
-    if (!enabled || !v2StateMachineDoc || !stateMachineId) {
+    if (!enabled || !stateMachineDocument || !stateMachineId) {
       setRun(null);
       return;
     }
-    setRun(startStateMachineRun(v2StateMachineDoc, stateMachineId));
-  }, [enabled, stateMachineId, v2StateMachineDoc]);
+    setRun(startStateMachineRun(stateMachineDocument, stateMachineId));
+  }, [enabled, stateMachineDocument, stateMachineId]);
 
   const triggerEvent = useCallback((event: string, key?: string) => {
-    if (!enabled || !v2StateMachineDoc || !effectiveRun) return false;
-    const next = dispatchStateMachineRunEvent(v2StateMachineDoc, effectiveRun, key ? { name: event, key } : event);
+    if (!enabled || !stateMachineDocument || !effectiveRun) return false;
+    const next = dispatchStateMachineRunEvent(stateMachineDocument, effectiveRun, key ? { name: event, key } : event);
     if (!next.changed) return false;
     setRun(next);
     onPlayStateChange?.(next.playing);
     return true;
-  }, [effectiveRun, enabled, onPlayStateChange, v2StateMachineDoc]);
+  }, [effectiveRun, enabled, onPlayStateChange, stateMachineDocument]);
 
   useEffect(() => {
-    if (!enabled || !v2StateMachineDoc || !effectiveRun?.playing) return;
+    if (!enabled || !stateMachineDocument || !effectiveRun?.playing) return;
     let raf = 0;
     let lastTime = performance.now();
-    const fps = v2StateMachineDoc.scene.fps ?? 60;
+    const fps = stateMachineDocument.scene.fps ?? 60;
     const tick = (now: number) => {
       const elapsed = now - lastTime;
       const frameDelta = Math.floor((elapsed / 1000) * fps);
       if (frameDelta >= 1) {
         setRun(current => {
           if (!current?.playing) return current;
-          const next = advanceStateMachineRunFrame(v2StateMachineDoc, current, frameDelta);
+          const next = advanceStateMachineRunFrame(stateMachineDocument, current, frameDelta);
           if (shouldLoop && stateMachineId && (next.finished || next.exited)) {
-            const restarted = startStateMachineRun(v2StateMachineDoc, stateMachineId);
+            const restarted = startStateMachineRun(stateMachineDocument, stateMachineId);
             if (next.playing !== restarted.playing) onPlayStateChange?.(restarted.playing);
             return restarted;
           }
@@ -96,10 +95,10 @@ export function useStateMachineRuntime({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [effectiveRun?.playing, enabled, onPlayStateChange, shouldLoop, stateMachineId, v2StateMachineDoc]);
+  }, [effectiveRun?.playing, enabled, onPlayStateChange, shouldLoop, stateMachineDocument, stateMachineId]);
 
-  const renderableDsl = enabled && v2StateMachineDoc && effectiveRun
-    ? stateMachineRunToRenderableDocument(v2StateMachineDoc, effectiveRun)
+  const renderableDsl = enabled && stateMachineDocument && effectiveRun
+    ? stateMachineRunToRenderableDocument(stateMachineDocument, effectiveRun)
     : undefined;
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -124,13 +123,13 @@ export function useStateMachineRuntime({
     enabled,
     renderableDsl,
     frameOverride: enabled ? 0 : undefined,
-    getTotalFrames: () => effectiveRun ? getRunDuration(v2StateMachineDoc, effectiveRun) + 1 : 0,
+    getTotalFrames: () => effectiveRun ? getRunDuration(stateMachineDocument, effectiveRun) + 1 : 0,
     seekToFrame: frame => {
-      setRun(current => current ? { ...current, currentFrame: Math.max(0, Math.min(frame, getRunDuration(v2StateMachineDoc, current))) } : current);
+      setRun(current => current ? { ...current, currentFrame: Math.max(0, Math.min(frame, getRunDuration(stateMachineDocument, current))) } : current);
     },
     play: () => {
-      if (shouldLoop && effectiveRun && (effectiveRun.finished || effectiveRun.exited) && v2StateMachineDoc && stateMachineId) {
-        const restarted = startStateMachineRun(v2StateMachineDoc, stateMachineId);
+      if (shouldLoop && effectiveRun && (effectiveRun.finished || effectiveRun.exited) && stateMachineDocument && stateMachineId) {
+        const restarted = startStateMachineRun(stateMachineDocument, stateMachineId);
         setRun(restarted);
         onPlayStateChange?.(restarted.playing);
         return;
@@ -154,16 +153,16 @@ export function useStateMachineRuntime({
   };
 }
 
-function getV2StateMachineDocument(dsl: ElucimDocument | ElucimV2Document): ElucimV2Document | undefined {
+function getStateMachineDocument(dsl: RenderableDocument | ElucimDocument): ElucimDocument | undefined {
   return dsl.version === '2.0' && dsl.defaultStateMachine ? dsl : undefined;
 }
 
-function stateMachineRunToRenderableDocument(doc: ElucimV2Document, run: ElucimV2StateMachineRun): ElucimDocument {
+function stateMachineRunToRenderableDocument(doc: ElucimDocument, run: ElucimStateMachineRun): RenderableDocument {
   const frames = getStateMachineRunVisualFrames(doc, run);
   return createRenderableDocument(frames.length > 0 ? applyTimelineFrames(doc, frames) : doc);
 }
 
-function getRunDuration(doc: ElucimV2Document | undefined, run: ElucimV2StateMachineRun): number {
+function getRunDuration(doc: ElucimDocument | undefined, run: ElucimStateMachineRun): number {
   if (!doc || run.stateId === 'entry' || !run.timelineId) return 0;
   return doc.timelines?.[run.timelineId]?.duration ?? 0;
 }
