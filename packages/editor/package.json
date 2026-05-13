@@ -31,8 +31,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
+    },
+    "./style.css": "./dist/style.css"
   },
+  "style": "./dist/style.css",
   "files": [
     "dist"
   ],
