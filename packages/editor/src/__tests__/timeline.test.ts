@@ -395,6 +395,7 @@ describe('canonical timeline clip rows', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'Play state machine walkthrough' })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Timeline playback controls' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Preview state machine walkthrough' }));
 
     await waitFor(() => expect(onActiveTimelineChange).toHaveBeenCalledWith('idle'));
