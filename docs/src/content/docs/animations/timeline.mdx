@@ -9,6 +9,10 @@ In normalized Elucim documents, timelines are named clips. Each timeline contain
 
 State machines decide which timeline is active and how the scene moves from Entry through states and transitions.
 
+:::note
+For grouped objects, `opacity`, `translate`, `scale`, and `rotate` target the group container and affect every child together. `fill` and `stroke` target drawable objects, not group containers; use child tracks or shared color tokens to recolor a composite visual.
+:::
+
 ## A single timeline
 
 ```ts
