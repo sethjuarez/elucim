@@ -1,6 +1,6 @@
 {
   "name": "@elucim/cli",
-  "version": "0.22.0",
+  "version": "0.22.1",
   "description": "Agent-discoverable CLI for validating, inspecting, polishing, and laying out Elucim documents",
   "type": "module",
   "license": "MIT",

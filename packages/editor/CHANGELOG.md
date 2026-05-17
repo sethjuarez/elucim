@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.22.1](https://github.com/sethjuarez/elucim/compare/editor-v0.22.0...editor-v0.22.1) (2026-05-17)
+
+
+### Bug Fixes
+
+* **editor:** prevent state preview update loops ([4c7c2c2](https://github.com/sethjuarez/elucim/commit/4c7c2c2823d7eed80e862e7142c3b0147ced9292))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.22.1
+    * @elucim/dsl bumped to 0.22.1
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.22.1
+    * @elucim/dsl bumped from >=0.8.0 to >=0.22.1
+
 ## [0.22.0](https://github.com/sethjuarez/elucim/compare/editor-v0.21.1...editor-v0.22.0) (2026-05-13)
 
 
