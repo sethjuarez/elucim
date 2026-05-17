@@ -407,6 +407,58 @@ describe('canonical timeline clip rows', () => {
     expect(screen.getByText('Next auto-runs -> focused')).toBeTruthy();
   });
 
+  it('previews a state machine after a state is selected', async () => {
+    const onActiveTimelineChange = vi.fn();
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(Timeline, {
+          timelines: {
+            idle: {
+              id: 'idle',
+              duration: 30,
+              tracks: [{ target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 1 }] }],
+            },
+            focus: {
+              id: 'focus',
+              duration: 20,
+              tracks: [{ target: 'r1', property: 'scale', keyframes: [{ frame: 0, value: 0.8 }, { frame: 20, value: 1 }] }],
+            },
+          },
+          stateMachines: {
+            walkthrough: {
+              id: 'walkthrough',
+              entry: 'idle',
+              inputs: { focus: { type: 'trigger' } },
+              states: {
+                idle: { timeline: 'idle' },
+                focused: { timeline: 'focus' },
+              },
+              transitions: [
+                { id: 'idle-focus', from: 'idle', to: 'focused', trigger: 'focus' },
+                { id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' },
+              ],
+            },
+          },
+          preferredMotionType: 'stateMachine',
+          onActiveTimelineChange,
+        }),
+      ),
+    );
+
+    fireEvent.click(screen.getByLabelText('Select graph state focused'));
+    fireEvent.click(screen.getByRole('button', { name: 'Preview state machine walkthrough' }));
+
+    await waitFor(() => expect(onActiveTimelineChange).toHaveBeenCalledWith('idle'));
+    expect(screen.getByText(/Previewing idle via onStart from entry \(idle\)/)).toBeTruthy();
+  });
+
   it('exposes state transition events as preview triggers', async () => {
     const onActiveTimelineChange = vi.fn();
     render(

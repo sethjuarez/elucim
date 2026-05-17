@@ -100,6 +100,15 @@ function normalizeGraphId(value: string, fallback: string): string {
   return normalized || fallback;
 }
 
+function previewFramesEqual(
+  left: ElucimTimelineFrameSelection[] | undefined,
+  right: ElucimTimelineFrameSelection[] | undefined,
+): boolean {
+  if (left === right) return true;
+  if (!left || !right || left.length !== right.length) return false;
+  return left.every((frame, index) => frame.timelineId === right[index].timelineId && frame.frame === right[index].frame);
+}
+
 /**
  * Animation timeline with playhead, per-element tracks, and playback controls.
  * Supports: editable labels, drag reorder, draggable animation bars, easing picker.
@@ -975,6 +984,7 @@ function TimelineClipRows({
   const lastAnimationItem = useRef<SelectedTimelineItem | null>(firstAnimationItem);
   const lastStateMachineItem = useRef<SelectedStateMachineItem | null>(firstStateMachineItem);
   const latestStateMachinesRef = useRef(stateMachines);
+  const lastPreviewFramesRef = useRef<ElucimTimelineFrameSelection[] | undefined>(undefined);
   useEffect(() => {
     latestStateMachinesRef.current = stateMachines;
   }, [stateMachines]);
@@ -1041,16 +1051,21 @@ function TimelineClipRows({
     }
   }, [activeMotionType, clips, selectMotionItem, selectedItem, stateMachines]);
   const selectedClip = activeMotionType === 'animation' && selectedItem?.type === 'animation' ? clips.find(clip => clip.id === selectedItem.timelineId) : undefined;
+  const emitPreviewTimelineFrames = useCallback((frames: ElucimTimelineFrameSelection[] | undefined) => {
+    if (previewFramesEqual(lastPreviewFramesRef.current, frames)) return;
+    lastPreviewFramesRef.current = frames?.map(frame => ({ ...frame }));
+    onPreviewTimelineFramesChange?.(frames);
+  }, [onPreviewTimelineFramesChange]);
   useEffect(() => {
     onActiveTimelineChange?.(activeMotionType === 'animation' ? selectedClip?.id : stateMachinePreview?.timelineId);
   }, [activeMotionType, onActiveTimelineChange, selectedClip?.id, stateMachinePreview?.timelineId]);
   useEffect(() => {
     if (activeMotionType === 'animation') {
-      onPreviewTimelineFramesChange?.(selectedClip ? [{ timelineId: selectedClip.id, frame: currentFrame }] : undefined);
+      emitPreviewTimelineFrames(selectedClip ? [{ timelineId: selectedClip.id, frame: currentFrame }] : undefined);
       return;
     }
     if (!stateMachinePreview) {
-      onPreviewTimelineFramesChange?.(undefined);
+      emitPreviewTimelineFrames(undefined);
       return;
     }
     const frames = getStateMachineVisualFrames(
@@ -1066,8 +1081,8 @@ function TimelineClipRows({
         missingTimeline: 'skip',
       },
     );
-    onPreviewTimelineFramesChange?.(frames.length > 0 ? frames : undefined);
-  }, [activeMotionType, currentFrame, document, onPreviewTimelineFramesChange, selectedClip, stateMachinePreview, stateMachines, timelines]);
+    emitPreviewTimelineFrames(frames.length > 0 ? frames : undefined);
+  }, [activeMotionType, currentFrame, document, emitPreviewTimelineFrames, selectedClip, stateMachinePreview, stateMachines, timelines]);
   const selectedMachine = activeMotionType === 'stateMachine' && selectedItem?.type === 'stateMachine' ? stateMachines.find(machine => machine.id === selectedItem.machineId) : undefined;
   const selectedTrack = selectedClip && selectedItem?.type === 'animation' && selectedItem.trackIndex !== undefined ? selectedClip.tracks[selectedItem.trackIndex] : undefined;
   const selectedKeyframe = selectedTrack && selectedItem?.type === 'animation' && selectedItem.keyframeIndex !== undefined ? selectedTrack.keyframes[selectedItem.keyframeIndex] : undefined;
@@ -1320,6 +1335,9 @@ function TimelineClipRows({
     y: Math.round(viewport.y),
     zoom: Number(viewport.zoom.toFixed(3)),
   });
+  const graphViewportsEqual = (left: ReactFlowViewport | undefined, right: ReactFlowViewport | undefined): boolean => (
+    left?.x === right?.x && left?.y === right?.y && left?.zoom === right?.zoom
+  );
   const moveMachineGraphNode = (machine: ElucimStateMachine, nodeId: string, position: { x: number; y: number }, viewport?: ReactFlowViewport) => {
     const latestMachine = latestStateMachinesRef.current.find(current => current.id === machine.id) ?? machine;
     onStateMachineChange?.({
@@ -1351,11 +1369,13 @@ function TimelineClipRows({
   };
   const moveMachineViewport = (machine: ElucimStateMachine, viewport: ReactFlowViewport) => {
     const latestMachine = latestStateMachinesRef.current.find(current => current.id === machine.id) ?? machine;
+    const nextViewport = normalizeGraphViewport(viewport);
+    if (graphViewportsEqual(latestMachine.layout?.viewport, nextViewport)) return;
     onStateMachineChange?.({
       ...latestMachine,
       layout: {
         ...latestMachine.layout,
-        viewport: normalizeGraphViewport(viewport),
+        viewport: nextViewport,
       },
     });
   };
@@ -2471,6 +2491,26 @@ function stateMachineNodesEqual(
   });
 }
 
+function stateMachineEdgesEqual(
+  left: Edge<StateMachineGraphEdgeData>[],
+  right: Edge<StateMachineGraphEdgeData>[]
+) {
+  if (left.length !== right.length) return false;
+  return left.every((leftEdge, index) => {
+    const rightEdge = right[index];
+    if (!rightEdge || leftEdge.id !== rightEdge.id || leftEdge.source !== rightEdge.source || leftEdge.target !== rightEdge.target || leftEdge.type !== rightEdge.type) return false;
+    if (leftEdge.sourceHandle !== rightEdge.sourceHandle || leftEdge.targetHandle !== rightEdge.targetHandle || leftEdge.selected !== rightEdge.selected) return false;
+    return (
+      leftEdge.data?.label === rightEdge.data?.label &&
+      leftEdge.data?.selected === rightEdge.data?.selected &&
+      leftEdge.data?.backEdge === rightEdge.data?.backEdge &&
+      leftEdge.data?.direction === rightEdge.data?.direction &&
+      leftEdge.data?.stateId === rightEdge.data?.stateId &&
+      leftEdge.data?.eventName === rightEdge.data?.eventName
+    );
+  });
+}
+
 function StateMachineTimelineGraph({
   machine,
   selectedStateId,
@@ -2522,6 +2562,10 @@ function StateMachineTimelineGraph({
   const isDraggingNodeRef = useRef(false);
   const skipNextMoveEndRef = useRef(false);
   const didInitialFitRef = useRef(false);
+  const onSelectTransitionRef = useRef(onSelectTransition);
+  useEffect(() => {
+    onSelectTransitionRef.current = onSelectTransition;
+  }, [onSelectTransition]);
   const hasSavedNodePositions = Boolean(machine.layout?.entry) || Object.keys(machine.layout?.states ?? {}).length > 0;
   const hasSavedViewport = Boolean(machine.layout?.viewport);
   const nodeTypes = useMemo(() => ({ stateMachineState: StateMachineGraphNode }), []);
@@ -2651,54 +2695,61 @@ function StateMachineTimelineGraph({
     setFlowNodes(currentNodes => applyNodeChanges(changes, currentNodes) as Node<StateMachineGraphNodeData>[]);
   }, []);
   const entryTransition = getEntryTransition(machine);
-  const entryEdgeActive = previewStatus?.activeTransitionId === entryTransition?.id;
-  const entryEdge: Edge<StateMachineGraphEdgeData> = {
-    id: `${ENTRY_NODE_ID}:${machine.entry}`,
-    source: ENTRY_NODE_ID,
-    target: entryTransition?.to && entryTransition.to !== 'exit' ? entryTransition.to : machine.entry,
-    sourceHandle: layoutDirection === 'horizontal' ? 'source-right' : 'source-bottom',
-    targetHandle: layoutDirection === 'horizontal' ? 'target-left' : 'target-top',
-    type: 'stateTransition',
-    markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12, color: v('--elucim-editor-accent') },
-    data: { label: entryTransition ? transitionTriggerLabel(entryTransition) : 'onStart', selected: entryEdgeActive, backEdge: false, direction: layoutDirection, stateId: 'entry', eventName: entryTransition?.id ?? 'entry', onSelect: entryTransition ? () => onSelectTransition('entry', entryTransition.id) : undefined },
-  };
-  const edges: Edge<StateMachineGraphEdgeData>[] = [entryEdge, ...graphTransitions.map(transition => {
-    const selected = selectedTransitionEvent === transition.id || previewStatus?.activeTransitionId === transition.id;
-    const sourceRankPosition = dagPositions.get(transition.from) ?? { x: 0, y: 0 };
-    const targetRankPosition = transition.to === 'exit'
-      ? exitNodePosition(statePositions, layoutDirection)
-      : transition.to === 'entry'
-        ? graphPositions.get(ENTRY_NODE_ID) ?? { x: 0, y: 0 }
-        : dagPositions.get(transition.to) ?? { x: 0, y: 0 };
-    const forward = layoutDirection === 'horizontal'
-      ? targetRankPosition.x >= sourceRankPosition.x
-      : targetRankPosition.y >= sourceRankPosition.y;
-    const label = transitionTriggerLabel(transition);
-    return {
-      id: transition.id,
-      source: transition.from,
-      target: transition.to === 'exit' ? EXIT_NODE_ID : transition.to === 'entry' ? ENTRY_NODE_ID : transition.to,
+  const activeTransitionId = previewStatus?.activeTransitionId;
+  const edges: Edge<StateMachineGraphEdgeData>[] = useMemo(() => {
+    const entryEdgeActive = activeTransitionId === entryTransition?.id;
+    const entryEdge: Edge<StateMachineGraphEdgeData> = {
+      id: `${ENTRY_NODE_ID}:${machine.entry}`,
+      source: ENTRY_NODE_ID,
+      target: entryTransition?.to && entryTransition.to !== 'exit' ? entryTransition.to : machine.entry,
       sourceHandle: layoutDirection === 'horizontal' ? 'source-right' : 'source-bottom',
       targetHandle: layoutDirection === 'horizontal' ? 'target-left' : 'target-top',
       type: 'stateTransition',
-      selected,
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        width: 14,
-        height: 14,
-        color: selected ? v('--elucim-editor-accent') : `color-mix(in srgb, ${v('--elucim-editor-text-secondary')} 70%, transparent)`,
-      },
-      data: {
-        label,
-        selected,
-        backEdge: !forward,
-        direction: layoutDirection,
-        stateId: transition.from,
-        eventName: transition.id,
-        onSelect: () => onSelectTransition(transition.from, transition.id),
-      },
+      markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12, color: v('--elucim-editor-accent') },
+      data: { label: entryTransition ? transitionTriggerLabel(entryTransition) : 'onStart', selected: entryEdgeActive, backEdge: false, direction: layoutDirection, stateId: 'entry', eventName: entryTransition?.id ?? 'entry', onSelect: entryTransition ? () => onSelectTransitionRef.current('entry', entryTransition.id) : undefined },
     };
-  })];
+    return [entryEdge, ...graphTransitions.map(transition => {
+      const selected = selectedTransitionEvent === transition.id || activeTransitionId === transition.id;
+      const sourceRankPosition = dagPositions.get(transition.from) ?? { x: 0, y: 0 };
+      const targetRankPosition = transition.to === 'exit'
+        ? exitNodePosition(statePositions, layoutDirection)
+        : transition.to === 'entry'
+          ? graphPositions.get(ENTRY_NODE_ID) ?? { x: 0, y: 0 }
+          : dagPositions.get(transition.to) ?? { x: 0, y: 0 };
+      const forward = layoutDirection === 'horizontal'
+        ? targetRankPosition.x >= sourceRankPosition.x
+        : targetRankPosition.y >= sourceRankPosition.y;
+      const label = transitionTriggerLabel(transition);
+      return {
+        id: transition.id,
+        source: transition.from,
+        target: transition.to === 'exit' ? EXIT_NODE_ID : transition.to === 'entry' ? ENTRY_NODE_ID : transition.to,
+        sourceHandle: layoutDirection === 'horizontal' ? 'source-right' : 'source-bottom',
+        targetHandle: layoutDirection === 'horizontal' ? 'target-left' : 'target-top',
+        type: 'stateTransition',
+        selected,
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 14,
+          height: 14,
+          color: selected ? v('--elucim-editor-accent') : `color-mix(in srgb, ${v('--elucim-editor-text-secondary')} 70%, transparent)`,
+        },
+        data: {
+          label,
+          selected,
+          backEdge: !forward,
+          direction: layoutDirection,
+          stateId: transition.from,
+          eventName: transition.id,
+          onSelect: () => onSelectTransitionRef.current(transition.from, transition.id),
+        },
+      };
+    })];
+  }, [activeTransitionId, dagPositions, entryTransition, graphPositions, graphTransitions, layoutDirection, machine.entry, selectedTransitionEvent, statePositions]);
+  const [flowEdges, setFlowEdges] = useState(edges);
+  useEffect(() => {
+    setFlowEdges(currentEdges => stateMachineEdgesEqual(currentEdges, edges) ? currentEdges : edges);
+  }, [edges]);
   const triggerPreviewClickEvent = useCallback(() => {
     if (!eventSourceStateId) return false;
     if (!previewClickTransition) return false;
@@ -2712,19 +2763,26 @@ function StateMachineTimelineGraph({
     if (!keyTransition) return false;
     return onTriggerEvent(eventSourceStateId, 'onKey', keyTransition.key);
   }, [eventSourceStateId, exposedTransitions, onTriggerEvent]);
+  const previewCanvasHandlersRef = useRef({ click: triggerPreviewClickEvent, key: triggerPreviewKeyEvent });
   useEffect(() => {
-    if (!previewStatus) {
+    previewCanvasHandlersRef.current = { click: triggerPreviewClickEvent, key: triggerPreviewKeyEvent };
+  }, [triggerPreviewClickEvent, triggerPreviewKeyEvent]);
+  const previewCanvasClickHandler = useCallback(() => previewCanvasHandlersRef.current.click(), []);
+  const previewCanvasKeyDownHandler = useCallback((key: string) => previewCanvasHandlersRef.current.key(key), []);
+  const previewActive = Boolean(previewStatus);
+  useEffect(() => {
+    if (!previewActive) {
       onPreviewCanvasClickChange?.(undefined);
       onPreviewCanvasKeyDownChange?.(undefined);
       return;
     }
-    onPreviewCanvasClickChange?.(triggerPreviewClickEvent);
-    onPreviewCanvasKeyDownChange?.(triggerPreviewKeyEvent);
+    onPreviewCanvasClickChange?.(previewCanvasClickHandler);
+    onPreviewCanvasKeyDownChange?.(previewCanvasKeyDownHandler);
     return () => {
       onPreviewCanvasClickChange?.(undefined);
       onPreviewCanvasKeyDownChange?.(undefined);
     };
-  }, [onPreviewCanvasClickChange, onPreviewCanvasKeyDownChange, previewStatus, triggerPreviewClickEvent, triggerPreviewKeyEvent]);
+  }, [onPreviewCanvasClickChange, onPreviewCanvasKeyDownChange, previewActive, previewCanvasClickHandler, previewCanvasKeyDownHandler]);
   const handleNodeClick: NodeMouseHandler = (_, node) => {
     if (triggerPreviewClickEvent()) return;
     if (node.id === ENTRY_NODE_ID || node.id === EXIT_NODE_ID) {
@@ -2859,7 +2917,7 @@ function StateMachineTimelineGraph({
           key={machine.id}
           nodes={flowNodes}
           onNodesChange={handleNodesChange}
-          edges={edges}
+          edges={flowEdges}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onInit={instance => {

@@ -2,6 +2,8 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ElucimDocument } from '@elucim/dsl';
@@ -39,6 +41,17 @@ const documentModel: ElucimDocument = {
   },
   metadata: { polishLevel: 'draft', intent: 'Explain the CutReady flow' },
 };
+
+const cutReadyVisualFixtureDir = join(process.cwd(), 'src', '__tests__', 'fixtures', 'cutready-visuals');
+const cutReadyVisualFixtures = readdirSync(cutReadyVisualFixtureDir)
+  .filter(name => name.endsWith('.json'))
+  .map(name => {
+    const document = JSON.parse(readFileSync(join(cutReadyVisualFixtureDir, name), 'utf8')) as ElucimDocument;
+    const machine = Object.values(document.stateMachines ?? {})[0];
+    const stateId = machine ? Object.keys(machine.states)[0] : undefined;
+    return { name, document, machineId: machine?.id, stateId };
+  })
+  .filter((fixture): fixture is { name: string; document: ElucimDocument; machineId: string; stateId: string } => Boolean(fixture.machineId && fixture.stateId));
 
 describe('StateMachinePanel', () => {
   beforeEach(() => {
@@ -159,7 +172,7 @@ describe('StateMachinePanel', () => {
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].elements.title.intent.role).toBe('hero'));
   });
 
-  it('surfaces warnings for lossy canonical compatibility output', () => {
+  it('surfaces warnings for lossy canonical compatibility output', async () => {
     render(React.createElement(ElucimEditor, {
       initialDocument: {
         ...documentModel,
@@ -182,6 +195,7 @@ describe('StateMachinePanel', () => {
 
     expect(screen.getByText('Document compatibility warnings')).toBeTruthy();
     expect(screen.getByText(/Timeline "ghostTimeline"/)).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText('Checking semantic layout relationships...')).toBeNull());
   });
 
   it('creates state machines and authors states/transitions from the motion graph', async () => {
@@ -355,5 +369,21 @@ describe('StateMachinePanel', () => {
       expect(latest.stateMachines?.deck.states.intro).toBeUndefined();
       expect(latest.stateMachines?.deck.transitions).toEqual([{ id: 'entry-start', from: 'entry', to: 'idle', trigger: 'onStart' }]);
     });
+  });
+
+  it.each(cutReadyVisualFixtures)('previews selected state $stateId from CutReady visual $name', async ({ document, stateId }) => {
+    const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(0);
+    const cancelAnimationFrameSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    render(React.createElement(ElucimEditor, { initialDocument: document }));
+
+    fireEvent.click(screen.getByRole('tab', { name: 'State machines motion tab' }));
+    fireEvent.click(screen.getByLabelText(`Select graph state ${stateId}`));
+    fireEvent.click(screen.getByRole('button', { name: `Preview state ${stateId}` }));
+
+    await waitFor(() => expect(screen.getByText('Preview mode')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Exit state machine preview mode' }));
+    await waitFor(() => expect(screen.queryByText('Preview mode')).toBeNull());
+    requestAnimationFrameSpy.mockRestore();
+    cancelAnimationFrameSpy.mockRestore();
   });
 });

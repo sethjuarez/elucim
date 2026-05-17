@@ -1,0 +1,1044 @@
+{
+  "defaultStateMachine": "main",
+  "elements": {
+    "code-line-1": {
+      "id": "code-line-1",
+      "props": {
+        "content": "agent.run(task, tools)",
+        "fill": "$foreground",
+        "fontSize": 18,
+        "fontWeight": "600",
+        "opacity": 1,
+        "textAnchor": "start",
+        "type": "text",
+        "x": 84,
+        "y": 242
+      },
+      "type": "text"
+    },
+    "code-line-2": {
+      "id": "code-line-2",
+      "props": {
+        "content": "memory.load();",
+        "fill": "$muted",
+        "fontSize": 17,
+        "fontWeight": "500",
+        "opacity": 1,
+        "textAnchor": "start",
+        "type": "text",
+        "x": 84,
+        "y": 274
+      },
+      "type": "text"
+    },
+    "code-line-3": {
+      "id": "code-line-3",
+      "props": {
+        "content": "response = model.reply()",
+        "fill": "$muted",
+        "fontSize": 17,
+        "fontWeight": "500",
+        "opacity": 1,
+        "textAnchor": "start",
+        "type": "text",
+        "x": 84,
+        "y": 306
+      },
+      "type": "text"
+    },
+    "conn-evals": {
+      "id": "conn-evals",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "opacity": 1,
+        "stroke": "$success",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 598,
+        "x2": 652,
+        "y1": 300,
+        "y2": 412
+      },
+      "type": "arrow"
+    },
+    "conn-guardrails": {
+      "id": "conn-guardrails",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "opacity": 1,
+        "stroke": "$warning",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 598,
+        "x2": 652,
+        "y1": 268,
+        "y2": 320
+      },
+      "type": "arrow"
+    },
+    "conn-toolbox": {
+      "id": "conn-toolbox",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "opacity": 1,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 598,
+        "x2": 652,
+        "y1": 236,
+        "y2": 228
+      },
+      "type": "arrow"
+    },
+    "evals-card": {
+      "id": "evals-card",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 74,
+        "opacity": 1,
+        "rx": 18,
+        "stroke": "$border",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 228,
+        "x": 666,
+        "y": 376
+      },
+      "type": "rect"
+    },
+    "evals-label": {
+      "id": "evals-label",
+      "props": {
+        "content": "Evals",
+        "fill": "$foreground",
+        "fontSize": 24,
+        "fontWeight": "800",
+        "opacity": 1,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 780,
+        "y": 420
+      },
+      "type": "text"
+    },
+    "evals-strip": {
+      "id": "evals-strip",
+      "props": {
+        "fill": "$success",
+        "height": 74,
+        "opacity": 1,
+        "rx": 18,
+        "type": "rect",
+        "width": 8,
+        "x": 666,
+        "y": 376
+      },
+      "type": "rect"
+    },
+    "flow-arrow": {
+      "id": "flow-arrow",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "opacity": 1,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 292,
+        "x2": 338,
+        "y1": 262,
+        "y2": 262
+      },
+      "type": "arrow"
+    },
+    "foundry-badge": {
+      "id": "foundry-badge",
+      "intent": {
+        "importance": "secondary",
+        "role": "badge"
+      },
+      "props": {
+        "fill": "rgba(120,160,255,0.14)",
+        "height": 32,
+        "opacity": 1,
+        "rx": 16,
+        "stroke": "$accent",
+        "strokeWidth": 1.5,
+        "type": "rect",
+        "width": 156,
+        "x": 693,
+        "y": 150
+      },
+      "type": "rect"
+    },
+    "foundry-badge-text": {
+      "id": "foundry-badge-text",
+      "props": {
+        "content": "Foundry adds",
+        "fill": "$accent",
+        "fontSize": 16,
+        "fontWeight": "800",
+        "opacity": 1,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 771,
+        "y": 171
+      },
+      "type": "text"
+    },
+    "guardrails-card": {
+      "id": "guardrails-card",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 74,
+        "opacity": 1,
+        "rx": 18,
+        "stroke": "$border",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 228,
+        "x": 666,
+        "y": 284
+      },
+      "type": "rect"
+    },
+    "guardrails-label": {
+      "id": "guardrails-label",
+      "props": {
+        "content": "Guardrails",
+        "fill": "$foreground",
+        "fontSize": 24,
+        "fontWeight": "800",
+        "opacity": 1,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 780,
+        "y": 328
+      },
+      "type": "text"
+    },
+    "guardrails-strip": {
+      "id": "guardrails-strip",
+      "props": {
+        "fill": "$warning",
+        "height": 74,
+        "opacity": 1,
+        "rx": 18,
+        "type": "rect",
+        "width": 8,
+        "x": 666,
+        "y": 284
+      },
+      "type": "rect"
+    },
+    "hero-card": {
+      "id": "hero-card",
+      "intent": {
+        "importance": "primary",
+        "role": "hero"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 136,
+        "opacity": 1,
+        "rx": 24,
+        "stroke": "$accent",
+        "strokeWidth": 2.5,
+        "type": "rect",
+        "width": 242,
+        "x": 356,
+        "y": 200
+      },
+      "type": "rect"
+    },
+    "hero-ring": {
+      "id": "hero-ring",
+      "intent": {
+        "importance": "supporting",
+        "role": "decoration"
+      },
+      "props": {
+        "fill": "rgba(0,0,0,0)",
+        "height": 160,
+        "opacity": 1,
+        "rx": 28,
+        "stroke": "rgba(120,160,255,0.18)",
+        "strokeWidth": 10,
+        "type": "rect",
+        "width": 266,
+        "x": 344,
+        "y": 188
+      },
+      "type": "rect"
+    },
+    "hero-sub": {
+      "id": "hero-sub",
+      "props": {
+        "content": "keep the agent, add shared controls",
+        "fill": "$foreground",
+        "fontSize": 18,
+        "fontWeight": "600",
+        "opacity": 1,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 477,
+        "y": 286
+      },
+      "type": "text"
+    },
+    "hero-title": {
+      "id": "hero-title",
+      "intent": {
+        "importance": "primary",
+        "role": "hero"
+      },
+      "props": {
+        "content": "Working locally",
+        "fill": "$title",
+        "fontSize": 29,
+        "fontWeight": "900",
+        "opacity": 1,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 477,
+        "y": 250
+      },
+      "type": "text"
+    },
+    "local-card": {
+      "id": "local-card",
+      "intent": {
+        "importance": "secondary",
+        "role": "container"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 186,
+        "opacity": 1,
+        "rx": 18,
+        "stroke": "$border",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 234,
+        "x": 58,
+        "y": 170
+      },
+      "type": "rect"
+    },
+    "local-dot-1": {
+      "id": "local-dot-1",
+      "props": {
+        "cx": 82,
+        "cy": 187,
+        "fill": "$muted",
+        "opacity": 1,
+        "r": 5,
+        "type": "circle"
+      },
+      "type": "circle"
+    },
+    "local-dot-2": {
+      "id": "local-dot-2",
+      "props": {
+        "cx": 98,
+        "cy": 187,
+        "fill": "$muted",
+        "opacity": 1,
+        "r": 5,
+        "type": "circle"
+      },
+      "type": "circle"
+    },
+    "local-dot-3": {
+      "id": "local-dot-3",
+      "props": {
+        "cx": 114,
+        "cy": 187,
+        "fill": "$muted",
+        "opacity": 1,
+        "r": 5,
+        "type": "circle"
+      },
+      "type": "circle"
+    },
+    "local-label": {
+      "id": "local-label",
+      "intent": {
+        "importance": "secondary",
+        "role": "label"
+      },
+      "props": {
+        "content": "Local agent project",
+        "fill": "$foreground",
+        "fontSize": 18,
+        "fontWeight": "700",
+        "opacity": 1,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 175,
+        "y": 191
+      },
+      "type": "text"
+    },
+    "local-topbar": {
+      "id": "local-topbar",
+      "props": {
+        "fill": "rgba(255,255,255,0.06)",
+        "height": 34,
+        "opacity": 1,
+        "rx": 18,
+        "type": "rect",
+        "width": 234,
+        "x": 58,
+        "y": 170
+      },
+      "type": "rect"
+    },
+    "status-chip": {
+      "id": "status-chip",
+      "props": {
+        "fill": "rgba(80,200,120,0.14)",
+        "height": 30,
+        "opacity": 1,
+        "rx": 15,
+        "stroke": "$success",
+        "strokeWidth": 1.5,
+        "type": "rect",
+        "width": 128,
+        "x": 84,
+        "y": 326
+      },
+      "type": "rect"
+    },
+    "status-chip-text": {
+      "id": "status-chip-text",
+      "props": {
+        "content": "already working",
+        "fill": "$success",
+        "fontSize": 15,
+        "fontWeight": "700",
+        "opacity": 1,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 148,
+        "y": 345
+      },
+      "type": "text"
+    },
+    "subtitle": {
+      "id": "subtitle",
+      "intent": {
+        "importance": "secondary",
+        "role": "subtitle"
+      },
+      "props": {
+        "content": "Foundry adds shared tools, guardrails, and evals without a rewrite.",
+        "fill": "$subtitle",
+        "fontSize": 20,
+        "fontWeight": "600",
+        "opacity": 1,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 480,
+        "y": 96
+      },
+      "type": "text"
+    },
+    "title": {
+      "id": "title",
+      "intent": {
+        "importance": "primary",
+        "role": "title"
+      },
+      "props": {
+        "content": "Keep the local agent. Add the missing operating layer.",
+        "fill": "$title",
+        "fontSize": 34,
+        "fontWeight": "900",
+        "opacity": 1,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 480,
+        "y": 58
+      },
+      "type": "text"
+    },
+    "toolbox-card": {
+      "id": "toolbox-card",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 74,
+        "opacity": 1,
+        "rx": 18,
+        "stroke": "$border",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 228,
+        "x": 666,
+        "y": 192
+      },
+      "type": "rect"
+    },
+    "toolbox-label": {
+      "id": "toolbox-label",
+      "props": {
+        "content": "Toolbox",
+        "fill": "$foreground",
+        "fontSize": 24,
+        "fontWeight": "800",
+        "opacity": 1,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 780,
+        "y": 236
+      },
+      "type": "text"
+    },
+    "toolbox-strip": {
+      "id": "toolbox-strip",
+      "props": {
+        "fill": "$accent",
+        "height": 74,
+        "opacity": 1,
+        "rx": 18,
+        "type": "rect",
+        "width": 8,
+        "x": 666,
+        "y": 192
+      },
+      "type": "rect"
+    }
+  },
+  "scene": {
+    "background": "$background",
+    "children": [
+      "title",
+      "subtitle",
+      "local-card",
+      "hero-ring",
+      "hero-card",
+      "hero-title",
+      "hero-sub",
+      "foundry-badge",
+      "foundry-badge-text",
+      "toolbox-card",
+      "toolbox-label",
+      "toolbox-strip",
+      "guardrails-card",
+      "guardrails-label",
+      "guardrails-strip",
+      "evals-card",
+      "evals-label",
+      "evals-strip",
+      "flow-arrow",
+      "status-chip",
+      "status-chip-text",
+      "local-topbar",
+      "local-label",
+      "code-line-1",
+      "code-line-2",
+      "code-line-3",
+      "local-dot-1",
+      "local-dot-2",
+      "local-dot-3",
+      "conn-toolbox",
+      "conn-guardrails",
+      "conn-evals"
+    ],
+    "fps": 30,
+    "height": 540,
+    "type": "player",
+    "width": 960
+  },
+  "stateMachines": {
+    "main": {
+      "entry": "intro",
+      "id": "main",
+      "states": {
+        "intro": {
+          "timeline": "intro"
+        }
+      },
+      "transitions": [
+        {
+          "from": "entry",
+          "id": "entry-start",
+          "to": "intro",
+          "trigger": "onStart"
+        }
+      ]
+    }
+  },
+  "timelines": {
+    "intro": {
+      "duration": 96,
+      "id": "intro",
+      "tracks": [
+        {
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 10,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "title"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 4,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 14,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "subtitle"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 8,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 20,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 8,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 20,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-topbar"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 10,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 22,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 12,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 22,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "code-line-1"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 14,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 24,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "code-line-2"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 16,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 26,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "code-line-3"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 18,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 28,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "status-chip"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 18,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 28,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "status-chip-text"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 24,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 34,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "flow-arrow"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 28,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 40,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "hero-ring"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 28,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 40,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "hero-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 30,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 42,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "hero-title"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 32,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 44,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "hero-sub"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 42,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 50,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "foundry-badge"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 42,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 50,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "foundry-badge-text"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 48,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 58,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "toolbox-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 48,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 58,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "toolbox-strip"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 50,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 60,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "toolbox-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 48,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 58,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "conn-toolbox"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 58,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 68,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "guardrails-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 58,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 68,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "guardrails-strip"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 60,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 70,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "guardrails-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 58,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 68,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "conn-guardrails"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 68,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 78,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "evals-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 68,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 78,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "evals-strip"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 70,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 80,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "evals-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 68,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 78,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "conn-evals"
+        }
+      ]
+    }
+  },
+  "version": "2.0"
+}

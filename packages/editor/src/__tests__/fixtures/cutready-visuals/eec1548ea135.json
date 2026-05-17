@@ -1,0 +1,812 @@
+{
+  "defaultStateMachine": "main",
+  "elements": {
+    "endpoint-badge": {
+      "id": "endpoint-badge",
+      "intent": {
+        "importance": "supporting",
+        "role": "badge"
+      },
+      "props": {
+        "fill": "rgba(0,0,0,0)",
+        "height": 34,
+        "rx": 17,
+        "stroke": "$accent",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 140,
+        "x": 524,
+        "y": 298
+      },
+      "type": "rect"
+    },
+    "endpoint-text": {
+      "id": "endpoint-text",
+      "intent": {
+        "importance": "supporting",
+        "role": "label"
+      },
+      "props": {
+        "content": "Single MCP endpoint",
+        "fill": "$accent",
+        "fontSize": 16,
+        "fontWeight": "800",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 594,
+        "y": 320
+      },
+      "type": "text"
+    },
+    "github-card": {
+      "id": "github-card",
+      "intent": {
+        "importance": "supporting",
+        "role": "step"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 64,
+        "rx": 14,
+        "stroke": "$tertiary",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 118,
+        "x": 806,
+        "y": 316
+      },
+      "type": "rect"
+    },
+    "github-title": {
+      "id": "github-title",
+      "intent": {
+        "importance": "supporting",
+        "role": "label"
+      },
+      "props": {
+        "content": "GitHub MCP",
+        "fill": "$foreground",
+        "fontSize": 18,
+        "fontWeight": "700",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 865,
+        "y": 355
+      },
+      "type": "text"
+    },
+    "hub-dot": {
+      "id": "hub-dot",
+      "intent": {
+        "importance": "supporting",
+        "role": "decoration"
+      },
+      "props": {
+        "cx": 724,
+        "cy": 267,
+        "fill": "$accent",
+        "r": 8,
+        "type": "circle"
+      },
+      "type": "circle"
+    },
+    "local-card": {
+      "id": "local-card",
+      "intent": {
+        "importance": "secondary",
+        "role": "container"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 182,
+        "rx": 18,
+        "stroke": "$border",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 232,
+        "x": 58,
+        "y": 176
+      },
+      "type": "rect"
+    },
+    "local-code-1": {
+      "id": "local-code-1",
+      "props": {
+        "stroke": "$muted",
+        "strokeWidth": 4,
+        "type": "line",
+        "x1": 92,
+        "x2": 214,
+        "y1": 246,
+        "y2": 246
+      },
+      "type": "line"
+    },
+    "local-code-2": {
+      "id": "local-code-2",
+      "props": {
+        "stroke": "$muted",
+        "strokeWidth": 4,
+        "type": "line",
+        "x1": 92,
+        "x2": 188,
+        "y1": 274,
+        "y2": 274
+      },
+      "type": "line"
+    },
+    "local-code-3": {
+      "id": "local-code-3",
+      "props": {
+        "stroke": "$muted",
+        "strokeWidth": 4,
+        "type": "line",
+        "x1": 92,
+        "x2": 232,
+        "y1": 302,
+        "y2": 302
+      },
+      "type": "line"
+    },
+    "local-label": {
+      "id": "local-label",
+      "intent": {
+        "importance": "secondary",
+        "role": "step"
+      },
+      "props": {
+        "content": "Local agent",
+        "fill": "$foreground",
+        "fontSize": 24,
+        "fontWeight": "800",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 174,
+        "y": 210
+      },
+      "type": "text"
+    },
+    "search-card": {
+      "id": "search-card",
+      "intent": {
+        "importance": "supporting",
+        "role": "step"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 64,
+        "rx": 14,
+        "stroke": "$secondary",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 134,
+        "x": 790,
+        "y": 235
+      },
+      "type": "rect"
+    },
+    "search-title": {
+      "id": "search-title",
+      "intent": {
+        "importance": "supporting",
+        "role": "label"
+      },
+      "props": {
+        "content": "Azure AI Search",
+        "fill": "$foreground",
+        "fontSize": 17,
+        "fontWeight": "700",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 857,
+        "y": 274
+      },
+      "type": "text"
+    },
+    "subtitle": {
+      "id": "subtitle",
+      "intent": {
+        "importance": "secondary",
+        "role": "subtitle"
+      },
+      "props": {
+        "content": "local code connects once through a single MCP endpoint",
+        "fill": "$subtitle",
+        "fontSize": 20,
+        "fontWeight": "600",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 480,
+        "y": 100
+      },
+      "type": "text"
+    },
+    "title": {
+      "id": "title",
+      "intent": {
+        "importance": "primary",
+        "role": "title"
+      },
+      "props": {
+        "content": "One toolbox, many approved tools",
+        "fill": "$title",
+        "fontSize": 40,
+        "fontWeight": "900",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 480,
+        "y": 62
+      },
+      "type": "text"
+    },
+    "to-github": {
+      "id": "to-github",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "stroke": "$tertiary",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 732,
+        "x2": 802,
+        "y1": 267,
+        "y2": 338
+      },
+      "type": "arrow"
+    },
+    "to-search": {
+      "id": "to-search",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "stroke": "$secondary",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 732,
+        "x2": 802,
+        "y1": 267,
+        "y2": 267
+      },
+      "type": "arrow"
+    },
+    "to-toolbox": {
+      "id": "to-toolbox",
+      "intent": {
+        "importance": "primary",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 12,
+        "stroke": "$accent",
+        "strokeWidth": 4,
+        "type": "arrow",
+        "x1": 316,
+        "x2": 458,
+        "y1": 267,
+        "y2": 267
+      },
+      "type": "arrow"
+    },
+    "to-web": {
+      "id": "to-web",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 732,
+        "x2": 802,
+        "y1": 267,
+        "y2": 196
+      },
+      "type": "arrow"
+    },
+    "toolbox-card": {
+      "id": "toolbox-card",
+      "intent": {
+        "importance": "primary",
+        "role": "hero"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 168,
+        "rx": 22,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "rect",
+        "width": 236,
+        "x": 476,
+        "y": 184
+      },
+      "type": "rect"
+    },
+    "toolbox-sub": {
+      "id": "toolbox-sub",
+      "intent": {
+        "importance": "supporting",
+        "role": "label"
+      },
+      "props": {
+        "content": "shared auth + managed bundle",
+        "fill": "$muted",
+        "fontSize": 18,
+        "fontWeight": "600",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 594,
+        "y": 272
+      },
+      "type": "text"
+    },
+    "toolbox-title": {
+      "id": "toolbox-title",
+      "intent": {
+        "importance": "primary",
+        "role": "hero"
+      },
+      "props": {
+        "content": "Foundry Toolbox",
+        "fill": "$title",
+        "fontSize": 30,
+        "fontWeight": "900",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 594,
+        "y": 236
+      },
+      "type": "text"
+    },
+    "web-card": {
+      "id": "web-card",
+      "intent": {
+        "importance": "supporting",
+        "role": "step"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 64,
+        "rx": 14,
+        "stroke": "$accent",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 118,
+        "x": 806,
+        "y": 154
+      },
+      "type": "rect"
+    },
+    "web-title": {
+      "id": "web-title",
+      "intent": {
+        "importance": "supporting",
+        "role": "label"
+      },
+      "props": {
+        "content": "Web Search",
+        "fill": "$foreground",
+        "fontSize": 18,
+        "fontWeight": "700",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 865,
+        "y": 193
+      },
+      "type": "text"
+    }
+  },
+  "scene": {
+    "background": "$background",
+    "children": [
+      "title",
+      "subtitle",
+      "local-card",
+      "local-label",
+      "local-code-1",
+      "local-code-2",
+      "local-code-3",
+      "to-toolbox",
+      "toolbox-card",
+      "toolbox-title",
+      "toolbox-sub",
+      "endpoint-badge",
+      "endpoint-text",
+      "hub-dot",
+      "to-web",
+      "to-search",
+      "to-github",
+      "web-card",
+      "web-title",
+      "search-card",
+      "search-title",
+      "github-card",
+      "github-title"
+    ],
+    "fps": 30,
+    "height": 540,
+    "type": "player",
+    "width": 960
+  },
+  "stateMachines": {
+    "main": {
+      "entry": "intro",
+      "id": "main",
+      "states": {
+        "intro": {
+          "timeline": "intro"
+        }
+      },
+      "transitions": [
+        {
+          "from": "entry",
+          "id": "entry-start",
+          "to": "intro",
+          "trigger": "onStart"
+        }
+      ]
+    }
+  },
+  "timelines": {
+    "intro": {
+      "duration": 96,
+      "id": "intro",
+      "tracks": [
+        {
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 8,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "title"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 4,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 12,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "subtitle"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 10,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 20,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 12,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 22,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 14,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 24,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-code-1"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 16,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 26,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-code-2"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 18,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 28,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-code-3"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 24,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 34,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "toolbox-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 26,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 36,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "toolbox-title"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 28,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 38,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "toolbox-sub"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 32,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 40,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "endpoint-badge"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 34,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 42,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "endpoint-text"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 30,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 40,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "to-toolbox"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 40,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 46,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "hub-dot"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 44,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 54,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "web-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 46,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 56,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "web-title"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 44,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 54,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "to-web"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 52,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 62,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "search-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 54,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 64,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "search-title"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 52,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 62,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "to-search"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 60,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 70,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "github-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 62,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 72,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "github-title"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 60,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 70,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "to-github"
+        }
+      ]
+    }
+  },
+  "version": "2.0"
+}

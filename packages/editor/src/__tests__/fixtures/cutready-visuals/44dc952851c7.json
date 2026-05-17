@@ -1,0 +1,1006 @@
+{
+  "defaultStateMachine": "main",
+  "elements": {
+    "evals-card": {
+      "id": "evals-card",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 76,
+        "opacity": 0,
+        "rx": 18,
+        "stroke": "$success",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 224,
+        "x": 666,
+        "y": 312
+      },
+      "type": "rect"
+    },
+    "evals-icon": {
+      "id": "evals-icon",
+      "intent": {
+        "importance": "supporting",
+        "role": "decoration"
+      },
+      "props": {
+        "opacity": 0,
+        "stroke": "$success",
+        "strokeWidth": 4,
+        "type": "line",
+        "x1": 687,
+        "x2": 700,
+        "y1": 352,
+        "y2": 365
+      },
+      "type": "line"
+    },
+    "evals-label": {
+      "id": "evals-label",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "props": {
+        "content": "Evals",
+        "fill": "$foreground",
+        "fontSize": 24,
+        "fontWeight": "800",
+        "opacity": 0,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 778,
+        "y": 357
+      },
+      "type": "text"
+    },
+    "foundry-badge": {
+      "id": "foundry-badge",
+      "intent": {
+        "importance": "secondary",
+        "role": "label"
+      },
+      "props": {
+        "content": "Foundry adds",
+        "fill": "$accent",
+        "fontSize": 18,
+        "fontWeight": "800",
+        "opacity": 0,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 738,
+        "y": 164
+      },
+      "type": "text"
+    },
+    "guardrails-card": {
+      "id": "guardrails-card",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 76,
+        "opacity": 0,
+        "rx": 18,
+        "stroke": "$warning",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 224,
+        "x": 666,
+        "y": 247
+      },
+      "type": "rect"
+    },
+    "guardrails-icon": {
+      "id": "guardrails-icon",
+      "intent": {
+        "importance": "supporting",
+        "role": "decoration"
+      },
+      "props": {
+        "fill": "rgba(0,0,0,0)",
+        "opacity": 0,
+        "points": [
+          [
+            700,
+            266
+          ],
+          [
+            716,
+            278
+          ],
+          [
+            710,
+            300
+          ],
+          [
+            690,
+            300
+          ],
+          [
+            684,
+            278
+          ]
+        ],
+        "stroke": "$warning",
+        "strokeWidth": 2,
+        "type": "polygon"
+      },
+      "type": "polygon"
+    },
+    "guardrails-label": {
+      "id": "guardrails-label",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "props": {
+        "content": "Guardrails",
+        "fill": "$foreground",
+        "fontSize": 24,
+        "fontWeight": "800",
+        "opacity": 0,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 778,
+        "y": 292
+      },
+      "type": "text"
+    },
+    "hero-card": {
+      "id": "hero-card",
+      "intent": {
+        "importance": "primary",
+        "role": "hero"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 130,
+        "opacity": 0,
+        "rx": 26,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "rect",
+        "width": 190,
+        "x": 390,
+        "y": 220
+      },
+      "type": "rect"
+    },
+    "hero-ring": {
+      "id": "hero-ring",
+      "intent": {
+        "importance": "supporting",
+        "role": "decoration"
+      },
+      "props": {
+        "cx": 485,
+        "cy": 254,
+        "fill": "rgba(0,0,0,0)",
+        "opacity": 0,
+        "r": 20,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "circle"
+      },
+      "type": "circle"
+    },
+    "hero-sub": {
+      "id": "hero-sub",
+      "intent": {
+        "importance": "secondary",
+        "role": "label"
+      },
+      "props": {
+        "content": "Foundry adds layers around it",
+        "fill": "$muted",
+        "fontSize": 16,
+        "fontWeight": "700",
+        "opacity": 0,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 485,
+        "y": 324
+      },
+      "type": "text"
+    },
+    "hero-title": {
+      "id": "hero-title",
+      "intent": {
+        "importance": "primary",
+        "role": "hero"
+      },
+      "props": {
+        "content": "Working locally",
+        "fill": "$title",
+        "fontSize": 26,
+        "fontWeight": "900",
+        "opacity": 0,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 485,
+        "y": 296
+      },
+      "type": "text"
+    },
+    "local-card": {
+      "id": "local-card",
+      "intent": {
+        "importance": "secondary",
+        "role": "container"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 220,
+        "opacity": 0,
+        "rx": 18,
+        "stroke": "$border",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 242,
+        "x": 58,
+        "y": 174
+      },
+      "type": "rect"
+    },
+    "local-code-1": {
+      "id": "local-code-1",
+      "intent": {
+        "importance": "supporting",
+        "role": "label"
+      },
+      "props": {
+        "content": "agent = create_agent(...)",
+        "fill": "$muted",
+        "fontSize": 17,
+        "fontWeight": "600",
+        "opacity": 0,
+        "textAnchor": "start",
+        "type": "text",
+        "x": 84,
+        "y": 252
+      },
+      "type": "text"
+    },
+    "local-code-2": {
+      "id": "local-code-2",
+      "intent": {
+        "importance": "supporting",
+        "role": "label"
+      },
+      "props": {
+        "content": "response = agent.invoke(task)",
+        "fill": "$muted",
+        "fontSize": 17,
+        "fontWeight": "600",
+        "opacity": 0,
+        "textAnchor": "start",
+        "type": "text",
+        "x": 84,
+        "y": 284
+      },
+      "type": "text"
+    },
+    "local-code-3": {
+      "id": "local-code-3",
+      "intent": {
+        "importance": "supporting",
+        "role": "label"
+      },
+      "props": {
+        "content": "status: working",
+        "fill": "$success",
+        "fontSize": 18,
+        "fontWeight": "800",
+        "opacity": 0,
+        "textAnchor": "start",
+        "type": "text",
+        "x": 84,
+        "y": 330
+      },
+      "type": "text"
+    },
+    "local-code-4": {
+      "id": "local-code-4",
+      "intent": {
+        "importance": "supporting",
+        "role": "label"
+      },
+      "props": {
+        "content": "no rewrite required",
+        "fill": "$muted",
+        "fontSize": 16,
+        "fontWeight": "700",
+        "opacity": 0,
+        "textAnchor": "start",
+        "type": "text",
+        "x": 84,
+        "y": 360
+      },
+      "type": "text"
+    },
+    "local-dot": {
+      "id": "local-dot",
+      "intent": {
+        "importance": "supporting",
+        "role": "decoration"
+      },
+      "props": {
+        "cx": 86,
+        "cy": 202,
+        "fill": "$success",
+        "opacity": 0,
+        "r": 7,
+        "type": "circle"
+      },
+      "type": "circle"
+    },
+    "local-label": {
+      "id": "local-label",
+      "intent": {
+        "importance": "secondary",
+        "role": "label"
+      },
+      "props": {
+        "content": "Local agent",
+        "fill": "$foreground",
+        "fontSize": 22,
+        "fontWeight": "800",
+        "opacity": 0,
+        "textAnchor": "start",
+        "type": "text",
+        "x": 116,
+        "y": 208
+      },
+      "type": "text"
+    },
+    "subtitle": {
+      "id": "subtitle",
+      "intent": {
+        "importance": "secondary",
+        "role": "subtitle"
+      },
+      "props": {
+        "content": "same agent, now with Toolbox, Guardrails, and Evals",
+        "fill": "$subtitle",
+        "fontSize": 20,
+        "fontWeight": "600",
+        "opacity": 0,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 480,
+        "y": 100
+      },
+      "type": "text"
+    },
+    "title": {
+      "id": "title",
+      "intent": {
+        "importance": "primary",
+        "role": "title"
+      },
+      "props": {
+        "content": "Foundry upgrades the local loop",
+        "fill": "$title",
+        "fontSize": 38,
+        "fontWeight": "900",
+        "opacity": 0,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 480,
+        "y": 64
+      },
+      "type": "text"
+    },
+    "to-evals": {
+      "id": "to-evals",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "opacity": 0,
+        "stroke": "$success",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 596,
+        "x2": 654,
+        "y1": 350,
+        "y2": 350
+      },
+      "type": "arrow"
+    },
+    "to-guardrails": {
+      "id": "to-guardrails",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "opacity": 0,
+        "stroke": "$warning",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 596,
+        "x2": 654,
+        "y1": 285,
+        "y2": 285
+      },
+      "type": "arrow"
+    },
+    "to-hero": {
+      "id": "to-hero",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "opacity": 0,
+        "stroke": "$border",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 318,
+        "x2": 402,
+        "y1": 285,
+        "y2": 285
+      },
+      "type": "arrow"
+    },
+    "to-toolbox": {
+      "id": "to-toolbox",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "props": {
+        "headSize": 10,
+        "opacity": 0,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 596,
+        "x2": 654,
+        "y1": 220,
+        "y2": 220
+      },
+      "type": "arrow"
+    },
+    "toolbox-card": {
+      "id": "toolbox-card",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 76,
+        "opacity": 0,
+        "rx": 18,
+        "stroke": "$accent",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 224,
+        "x": 666,
+        "y": 182
+      },
+      "type": "rect"
+    },
+    "toolbox-icon": {
+      "id": "toolbox-icon",
+      "intent": {
+        "importance": "supporting",
+        "role": "decoration"
+      },
+      "props": {
+        "fill": "rgba(0,0,0,0)",
+        "height": 22,
+        "opacity": 0,
+        "rx": 4,
+        "stroke": "$accent",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 28,
+        "x": 686,
+        "y": 202
+      },
+      "type": "rect"
+    },
+    "toolbox-label": {
+      "id": "toolbox-label",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "props": {
+        "content": "Toolbox",
+        "fill": "$foreground",
+        "fontSize": 24,
+        "fontWeight": "800",
+        "opacity": 0,
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 778,
+        "y": 227
+      },
+      "type": "text"
+    }
+  },
+  "scene": {
+    "background": "$background",
+    "children": [
+      "title",
+      "subtitle",
+      "local-card",
+      "local-dot",
+      "local-label",
+      "local-code-1",
+      "local-code-2",
+      "local-code-3",
+      "local-code-4",
+      "to-hero",
+      "hero-card",
+      "hero-ring",
+      "hero-title",
+      "hero-sub",
+      "foundry-badge",
+      "to-toolbox",
+      "toolbox-card",
+      "toolbox-icon",
+      "toolbox-label",
+      "to-guardrails",
+      "guardrails-card",
+      "guardrails-icon",
+      "guardrails-label",
+      "to-evals",
+      "evals-card",
+      "evals-icon",
+      "evals-label"
+    ],
+    "fps": 30,
+    "height": 540,
+    "type": "player",
+    "width": 960
+  },
+  "stateMachines": {
+    "main": {
+      "entry": "intro",
+      "id": "main",
+      "states": {
+        "intro": {
+          "timeline": "intro"
+        }
+      },
+      "transitions": [
+        {
+          "from": "entry",
+          "id": "entry-start",
+          "to": "intro",
+          "trigger": "onStart"
+        }
+      ]
+    }
+  },
+  "timelines": {
+    "intro": {
+      "duration": 96,
+      "id": "intro",
+      "tracks": [
+        {
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 8,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "title"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 4,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 12,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "subtitle"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 10,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 20,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 12,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 20,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-dot"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 12,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 22,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 16,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 24,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-code-1"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 18,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 26,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-code-2"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 20,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 28,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-code-3"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 22,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 30,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-code-4"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 24,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 32,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "to-hero"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 28,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 38,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "hero-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 30,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 40,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "hero-ring"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 32,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 40,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "hero-title"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 34,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 42,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "hero-sub"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 40,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 48,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "foundry-badge"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 46,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 54,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "to-toolbox"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 48,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 58,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "toolbox-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 50,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 58,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "toolbox-icon"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 52,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 60,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "toolbox-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 58,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 66,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "to-guardrails"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 60,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 70,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "guardrails-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 62,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 70,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "guardrails-icon"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 64,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 72,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "guardrails-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 70,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 78,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "to-evals"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 72,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 82,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "evals-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 74,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 82,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "evals-icon"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 76,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 84,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "evals-label"
+        }
+      ]
+    }
+  },
+  "version": "2.0"
+}

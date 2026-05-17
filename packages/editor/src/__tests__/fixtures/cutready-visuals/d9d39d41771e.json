@@ -1,0 +1,1204 @@
+{
+  "defaultStateMachine": "main",
+  "elements": {
+    "arrow-1": {
+      "id": "arrow-1",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "layout": {
+        "x1": 390,
+        "x2": 438,
+        "y1": 269,
+        "y2": 269
+      },
+      "props": {
+        "headSize": 10,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 390,
+        "x2": 438,
+        "y1": 269,
+        "y2": 269
+      },
+      "type": "arrow"
+    },
+    "arrow-2": {
+      "id": "arrow-2",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "layout": {
+        "x1": 606,
+        "x2": 654,
+        "y1": 269,
+        "y2": 269
+      },
+      "props": {
+        "headSize": 10,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 606,
+        "x2": 654,
+        "y1": 269,
+        "y2": 269
+      },
+      "type": "arrow"
+    },
+    "arrow-3": {
+      "id": "arrow-3",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "layout": {
+        "x1": 804,
+        "x2": 842,
+        "y1": 269,
+        "y2": 269
+      },
+      "props": {
+        "headSize": 10,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 804,
+        "x2": 842,
+        "y1": 269,
+        "y2": 269
+      },
+      "type": "arrow"
+    },
+    "arrow-start": {
+      "id": "arrow-start",
+      "intent": {
+        "importance": "supporting",
+        "role": "connector"
+      },
+      "layout": {
+        "x1": 164,
+        "x2": 224,
+        "y1": 271,
+        "y2": 271
+      },
+      "props": {
+        "headSize": 10,
+        "stroke": "$accent",
+        "strokeWidth": 3,
+        "type": "arrow",
+        "x1": 164,
+        "x2": 224,
+        "y1": 271,
+        "y2": 271
+      },
+      "type": "arrow"
+    },
+    "control-card": {
+      "id": "control-card",
+      "intent": {
+        "importance": "primary",
+        "role": "hero"
+      },
+      "layout": {
+        "height": 202,
+        "width": 120,
+        "x": 820,
+        "y": 168
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 202,
+        "rx": 20,
+        "stroke": "$tertiary",
+        "strokeWidth": 3,
+        "type": "rect",
+        "width": 120,
+        "x": 820,
+        "y": 168
+      },
+      "type": "rect"
+    },
+    "control-label": {
+      "id": "control-label",
+      "intent": {
+        "importance": "primary",
+        "role": "label"
+      },
+      "layout": {
+        "x": 880,
+        "y": 228
+      },
+      "props": {
+        "content": "Control",
+        "fill": "$tertiary",
+        "fontSize": 24,
+        "fontWeight": "900",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 880,
+        "y": 228
+      },
+      "type": "text"
+    },
+    "control-sub": {
+      "id": "control-sub",
+      "layout": {
+        "x": 880,
+        "y": 260
+      },
+      "props": {
+        "content": "Plane",
+        "fill": "$tertiary",
+        "fontSize": 22,
+        "fontWeight": "900",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 880,
+        "y": 260
+      },
+      "type": "text"
+    },
+    "deploy-card": {
+      "id": "deploy-card",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "layout": {
+        "height": 150,
+        "width": 150,
+        "x": 228,
+        "y": 194
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 150,
+        "rx": 18,
+        "stroke": "$accent",
+        "strokeWidth": 2.5,
+        "type": "rect",
+        "width": 150,
+        "x": 228,
+        "y": 194
+      },
+      "type": "rect"
+    },
+    "deploy-label": {
+      "id": "deploy-label",
+      "intent": {
+        "importance": "primary",
+        "role": "label"
+      },
+      "layout": {
+        "x": 303,
+        "y": 252
+      },
+      "props": {
+        "content": "Deploy",
+        "fill": "$accent",
+        "fontSize": 26,
+        "fontWeight": "900",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 303,
+        "y": 252
+      },
+      "type": "text"
+    },
+    "deploy-sub": {
+      "id": "deploy-sub",
+      "layout": {
+        "x": 303,
+        "y": 286
+      },
+      "props": {
+        "content": "ship the agent",
+        "fill": "$muted",
+        "fontSize": 17,
+        "fontWeight": "600",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 303,
+        "y": 286
+      },
+      "type": "text"
+    },
+    "evals-card": {
+      "id": "evals-card",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "layout": {
+        "height": 150,
+        "width": 132,
+        "x": 660,
+        "y": 194
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 150,
+        "rx": 18,
+        "stroke": "$success",
+        "strokeWidth": 2.5,
+        "type": "rect",
+        "width": 132,
+        "x": 660,
+        "y": 194
+      },
+      "type": "rect"
+    },
+    "evals-label": {
+      "id": "evals-label",
+      "intent": {
+        "importance": "primary",
+        "role": "label"
+      },
+      "layout": {
+        "x": 726,
+        "y": 252
+      },
+      "props": {
+        "content": "Evals",
+        "fill": "$success",
+        "fontSize": 24,
+        "fontWeight": "900",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 726,
+        "y": 252
+      },
+      "type": "text"
+    },
+    "evals-sub": {
+      "id": "evals-sub",
+      "layout": {
+        "x": 726,
+        "y": 286
+      },
+      "props": {
+        "content": "like unit tests",
+        "fill": "$muted",
+        "fontSize": 17,
+        "fontWeight": "600",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 726,
+        "y": 286
+      },
+      "type": "text"
+    },
+    "fleet-line-1": {
+      "id": "fleet-line-1",
+      "layout": {
+        "x1": 880,
+        "x2": 853,
+        "y1": 274,
+        "y2": 292
+      },
+      "props": {
+        "stroke": "$tertiary",
+        "strokeWidth": 2,
+        "type": "line",
+        "x1": 880,
+        "x2": 853,
+        "y1": 274,
+        "y2": 292
+      },
+      "type": "line"
+    },
+    "fleet-line-2": {
+      "id": "fleet-line-2",
+      "layout": {
+        "x1": 880,
+        "x2": 880,
+        "y1": 274,
+        "y2": 306
+      },
+      "props": {
+        "stroke": "$tertiary",
+        "strokeWidth": 2,
+        "type": "line",
+        "x1": 880,
+        "x2": 880,
+        "y1": 274,
+        "y2": 306
+      },
+      "type": "line"
+    },
+    "fleet-line-3": {
+      "id": "fleet-line-3",
+      "layout": {
+        "x1": 880,
+        "x2": 907,
+        "y1": 274,
+        "y2": 292
+      },
+      "props": {
+        "stroke": "$tertiary",
+        "strokeWidth": 2,
+        "type": "line",
+        "x1": 880,
+        "x2": 907,
+        "y1": 274,
+        "y2": 292
+      },
+      "type": "line"
+    },
+    "fleet-mini-1": {
+      "id": "fleet-mini-1",
+      "layout": {
+        "height": 22,
+        "width": 22,
+        "x": 842,
+        "y": 292
+      },
+      "props": {
+        "fill": "rgba(255,255,255,0.04)",
+        "height": 22,
+        "rx": 6,
+        "stroke": "$border",
+        "strokeWidth": 1.5,
+        "type": "rect",
+        "width": 22,
+        "x": 842,
+        "y": 292
+      },
+      "type": "rect"
+    },
+    "fleet-mini-2": {
+      "id": "fleet-mini-2",
+      "layout": {
+        "height": 22,
+        "width": 22,
+        "x": 869,
+        "y": 306
+      },
+      "props": {
+        "fill": "rgba(255,255,255,0.04)",
+        "height": 22,
+        "rx": 6,
+        "stroke": "$border",
+        "strokeWidth": 1.5,
+        "type": "rect",
+        "width": 22,
+        "x": 869,
+        "y": 306
+      },
+      "type": "rect"
+    },
+    "fleet-mini-3": {
+      "id": "fleet-mini-3",
+      "layout": {
+        "height": 22,
+        "width": 22,
+        "x": 896,
+        "y": 292
+      },
+      "props": {
+        "fill": "rgba(255,255,255,0.04)",
+        "height": 22,
+        "rx": 6,
+        "stroke": "$border",
+        "strokeWidth": 1.5,
+        "type": "rect",
+        "width": 22,
+        "x": 896,
+        "y": 292
+      },
+      "type": "rect"
+    },
+    "local-card": {
+      "id": "local-card",
+      "intent": {
+        "importance": "secondary",
+        "role": "container"
+      },
+      "layout": {
+        "height": 122,
+        "width": 110,
+        "x": 42,
+        "y": 210
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 122,
+        "rx": 16,
+        "stroke": "$border",
+        "strokeWidth": 2,
+        "type": "rect",
+        "width": 110,
+        "x": 42,
+        "y": 210
+      },
+      "type": "rect"
+    },
+    "local-dot-1": {
+      "id": "local-dot-1",
+      "layout": {
+        "cx": 58,
+        "cy": 221,
+        "r": 3
+      },
+      "props": {
+        "cx": 58,
+        "cy": 221,
+        "fill": "$muted",
+        "r": 3,
+        "type": "circle"
+      },
+      "type": "circle"
+    },
+    "local-dot-2": {
+      "id": "local-dot-2",
+      "layout": {
+        "cx": 68,
+        "cy": 221,
+        "r": 3
+      },
+      "props": {
+        "cx": 68,
+        "cy": 221,
+        "fill": "$muted",
+        "r": 3,
+        "type": "circle"
+      },
+      "type": "circle"
+    },
+    "local-dot-3": {
+      "id": "local-dot-3",
+      "layout": {
+        "cx": 78,
+        "cy": 221,
+        "r": 3
+      },
+      "props": {
+        "cx": 78,
+        "cy": 221,
+        "fill": "$muted",
+        "r": 3,
+        "type": "circle"
+      },
+      "type": "circle"
+    },
+    "local-label": {
+      "id": "local-label",
+      "intent": {
+        "importance": "secondary",
+        "role": "label"
+      },
+      "layout": {
+        "x": 97,
+        "y": 266
+      },
+      "props": {
+        "content": "Local agent",
+        "fill": "$foreground",
+        "fontSize": 15,
+        "fontWeight": "800",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 97,
+        "y": 266
+      },
+      "type": "text"
+    },
+    "local-status": {
+      "id": "local-status",
+      "layout": {
+        "height": 24,
+        "width": 82,
+        "x": 56,
+        "y": 284
+      },
+      "props": {
+        "fill": "rgba(34,197,94,0.16)",
+        "height": 24,
+        "rx": 12,
+        "stroke": "$success",
+        "strokeWidth": 1.5,
+        "type": "rect",
+        "width": 82,
+        "x": 56,
+        "y": 284
+      },
+      "type": "rect"
+    },
+    "local-status-text": {
+      "id": "local-status-text",
+      "layout": {
+        "x": 97,
+        "y": 301
+      },
+      "props": {
+        "content": "proven",
+        "fill": "$success",
+        "fontSize": 16,
+        "fontWeight": "800",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 97,
+        "y": 301
+      },
+      "type": "text"
+    },
+    "local-topbar": {
+      "id": "local-topbar",
+      "layout": {
+        "height": 22,
+        "width": 111,
+        "x": 41,
+        "y": 210
+      },
+      "props": {
+        "fill": "rgba(255,255,255,0.08)",
+        "height": 22,
+        "rx": 16,
+        "type": "rect",
+        "width": 111,
+        "x": 41,
+        "y": 210
+      },
+      "type": "rect"
+    },
+    "subtitle": {
+      "id": "subtitle",
+      "intent": {
+        "importance": "secondary",
+        "role": "subtitle"
+      },
+      "layout": {
+        "x": 480,
+        "y": 98
+      },
+      "props": {
+        "content": "from proven local demo to deployable, testable, managed agents",
+        "fill": "$subtitle",
+        "fontSize": 20,
+        "fontWeight": "600",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 480,
+        "y": 98
+      },
+      "type": "text"
+    },
+    "title": {
+      "id": "title",
+      "intent": {
+        "importance": "primary",
+        "role": "title"
+      },
+      "layout": {
+        "x": 480,
+        "y": 62
+      },
+      "props": {
+        "content": "Why move the agent into Foundry?",
+        "fill": "$title",
+        "fontSize": 38,
+        "fontWeight": "900",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 480,
+        "y": 62
+      },
+      "type": "text"
+    },
+    "vscode-card": {
+      "id": "vscode-card",
+      "intent": {
+        "importance": "primary",
+        "role": "step"
+      },
+      "layout": {
+        "height": 150,
+        "width": 150,
+        "x": 444,
+        "y": 194
+      },
+      "props": {
+        "fill": "$surface",
+        "height": 150,
+        "rx": 18,
+        "stroke": "$secondary",
+        "strokeWidth": 2.5,
+        "type": "rect",
+        "width": 150,
+        "x": 444,
+        "y": 194
+      },
+      "type": "rect"
+    },
+    "vscode-label": {
+      "id": "vscode-label",
+      "intent": {
+        "importance": "primary",
+        "role": "label"
+      },
+      "layout": {
+        "x": 519,
+        "y": 244
+      },
+      "props": {
+        "content": "VS Code",
+        "fill": "$secondary",
+        "fontSize": 24,
+        "fontWeight": "900",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 519,
+        "y": 244
+      },
+      "type": "text"
+    },
+    "vscode-sub": {
+      "id": "vscode-sub",
+      "layout": {
+        "x": 519,
+        "y": 280
+      },
+      "props": {
+        "content": "or portal",
+        "fill": "$muted",
+        "fontSize": 18,
+        "fontWeight": "600",
+        "textAnchor": "middle",
+        "type": "text",
+        "x": 519,
+        "y": 280
+      },
+      "type": "text"
+    }
+  },
+  "scene": {
+    "background": "$background",
+    "children": [
+      "title",
+      "subtitle",
+      "local-card",
+      "local-topbar",
+      "local-label",
+      "local-status",
+      "local-status-text",
+      "local-dot-1",
+      "local-dot-2",
+      "local-dot-3",
+      "arrow-start",
+      "deploy-card",
+      "deploy-label",
+      "deploy-sub",
+      "arrow-1",
+      "vscode-card",
+      "vscode-label",
+      "vscode-sub",
+      "arrow-2",
+      "evals-card",
+      "evals-label",
+      "evals-sub",
+      "arrow-3",
+      "control-card",
+      "control-label",
+      "control-sub",
+      "fleet-mini-1",
+      "fleet-mini-2",
+      "fleet-mini-3",
+      "fleet-line-1",
+      "fleet-line-2",
+      "fleet-line-3"
+    ],
+    "fps": 30,
+    "height": 540,
+    "type": "player",
+    "width": 960
+  },
+  "stateMachines": {
+    "main": {
+      "entry": "intro",
+      "id": "main",
+      "layout": {
+        "viewport": {
+          "x": 606,
+          "y": 62,
+          "zoom": 1
+        }
+      },
+      "states": {
+        "intro": {
+          "timeline": "intro"
+        }
+      },
+      "transitions": [
+        {
+          "from": "entry",
+          "id": "entry-start",
+          "to": "intro",
+          "trigger": "onStart"
+        }
+      ]
+    }
+  },
+  "timelines": {
+    "intro": {
+      "duration": 108,
+      "id": "intro",
+      "tracks": [
+        {
+          "keyframes": [
+            {
+              "frame": 0,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 8,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "title"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 4,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 12,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "subtitle"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 10,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 20,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 10,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 20,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-topbar"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 12,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 22,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 14,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 24,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-status"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 14,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 24,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "local-status-text"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 22,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 30,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "arrow-start"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 24,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 34,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "deploy-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 26,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 36,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "deploy-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 28,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 38,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "deploy-sub"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 36,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 44,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "arrow-1"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 38,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 48,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "vscode-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 40,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 50,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "vscode-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 42,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 52,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "vscode-sub"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 50,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 58,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "arrow-2"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 52,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 62,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "evals-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 54,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 64,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "evals-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 56,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 66,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "evals-sub"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 64,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 72,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "arrow-3"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 66,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 78,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "control-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 66,
+              "value": 0.96
+            },
+            {
+              "easing": "easeOutBack",
+              "frame": 78,
+              "value": 1
+            }
+          ],
+          "property": "scale",
+          "target": "control-card"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 70,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 80,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "control-label"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 72,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 82,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "control-sub"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 80,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 88,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "fleet-line-1"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 82,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 90,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "fleet-line-2"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 84,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 92,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "fleet-line-3"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 86,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 94,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "fleet-mini-1"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 88,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 96,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "fleet-mini-2"
+        },
+        {
+          "keyframes": [
+            {
+              "frame": 90,
+              "value": 0
+            },
+            {
+              "easing": "easeOutCubic",
+              "frame": 98,
+              "value": 1
+            }
+          ],
+          "property": "opacity",
+          "target": "fleet-mini-3"
+        }
+      ]
+    }
+  },
+  "version": "2.0"
+}
