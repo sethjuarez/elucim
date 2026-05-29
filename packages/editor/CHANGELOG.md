@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.23.0](https://github.com/sethjuarez/elucim/compare/editor-v0.22.1...editor-v0.23.0) (2026-05-29)
+
+
+### Features
+
+* **dsl:** score agent text layout issues ([11847a6](https://github.com/sethjuarez/elucim/commit/11847a619114bc0e2f0c6371d0a4d15717d65fb8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.23.0
+    * @elucim/dsl bumped to 0.23.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.23.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.23.0
+
 ## [0.22.1](https://github.com/sethjuarez/elucim/compare/editor-v0.22.0...editor-v0.22.1) (2026-05-17)
 
 
