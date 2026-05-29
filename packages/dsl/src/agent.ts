@@ -18,11 +18,14 @@ import {
   applyCommand,
   applyNudge,
   applyTimelineFrame,
+  checkLayoutForAgent,
+  createAgentSafeDocument,
   createAutoLayoutGroupPreset,
   createAutoStaggerTimeline,
   createBadgePreset,
   createBoundaryPreset,
   createCardGridPreset,
+  createComparisonScenePreset,
   createComparisonTablePreset,
   createConnectorPreset,
   createDecisionNodePreset,
@@ -33,7 +36,10 @@ import {
   createStateSnapshotMotion,
   createTimelineRoadmapPreset,
   createStepCardPreset,
+  createTextCalloutScenePreset,
   createTextBlockPreset,
+  createTextBoxPreset,
+  createThreeCardFlowScenePreset,
   diffDocuments,
   holdFinalFrame,
   inspectPolishHeuristics,
@@ -41,20 +47,29 @@ import {
   planMotionBeats,
   planSemanticLayout,
   previewBeatDiffs,
+  repairLayoutForAgent,
   summarizeDocument,
   suggestDocumentNudges,
+  suggestLayoutRepairsForAgent,
   suggestSemanticLayoutNudges,
   validateForAgent,
   type ElucimAutoLayoutGroupPresetSpec,
+  type ElucimAgentSafeDocumentOptions,
+  type ElucimAgentSafeScenePreset,
   type ElucimAutoStaggerMotionSpec,
   type ElucimBadgePresetSpec,
   type ElucimBeatPreviewOptions,
   type ElucimBoundaryPresetSpec,
   type ElucimCardGridPresetSpec,
   type ElucimComparisonTablePresetSpec,
+  type ElucimComparisonSceneRowSpec,
+  type ElucimComparisonSceneSpec,
   type ElucimConnectorPresetSpec,
   type ElucimDecisionNodePresetSpec,
   type ElucimDocumentNudge,
+  type ElucimLayoutCheckResult,
+  type ElucimLayoutIssue,
+  type ElucimLayoutRepairSuggestion,
   type ElucimMotionBeatPlanSpec,
   type ElucimPolishHeuristicReport,
   type ElucimPolishReport,
@@ -68,6 +83,10 @@ import {
   type ElucimStepCardPresetSpec,
   type ElucimTimelineRoadmapPresetSpec,
   type ElucimTextBlockPresetSpec,
+  type ElucimTextBoxPresetSpec,
+  type ElucimTextCalloutSceneSpec,
+  type ElucimThreeCardFlowItemSpec,
+  type ElucimThreeCardFlowSceneSpec,
   type JsonPatchOperation,
 } from './agentDocument';
 
@@ -92,9 +111,14 @@ export interface AgentOperationDescriptor {
 
 const AGENT_OPERATION_CATALOG: readonly AgentOperationDescriptor[] = [
   { name: 'createDocument', kind: 'author', async: false, description: 'Create an empty normalized ElucimDocument with scene metadata and defaults.' },
+  { name: 'createTextCalloutScenePreset', kind: 'author', async: false, description: 'Create a composable agent-safe callout scene using bounded textboxes for generated title, body, and callout copy.' },
+  { name: 'createThreeCardFlowScenePreset', kind: 'author', async: false, description: 'Create a composable agent-safe flow scene with bounded card textboxes and deterministic card spacing.' },
+  { name: 'createComparisonScenePreset', kind: 'author', async: false, description: 'Create a composable agent-safe comparison scene with bounded textbox table headers and cells.' },
+  { name: 'createAgentSafeDocument', kind: 'author', async: false, description: 'Wrap an agent-safe scene preset in a normalized document without changing its elements.' },
   { name: 'addElement', kind: 'author', async: false, description: 'Add a stable-ID element with props, layout, role, and semantic intent.' },
   { name: 'createConnectorPreset', kind: 'author', async: false, description: 'Create an editable semantic connector from source/target bounds with optional label and ELK-readable flow intent.' },
   { name: 'createTextBlockPreset', kind: 'author', async: false, description: 'Create editable wrapped text as grouped text lines with stable IDs and readable sizing.' },
+  { name: 'createTextBoxPreset', kind: 'author', async: false, description: 'Create one bounded textbox Object with deterministic wrapping, shrink/truncate fitting, and stable layout bounds.' },
   { name: 'createStepCardPreset', kind: 'author', async: false, description: 'Create an editable step card group with title, body, optional index/status, token colors, and layout rank.' },
   { name: 'createCardGridPreset', kind: 'author', async: false, description: 'Create an editable grid of step cards with deterministic sizing, gutters, order, and semantic ranks.' },
   { name: 'createDecisionNodePreset', kind: 'author', async: false, description: 'Create an editable diamond decision node with centered text and predictable connector anchors.' },
@@ -119,6 +143,9 @@ const AGENT_OPERATION_CATALOG: readonly AgentOperationDescriptor[] = [
   { name: 'evaluateSceneForAgent', kind: 'inspect', async: false, description: 'Return quality issues, polish diagnostics, summaries, and available deterministic nudges.' },
   { name: 'inspectSceneForAgent', kind: 'inspect', async: false, description: 'Sample rendered frames for visibility, occupancy, off-canvas, contrast, and animation issues.' },
   { name: 'inspectPolishHeuristics', kind: 'inspect', async: false, description: 'Return raw polish evidence: bounds, intersections, off-canvas overflow, text, colors, graph details, and semantic relationships.' },
+  { name: 'checkLayoutForAgent', kind: 'inspect', async: false, description: 'Preflight generated scenes for text overflow, tiny auto-fit text, and likely element overlaps.' },
+  { name: 'suggestLayoutRepairsForAgent', kind: 'layout', async: false, description: 'Return deterministic repair suggestions for layout preflight issues without mutating the document.' },
+  { name: 'repairLayoutForAgent', kind: 'layout', async: false, description: 'Apply safe layout repairs, re-check layout, and return before/after diagnostics.' },
   { name: 'suggestDocumentNudges', kind: 'polish', async: false, description: 'Return command-backed safe and review polish nudges for metadata, motion, readability, and graph layout.' },
   { name: 'suggestSemanticLayoutNudges', kind: 'layout', async: true, description: 'Use ELK to produce review-only layout nudges from semantic relationships and connector hints.' },
   { name: 'applyNudge', kind: 'polish', async: false, description: 'Apply a selected command-backed nudge and return the updated editable document.' },
@@ -240,17 +267,21 @@ export interface AgentQualityIssue {
     | 'missing-state-machine'
     | 'missing-default-state-machine'
     | 'unthemed-colors'
-    | 'large-scene';
+    | 'large-scene'
+    | ElucimLayoutIssue['code'];
   path: string;
   message: string;
   suggestions?: string[];
 }
 
 export interface AgentQualityReport {
+  /** True only when both schema validation and layout preflight have no errors. */
   valid: boolean;
   score: number;
   issues: AgentQualityIssue[];
   validation: AgentValidationResult;
+  layout: ElucimLayoutCheckResult;
+  layoutRepairs: ElucimLayoutRepairSuggestion[];
   summary?: AgentDocumentSummary;
   nudges: ElucimDocumentNudge[];
   polish?: ElucimPolishReport;
@@ -368,6 +399,7 @@ export interface AgentSceneInspectionReport {
 
 export {
   applyNudge,
+  createAgentSafeDocument,
   createAutoLayoutGroupPreset,
   createAutoStaggerTimeline,
   createBadgePreset,
@@ -376,6 +408,7 @@ export {
   diffDocuments,
   planSemanticLayout,
   createCardGridPreset,
+  createComparisonScenePreset,
   createComparisonTablePreset,
   createConnectorPreset,
   createDecisionNodePreset,
@@ -386,20 +419,30 @@ export {
   holdFinalFrame,
   createTimelineRoadmapPreset,
   createStepCardPreset,
+  createTextCalloutScenePreset,
   createTextBlockPreset,
+  createTextBoxPreset,
+  createThreeCardFlowScenePreset,
+  checkLayoutForAgent,
   inspectPolishHeuristics,
   lintMotion,
   planMotionBeats,
   previewBeatDiffs,
+  repairLayoutForAgent,
   suggestDocumentNudges,
+  suggestLayoutRepairsForAgent,
   suggestSemanticLayoutNudges,
   summarizeDocument,
   validateForAgent,
   type ElucimPolishHeuristicReport,
+  type ElucimAgentSafeDocumentOptions,
+  type ElucimAgentSafeScenePreset,
   type ElucimAutoLayoutGroupPresetSpec,
   type ElucimBadgePresetSpec,
   type ElucimBoundaryPresetSpec,
   type ElucimCardGridPresetSpec,
+  type ElucimComparisonSceneRowSpec,
+  type ElucimComparisonSceneSpec,
   type ElucimComparisonTablePresetSpec,
   type ElucimConnectorPresetSpec,
   type ElucimDecisionNodePresetSpec,
@@ -408,6 +451,10 @@ export {
   type ElucimStepCardPresetSpec,
   type ElucimTimelineRoadmapPresetSpec,
   type ElucimTextBlockPresetSpec,
+  type ElucimTextBoxPresetSpec,
+  type ElucimTextCalloutSceneSpec,
+  type ElucimThreeCardFlowItemSpec,
+  type ElucimThreeCardFlowSceneSpec,
   type ElucimSemanticLayoutOptions,
   type ElucimSemanticLayoutPlan,
   type ElucimAutoStaggerMotionSpec,
@@ -611,12 +658,15 @@ export function applyAgentCommands(doc: AgentDocument, commands: AgentCommand[])
 
 export function evaluateSceneForAgent(doc: AgentDocument): AgentQualityReport {
   const validation = validateForAgent(doc);
+  const layout = validation.valid ? checkLayoutForAgent(doc) : emptyLayoutCheck();
+  const layoutRepairs = validation.valid ? suggestLayoutRepairsForAgent(doc, layout) : [];
   const issues: AgentQualityIssue[] = validation.errors.map(error => ({
     severity: error.severity,
     code: 'invalid-document',
     path: error.path,
     message: error.message,
   }));
+  issues.push(...layout.issues.map(issue => layoutIssueToQualityIssue(issue, layoutRepairs)));
 
   const elementIds = Object.keys(doc.elements ?? {});
   if (elementIds.length === 0) {
@@ -695,7 +745,7 @@ export function evaluateSceneForAgent(doc: AgentDocument): AgentQualityReport {
   const infoPenalty = issues.filter(issue => issue.severity === 'info').length * 5;
   const heuristics = validation.valid ? inspectPolishHeuristics(doc) : undefined;
   return {
-    valid: validation.valid,
+    valid: validation.valid && layout.valid,
     score: Math.max(0, 100 - errorPenalty - warningPenalty - infoPenalty),
     issues,
     validation,
@@ -703,6 +753,34 @@ export function evaluateSceneForAgent(doc: AgentDocument): AgentQualityReport {
     polish: heuristics ? { score: heuristics.score, diagnostics: heuristics.diagnostics } : undefined,
     heuristics,
     nudges: validation.valid ? suggestDocumentNudges(doc) : [],
+    layout,
+    layoutRepairs,
+  };
+}
+
+function emptyLayoutCheck(): ElucimLayoutCheckResult {
+  return {
+    valid: true,
+    issueCount: 0,
+    errors: [],
+    warnings: [],
+    issues: [],
+  };
+}
+
+function layoutIssueToQualityIssue(
+  issue: ElucimLayoutIssue,
+  layoutRepairs: ElucimLayoutRepairSuggestion[],
+): AgentQualityIssue {
+  const suggestions = layoutRepairs
+    .filter(repair => repair.issueId === issue.id)
+    .map(repair => repair.message);
+  return {
+    severity: issue.severity,
+    code: issue.code,
+    path: issue.affectedElementIds.length === 1 ? `elements.${issue.affectedElementIds[0]}` : 'elements',
+    message: issue.message,
+    ...(suggestions.length > 0 ? { suggestions } : {}),
   };
 }
 

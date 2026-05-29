@@ -3,16 +3,31 @@
  */
 import { describe, it, expect } from 'vitest';
 import React, { useEffect } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { editorReducer, findElementById } from '../state/reducer';
 import { createInitialState } from '../state/types';
 import { EditorProvider, useEditorState } from '../state/EditorProvider';
 import { Inspector } from '../inspector/Inspector';
-import type { BarChartNode, CircleNode, FunctionPlotNode, GroupNode, RectNode, TextNode, LaTeXNode } from '@elucim/dsl';
+import type { BarChartNode, CircleNode, FunctionPlotNode, GroupNode, RectNode, TextNode, TextBoxNode, LaTeXNode } from '@elucim/dsl';
 
 const circle: CircleNode = { type: 'circle', id: 'c1', cx: 100, cy: 200, r: 50, fill: '#ff0000', stroke: '#00ff00', strokeWidth: 2, opacity: 0.8 };
 const rect: RectNode = { type: 'rect', id: 'r1', x: 50, y: 50, width: 100, height: 80, fill: '#0000ff' };
 const text: TextNode = { type: 'text', id: 't1', x: 200, y: 100, content: 'Hello', fontSize: 24, fill: '#fff' };
+const textbox: TextBoxNode = {
+  type: 'textbox',
+  id: 'tb1',
+  x: 120,
+  y: 140,
+  width: 320,
+  height: 140,
+  content: 'Bounded copy',
+  fill: '$foreground',
+  fontSize: 20,
+  fontWeight: 600,
+  autoFit: 'shrink',
+  padding: 12,
+  background: { fill: '$surface', stroke: '$border' },
+};
 const latex: LaTeXNode = { type: 'latex', id: 'lx1', x: 300, y: 300, expression: '\\frac{a}{b}', fontSize: 20 };
 const heroGroup: GroupNode = {
   type: 'group',
@@ -109,6 +124,54 @@ describe('inspector function fields', () => {
 
     fireEvent.change(rangeMax, { target: { value: '4' } });
     await waitFor(() => expect(latestFunction?.yClamp).toEqual([-10, 4]));
+  });
+});
+
+describe('inspector textbox fields', () => {
+  it('edits textbox fitting, padding, and background controls', async () => {
+    let latestTextbox: TextBoxNode | null = null;
+
+    function SelectAndCapture() {
+      const { state, dispatch } = useEditorState();
+      useEffect(() => {
+        dispatch({ type: 'SELECT', ids: ['tb1'] });
+      }, [dispatch]);
+      useEffect(() => {
+        latestTextbox = findElementById(state.document.root, 'tb1')?.element as TextBoxNode;
+      }, [state.document]);
+      return null;
+    }
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: '1.0',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [textbox] },
+          },
+        },
+        React.createElement(SelectAndCapture),
+        React.createElement(Inspector),
+      ),
+    );
+
+    const fit = await screen.findByLabelText('Fit') as HTMLSelectElement;
+    fireEvent.change(fit, { target: { value: 'truncate' } });
+    await waitFor(() => expect(latestTextbox?.autoFit).toBe('truncate'));
+
+    const padX = screen.getByLabelText('Pad X') as HTMLInputElement;
+    fireEvent.change(padX, { target: { value: '18' } });
+    await waitFor(() => expect(latestTextbox?.padding).toEqual({ x: 18, y: 12 }));
+
+    const backgroundFill = screen.getByLabelText('Bg Fill value') as HTMLInputElement;
+    fireEvent.change(backgroundFill, { target: { value: '$accent' } });
+    await waitFor(() => expect(latestTextbox?.background).toMatchObject({ fill: '$accent', stroke: '$border' }));
+
+    const weight = screen.getByLabelText('Weight') as HTMLInputElement;
+    fireEvent.change(weight, { target: { value: '700' } });
+    await waitFor(() => expect(latestTextbox?.fontWeight).toBe(700));
+    cleanup();
   });
 });
 

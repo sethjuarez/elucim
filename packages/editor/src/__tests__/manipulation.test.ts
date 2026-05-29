@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { editorReducer } from '../state/reducer';
 import { createInitialState } from '../state/types';
 import type { EditorState } from '../state/types';
-import type { RenderableDocument as ElucimDocument, CircleNode, RectNode, LineNode } from '@elucim/dsl';
+import type { RenderableDocument as ElucimDocument, CircleNode, RectNode, LineNode, TextBoxNode } from '@elucim/dsl';
 
 function stateWithElements(...elements: any[]): EditorState {
   const doc: ElucimDocument = {
@@ -21,6 +21,7 @@ function stateWithElements(...elements: any[]): EditorState {
 const rect1: RectNode = { type: 'rect', id: 'r1', x: 50, y: 50, width: 100, height: 80 };
 const circle1: CircleNode = { type: 'circle', id: 'c1', cx: 200, cy: 200, r: 50 };
 const line1: LineNode = { type: 'line', id: 'l1', x1: 10, y1: 10, x2: 110, y2: 110 };
+const textbox1: TextBoxNode = { type: 'textbox', id: 'tb1', x: 80, y: 90, width: 240, height: 120, content: 'Bounded text', autoFit: 'shrink' };
 
 // ─── RESIZE_ELEMENT ────────────────────────────────────────────────────────
 
@@ -114,6 +115,28 @@ describe('RESIZE_ELEMENT', () => {
     expect(el.y1).toBe(10);
     expect(el.x2).toBe(105);
     expect(el.y2).toBe(120);
+  });
+
+  it('resizes textbox by moving only the dragged edges', () => {
+    const state = stateWithElements(textbox1);
+
+    const east = editorReducer(state, { type: 'RESIZE_ELEMENT', id: 'tb1', handle: 'e', dx: 40, dy: 12 });
+    expect((east.document.root as any).children[0]).toMatchObject({
+      x: 80,
+      y: 90,
+      width: 280,
+      height: 120,
+    });
+    expect((east.document.root as any).children[0]).not.toHaveProperty('fontSize');
+
+    const northWest = editorReducer(state, { type: 'RESIZE_ELEMENT', id: 'tb1', handle: 'nw', dx: 20, dy: 10 });
+    expect((northWest.document.root as any).children[0]).toMatchObject({
+      x: 100,
+      y: 100,
+      width: 220,
+      height: 110,
+    });
+    expect((northWest.document.root as any).children[0]).not.toHaveProperty('fontSize');
   });
 });
 

@@ -1,0 +1,60 @@
+---
+title: TextBox
+description: Keep generated copy inside a bounded, styled text region.
+---
+
+Use `textbox` when text must stay inside a known rectangle. It wraps deterministically and can shrink or truncate copy so agent-authored labels, callouts, and captions do not escape their boxes.
+
+## DSL example
+
+```ts
+elements: {
+  summary: {
+    id: 'summary',
+    type: 'textbox',
+    role: 'callout',
+    layout: { x: 80, y: 120, width: 360, height: 140 },
+    props: {
+      type: 'textbox',
+      x: 80,
+      y: 120,
+      width: 360,
+      height: 140,
+      content: 'TextBox wraps generated copy and keeps it within this visual region.',
+      fontSize: 20,
+      autoFit: 'shrink',
+      background: { fill: '$surface', stroke: '$muted' },
+    },
+  },
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `x`, `y` | `number` | required | Top-left corner of the box |
+| `width`, `height` | `number` | required | Outer box dimensions |
+| `content` | `string` | required | Text to display |
+| `padding` | `number \| { x?: number; y?: number }` | `12, 10` | Inner text inset |
+| `fontSize` | `number` | `20` | Starting font size in pixels |
+| `minFontSize` | `number` | `10` | Smallest font size used by `autoFit: 'shrink'` |
+| `fontFamily` | `string` | `'sans-serif'` | Font family |
+| `fontWeight` | `string \| number` | `'normal'` | Font weight |
+| `lineHeight` | `number` | `1.2 * fontSize` | Line height; values `<= 4` are ratios |
+| `align` | `'start' \| 'middle' \| 'end'` | `'start'` | Horizontal text alignment |
+| `verticalAlign` | `'top' \| 'middle' \| 'bottom'` | `'top'` | Vertical placement of rendered lines |
+| `autoFit` | `'none' \| 'shrink' \| 'truncate'` | `'none'` | How to handle text that exceeds the inner bounds |
+| `background` | `{ fill?: string; stroke?: string; strokeWidth?: number; radius?: number }` | styled default | Background rectangle styling |
+
+## Agent helper
+
+Prefer `createTextBoxPreset()` or the CLI `add-textbox` command for generated prose:
+
+```bash
+npx @elucim/cli add-textbox diagram.elc --id summary --x 80 --y 120 --width 360 --height 140 --text "Bounded copy" --auto-fit shrink --background panel --out diagram.elc --json
+```
+
+Pass `--background none` when the text should be bounded for layout but drawn without a visible panel.
+
+The helper and CLI default to `autoFit: 'shrink'` so generated copy stays bounded; the raw primitive defaults to `autoFit: 'none'`.

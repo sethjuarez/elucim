@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import {
   applyNudge,
   applyTimelineFrame,
+  checkLayoutForAgent,
   collectElementBounds,
   createAutoStaggerTimeline,
   createCardGridPreset,
@@ -14,6 +15,7 @@ import {
   createSemanticMotionTimeline,
   createStepCardPreset,
   createTextBlockPreset,
+  createTextBoxPreset,
   diffDocuments,
   fromYaml,
   holdFinalFrame,
@@ -22,7 +24,9 @@ import {
   normalizeDocument,
   planMotionBeats,
   previewBeatDiffs,
+  repairLayoutForAgent,
   suggestDocumentNudges,
+  suggestLayoutRepairsForAgent,
   suggestSemanticLayoutNudges,
   validateForAgent,
   type ElucimBeatPreviewOptions,
@@ -78,6 +82,16 @@ const COMMANDS = [
     description: 'Return summary, quality report, and raw polish heuristics for agent interrogation.',
   },
   {
+    name: 'check-layout',
+    usage: 'elucim check-layout <file> --json',
+    description: 'Preflight generated scenes for text overflow, tiny auto-fit text, and likely element overlaps.',
+  },
+  {
+    name: 'repair-layout',
+    usage: 'elucim repair-layout <file> --out <file> --json',
+    description: 'Apply safe layout repairs, re-run layout checks, and write the updated document.',
+  },
+  {
     name: 'nudges',
     usage: 'elucim nudges <file> --semantic-layout --json',
     description: 'List deterministic polish nudges and optional ELK semantic layout nudges.',
@@ -116,6 +130,11 @@ const COMMANDS = [
     name: 'add-text-block',
     usage: 'elucim add-text-block <file> --id <id> --x 80 --y 120 --width 320 --text "..." --out <file> --json',
     description: 'Add editable wrapped text lines as a grouped text block.',
+  },
+  {
+    name: 'add-textbox',
+    usage: 'elucim add-textbox <file> --id <id> --x 80 --y 120 --width 320 --height 120 --text "..." --auto-fit shrink --background panel --out <file> --json',
+    description: 'Add one bounded textbox Object with deterministic wrapping and shrink/truncate fitting.',
   },
   {
     name: 'add-step-card',
@@ -180,6 +199,8 @@ const COMMAND_EXAMPLES: Record<CliCommandName, readonly CliCommandExample[]> = {
   ops: [{ description: 'Discover available CLI and code-backed agent operations.', argv: ['ops', '--json'] }],
   validate: [{ description: 'Validate an Elucim Document before and after edits.', argv: ['validate', 'diagram.elc', '--json'] }],
   inspect: [{ description: 'Summarize document quality and agent-readable polish issues.', argv: ['inspect', 'diagram.elc', '--json'] }],
+  'check-layout': [{ description: 'Catch text overflow and likely overlaps before rendering.', argv: ['check-layout', 'diagram.elc', '--json'] }],
+  'repair-layout': [{ description: 'Apply safe generated-text layout repairs and write a new document.', argv: ['repair-layout', 'diagram.elc', '--out', 'repaired.elc', '--json'] }],
   nudges: [{ description: 'List deterministic and semantic layout improvement suggestions.', argv: ['nudges', 'diagram.elc', '--semantic-layout', '--json'] }],
   polish: [{ description: 'Apply safe deterministic improvements and write a new document.', argv: ['polish', 'diagram.elc', '--apply-safe', '--out', 'polished.elc', '--json'] }],
   layout: [{ description: 'Apply the best available semantic layout suggestion.', argv: ['layout', 'diagram.elc', '--out', 'laid-out.elc', '--json'] }],
@@ -188,6 +209,7 @@ const COMMAND_EXAMPLES: Record<CliCommandName, readonly CliCommandExample[]> = {
   'update-element': [{ description: 'Patch props or layout for an existing Object.', argv: ['update-element', 'diagram.elc', '--id', 'card', '--props-json', '{"fill":"$primary"}', '--out', 'updated.elc', '--json'] }],
   'delete-element': [{ description: 'Remove an Object and prune document references through validation.', argv: ['delete-element', 'diagram.elc', '--id', 'card', '--out', 'without-card.elc', '--json'] }],
   'add-text-block': [{ description: 'Create editable wrapped text from one body string.', argv: ['add-text-block', 'diagram.elc', '--id', 'summary', '--x', '80', '--y', '120', '--width', '320', '--text', 'Explain the idea clearly.', '--out', 'text.elc', '--json'] }],
+  'add-textbox': [{ description: 'Create one bounded textbox that keeps agent-authored copy inside a box.', argv: ['add-textbox', 'diagram.elc', '--id', 'summary', '--x', '80', '--y', '120', '--width', '320', '--height', '120', '--text', 'Explain the idea clearly.', '--auto-fit', 'shrink', '--background', 'panel', '--out', 'textbox.elc', '--json'] }],
   'add-step-card': [{ description: 'Create a tokenized editable step card.', argv: ['add-step-card', 'diagram.elc', '--id', 'step-1', '--x', '80', '--y', '120', '--title', 'Plan', '--body', 'Pick the first action.', '--out', 'step.elc', '--json'] }],
   'add-card-grid': [{ description: 'Create multiple ordered cards from JSON item specs.', argv: ['add-card-grid', 'diagram.elc', '--id', 'steps', '--x', '80', '--y', '120', '--items-json', '[{"title":"One","body":"Start"}]', '--out', 'grid.elc', '--json'] }],
   'add-beat': [{ description: 'Compile semantic motion into an ordinary timeline.', argv: ['add-beat', 'diagram.elc', '--id', 'intro', '--preset', 'revealFlow', '--targets', 'step-1', '--duration', '48', '--out', 'motion.elc', '--json'] }],
@@ -224,6 +246,10 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
         return await validateCommand(args, io);
       case 'inspect':
         return await inspectCommand(args, io);
+      case 'check-layout':
+        return await checkLayoutCommand(args, io);
+      case 'repair-layout':
+        return await repairLayoutCommand(args, io);
       case 'nudges':
         return await nudgesCommand(args, io);
       case 'polish':
@@ -240,6 +266,8 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
         return await addConnectorCommand(args, io);
       case 'add-text-block':
         return await addTextBlockCommand(args, io);
+      case 'add-textbox':
+        return await addTextBoxCommand(args, io);
       case 'add-step-card':
         return await addStepCardCommand(args, io);
       case 'add-card-grid':
@@ -293,7 +321,7 @@ function opsPayload() {
       recommendedWorkflows: [
         {
           goal: 'Author a playable animated Elucim Document',
-          commands: ['add-element', 'add-beat', 'create-state-machine', 'validate', 'export-frames'],
+          commands: ['add-element', 'add-textbox', 'check-layout', 'repair-layout', 'add-beat', 'create-state-machine', 'validate', 'export-frames'],
         },
         {
           goal: 'Improve an existing Elucim Document safely',
@@ -347,6 +375,69 @@ async function inspectCommand(args: ParsedArgs, io: CliIo): Promise<number> {
   };
   writeOutput(args, io, payload);
   return validation.valid ? 0 : 1;
+}
+
+async function checkLayoutCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const validation = validateForAgent(loaded.document);
+  const layout = validation.valid ? checkLayoutForAgent(loaded.document) : undefined;
+  const repairSuggestions = layout ? suggestLayoutRepairsForAgent(loaded.document, layout) : undefined;
+  writeOutput(args, io, {
+    command: 'check-layout',
+    file: loaded.path,
+    inputFormat: loaded.inputFormat,
+    migrated: loaded.migrated,
+    warnings: loaded.warnings,
+    validation,
+    layout,
+    repairSuggestions,
+  });
+  return validation.valid && layout?.valid ? 0 : 1;
+}
+
+async function repairLayoutCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const validation = validateForAgent(loaded.document);
+  if (!validation.valid) {
+    writeOutput(args, io, {
+      command: 'repair-layout',
+      file: loaded.path,
+      inputFormat: loaded.inputFormat,
+      migrated: loaded.migrated,
+      warnings: loaded.warnings,
+      validation,
+      applied: [],
+      skipped: [],
+    });
+    return 1;
+  }
+
+  const repair = repairLayoutForAgent(loaded.document, {
+    includeReview: hasFlag(args, 'apply-all-review'),
+    reviewSuggestionIds: reviewRepairIds(args),
+    maxPasses: optionalNumberFlag(args, 'max-passes'),
+  });
+  const outputPath = await maybeWriteDocument(args, loaded.path, repair.document);
+  writeOutput(args, io, {
+    command: 'repair-layout',
+    file: loaded.path,
+    inputFormat: loaded.inputFormat,
+    migrated: loaded.migrated,
+    warnings: loaded.warnings,
+    outputPath,
+    validation,
+    changed: repair.changed,
+    converged: repair.converged,
+    passes: repair.passes,
+    before: repair.before,
+    after: repair.after,
+    applied: repair.applied,
+    skipped: repair.skipped,
+    repairSuggestions: repair.repairSuggestions,
+    diff: diffDocuments(loaded.document, repair.document),
+    document: shouldIncludeDocument(args) ? repair.document : undefined,
+  });
+  return repair.after.valid ? 0 : 1;
 }
 
 async function nudgesCommand(args: ParsedArgs, io: CliIo): Promise<number> {
@@ -533,6 +624,40 @@ async function addTextBlockCommand(args: ParsedArgs, io: CliIo): Promise<number>
   const document = addCompositeElements(before, elements);
   const outputPath = await maybeWriteDocument(args, loaded.path, document);
   writeCompositeOutput(args, io, 'add-text-block', loaded.path, outputPath, before, document, elements);
+  return 0;
+}
+
+async function addTextBoxCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const before = loaded.document;
+  const elements = createTextBoxPreset({
+    id: requiredFlag(args, 'id'),
+    x: numberFlag(args, 'x', true),
+    y: numberFlag(args, 'y', true),
+    width: numberFlag(args, 'width', true),
+    height: numberFlag(args, 'height', true),
+    text: requiredFlag(args, 'text'),
+    fontSize: optionalNumberFlag(args, 'font-size'),
+    minFontSize: optionalNumberFlag(args, 'min-font-size'),
+    fontFamily: flagValue(args, 'font-family'),
+    fontWeight: flagValue(args, 'font-weight'),
+    lineHeight: optionalNumberFlag(args, 'line-height'),
+    fillToken: flagValue(args, 'fill'),
+    backgroundFillToken: flagValue(args, 'background-fill'),
+    backgroundStrokeToken: flagValue(args, 'background-stroke'),
+    background: textBoxBackground(args),
+    padding: textBoxPadding(args),
+    align: textBoxAlign(args),
+    verticalAlign: textBoxVerticalAlign(args),
+    autoFit: textBoxAutoFit(args),
+    role: flagValue(args, 'role'),
+    importance: textBoxImportance(args),
+    parentId: flagValue(args, 'parent'),
+    rank: optionalNumberFlag(args, 'rank'),
+  });
+  const document = addCompositeElements(before, elements);
+  const outputPath = await maybeWriteDocument(args, loaded.path, document);
+  writeCompositeOutput(args, io, 'add-textbox', loaded.path, outputPath, before, document, elements);
   return 0;
 }
 
@@ -898,6 +1023,13 @@ function flagValues(args: ParsedArgs, name: string): string[] {
   return args.flags.get(name) ?? [];
 }
 
+function reviewRepairIds(args: ParsedArgs): string[] {
+  return flagValues(args, 'apply-review')
+    .flatMap(value => value.split(','))
+    .map(value => value.trim())
+    .filter(Boolean);
+}
+
 function connectorAnchor(args: ParsedArgs, name: string) {
   const value = flagValue(args, name);
   if (value === undefined) return undefined;
@@ -924,6 +1056,54 @@ function connectorCap(args: ParsedArgs, name: string) {
   if (value === undefined) return undefined;
   if (value === 'none' || value === 'arrow' || value === 'dot') return value;
   throw new Error(`--${name} must be none, arrow, or dot.`);
+}
+
+function textBoxAlign(args: ParsedArgs) {
+  const value = flagValue(args, 'align');
+  if (value === undefined) return undefined;
+  if (value === 'left' || value === 'center' || value === 'right') return value;
+  throw new Error('--align must be left, center, or right.');
+}
+
+function textBoxVerticalAlign(args: ParsedArgs) {
+  const value = flagValue(args, 'vertical-align');
+  if (value === undefined) return undefined;
+  if (value === 'top' || value === 'middle' || value === 'bottom') return value;
+  throw new Error('--vertical-align must be top, middle, or bottom.');
+}
+
+function textBoxAutoFit(args: ParsedArgs) {
+  const value = flagValue(args, 'auto-fit');
+  if (value === undefined) return undefined;
+  if (value === 'none' || value === 'shrink' || value === 'truncate') return value;
+  throw new Error('--auto-fit must be none, shrink, or truncate.');
+}
+
+function textBoxBackground(args: ParsedArgs) {
+  const value = flagValue(args, 'background');
+  const hasBackgroundStyle = flagValue(args, 'background-fill') !== undefined || flagValue(args, 'background-stroke') !== undefined;
+  if (value === undefined) return undefined;
+  if (value === 'none' && hasBackgroundStyle) throw new Error('--background none cannot be combined with --background-fill or --background-stroke.');
+  if (value === 'panel' || value === 'none') return value;
+  throw new Error('--background must be panel or none.');
+}
+
+function textBoxPadding(args: ParsedArgs) {
+  const padding = optionalNumberFlag(args, 'padding');
+  const paddingX = optionalNumberFlag(args, 'padding-x');
+  const paddingY = optionalNumberFlag(args, 'padding-y');
+  if (paddingX !== undefined || paddingY !== undefined) {
+    const fallback = padding ?? 12;
+    return { x: paddingX ?? fallback, y: paddingY ?? fallback };
+  }
+  return padding;
+}
+
+function textBoxImportance(args: ParsedArgs) {
+  const value = flagValue(args, 'importance');
+  if (value === undefined) return undefined;
+  if (value === 'primary' || value === 'secondary' || value === 'supporting' || value === 'decorative') return value;
+  throw new Error('--importance must be primary, secondary, supporting, or decorative.');
 }
 
 function semanticPreset(args: ParsedArgs): ElucimSemanticMotionPreset {
@@ -1051,6 +1231,18 @@ function addCompositeElements(doc: ElucimDocument, elements: ElucimElement[]): E
   const nextElements = { ...doc.elements };
   for (const element of elements) nextElements[element.id] = element;
   const rootIds = elements.filter(element => !element.parentId).map(element => element.id);
+  for (const element of elements) {
+    if (!element.parentId) continue;
+    const parent = nextElements[element.parentId];
+    if (!parent) throw new Error(`Parent element "${element.parentId}" does not exist.`);
+    if (!('children' in parent) || !Array.isArray(parent.children)) {
+      throw new Error(`Parent element "${element.parentId}" cannot contain children.`);
+    }
+    nextElements[element.parentId] = {
+      ...parent,
+      children: parent.children.includes(element.id) ? parent.children : [...parent.children, element.id],
+    };
+  }
   const next = {
     ...doc,
     scene: { ...doc.scene, children: [...doc.scene.children, ...rootIds] },

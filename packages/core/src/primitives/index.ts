@@ -4,6 +4,14 @@ export { Line, type LineProps } from './Line';
 export { Arrow, type ArrowProps } from './Arrow';
 export { Rect, type RectProps } from './Rect';
 export { Text, type TextProps } from './Text';
+export {
+  TextBox,
+  type TextBoxAlign,
+  type TextBoxAutoFit,
+  type TextBoxPadding,
+  type TextBoxProps,
+  type TextBoxVerticalAlign,
+} from './TextBox';
 export { Polygon, type PolygonProps } from './Polygon';
 export { Axes, type AxesProps, mathToSvg } from './Axes';
 export { FunctionPlot, type FunctionPlotProps } from './FunctionPlot';

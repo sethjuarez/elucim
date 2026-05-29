@@ -22,7 +22,7 @@ pnpm add @elucim/core
 `@elucim/core` is the low-level React runtime and primitive layer. For normal user/agent-authored scenes, prefer normalized `ElucimDocument` files rendered with `@elucim/dsl`'s `<DslRenderer>`. Use core directly when you intentionally want hand-coded React components, custom hooks, or host-level presentation shells.
 
 ```tsx
-import { Player, Circle, Text, Group, useCurrentFrame, interpolate } from '@elucim/core';
+import { Player, Circle, TextBox, Group, useCurrentFrame, interpolate } from '@elucim/core';
 
 function PulsingGroup() {
   const frame = useCurrentFrame();
@@ -32,9 +32,9 @@ function PulsingGroup() {
     <Group translate={[400, 280]} opacity={opacity}>
       <Circle cx={0} cy={0} r={80} stroke="#6c5ce7" strokeWidth={3} fill="none" />
       <Circle cx={60} cy={0} r={12} fill="#6c5ce7" />
-      <Text x={0} y={10} fill="#e0e0e0" fontSize={24} textAnchor="middle">
+      <TextBox x={-120} y={-26} width={240} height={52} fill="#e0e0e0" align="middle" verticalAlign="middle" backgroundFill="none" backgroundStroke="none">
         Hello Elucim
-      </Text>
+      </TextBox>
     </Group>
   );
 }
@@ -69,7 +69,8 @@ export function MyAnimation() {
 | `Arrow` | Line with arrowhead |
 | `Polygon` | Arbitrary polygon from point arrays |
 | `BezierCurve` | Quadratic and cubic Bezier curves |
-| `Text` | SVG text element |
+| `Text` | SVG text element for short labels |
+| `TextBox` | Bounded SVG text region with deterministic wrapping, shrink, and truncate modes |
 | `Image` | Embed images (PNG, JPEG, SVG, WebP, GIF) with `borderRadius`, `clipShape`, and transform support |
 | `Group` | Composable container that applies shared transforms to children; later siblings render on top |
 

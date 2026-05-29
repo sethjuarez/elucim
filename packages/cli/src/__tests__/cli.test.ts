@@ -60,6 +60,23 @@ const flowDoc = {
   },
 };
 
+const overlapDoc = {
+  version: '2.0',
+  scene: { type: 'player', width: 400, height: 240, children: ['a', 'b'] },
+  elements: {
+    a: {
+      id: 'a',
+      type: 'rect',
+      props: { type: 'rect', x: 60, y: 90, width: 120, height: 80 },
+    },
+    b: {
+      id: 'b',
+      type: 'rect',
+      props: { type: 'rect', x: 100, y: 110, width: 120, height: 80 },
+    },
+  },
+};
+
 const fixtureDir = fileURLToPath(new URL('../../fixtures/agent/', import.meta.url));
 const agentFixtures = [
   'concept-card.elc',
@@ -71,9 +88,10 @@ describe('elucim CLI', () => {
     const output = capture();
     const code = await runCli(['ops', '--json'], output.io);
 
-    expect(code).toBe(0);
+    expect(code, output.stderr()).toBe(0);
     const payload = JSON.parse(output.stdout());
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('inspect');
+    expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('repair-layout');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('add-element');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('update-element');
     expect(payload.cli.commands.map((command: { name: string }) => command.name)).toContain('add-connector');
@@ -98,7 +116,7 @@ describe('elucim CLI', () => {
       const output = capture();
       const code = await runCli(['validate', file, '--json'], output.io);
 
-      expect(code).toBe(0);
+      expect(code, output.stderr()).toBe(0);
       expect(JSON.parse(output.stdout()).validation.valid).toBe(true);
     });
   });
@@ -132,9 +150,144 @@ describe('elucim CLI', () => {
       const output = capture();
       const code = await runCli(['inspect', file, '--json'], output.io);
 
-      expect(code).toBe(0);
+      expect(code, output.stderr()).toBe(0);
       const payload = JSON.parse(output.stdout());
       expect(payload.heuristics.text).toContainEqual(expect.objectContaining({ id: 'title', belowMinimumSize: true }));
+    });
+  });
+
+  it('checks layout issues for agent-generated text before rendering', async () => {
+    await withTempDoc({
+      version: '2.0',
+      scene: { type: 'player', width: 400, height: 240, children: ['summary'] },
+      elements: {
+        summary: {
+          id: 'summary',
+          type: 'textbox',
+          props: {
+            type: 'textbox',
+            x: 40,
+            y: 40,
+            width: 120,
+            height: 50,
+            content: 'This generated explanation is too long to fit in the available box.',
+            fontSize: 20,
+            autoFit: 'none',
+          },
+        },
+      },
+    }, async file => {
+      const output = capture();
+      const code = await runCli(['check-layout', file, '--json'], output.io);
+
+      expect(code).toBe(1);
+      const payload = JSON.parse(output.stdout());
+      expect(payload.command).toBe('check-layout');
+      expect(payload.layout.valid).toBe(false);
+      expect(payload.layout.errors).toContainEqual(expect.objectContaining({
+        code: 'textbox-overflow',
+        affectedElementIds: ['summary'],
+      }));
+      expect(payload.repairSuggestions).toContainEqual(expect.objectContaining({
+        action: 'resize-textbox',
+        targetElementId: 'summary',
+        cli: expect.objectContaining({
+          command: 'update-element',
+          argvTemplate: expect.arrayContaining(['update-element', '<file>', '--id', 'summary', '--props-json']),
+          filePlaceholder: '<file>',
+        }),
+      }));
+    });
+  });
+
+  it('repairs safe layout issues and writes an output document', async () => {
+    await withTempDoc({
+      version: '2.0',
+      scene: { type: 'player', width: 400, height: 240, children: ['summary'] },
+      elements: {
+        summary: {
+          id: 'summary',
+          type: 'textbox',
+          props: {
+            type: 'textbox',
+            x: 40,
+            y: 40,
+            width: 120,
+            height: 50,
+            content: 'This generated explanation is too long to fit in the available box.',
+            fontSize: 20,
+            autoFit: 'none',
+          },
+        },
+      },
+    }, async (file, dir) => {
+      const out = join(dir, 'repaired.elc');
+      const output = capture();
+      const code = await runCli(['repair-layout', file, '--out', out, '--json'], output.io);
+
+      expect(code, output.stderr()).toBe(0);
+      const payload = JSON.parse(output.stdout());
+      expect(payload.command).toBe('repair-layout');
+      expect(payload.changed).toBe(true);
+      expect(payload.before.valid).toBe(false);
+      expect(payload.after.valid).toBe(true);
+      expect(payload.applied).toContainEqual(expect.objectContaining({
+        suggestion: expect.objectContaining({
+          action: 'resize-textbox',
+          targetElementId: 'summary',
+          confidence: 'safe',
+        }),
+      }));
+      const next = JSON.parse(await readFile(out, 'utf8'));
+      expect(next.elements.summary.props.width).toBeGreaterThan(120);
+      expect(next.elements.summary.props.height).toBeGreaterThan(50);
+    });
+  });
+
+  it('applies a selected review layout repair id', async () => {
+    await withTempDoc(overlapDoc, async (file, dir) => {
+      const out = join(dir, 'review-repaired.elc');
+      const output = capture();
+      const code = await runCli([
+        'repair-layout',
+        file,
+        '--apply-review',
+        'layout-repair-element-overlap-a-b-move-element',
+        '--out',
+        out,
+        '--json',
+      ], output.io);
+
+      expect(code, output.stderr()).toBe(0);
+      const payload = JSON.parse(output.stdout());
+      expect(payload.changed).toBe(true);
+      expect(payload.applied).toContainEqual(expect.objectContaining({
+        suggestion: expect.objectContaining({
+          id: 'layout-repair-element-overlap-a-b-move-element',
+          confidence: 'review',
+        }),
+      }));
+      const next = JSON.parse(await readFile(out, 'utf8'));
+      expect(next.elements.a.props.y).toBeGreaterThan(overlapDoc.elements.a.props.y);
+    });
+  });
+
+  it('applies all review layout repairs when requested', async () => {
+    await withTempDoc(overlapDoc, async (file, dir) => {
+      const out = join(dir, 'all-review-repaired.elc');
+      const output = capture();
+      const code = await runCli(['repair-layout', file, '--apply-all-review', '--out', out, '--json'], output.io);
+
+      expect(code, output.stderr()).toBe(0);
+      const payload = JSON.parse(output.stdout());
+      expect(payload.applied).toContainEqual(expect.objectContaining({
+        suggestion: expect.objectContaining({
+          action: 'move-element',
+          confidence: 'review',
+        }),
+      }));
+      const next = JSON.parse(await readFile(out, 'utf8'));
+      expect(next.elements.a.props.y).toBeGreaterThan(overlapDoc.elements.a.props.y);
     });
   });
 
@@ -167,8 +320,15 @@ describe('elucim CLI', () => {
   it('adds, updates, and deletes arbitrary Objects from the CLI', async () => {
     await withTempDoc({
       version: '2.0',
-      scene: { type: 'player', width: 640, height: 360, children: [] },
-      elements: {},
+      scene: { type: 'player', width: 640, height: 360, children: ['panel'] },
+      elements: {
+        panel: {
+          id: 'panel',
+          type: 'group',
+          children: [],
+          props: {},
+        },
+      },
     }, async (file, dir) => {
       const withObject = join(dir, 'with-object.elc');
       const updated = join(dir, 'updated.elc');
@@ -220,8 +380,15 @@ describe('elucim CLI', () => {
   it('reports JSON flag context and does not write invalid Object updates', async () => {
     await withTempDoc({
       version: '2.0',
-      scene: { type: 'player', width: 640, height: 360, children: [] },
-      elements: {},
+      scene: { type: 'player', width: 640, height: 360, children: ['panel'] },
+      elements: {
+        panel: {
+          id: 'panel',
+          type: 'group',
+          children: [],
+          props: {},
+        },
+      },
     }, async (file, dir) => {
       const invalidJson = capture();
       const invalidDoc = capture();
@@ -261,13 +428,96 @@ describe('elucim CLI', () => {
         '--json',
       ], output.io);
 
-      expect(code).toBe(0);
+      expect(code, output.stderr()).toBe(0);
       const payload = JSON.parse(output.stdout());
       expect(payload.added).toContain('draft');
       const next = JSON.parse(await readFile(out, 'utf8'));
       expect(next.scene.children).toContain('draft');
       expect(next.elements.draft).toMatchObject({ type: 'group', role: 'stepCard' });
       expect(next.elements['draft-card'].props.fill).toBe('$surface');
+    });
+  });
+
+  it('adds bounded textboxes to documents', async () => {
+    await withTempDoc({
+      version: '2.0',
+      scene: { type: 'player', width: 640, height: 360, children: ['panel'] },
+      elements: {
+        panel: {
+          id: 'panel',
+          type: 'group',
+          children: [],
+          props: {},
+        },
+      },
+    }, async (file, dir) => {
+      const out = join(dir, 'textbox.elc');
+      const output = capture();
+      const code = await runCli([
+        'add-textbox',
+        file,
+        '--id', 'summary',
+        '--x', '80',
+        '--y', '120',
+        '--width', '320',
+        '--height', '120',
+        '--text', 'Generated copy should wrap and fit inside a known region.',
+        '--auto-fit', 'truncate',
+        '--background', 'none',
+        '--padding-x', '16',
+        '--padding-y', '12',
+        '--font-weight', '600',
+        '--parent', 'panel',
+        '--importance', 'primary',
+        '--out', out,
+        '--json',
+      ], output.io);
+
+      expect(code, output.stderr()).toBe(0);
+      const payload = JSON.parse(output.stdout());
+      expect(payload.added).toEqual(['summary']);
+      const next = JSON.parse(await readFile(out, 'utf8'));
+      expect(next.elements.summary).toMatchObject({
+        type: 'textbox',
+        layout: { x: 80, y: 120, width: 320, height: 120 },
+        props: expect.objectContaining({
+          type: 'textbox',
+          content: 'Generated copy should wrap and fit inside a known region.',
+          autoFit: 'truncate',
+          padding: { x: 16, y: 12 },
+          fontWeight: '600',
+          background: { fill: 'none', stroke: 'none', strokeWidth: 0 },
+        }),
+        parentId: 'panel',
+        intent: expect.objectContaining({ importance: 'primary', group: 'panel' }),
+      });
+      expect(next.elements.panel.children).toContain('summary');
+    });
+  });
+
+  it('rejects conflicting textbox background flags', async () => {
+    await withTempDoc({
+      version: '2.0',
+      scene: { type: 'player', width: 640, height: 360, children: [] },
+      elements: {},
+    }, async (file) => {
+      const output = capture();
+      const code = await runCli([
+        'add-textbox',
+        file,
+        '--id', 'summary',
+        '--x', '80',
+        '--y', '120',
+        '--width', '320',
+        '--height', '120',
+        '--text', 'Conflicting background options.',
+        '--background', 'none',
+        '--background-fill', '$surface',
+        '--json',
+      ], output.io);
+
+      expect(code).toBe(1);
+      expect(output.stderr()).toContain('--background none cannot be combined');
     });
   });
 

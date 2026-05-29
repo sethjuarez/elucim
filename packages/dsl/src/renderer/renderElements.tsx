@@ -4,7 +4,7 @@ import {
   Scene, Player,
   Presentation, Slide,
   Sequence,
-  BezierCurve, Circle, Line, Arrow, Rect, Text, Polygon,
+  BezierCurve, Circle, Line, Arrow, Rect, Text, TextBox, Polygon,
   Image, Group,
   Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
   FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel,
@@ -278,6 +278,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           fill={resolveColor(node.fill)} fontSize={node.fontSize}
           fontFamily={node.fontFamily} fontWeight={node.fontWeight}
           textAnchor={node.textAnchor} dominantBaseline={node.dominantBaseline}
+          maxWidth={node.maxWidth} lineHeight={node.lineHeight} wrap={node.wrap}
           opacity={node.opacity}
           fadeIn={node.fadeIn} fadeOut={node.fadeOut}
           easing={resolveEasing(node.easing)}
@@ -286,6 +287,28 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
         >
           {node.content}
         </Text>
+      );
+    case 'textbox':
+      return (
+        <TextBox
+          key={key}
+          x={node.x} y={node.y} width={node.width} height={node.height}
+          padding={node.padding}
+          fill={resolveColor(node.fill)} fontSize={node.fontSize} minFontSize={node.minFontSize}
+          fontFamily={node.fontFamily} fontWeight={node.fontWeight} lineHeight={node.lineHeight}
+          align={node.align} verticalAlign={node.verticalAlign} autoFit={node.autoFit}
+          backgroundFill={resolveColor(node.background?.fill)}
+          backgroundStroke={resolveColor(node.background?.stroke)}
+          backgroundStrokeWidth={node.background?.strokeWidth}
+          radius={node.background?.radius}
+          opacity={node.opacity}
+          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
+          easing={resolveEasing(node.easing)}
+          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          scale={node.scale} translate={node.translate}
+        >
+          {node.content}
+        </TextBox>
       );
 
     case 'image':

@@ -60,7 +60,7 @@ const VALID_ROOT_TYPES = ['scene', 'player', 'presentation'];
 const VALID_PRESETS = ['card', 'slide', 'square'];
 const VALID_ELEMENT_TYPES = [
   'sequence', 'group',
-  'bezierCurve', 'circle', 'line', 'arrow', 'rect', 'polygon', 'text', 'image',
+  'bezierCurve', 'circle', 'line', 'arrow', 'rect', 'polygon', 'text', 'textbox', 'image',
   'axes', 'functionPlot', 'vectorField', 'vector', 'matrix', 'graph', 'latex', 'barChart',
   'fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel',
   'player', 'scene',
@@ -196,6 +196,7 @@ function validateElementNode(node: Record<string, unknown>, path: string, errors
     case 'rect': validateRect(node, path, errors); break;
     case 'polygon': validatePolygon(node, path, errors); break;
     case 'text': validateText(node, path, errors); break;
+    case 'textbox': validateTextBox(node, path, errors); break;
     case 'image': validateImage(node, path, errors); break;
     case 'axes': validateAxes(node, path, errors); break;
     case 'functionPlot': validateFunctionPlot(node, path, errors); break;
@@ -285,6 +286,65 @@ function validateText(node: Record<string, unknown>, path: string, errors: Valid
   requireNumber(node, 'y', path, errors);
   if (typeof node.content !== 'string') {
     errors.push({ path: `${path}.content`, message: 'Text requires a "content" string', severity: 'error' });
+  }
+  optionalPositiveNum(node, 'maxWidth', path, errors);
+  optionalPositiveNum(node, 'lineHeight', path, errors);
+  if (node.wrap !== undefined && node.wrap !== 'none' && node.wrap !== 'word' && node.wrap !== 'char') {
+    errors.push({ path: `${path}.wrap`, message: '"wrap" must be one of: none, word, char', severity: 'error' });
+  }
+  validateAnimationProps(node, path, errors);
+}
+
+function validatePadding(value: unknown, path: string, errors: ValidationError[]) {
+  if (typeof value === 'number') {
+    if (value < 0) errors.push({ path, message: '"padding" must be a non-negative number', severity: 'error' });
+    return;
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    errors.push({ path, message: '"padding" must be a number or { x, y }', severity: 'error' });
+    return;
+  }
+
+  const padding = value as Record<string, unknown>;
+  for (const key of ['x', 'y']) {
+    if (padding[key] !== undefined && (typeof padding[key] !== 'number' || (padding[key] as number) < 0)) {
+      errors.push({ path: `${path}.${key}`, message: `"padding.${key}" must be a non-negative number`, severity: 'error' });
+    }
+  }
+}
+
+function validateTextBox(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  requireNumber(node, 'x', path, errors);
+  requireNumber(node, 'y', path, errors);
+  requirePositiveNum(node, 'width', path, errors);
+  requirePositiveNum(node, 'height', path, errors);
+  if (typeof node.content !== 'string') {
+    errors.push({ path: `${path}.content`, message: 'TextBox requires a "content" string', severity: 'error' });
+  }
+  if (node.padding !== undefined) validatePadding(node.padding, `${path}.padding`, errors);
+  optionalPositiveNum(node, 'fontSize', path, errors);
+  optionalPositiveNum(node, 'minFontSize', path, errors);
+  optionalPositiveNum(node, 'lineHeight', path, errors);
+  if (node.align !== undefined && node.align !== 'start' && node.align !== 'middle' && node.align !== 'end') {
+    errors.push({ path: `${path}.align`, message: '"align" must be one of: start, middle, end', severity: 'error' });
+  }
+  if (node.verticalAlign !== undefined && node.verticalAlign !== 'top' && node.verticalAlign !== 'middle' && node.verticalAlign !== 'bottom') {
+    errors.push({ path: `${path}.verticalAlign`, message: '"verticalAlign" must be one of: top, middle, bottom', severity: 'error' });
+  }
+  if (node.autoFit !== undefined && node.autoFit !== 'none' && node.autoFit !== 'shrink' && node.autoFit !== 'truncate') {
+    errors.push({ path: `${path}.autoFit`, message: '"autoFit" must be one of: none, shrink, truncate', severity: 'error' });
+  }
+  if (node.background !== undefined) {
+    if (!node.background || typeof node.background !== 'object' || Array.isArray(node.background)) {
+      errors.push({ path: `${path}.background`, message: '"background" must be an object', severity: 'error' });
+    } else {
+      const background = node.background as Record<string, unknown>;
+      optionalString(background, 'fill', `${path}.background`, errors);
+      optionalString(background, 'stroke', `${path}.background`, errors);
+      optionalPositiveNum(background, 'strokeWidth', `${path}.background`, errors);
+      optionalPositiveNum(background, 'radius', `${path}.background`, errors);
+    }
   }
   validateAnimationProps(node, path, errors);
 }

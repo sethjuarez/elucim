@@ -203,6 +203,9 @@ function getRotationInfo(
   if (hasNum(el, 'x1', 'y1', 'x2', 'y2')) {
     return { rotation, rotationCenter: [(el.x1 + el.x2) / 2, (el.y1 + el.y2) / 2] };
   }
+  if (el.type === 'textbox' && hasNum(el, 'x', 'y', 'width', 'height')) {
+    return { rotation, rotationCenter: [el.x + el.width / 2, el.y + el.height / 2] };
+  }
   if (hasNum(el, 'x', 'y') && ('content' in el || 'expression' in el)) {
     return { rotation, rotationCenter: [el.x, el.y] };
   }

@@ -195,48 +195,60 @@ const svg = renderToSvgString(myDoc, 0);
 
 ### Agent authoring helpers
 
-`@elucim/dsl/agent` provides a small, deterministic toolkit for LLM and host workflows. It creates normalized documents, applies higher-level commands, generates explicit timeline/state-machine structures, and returns agent-readable quality reports.
+`@elucim/dsl/agent` provides a small, deterministic toolkit for LLM and host workflows. It creates normalized documents, applies higher-level commands, generates safe scene presets with bounded textboxes, generates explicit timeline/state-machine structures, and returns agent-readable quality reports.
 
 ```ts
 import {
   applyAgentCommands,
-  createDocument,
+  checkLayoutForAgent,
+  createAgentSafeDocument,
+  createThreeCardFlowScenePreset,
   evaluateSceneForAgent,
   inspectSceneForAgent,
   repairDocumentForAgent,
+  repairLayoutForAgent,
   sampleAnimationForAgent,
+  suggestLayoutRepairsForAgent,
 } from '@elucim/dsl/agent';
 
-const doc = applyAgentCommands(createDocument({
-  preset: 'slide',
+const safeScene = createThreeCardFlowScenePreset({
+  id: 'slope-flow',
+  title: 'Slope as local change',
+  subtitle: 'Start from bounded text regions before adding motion.',
+  items: [
+    { id: 'compare', title: 'Compare points', body: 'Pick two nearby inputs and observe the output change.' },
+    { id: 'divide', title: 'Divide changes', body: 'The ratio turns movement into a rate.' },
+    { id: 'shrink', title: 'Shrink interval', body: 'As the interval gets smaller, the local rate becomes the slope.' },
+  ],
+});
+
+const doc = applyAgentCommands(createAgentSafeDocument(safeScene, {
   metadata: { title: 'Slope intuition' },
 }), [
-  {
-    op: 'addElement',
-    element: {
-      id: 'title',
-      type: 'text',
-      role: 'title',
-      intent: { purpose: 'Introduce the core concept' },
-      layout: { x: 96, y: 96 },
-      props: { content: 'Slope as local change', fill: '$title' },
-    },
-  },
-  { op: 'addRevealTimeline', timeline: { id: 'intro', targets: ['title'], preset: 'fadeIn' } },
+  { op: 'addRevealTimeline', timeline: { id: 'intro', targets: ['compare', 'divide', 'shrink'], preset: 'staggeredFadeIn' } },
   { op: 'createStateMachine', stateMachine: { id: 'main', timelineId: 'intro', start: 'onStart' } },
 ]).document;
 
 const report = evaluateSceneForAgent(doc);
+console.table(report.issues.map(issue => ({
+  severity: issue.severity,
+  code: issue.code,
+  path: issue.path,
+  suggestions: issue.suggestions?.join('; '),
+})));
 const repaired = repairDocumentForAgent(doc);
 const animation = sampleAnimationForAgent(repaired.document, 'intro');
-const inspection = inspectSceneForAgent(repaired.document, { timelineId: 'intro' });
+const layout = checkLayoutForAgent(repaired.document);
+const layoutRepairs = suggestLayoutRepairsForAgent(repaired.document, layout);
+const layoutRepair = repairLayoutForAgent(repaired.document);
+const inspection = inspectSceneForAgent(layoutRepair.document, { timelineId: 'intro' });
 ```
 
-The agent helpers intentionally produce timelines and state machines rather than wrapper animation props. Use them when you want an LLM to make targeted scene edits without memorizing the full document schema. Diagnostic helpers such as `getTimelineBounds()`, `repairDocumentForAgent()`, `sampleAnimationForAgent()`, `inspectSceneForAgent()`, and `createLoopingStateMachine()` help agents detect timeline mistakes, auto-extend too-short timeline durations, prove that properties change over sampled frames, catch tiny/off-canvas/low-contrast scenes, and wire a generated timeline into live playback.
+The agent helpers intentionally produce timelines and state machines rather than wrapper animation props. Use them when you want an LLM to make targeted scene edits without memorizing the full document schema. Prefer `createTextCalloutScenePreset()`, `createThreeCardFlowScenePreset()`, `createComparisonScenePreset()`, and `createAgentSafeDocument()` for text-heavy generated scenes; these helpers allocate bounded textboxes before validation and repair. `evaluateSceneForAgent()` includes `report.layout`, `report.layoutRepairs`, and layout/text issue codes in `report.issues`; `report.valid` is true only when schema validation passes and layout preflight has no errors, so text overflow and textbox failures affect the quality score. Diagnostic helpers such as `getTimelineBounds()`, `repairDocumentForAgent()`, `sampleAnimationForAgent()`, `checkLayoutForAgent()`, `suggestLayoutRepairsForAgent()`, `repairLayoutForAgent()`, `inspectSceneForAgent()`, and `createLoopingStateMachine()` help agents detect timeline mistakes, auto-extend too-short timeline durations, prove that properties change over sampled frames, catch text overflow/likely overlaps, return deterministic layout repair suggestions, apply safe layout repairs with before/after checks, catch tiny/off-canvas/low-contrast scenes, and wire a generated timeline into live playback. Review-level layout repairs, especially overlap moves and copy rewrites, remain opt-in with `includeReview` or `reviewSuggestionIds`.
 
 ### Diagram polish for agents
 
-Generated diagrams should be checked with the deterministic polish APIs before handing them to a user. `evaluateSceneForAgent()` includes `report.polish`, and the same analysis is available directly as `analyzePolish(doc)`. The report returns category scores plus diagnostics for layout, hierarchy, readability, contrast, graph readability, explanatory structure, and motion.
+Generated diagrams should be checked with the deterministic polish APIs before handing them to a user. `evaluateSceneForAgent()` includes `report.layout`, `report.layoutRepairs`, and `report.polish`, and the same polish analysis is available directly as `analyzePolish(doc)`. The report returns layout/text diagnostics, deterministic layout repair suggestions, category scores, and diagnostics for layout, hierarchy, readability, contrast, graph readability, explanatory structure, and motion.
 
 ```ts
 import {
@@ -251,6 +263,7 @@ import {
   createQueueStackPreset,
   createStepCardPreset,
   createTextBlockPreset,
+  createTextBoxPreset,
   createTimelineRoadmapPreset,
   inspectPolishHeuristics,
   suggestDocumentNudges,
@@ -294,6 +307,16 @@ const textBlockElements = createTextBlockPreset({
   y: 320,
   width: 360,
   text: 'Wrapped text emits editable text lines inside a group.',
+});
+
+const textBoxElements = createTextBoxPreset({
+  id: 'summary',
+  x: 480,
+  y: 320,
+  width: 360,
+  height: 120,
+  text: 'Use bounded textboxes when generated copy must stay inside a known region.',
+  autoFit: 'shrink',
 });
 
 const supportingElements = [
@@ -363,7 +386,7 @@ Agent guidance:
 
 - Prefer semantic roles and intent (`role: 'title'`, `role: 'callout'`, `intent.importance: 'primary' | 'secondary' | 'supporting'`) so polish can preserve explanatory meaning.
 - Add explicit relationship intent when the layout matters: `intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, `intent.group`, plus `layout.rank` and `layout.locked`.
-- Use composite helpers such as `createStepCardPreset()`, `createTextBlockPreset()`, `createCardGridPreset()`, `createConnectorPreset()`, `createDecisionNodePreset()`, `createBoundaryPreset()`, `createBadgePreset()`, `createQueueStackPreset()`, `createTimelineRoadmapPreset()`, `createComparisonTablePreset()`, `createAutoLayoutGroupPreset()`, and `createProgressiveRevealGroupPreset()` for designed-slide structure. They emit ordinary editable groups, primitives, and timelines, not a separate persisted layout format.
+- Use composite helpers such as `createStepCardPreset()`, `createTextBlockPreset()`, `createTextBoxPreset()`, `createCardGridPreset()`, `createConnectorPreset()`, `createDecisionNodePreset()`, `createBoundaryPreset()`, `createBadgePreset()`, `createQueueStackPreset()`, `createTimelineRoadmapPreset()`, `createComparisonTablePreset()`, `createAutoLayoutGroupPreset()`, and `createProgressiveRevealGroupPreset()` for designed-slide structure. They emit ordinary editable groups, primitives, and timelines, not a separate persisted layout format.
 - Prefer `createConnectorPreset()` for reading order and layout relationships. Its generated connector intent is consumed as a virtual ELK edge during semantic layout.
 - Use theme tokens such as `$title`, `$surface`, `$primary`, and `$muted` instead of one-off literal colors unless a specific color is necessary.
 - Run `suggestDocumentNudges()` after drafting. Apply `safe` nudges automatically; present `review` nudges, especially graph layout changes, for review.

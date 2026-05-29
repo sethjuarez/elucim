@@ -83,6 +83,7 @@ export default defineConfig({
             { slug: 'primitives/line' },
             { slug: 'primitives/rect' },
             { slug: 'primitives/text' },
+            { slug: 'primitives/textbox' },
             { slug: 'primitives/polygon' },
             { slug: 'primitives/bezier-curve' },
             { slug: 'primitives/image' },

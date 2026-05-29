@@ -23,6 +23,7 @@ Rules:
 - Validate with `validateForAgent()`.
 - Repair timeline duration issues with `repairDocumentForAgent()`.
 - Check that motion actually changes with `sampleAnimationForAgent()`.
+- Check generated copy and spacing with `checkLayoutForAgent()` plus `repairLayoutForAgent()`, or `elucim check-layout` followed by `elucim repair-layout`.
 - Check that the scene is visible and readable with `inspectSceneForAgent()`.
 - Check polish with `evaluateSceneForAgent().polish` or `analyzePolish()`.
 - Add explicit relationship metadata (`intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, `intent.group`) plus layout hints such as `layout.rank` and `layout.locked` when element placement should communicate a flow or explanation.
@@ -35,7 +36,6 @@ Rules:
 
 ```ts
 import {
-  addElement,
   addRevealTimeline,
   addTimeline,
   applyAgentCommand,
@@ -43,6 +43,9 @@ import {
   applyNudge,
   bringElementForward,
   bringElementToFront,
+  checkLayoutForAgent,
+  createAgentSafeDocument,
+  createComparisonScenePreset,
   createDocument,
   createAutoStaggerTimeline,
   createLoopingStateMachine,
@@ -62,12 +65,16 @@ import {
   planMotionBeats,
   previewBeatDiffs,
   repairDocumentForAgent,
+  repairLayoutForAgent,
   reorderElement,
   sampleAnimationForAgent,
   sendElementBackward,
   sendElementToBack,
   summarizeDocument,
   suggestDocumentNudges,
+  suggestLayoutRepairsForAgent,
+  createTextCalloutScenePreset,
+  createThreeCardFlowScenePreset,
   updateElement,
   validateForAgent,
 } from '@elucim/dsl/agent';
@@ -86,6 +93,7 @@ import {
   createQueueStackPreset,
   createStepCardPreset,
   createTextBlockPreset,
+  createTextBoxPreset,
   createTimelineRoadmapPreset,
   suggestSemanticLayoutNudges,
 } from '@elucim/dsl';
@@ -106,85 +114,71 @@ Agents running from a shell can use the publishable CLI instead of writing one-o
 ```bash
 npx @elucim/cli ops --json
 npx @elucim/cli validate diagram.elc --json
+npx @elucim/cli check-layout diagram.elc --json
+npx @elucim/cli repair-layout diagram.elc --out repaired.elc --json
+npx @elucim/cli repair-layout diagram.elc --apply-review layout-repair-element-overlap-a-b-move-element --out repaired.elc --json
 npx @elucim/cli inspect diagram.elc --json
 npx @elucim/cli nudges diagram.elc --semantic-layout --json
 npx @elucim/cli polish diagram.elc --apply-safe --out polished.elc --json
 npx @elucim/cli layout diagram.elc --out laid-out.elc --json
+npx @elucim/cli add-textbox diagram.elc --id summary --x 80 --y 120 --width 320 --height 120 --text "Bounded copy" --auto-fit shrink --background panel --out diagram.elc --json
 npx @elucim/cli add-beat diagram.elc --id intro-flow --preset revealFlow --targets a,b,c --out diagram.elc --json
 npx @elucim/cli sample-beats diagram.elc --timeline intro-flow --beats 4 --json
 ```
 
-`ops --json` returns the CLI command catalog and the same code-backed agent operation catalog exposed by `getAgentOperationCatalog()`. If installed globally, the binary is still `elucim`.
+`ops --json` returns the CLI command catalog and the same code-backed agent operation catalog exposed by `getAgentOperationCatalog()`. `repair-layout` applies safe repairs by default; use `--apply-review <id>` for one suggested review-level repair, `--apply-all-review` when a workflow intentionally accepts all review-level nudges, and `--max-passes <n>` to control iterative re-check/repair passes. If installed globally, the binary is still `elucim`.
 
 ## Recommended agent loop
 
-1. **Create** a normalized starter document with `createDocument()`.
+1. **Create** a normalized starter document with `createDocument()`, or start text-heavy scenes from `createTextCalloutScenePreset()`, `createThreeCardFlowScenePreset()`, or `createComparisonScenePreset()` and wrap them with `createAgentSafeDocument()`.
 2. **Add** meaningful elements with stable IDs, roles, intent, and tokenized colors.
 3. **Order** siblings with `reorderElement()` or front/back helpers when overlap matters.
 4. **Animate** with `addTimeline()` or `addRevealTimeline()`.
 5. **Wire playback** with `createStateMachine()` or `createLoopingStateMachine()`.
 6. **Validate** with `validateForAgent()`.
 7. **Repair** conservative timeline mistakes with `repairDocumentForAgent()`.
-8. **Inspect** quality with `evaluateSceneForAgent()` and `inspectSceneForAgent()`.
-9. **Polish** with `report.polish`, `suggestDocumentNudges()`, and `applyNudge()`.
-10. **Explain** remaining warnings and return the final document.
+8. **Preflight layout** with `checkLayoutForAgent()` and `repairLayoutForAgent()` so safe text wrapping and textbox resizing fixes are applied automatically; treat remaining review suggestions, especially overlaps, as human/editor-review changes.
+9. **Inspect** quality with `evaluateSceneForAgent()` and `inspectSceneForAgent()`. `evaluateSceneForAgent()` includes layout/text diagnostics in `quality.issues`, exposes the full `quality.layout` report and `quality.layoutRepairs`, and treats layout errors as quality failures.
+10. **Polish** with `report.polish`, `suggestDocumentNudges()`, and `applyNudge()`.
+11. **Explain** remaining warnings and return the final document.
 
 ```ts
 import {
   addElement,
   addRevealTimeline,
-  createDocument,
+  checkLayoutForAgent,
+  createAgentSafeDocument,
+  createThreeCardFlowScenePreset,
   createLoopingStateMachine,
   evaluateSceneForAgent,
   inspectSceneForAgent,
   repairDocumentForAgent,
+  repairLayoutForAgent,
+  suggestLayoutRepairsForAgent,
   validateForAgent,
 } from '@elucim/dsl/agent';
 
-let doc = createDocument({
-  preset: 'slide',
+const safeScene = createThreeCardFlowScenePreset({
+  id: 'cache-flow',
+  title: 'Cache hit rate',
+  subtitle: 'Use bounded card textboxes before adding motion.',
+  items: [
+    { id: 'request', title: 'Request arrives', body: 'The app asks for a response with stable request metadata.' },
+    { id: 'lookup', title: 'Cache lookup', body: 'A cache key checks whether useful context is already available.' },
+    { id: 'respond', title: 'Respond', body: 'Hits return quickly; misses continue to retrieval or generation.' },
+  ],
+});
+
+let doc = createAgentSafeDocument(safeScene, {
   metadata: {
     title: 'Cache hit rate',
     intent: 'Show why a small cache improves request latency.',
   },
 });
 
-doc = addElement(doc, {
-  id: 'title',
-  type: 'text',
-  role: 'title',
-  intent: { role: 'title', description: 'Name the takeaway', importance: 'primary' },
-  props: {
-    content: 'Small caches remove repeated work',
-    x: 640,
-    y: 96,
-    fill: '$title',
-    fontSize: 44,
-    textAnchor: 'middle',
-  },
-}).document;
-
-doc = addElement(doc, {
-  id: 'cache',
-  type: 'rect',
-  role: 'concept',
-  intent: { role: 'cache', description: 'The reusable local memory', importance: 'primary' },
-  props: {
-    x: 440,
-    y: 260,
-    width: 400,
-    height: 180,
-    rx: 24,
-    fill: '$surface',
-    stroke: '$accent',
-    strokeWidth: 3,
-    opacity: 0,
-  },
-}).document;
-
 doc = addRevealTimeline(doc, {
   id: 'intro',
-  targets: ['title', 'cache'],
+  targets: ['cache-flow-title', 'request', 'lookup', 'respond'],
   preset: 'staggeredFadeIn',
   duration: 60,
 }).document;
@@ -193,7 +187,18 @@ doc = createLoopingStateMachine(doc, { id: 'main', timelineId: 'intro' }).docume
 doc = repairDocumentForAgent(doc).document;
 
 const validation = validateForAgent(doc);
+const layoutCheck = checkLayoutForAgent(doc);
+const layoutRepairs = suggestLayoutRepairsForAgent(doc, layoutCheck);
+doc = repairLayoutForAgent(doc).document;
 const quality = evaluateSceneForAgent(doc);
+if (!quality.valid) {
+  console.table(quality.issues.map(issue => ({
+    severity: issue.severity,
+    code: issue.code,
+    path: issue.path,
+    suggestions: issue.suggestions?.join('; '),
+  })));
+}
 const heuristics = inspectPolishHeuristics(doc);
 const inspection = inspectSceneForAgent(doc, { timelineId: 'intro' });
 const safeNudges = quality.nudges.filter(nudge => nudge.confidence === 'safe');
@@ -211,11 +216,11 @@ const semanticLayoutNudges = await suggestSemanticLayoutNudges(doc);
 | Semantic motion | `planMotionBeats`, `createSemanticMotionTimeline`, `createAutoStaggerTimeline`, `createStateSnapshotMotion`, `lintMotion`, `previewBeatDiffs`, `createReducedMotionDocument`, `holdFinalFrame` | Compile intent-level verbs and narration beats into ordinary Elucim timelines/state machines, then verify readability and accessibility. |
 | State machines | `createStateMachine`, `createLoopingStateMachine` | Wire timelines into runtime playback. |
 | Validation | `validateForAgent`, `repairDocumentForAgent` | Return structured errors, hints, conservative repairs, summaries, validation, and diffs. |
-| Quality | `evaluateSceneForAgent`, `inspectSceneForAgent`, `analyzePolish`, `inspectPolishHeuristics` | Catch missing metadata, missing motion, blank frames, tiny scenes, off-canvas elements, zero-size elements, low contrast, graph readability issues, weak hierarchy, and static timelines. `inspectPolishHeuristics` exposes the raw evidence behind the score: bounds, intersections, overflow, text, colors, graph details, connector continuations, and semantic relationships. |
+| Quality | `checkLayoutForAgent`, `suggestLayoutRepairsForAgent`, `evaluateSceneForAgent`, `inspectSceneForAgent`, `analyzePolish`, `inspectPolishHeuristics` | Catch text overflow, tiny auto-fit copy, likely overlaps, and return deterministic repair suggestions before broader quality checks. Also catches missing metadata, missing motion, blank frames, tiny scenes, off-canvas elements, zero-size elements, low contrast, graph readability issues, weak hierarchy, and static timelines. `inspectPolishHeuristics` exposes the raw evidence behind the score: bounds, intersections, overflow, text, colors, graph details, connector continuations, and semantic relationships. |
 | Review | `summarizeDocument`, `diffDocuments`, `suggestDocumentNudges`, `applyNudge` | Give hosts/humans compact context, JSON-patch-shaped diffs, and deterministic polish options. |
 | Semantic layout | `suggestSemanticLayoutNudges` | Use ELK as a review-only layout solver for explicit agent-authored relationships between ordinary elements. |
 | Operation catalog | `getAgentOperationCatalog` | Return the authoring, validation, inspection, polish, and layout operations a host can pass to an agent/tool planner. |
-| Presets | `createCalloutCardPreset`, `createConnectorPreset`, `createTextBlockPreset`, `createStepCardPreset`, `createCardGridPreset`, `createDecisionNodePreset`, `createBoundaryPreset`, `createBadgePreset`, `createQueueStackPreset`, `createTimelineRoadmapPreset`, `createComparisonTablePreset`, `createAutoLayoutGroupPreset`, `createProgressiveRevealGroupPreset` | Start from semantic, theme-tokenized explanatory building blocks instead of raw shapes. |
+| Presets | `createTextCalloutScenePreset`, `createThreeCardFlowScenePreset`, `createComparisonScenePreset`, `createAgentSafeDocument`, `createConnectorPreset`, `createTextBlockPreset`, `createTextBoxPreset`, `createStepCardPreset`, `createCardGridPreset`, `createDecisionNodePreset`, `createBoundaryPreset`, `createBadgePreset`, `createQueueStackPreset`, `createTimelineRoadmapPreset`, `createComparisonTablePreset`, `createAutoLayoutGroupPreset`, `createProgressiveRevealGroupPreset` | Start from semantic, theme-tokenized explanatory building blocks instead of raw shapes. The agent-safe scene presets use bounded textboxes for generated copy by construction. |
 
 ## Command surface
 
@@ -293,7 +298,7 @@ const safe = nudges.filter(nudge => nudge.confidence === 'safe');
 doc = safe.reduce((current, nudge) => applyNudge(current, nudge).document, doc);
 ```
 
-`evaluateSceneForAgent(doc)` also includes `quality.polish`, so agents can return one quality object with validation, issues, nudges, summary, and polish diagnostics.
+`evaluateSceneForAgent(doc)` also includes `quality.layout`, `quality.layoutRepairs`, and `quality.polish`, so agents can return one quality object with validation, layout/text diagnostics, deterministic layout repair suggestions, nudges, summary, and polish diagnostics. Layout issue codes such as `text-overflows-width`, `raw-text-too-wide`, `text-layout-width-without-maxwidth`, `textbox-overflow`, `textbox-tiny-font`, and `element-overlap` appear in `quality.issues` and affect the quality score.
 
 Polish categories include:
 
@@ -312,9 +317,16 @@ Nudge confidence matters:
 - Apply `safe` nudges automatically when the user asked for a polished result. These are low-risk changes such as strengthening title hierarchy or fixing tiny text.
 - Surface `review` nudges for confirmation or editor review. Graph layout nudges can move many nodes even though they preserve the graph structure.
 
-For explanatory structure, prefer semantic presets. They emit ordinary editable elements, groups, and timelines, not opaque custom schema nodes.
+For explanatory structure, prefer semantic presets. They emit ordinary editable elements, groups, and timelines, not opaque custom schema nodes. For agent-generated copy, prefer the scene-level safe presets first because they allocate bounded text regions and avoid raw SVG text for prose.
 
 ```ts
+const safeCallout = createTextCalloutScenePreset({
+  id: 'takeaway',
+  title: 'Bounded text first',
+  body: 'Agent-generated scenes should start with explicit text regions so copy can wrap, shrink, truncate, and be checked deterministically.',
+  callout: 'Run checkLayoutForAgent() and repairLayoutForAgent() before rendering.',
+});
+
 const step = createStepCardPreset({
   id: 'draft',
   x: 80,

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ElementNode, CircleNode, RectNode, LineNode, ArrowNode, TextNode, LaTeXNode, ImageNode, AxesNode, FunctionPlotNode, VectorNode, VectorFieldNode, MatrixNode, BarChartNode, GraphNode, BezierCurveNode, PolygonNode, GroupNode } from '@elucim/dsl';
+import type { ElementNode, CircleNode, RectNode, LineNode, ArrowNode, TextNode, TextBoxNode, LaTeXNode, ImageNode, AxesNode, FunctionPlotNode, VectorNode, VectorFieldNode, MatrixNode, BarChartNode, GraphNode, BezierCurveNode, PolygonNode, GroupNode } from '@elucim/dsl';
 import {
   IconRect, IconCircle, IconImage,
   IconLine, IconArrow, IconBezier,
@@ -350,6 +350,30 @@ export const ELEMENT_TEMPLATES: ElementTemplate[] = [
       fontSize: 24,
       textAnchor: 'middle',
     } satisfies TextNode),
+  },
+  {
+    id: 'textbox',
+    type: 'textbox',
+    label: 'Text Box',
+    category: 'text',
+    icon: <IconText />,
+    create: (cx, cy) => ({
+      type: 'textbox',
+      id: genId('textbox'),
+      x: cx - 150,
+      y: cy - 60,
+      width: 300,
+      height: 120,
+      content: 'Bounded text stays inside this box.',
+      fill: '$foreground',
+      fontSize: 20,
+      fontWeight: 600,
+      align: 'start',
+      verticalAlign: 'top',
+      padding: 14,
+      autoFit: 'shrink',
+      background: { fill: '$surface', stroke: '$border', radius: 16 },
+    } satisfies TextBoxNode),
   },
   {
     id: 'latex',

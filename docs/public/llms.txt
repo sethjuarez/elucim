@@ -142,7 +142,7 @@ Render with `<DslRenderer dsl={doc} />`. Validate with `validate(doc)` or `valid
 When generating Elucim diagrams, use the normalized `ElucimDocument` shape and run deterministic polish before returning the result.
 
 - If working from a shell, use `npx @elucim/cli ops --json` to discover the CLI and code-backed agent operations. Then use `npx @elucim/cli validate`, `inspect`, `nudges`, `polish`, and `layout` to interrogate and improve documents without writing ad hoc scripts. Global installs expose the shorter `elucim` binary.
-- Use `evaluateSceneForAgent(doc)` from `@elucim/dsl/agent`; inspect `report.polish` for category scores and diagnostics.
+- Use `evaluateSceneForAgent(doc)` from `@elucim/dsl/agent`; inspect `report.layout`, `report.layoutRepairs`, and `report.polish` for text/layout issue codes, deterministic repair suggestions, category scores, and diagnostics. `report.valid` requires both schema validation and layout preflight to have no errors.
 - Use `analyzePolish(doc)` from `@elucim/dsl` for direct polish analysis.
 - Use `inspectPolishHeuristics(doc)` when you need the raw evidence behind the score: bounds, intersections, off-canvas overflow, text sizing, colors, graph crossings/overlaps, connector continuations, and semantic relationships.
 - Use `suggestDocumentNudges(doc)` and `applyNudge(doc, nudge)` to make command-backed, previewable fixes.
@@ -150,8 +150,9 @@ When generating Elucim diagrams, use the normalized `ElucimDocument` shape and r
 - Use semantic roles and intent: `role: "title"`, `role: "callout"`, `intent.importance: "primary" | "secondary" | "supporting"`.
 - Add explicit layout relationships when possible: `intent.target`, `intent.flowFrom`, `intent.flowTo`, `intent.relationship`, `intent.group`, plus `layout.rank` and `layout.locked`.
 - Use semantic color tokens (`$title`, `$surface`, `$primary`, `$muted`) instead of many literal colors.
-- Prefer composite authoring helpers for designed-slide structure instead of hand-assembling loose primitives: `createStepCardPreset()`, `createTextBlockPreset()`, `createCardGridPreset()`, `createConnectorPreset()`, `createDecisionNodePreset()`, `createBoundaryPreset()`, `createBadgePreset()`, `createQueueStackPreset()`, `createTimelineRoadmapPreset()`, `createComparisonTablePreset()`, `createAutoLayoutGroupPreset()`, and `createProgressiveRevealGroupPreset()` from `@elucim/dsl`.
-- From the CLI, use `add-step-card`, `add-text-block`, `add-card-grid`, and `add-connector` to add those composites to an existing document. These write ordinary editable groups and primitives. `add-connector` supports `--line-style`, `--start-cap`, `--end-cap`, and `--stroke-width`.
+- Prefer agent-safe scene presets for text-heavy generated visuals: `createTextCalloutScenePreset()`, `createThreeCardFlowScenePreset()`, `createComparisonScenePreset()`, and `createAgentSafeDocument()` from `@elucim/dsl/agent`. These allocate bounded textboxes before validation/repair, and layout/text diagnostics count in the agent quality score.
+- Prefer composite authoring helpers for designed-slide structure instead of hand-assembling loose primitives: `createStepCardPreset()`, `createTextBlockPreset()`, `createTextBoxPreset()`, `createCardGridPreset()`, `createConnectorPreset()`, `createDecisionNodePreset()`, `createBoundaryPreset()`, `createBadgePreset()`, `createQueueStackPreset()`, `createTimelineRoadmapPreset()`, `createComparisonTablePreset()`, `createAutoLayoutGroupPreset()`, and `createProgressiveRevealGroupPreset()` from `@elucim/dsl`.
+- From the CLI, use `add-step-card`, `add-text-block`, `add-textbox`, `add-card-grid`, and `add-connector` to add those composites to an existing document. These write ordinary editable groups and primitives. Use `add-textbox` when generated copy must stay inside a known rectangle. `add-connector` supports `--line-style`, `--start-cap`, `--end-cap`, and `--stroke-width`.
 - Use `createConnectorPreset()` or `elucim add-connector` for reading order and layout semantics. Generated connector intent contributes virtual ELK edges during semantic layout; the persisted document remains normal editable Elucim elements.
 - Use semantic motion helpers for agent-authored animation intent instead of raw keyframes: `planMotionBeats()`, `createSemanticMotionTimeline()`, `createAutoStaggerTimeline()`, `createStateSnapshotMotion()`, `lintMotion()`, `previewBeatDiffs()`, `createReducedMotionDocument()`, and `holdFinalFrame()`.
 - Semantic motion presets are `revealFlow`, `emphasizeDecision`, `tracePath`, `loopOnce`, `handoff`, `drainQueue`, and `compareBeforeAfter`. They compile to ordinary document timelines/state machines.
@@ -166,25 +167,22 @@ When generating Elucim diagrams, use the normalized `ElucimDocument` shape and r
 ### Agent authoring APIs
 
 ```typescript
-import { addElement, createDocument, validateForAgent } from '@elucim/dsl/agent';
+import {
+  createAgentSafeDocument,
+  createTextCalloutScenePreset,
+  validateForAgent,
+} from '@elucim/dsl/agent';
 
-const base = createDocument({
-  width: 800,
-  height: 600,
-  fps: 30,
+const base = createAgentSafeDocument(createTextCalloutScenePreset({
+  id: 'agent-draft',
+  title: 'Hello Elucim',
+  body: 'Generated copy lives inside bounded textboxes so it can be checked and repaired deterministically.',
+  callout: 'Use raw text only for short labels or numbers.',
+}), {
   metadata: { title: 'Agent draft', polishLevel: 'draft' },
 });
 
-const { document } = addElement(base, {
-  id: 'title',
-  type: 'text',
-  role: 'title',
-  layout: { x: 80, y: 96, width: 640, height: 64 },
-  intent: { importance: 'primary', generated: true },
-  props: { type: 'text', x: 80, y: 96, content: 'Hello Elucim', fill: '$title', fontSize: 40 },
-});
-
-const result = validateForAgent(document);
+const result = validateForAgent(base);
 ```
 
 ## Docs

@@ -30,6 +30,14 @@ export { Line, type LineProps } from './primitives/Line';
 export { Arrow, type ArrowProps } from './primitives/Arrow';
 export { Rect, type RectProps } from './primitives/Rect';
 export { Text, type TextProps } from './primitives/Text';
+export {
+  TextBox,
+  type TextBoxAlign,
+  type TextBoxAutoFit,
+  type TextBoxPadding,
+  type TextBoxProps,
+  type TextBoxVerticalAlign,
+} from './primitives/TextBox';
 export { Polygon, type PolygonProps } from './primitives/Polygon';
 export { Axes, type AxesProps, mathToSvg } from './primitives/Axes';
 export { FunctionPlot, type FunctionPlotProps } from './primitives/FunctionPlot';
@@ -43,6 +51,14 @@ export { Image, type ImageProps } from './primitives/Image';
 export { Group, type GroupProps } from './primitives/Group';
 export { useAnimation, type AnimationProps } from './primitives/animation';
 export { buildTransform, withTransform, sortByZIndex, type SpatialProps, type BaseElementProps } from './primitives/transform';
+export {
+  measureTextLayout,
+  measureTextWidth,
+  type MeasuredTextLayout,
+  type MeasuredTextLine,
+  type MeasureTextOptions,
+  type TextWrapMode,
+} from './text/measureText';
 
 // Legacy animation wrappers
 export { FadeIn, FadeOut, type FadeInProps, type FadeOutProps } from './animations/Fade';

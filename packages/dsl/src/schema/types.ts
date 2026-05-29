@@ -257,6 +257,44 @@ export interface TextNode {
   fontWeight?: string | number;
   textAnchor?: 'start' | 'middle' | 'end';
   dominantBaseline?: 'auto' | 'middle' | 'hanging' | 'central';
+  maxWidth?: number;
+  lineHeight?: number;
+  wrap?: 'none' | 'word' | 'char';
+  opacity?: number;
+  fadeIn?: number;
+  fadeOut?: number;
+  easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  scale?: number | [number, number];
+  translate?: [number, number];
+  zIndex?: number;
+}
+
+export interface TextBoxNode {
+  type: 'textbox';
+  id?: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  content: string;
+  padding?: number | { x?: number; y?: number };
+  fill?: string;
+  fontSize?: number;
+  minFontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string | number;
+  lineHeight?: number;
+  align?: 'start' | 'middle' | 'end';
+  verticalAlign?: 'top' | 'middle' | 'bottom';
+  autoFit?: 'none' | 'shrink' | 'truncate';
+  background?: {
+    fill?: string;
+    stroke?: string;
+    strokeWidth?: number;
+    radius?: number;
+  };
   opacity?: number;
   fadeIn?: number;
   fadeOut?: number;
@@ -614,6 +652,7 @@ export type ElementNode =
   | RectNode
   | PolygonNode
   | TextNode
+  | TextBoxNode
   | ImageNode
   // Math
   | AxesNode

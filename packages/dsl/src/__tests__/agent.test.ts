@@ -5,7 +5,13 @@ import {
   applyAgentCommands,
   bringElementForward,
   bringElementToFront,
+  checkLayoutForAgent,
+  createAgentSafeDocument,
+  createComparisonScenePreset,
   createDocument,
+  createStepCardPreset,
+  createTextCalloutScenePreset,
+  createThreeCardFlowScenePreset,
   createLoopingStateMachine,
   createStateMachine,
   evaluateSceneForAgent,
@@ -25,6 +31,7 @@ import {
   getStateMachineVisualFrames,
   transitionStateMachine,
   validateDocument,
+  createTextBoxPreset,
 } from '../index';
 
 describe('agent authoring API', () => {
@@ -68,6 +75,165 @@ describe('agent authoring API', () => {
     expect(validateDocument(result.document).valid).toBe(true);
   });
 
+  it('creates bounded textbox presets for agent-authored copy', () => {
+    const [textbox] = createTextBoxPreset({
+      id: 'summary',
+      x: 80,
+      y: 120,
+      width: 320,
+      height: 120,
+      text: 'Use a textbox when generated copy must stay inside a known region.',
+      autoFit: 'truncate',
+      background: 'none',
+      fontWeight: '600',
+    });
+
+    expect(textbox).toMatchObject({
+      id: 'summary',
+      type: 'textbox',
+      layout: { x: 80, y: 120, width: 320, height: 120 },
+      props: expect.objectContaining({
+        type: 'textbox',
+        content: 'Use a textbox when generated copy must stay inside a known region.',
+        autoFit: 'truncate',
+        fontWeight: '600',
+        background: { fill: 'none', stroke: 'none', strokeWidth: 0 },
+      }),
+    });
+    expect(validateDocument({
+      version: '2.0',
+      scene: { type: 'player', children: ['summary'] },
+      elements: { summary: textbox },
+    }).valid).toBe(true);
+  });
+
+  it('includes textbox helpers in the agent operation catalog', () => {
+    expect(getAgentOperationCatalog().map(op => op.name)).toContain('createTextBoxPreset');
+  });
+
+  it('creates deterministic agent-safe text callout scenes from bounded textboxes', () => {
+    const preset = createTextCalloutScenePreset({
+      id: 'safe',
+      title: 'How embeddings turn words into searchable meaning',
+      subtitle: 'A bounded text-first scene for agent generated copy.',
+      body: 'Embeddings place related ideas near each other so retrieval can find useful context even when the exact words differ.',
+      callout: 'Start with textbox regions, then run checkLayoutForAgent and repairLayoutForAgent before presenting.',
+    });
+    const doc = createAgentSafeDocument(preset, {
+      metadata: { title: 'Safe callout', intent: 'Demonstrate agent-safe text regions.' },
+    });
+    const again = createTextCalloutScenePreset({
+      id: 'safe',
+      title: 'How embeddings turn words into searchable meaning',
+      subtitle: 'A bounded text-first scene for agent generated copy.',
+      body: 'Embeddings place related ideas near each other so retrieval can find useful context even when the exact words differ.',
+      callout: 'Start with textbox regions, then run checkLayoutForAgent and repairLayoutForAgent before presenting.',
+    });
+
+    expect(again).toEqual(preset);
+    expect(validateDocument(doc).valid).toBe(true);
+    expect(checkLayoutForAgent(doc)).toMatchObject({ errors: [], warnings: [] });
+    expect(Object.values(doc.elements).filter(element => element.type === 'text')).toEqual([]);
+    expect(Object.values(doc.elements).filter(element => element.type === 'textbox').length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('creates agent-safe card flow scenes without raw authored copy', () => {
+    const preset = createThreeCardFlowScenePreset({
+      id: 'flow',
+      title: 'Agent visual workflow',
+      subtitle: 'Cards use textbox bounds so generated labels stay readable.',
+      items: [
+        { id: 'draft', title: 'Draft the scene', body: 'Create stable IDs and semantic intent before adding animation.' },
+        { id: 'check', title: 'Check layout', body: 'Run layout preflight to catch overflow, tiny copy, and unintended overlaps.' },
+        { id: 'repair', title: 'Repair safely', body: 'Apply safe repairs and keep review-level nudges explicit.' },
+      ],
+    });
+    const doc = createAgentSafeDocument(preset);
+
+    expect(validateDocument(doc).valid).toBe(true);
+    expect(checkLayoutForAgent(doc)).toMatchObject({ errors: [], warnings: [] });
+    expect(preset.rootElementIds).toEqual([
+      'flow-title',
+      'flow-subtitle',
+      'draft',
+      'check',
+      'repair',
+      'flow-draft-to-check',
+      'flow-check-to-repair',
+    ]);
+    expect(authoredRawText(doc)).toEqual([]);
+  });
+
+  it('creates agent-safe comparison scenes with bounded table cells', () => {
+    const preset = createComparisonScenePreset({
+      id: 'compare',
+      title: 'Prompting vs. agent workflows',
+      rowsHeader: 'Criterion',
+      columns: ['Prompt only', 'Agent workflow'],
+      rows: [
+        { id: 'state', label: 'State', cells: ['Usually implicit in chat history.', 'Stored in explicit documents, commands, and diffs.'] },
+        { id: 'quality', label: 'Quality loop', cells: ['Manual review after generation.', 'Validate, inspect, repair, then render.'] },
+      ],
+    });
+    const doc = createAgentSafeDocument(preset);
+
+    expect(validateDocument(doc).valid).toBe(true);
+    expect(checkLayoutForAgent(doc)).toMatchObject({ errors: [], warnings: [] });
+    expect(doc.scene.children).toEqual(['compare-title', 'compare-table']);
+    expect(doc.elements['compare-row-header-label'].props.content).toBe('Criterion');
+    expect(authoredRawText(doc)).toEqual([]);
+  });
+
+  it('rejects comparison scenes with too many rows for the scene height', () => {
+    expect(() => createComparisonScenePreset({
+      id: 'dense',
+      title: 'Too many rows',
+      columns: ['A', 'B'],
+      rows: Array.from({ length: 8 }, (_, index) => ({
+        id: `row-${index + 1}`,
+        label: `Row ${index + 1}`,
+        cells: ['One', 'Two'],
+      })),
+    })).toThrow(/supports at most/);
+  });
+
+  it('uses textbox content inside step card presets for generated title and body copy', () => {
+    const elements = createStepCardPreset({
+      id: 'safe-card',
+      x: 80,
+      y: 120,
+      width: 320,
+      height: 160,
+      title: 'Long agent-generated card title',
+      body: 'Body copy is bounded by a textbox instead of loose raw SVG text.',
+    });
+    const byId = Object.fromEntries(elements.map(element => [element.id, element]));
+    const group = byId['safe-card'];
+    const title = byId['safe-card-title'];
+    const body = byId['safe-card-body'];
+
+    expect(group.children).toContain('safe-card-title');
+    expect(group.children).toContain('safe-card-body');
+    expect(title).toMatchObject({ type: 'textbox', role: 'title' });
+    expect(body).toMatchObject({ type: 'textbox', role: 'body' });
+  });
+
+  it('keeps step card status text within its badge background', () => {
+    const elements = createStepCardPreset({
+      id: 'status-card',
+      x: 80,
+      y: 120,
+      title: 'Status card',
+      status: 'Done',
+    });
+    const byId = Object.fromEntries(elements.map(element => [element.id, element]));
+    const background = byId['status-card-status-bg'].props;
+    const status = byId['status-card-status'].props;
+
+    expect(status.x).toBeGreaterThanOrEqual(background.x);
+    expect(status.x + status.width).toBeLessThanOrEqual(background.x + background.width);
+  });
+
   it('builds reveal timelines and a default state machine without wrapper animation props', () => {
     const withElements = applyAgentCommands(createDocument(), [
       { op: 'addElement', element: { id: 'title', type: 'text', props: { content: 'Slope' } } },
@@ -86,6 +252,15 @@ describe('agent authoring API', () => {
     expect(withElements.elements.title.props).not.toHaveProperty('draw');
     expect(validateDocument(withElements).valid).toBe(true);
   });
+
+  function authoredRawText(doc: { elements: Record<string, { type: string; props: Record<string, unknown> }> }) {
+    return Object.values(doc.elements)
+      .filter(element => element.type === 'text')
+      .filter(element => {
+        const content = element.props.content;
+        return typeof content === 'string' && !/^\d+$/.test(content.trim());
+      });
+  }
 
   it('authors Objects, state-machine-embedded animation, and agent-readable validation in one document workflow', () => {
     const result = applyAgentCommands(createDocument({

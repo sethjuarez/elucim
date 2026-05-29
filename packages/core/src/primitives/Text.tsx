@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
+import { measureTextLayout, type TextWrapMode } from '../text/measureText';
 
 export interface TextProps extends AnimationProps, SpatialProps, BaseElementProps {
   x: number;
@@ -13,6 +14,9 @@ export interface TextProps extends AnimationProps, SpatialProps, BaseElementProp
   textAnchor?: 'start' | 'middle' | 'end';
   dominantBaseline?: 'auto' | 'middle' | 'hanging' | 'central';
   opacity?: number;
+  maxWidth?: number;
+  lineHeight?: number;
+  wrap?: TextWrapMode;
 }
 
 export function Text({
@@ -26,6 +30,9 @@ export function Text({
   textAnchor = 'start',
   dominantBaseline = 'auto',
   opacity: baseOpacity = 1,
+  maxWidth,
+  lineHeight,
+  wrap,
   fadeIn,
   fadeOut,
   easing,
@@ -35,6 +42,18 @@ export function Text({
   translate,
 }: TextProps) {
   const anim = useAnimation({ fadeIn, fadeOut, easing });
+  const shouldUseLayout = maxWidth !== undefined || lineHeight !== undefined || wrap !== undefined;
+  const layout = shouldUseLayout
+    ? measureTextLayout(children, { fontSize, fontFamily, fontWeight, lineHeight, maxWidth, wrap })
+    : undefined;
+  const shouldRenderLines = layout !== undefined && (layout.lines.length !== 1 || layout.lines[0]?.text !== children);
+  const renderedContent = shouldRenderLines && layout
+    ? layout.lines.map((line, index) => (
+      <tspan key={index} x={x} dy={index === 0 ? 0 : layout.lineHeight}>
+        {line.text}
+      </tspan>
+    ))
+    : children;
 
   const el = (
     <text
@@ -49,7 +68,7 @@ export function Text({
       opacity={baseOpacity * anim.opacity}
       data-testid="elucim-text"
     >
-      {children}
+      {renderedContent}
     </text>
   );
 

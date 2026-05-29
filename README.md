@@ -33,7 +33,7 @@ pnpm --filter @elucim/docs dev        # Documentation site → http://localhost:
 | Package | Description | npm |
 |---------|-------------|-----|
 | **[@elucim/dsl](./packages/dsl)** | Primary authoring surface: normalized JSON/YAML documents, timelines, state machines, DslRenderer | [![npm](https://img.shields.io/npm/v/@elucim/dsl)](https://www.npmjs.com/package/@elucim/dsl) |
-| **[@elucim/core](./packages/core)** | Low-level React components, hooks, primitives, playback, and export utilities | [![npm](https://img.shields.io/npm/v/@elucim/core)](https://www.npmjs.com/package/@elucim/core) |
+| **[@elucim/core](./packages/core)** | Low-level React components, hooks, primitives including bounded `TextBox`, playback, and export utilities | [![npm](https://img.shields.io/npm/v/@elucim/core)](https://www.npmjs.com/package/@elucim/core) |
 | **[@elucim/editor](./packages/editor)** | Visual canvas editor — Figma-like design tool | [![npm](https://img.shields.io/npm/v/@elucim/editor)](https://www.npmjs.com/package/@elucim/editor) |
 
 ## Monorepo Structure

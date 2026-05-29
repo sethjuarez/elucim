@@ -488,6 +488,33 @@ function TextField({ label, value, onChange }: {
   );
 }
 
+function TextAreaField({ label, value, onChange }: {
+  label: string; value: string | undefined; onChange: (v: string) => void;
+}) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: v('--elucim-editor-space-xs') }}>
+      <span style={{ color: v('--elucim-editor-text-secondary'), fontSize: v('--elucim-editor-font-sm') }}>{label}</span>
+      <textarea
+        value={value ?? ''}
+        rows={4}
+        onChange={e => onChange(e.target.value)}
+        style={{
+          width: '100%',
+          minHeight: 72,
+          resize: 'vertical',
+          background: v('--elucim-editor-input-bg'),
+          border: `1px solid ${v('--elucim-editor-border')}`,
+          borderRadius: v('--elucim-editor-radius-sm'),
+          color: v('--elucim-editor-fg'),
+          padding: '4px 6px',
+          fontSize: v('--elucim-editor-font-sm'),
+          boxSizing: 'border-box',
+        }}
+      />
+    </label>
+  );
+}
+
 function SelectField({ label, value, options, onChange }: {
   label: string; value: string; options: readonly string[]; onChange: (v: string) => void;
 }) {
@@ -720,11 +747,18 @@ function StyleFields({ element, onChange }: { element: ElementNode; onChange: (f
         <NumberField label="Opacity" value={el.opacity ?? 1} onChange={v => onChange('opacity', v)} step={0.05} />
       )}
       {'fontSize' in el && <NumberField label="Font Size" value={el.fontSize} onChange={v => onChange('fontSize', v)} />}
+      {'fontWeight' in el && <TextField label="Weight" value={String(el.fontWeight ?? '')} onChange={v => onChange('fontWeight', parseFontWeight(v))} />}
       {!hasOpacity && !showExtras && (
         <AddFieldButton options={['Opacity']} onAdd={() => setShowExtras(true)} />
       )}
     </>
   );
+}
+
+function parseFontWeight(value: string): string | number {
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) return Number(trimmed);
+  return value;
 }
 
 // ─── Transform Fields ──────────────────────────────────────────────────────
@@ -892,9 +926,39 @@ function ElementSpecificFields({ element, onChange }: { element: ElementNode; on
   if ('content' in el) {
     sections.push(
       <InspectorSection key="content" title="Content">
-        <TextField label="Text" value={el.content} onChange={v => onChange('content', v)} />
+        {el.type === 'textbox'
+          ? <TextAreaField label="Text" value={el.content} onChange={v => onChange('content', v)} />
+          : <TextField label="Text" value={el.content} onChange={v => onChange('content', v)} />}
         {'fontFamily' in el && <TextField label="Font" value={el.fontFamily} onChange={v => onChange('fontFamily', v)} />}
         {'textAnchor' in el && <TextField label="Anchor" value={el.textAnchor} onChange={v => onChange('textAnchor', v)} />}
+      </InspectorSection>
+    );
+  }
+
+  if (el.type === 'textbox') {
+    const padding = el.padding;
+    const paddingX = typeof padding === 'number' ? padding : padding?.x;
+    const paddingY = typeof padding === 'number' ? padding : padding?.y;
+    const background = el.background && typeof el.background === 'object' ? el.background : {};
+    const hasBackground = el.background && typeof el.background === 'object';
+    const updateBackground = (field: string, value: string) => onChange('background', { ...background, [field]: value });
+    sections.push(
+      <InspectorSection key="textbox-layout" title="Text Box">
+        <SelectField label="Fit" value={el.autoFit ?? 'none'} options={['none', 'shrink', 'truncate']} onChange={v => onChange('autoFit', v)} />
+        <SelectField label="Align" value={el.align ?? 'start'} options={['start', 'middle', 'end']} onChange={v => onChange('align', v)} />
+        <SelectField label="V Align" value={el.verticalAlign ?? 'top'} options={['top', 'middle', 'bottom']} onChange={v => onChange('verticalAlign', v)} />
+        <NumberField label="Min Font" value={el.minFontSize} onChange={v => onChange('minFontSize', v)} />
+        <NumberField label="Line H" value={el.lineHeight} onChange={v => onChange('lineHeight', v)} step={0.1} />
+        <NumberField label="Pad X" value={paddingX} onChange={v => onChange('padding', { x: v, y: paddingY ?? v })} />
+        <NumberField label="Pad Y" value={paddingY} onChange={v => onChange('padding', { x: paddingX ?? v, y: v })} />
+        {hasBackground ? (
+          <>
+            <ColorField label="Bg Fill" value={background.fill ?? '$surface'} onChange={v => updateBackground('fill', v)} />
+            <ColorField label="Bg Stroke" value={background.stroke ?? '$border'} onChange={v => updateBackground('stroke', v)} />
+          </>
+        ) : (
+          <AddFieldButton options={['Background']} onAdd={() => onChange('background', { fill: '$surface', stroke: '$border' })} />
+        )}
       </InspectorSection>
     );
   }

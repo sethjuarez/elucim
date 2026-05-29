@@ -92,6 +92,21 @@ describe('ELEMENT_TEMPLATES', () => {
     expect(hero.children[1].fill).toBe('$title');
   });
 
+  it('creates a bounded textbox template for generated prose', () => {
+    const textbox = ELEMENT_TEMPLATES.find(t => t.id === 'textbox')!.create(480, 270) as any;
+    expect(textbox).toMatchObject({
+      type: 'textbox',
+      x: 330,
+      y: 210,
+      width: 300,
+      height: 120,
+      align: 'start',
+      verticalAlign: 'top',
+      autoFit: 'shrink',
+      background: { fill: '$surface', stroke: '$border' },
+    });
+  });
+
   it('creates presentation groups with descriptive child ids', () => {
     const groupTemplates = ELEMENT_TEMPLATES.filter(t => t.category === 'presentation' && t.type === 'group');
     expect(groupTemplates.length).toBeGreaterThan(0);

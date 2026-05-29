@@ -42,6 +42,32 @@ export interface ElucimTextBlockPresetSpec {
   parentId?: string;
 }
 
+export interface ElucimTextBoxPresetSpec {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  text: string;
+  fontSize?: number;
+  minFontSize?: number;
+  fontFamily?: string;
+  fontWeight?: string | number;
+  lineHeight?: number;
+  fillToken?: string;
+  backgroundFillToken?: string;
+  backgroundStrokeToken?: string;
+  background?: 'panel' | 'none';
+  padding?: number | { x?: number; y?: number };
+  align?: ElucimTextAlign;
+  verticalAlign?: 'top' | 'middle' | 'bottom';
+  autoFit?: 'none' | 'shrink' | 'truncate';
+  role?: string;
+  importance?: 'primary' | 'secondary' | 'supporting' | 'decorative';
+  parentId?: string;
+  rank?: number;
+}
+
 export interface ElucimStepCardPresetSpec {
   id: string;
   x: number;
@@ -336,19 +362,71 @@ export function createTextBlockPreset(spec: ElucimTextBlockPresetSpec): ElucimCo
   ];
 }
 
+export function createTextBoxPreset(spec: ElucimTextBoxPresetSpec): ElucimCompositeElement[] {
+  assertId(spec.id, 'id');
+  assertPositive(spec.width, 'width');
+  assertPositive(spec.height, 'height');
+  const fontSize = spec.fontSize ?? 18;
+  assertPositive(fontSize, 'fontSize');
+  if (spec.minFontSize !== undefined) assertPositive(spec.minFontSize, 'minFontSize');
+  if (spec.lineHeight !== undefined) assertPositive(spec.lineHeight, 'lineHeight');
+
+  const align = spec.align === 'center' ? 'middle' : spec.align === 'right' ? 'end' : 'start';
+  const role = spec.role ?? 'textBox';
+
+  const background = spec.background === 'none'
+    ? { fill: 'none', stroke: 'none', strokeWidth: 0 }
+    : {
+        fill: spec.backgroundFillToken ?? '$surface',
+        stroke: spec.backgroundStrokeToken ?? '$muted',
+      };
+
+  return [{
+    id: spec.id,
+    type: 'textbox',
+    parentId: spec.parentId,
+    role,
+    intent: { role, importance: spec.importance ?? 'supporting', group: spec.parentId },
+    layout: { x: spec.x, y: spec.y, width: spec.width, height: spec.height, rank: spec.rank },
+    props: {
+      type: 'textbox',
+      x: spec.x,
+      y: spec.y,
+      width: spec.width,
+      height: spec.height,
+      content: spec.text,
+      fontSize,
+      minFontSize: spec.minFontSize,
+      fontFamily: spec.fontFamily,
+      fontWeight: spec.fontWeight,
+      lineHeight: spec.lineHeight,
+      fill: spec.fillToken ?? '$foreground',
+      padding: spec.padding,
+      align,
+      verticalAlign: spec.verticalAlign ?? 'top',
+      autoFit: spec.autoFit ?? 'shrink',
+      background,
+    },
+  }];
+}
+
 export function createStepCardPreset(spec: ElucimStepCardPresetSpec): ElucimCompositeElement[] {
   assertId(spec.id, 'id');
   const width = spec.width ?? 300;
   assertPositive(width, 'width');
-  const bodyLines = spec.body ? wrapText(spec.body, width - 44, 16, 3) : [];
-  const height = spec.height ?? Math.max(112, 76 + bodyLines.length * 22 + (spec.status ? 28 : 0));
+  const hasBody = Boolean(spec.body);
+  const height = spec.height ?? Math.max(132, 116 + (spec.status ? 28 : 0));
   assertPositive(height, 'height');
   const accent = spec.accentToken ?? '$primary';
+  const titleX = spec.x + (spec.index === undefined ? 22 : 54);
+  const titleWidth = width - (spec.index === undefined ? 44 : 76);
+  const bodyHeight = Math.max(34, height - 100 - (spec.status ? 26 : 0));
+  const statusBadgeWidth = spec.status ? Math.max(80, spec.status.length * 9 + 30) : 0;
   const children = [
     `${spec.id}-card`,
     ...(spec.index === undefined ? [] : [`${spec.id}-index-bg`, `${spec.id}-index`]),
     `${spec.id}-title`,
-    ...bodyLines.map((_, index) => `${spec.id}-body-line-${index + 1}`),
+    ...(hasBody ? [`${spec.id}-body`] : []),
     ...(spec.status ? [`${spec.id}-status-bg`, `${spec.id}-status`] : []),
   ];
 
@@ -376,8 +454,8 @@ export function createStepCardPreset(spec: ElucimStepCardPresetSpec): ElucimComp
         id: `${spec.id}-index-bg`,
         type: 'circle',
         parentId: spec.id,
-        role: 'index',
-        intent: { role: 'index', importance: 'secondary', group: spec.id },
+        role: 'container',
+        intent: { role: 'index-background', importance: 'decorative', group: spec.id },
         props: { type: 'circle', cx: spec.x + 30, cy: spec.y + 30, r: 15, fill: accent },
       },
       {
@@ -389,38 +467,70 @@ export function createStepCardPreset(spec: ElucimStepCardPresetSpec): ElucimComp
         props: { type: 'text', x: spec.x + 30, y: spec.y + 36, content: String(spec.index), fontSize: 16, fontWeight: 700, fill: '$background', textAnchor: 'middle' },
       },
     ] satisfies ElucimCompositeElement[]),
-    {
+    ...createTextBoxPreset({
       id: `${spec.id}-title`,
-      type: 'text',
       parentId: spec.id,
+      x: titleX,
+      y: spec.y + 18,
+      width: titleWidth,
+      height: 34,
+      text: spec.title,
+      fontSize: 21,
+      minFontSize: 15,
+      fontWeight: 700,
+      fillToken: '$title',
+      background: 'none',
+      padding: 0,
+      autoFit: 'shrink',
       role: 'title',
-      intent: { role: 'title', importance: 'secondary', group: spec.id },
-      props: { type: 'text', x: spec.x + (spec.index === undefined ? 22 : 54), y: spec.y + 38, content: spec.title, fontSize: 21, fontWeight: 700, fill: '$title' },
-    },
-    ...bodyLines.map((line, index): ElucimCompositeElement => ({
-      id: `${spec.id}-body-line-${index + 1}`,
-      type: 'text',
+      importance: 'secondary',
+    }),
+    ...(hasBody ? createTextBoxPreset({
+      id: `${spec.id}-body`,
       parentId: spec.id,
+      x: spec.x + 22,
+      y: spec.y + 60,
+      width: width - 44,
+      height: bodyHeight,
+      text: spec.body ?? '',
+      fontSize: 16,
+      minFontSize: 12,
+      lineHeight: 1.25,
+      fillToken: '$muted',
+      background: 'none',
+      padding: 0,
+      autoFit: 'shrink',
       role: 'body',
-      intent: { role: 'body', importance: 'supporting', group: spec.id },
-      props: { type: 'text', x: spec.x + 22, y: spec.y + 72 + index * 22, content: line, fontSize: 16, fill: '$muted' },
-    })),
+      importance: 'supporting',
+    }) : []),
     ...(spec.status ? [
       {
         id: `${spec.id}-status-bg`,
         type: 'rect',
         parentId: spec.id,
-        role: 'status',
-        intent: { role: 'status', importance: 'supporting', group: spec.id },
-        props: { type: 'rect', x: spec.x + 22, y: spec.y + height - 38, width: Math.max(64, spec.status.length * 9 + 22), height: 24, rx: 12, fill: '$surface', stroke: accent, strokeWidth: 1 },
+        role: 'container',
+        intent: { role: 'status-background', importance: 'decorative', group: spec.id },
+        props: { type: 'rect', x: spec.x + 22, y: spec.y + height - 38, width: statusBadgeWidth, height: 24, rx: 12, fill: '$surface', stroke: accent, strokeWidth: 1 },
       },
       {
-        id: `${spec.id}-status`,
-        type: 'text',
-        parentId: spec.id,
-        role: 'status',
-        intent: { role: 'status', importance: 'supporting', group: spec.id },
-        props: { type: 'text', x: spec.x + 34, y: spec.y + height - 21, content: spec.status, fontSize: 13, fontWeight: 600, fill: accent },
+        ...createTextBoxPreset({
+          id: `${spec.id}-status`,
+          parentId: spec.id,
+          x: spec.x + 30,
+          y: spec.y + height - 37,
+          width: statusBadgeWidth - 16,
+          height: 22,
+          text: spec.status,
+          fontSize: 13,
+          minFontSize: 11,
+          fontWeight: 600,
+          fillToken: accent,
+          background: 'none',
+          padding: 0,
+          autoFit: 'shrink',
+          role: 'status',
+          importance: 'supporting',
+        })[0],
       },
     ] satisfies ElucimCompositeElement[] : []),
   ];

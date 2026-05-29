@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getElementBounds, mergeBounds, isPointInBounds } from '../utils/bounds';
-import type { AxesNode, CircleNode, LaTeXNode, RectNode, LineNode, PolygonNode, TextNode, FunctionPlotNode, VectorFieldNode } from '@elucim/dsl';
+import type { AxesNode, CircleNode, LaTeXNode, RectNode, LineNode, PolygonNode, TextNode, TextBoxNode, FunctionPlotNode, VectorFieldNode } from '@elucim/dsl';
 
 describe('getElementBounds', () => {
   it('computes rect bounds', () => {
@@ -57,6 +57,11 @@ describe('getElementBounds', () => {
     expect(bounds!.x).toBe(50);
     expect(bounds!.width).toBeGreaterThan(0);
     expect(bounds!.height).toBeGreaterThan(0);
+  });
+
+  it('computes textbox bounds from its explicit rectangle', () => {
+    const textbox: TextBoxNode = { type: 'textbox', x: 80, y: 120, width: 320, height: 140, content: 'Bounded text', autoFit: 'shrink' };
+    expect(getElementBounds(textbox)).toEqual({ x: 80, y: 120, width: 320, height: 140 });
   });
 
   it('computes tighter LaTeX bounds from foreignObject sizing', () => {
@@ -296,6 +301,13 @@ describe('getElementBounds rotation info', () => {
     const bounds = getElementBounds(text);
     expect(bounds!.rotation).toBe(90);
     expect(bounds!.rotationCenter).toEqual([50, 100]);
+  });
+
+  it('uses textbox center as rotation center', () => {
+    const textbox: TextBoxNode = { type: 'textbox', x: 80, y: 90, width: 240, height: 120, content: 'Hi', rotation: 90 };
+    const bounds = getElementBounds(textbox);
+    expect(bounds!.rotation).toBe(90);
+    expect(bounds!.rotationCenter).toEqual([200, 150]);
   });
 
   it('uses circle center as rotation center', () => {

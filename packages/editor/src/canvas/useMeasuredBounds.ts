@@ -33,6 +33,14 @@ export function useMeasuredBounds(
       const id = elementIds[i];
       const el = elements[i] as Record<string, any>;
 
+      if (el.type === 'textbox') {
+        const textboxBounds = getElementBounds(elements[i]);
+        if (textboxBounds) {
+          newMap.set(id, textboxBounds);
+          continue;
+        }
+      }
+
       // FunctionPlot's SVG uses a clipPath. Browser getBBox() reports either
       // unclipped path geometry or the clip viewport, neither of which matches
       // the visible curve users expect to select/resize.
