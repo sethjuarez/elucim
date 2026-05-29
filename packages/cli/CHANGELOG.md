@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.23.0](https://github.com/sethjuarez/elucim/compare/cli-v0.22.1...cli-v0.23.0) (2026-05-29)
+
+
+### Features
+
+* **dsl:** score agent text layout issues ([11847a6](https://github.com/sethjuarez/elucim/commit/11847a619114bc0e2f0c6371d0a4d15717d65fb8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/dsl bumped to 0.23.0
+
 ## [0.22.1](https://github.com/sethjuarez/elucim/compare/cli-v0.22.0...cli-v0.22.1) (2026-05-17)
 
 
