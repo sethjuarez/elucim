@@ -63,6 +63,51 @@ export interface ElucimComparisonSceneSpec {
   background?: string;
 }
 
+export interface ElucimCalculusDerivativeSceneSpec {
+  id: string;
+  title?: string;
+  subtitle?: string;
+  fn?: string;
+  derivative?: string;
+  x?: number;
+  dx?: number;
+  xRange?: [number, number];
+  yRange?: [number, number];
+  width?: number;
+  height?: number;
+  background?: string;
+}
+
+export interface ElucimCalculusRiemannSceneSpec {
+  id: string;
+  title?: string;
+  subtitle?: string;
+  fn?: string;
+  interval?: [number, number];
+  n?: number;
+  method?: 'left' | 'right' | 'midpoint';
+  xRange?: [number, number];
+  yRange?: [number, number];
+  width?: number;
+  height?: number;
+  background?: string;
+}
+
+export interface ElucimCalculusAccumulationSceneSpec {
+  id: string;
+  title?: string;
+  subtitle?: string;
+  fn?: string;
+  from?: number;
+  to?: number;
+  samples?: number;
+  xRange?: [number, number];
+  yRange?: [number, number];
+  width?: number;
+  height?: number;
+  background?: string;
+}
+
 const DEFAULT_WIDTH = 1280;
 const DEFAULT_HEIGHT = 720;
 const SAFE_MARGIN_X = 96;
@@ -380,6 +425,232 @@ export function createComparisonScenePreset(spec: ElucimComparisonSceneSpec): El
   return createScenePreset({ width, height, background: spec.background, rootElementIds, elements: [...titleElements, ...tableElements] });
 }
 
+export function createCalculusDerivativeScenePreset(spec: ElucimCalculusDerivativeSceneSpec): ElucimAgentSafeScenePreset {
+  assertTemplateId(spec.id, 'id');
+  const width = positiveOrDefault(spec.width, DEFAULT_WIDTH, 'width');
+  const height = positiveOrDefault(spec.height, DEFAULT_HEIGHT, 'height');
+  const graph = calculusGraph(width, height, spec.xRange ?? [-1, 4], spec.yRange ?? [-1, 8]);
+  const fn = spec.fn ?? 'x^2';
+  const derivative = spec.derivative ?? '2*x';
+  const x = finiteOrDefault(spec.x, 1.6, 'x');
+  const dx = nonZeroOrDefault(spec.dx, 0.9, 'dx');
+  const titleElements = createTemplateTitle(
+    spec.id,
+    spec.title ?? 'Derivative as local slope',
+    spec.subtitle ?? 'Compare the secant slope over an interval with the tangent slope at one point.',
+    width,
+  );
+  const rootElementIds = [
+    `${spec.id}-title`,
+    `${spec.id}-subtitle`,
+    `${spec.id}-axes`,
+    `${spec.id}-curve`,
+    `${spec.id}-secant`,
+    `${spec.id}-tangent`,
+    `${spec.id}-explain`,
+  ];
+  const elements: ElucimCompositeElement[] = [
+    ...titleElements,
+    calculusAxes(`${spec.id}-axes`, graph, 'Axes for derivative lesson'),
+    calculusFunctionPlot(`${spec.id}-curve`, fn, graph, 'Function curve for derivative lesson'),
+    {
+      id: `${spec.id}-secant`,
+      type: 'secantLine',
+      role: 'calculus-secant',
+      intent: { role: 'secant-line', importance: 'primary', generated: true, relationship: 'approximates tangent slope' },
+      props: {
+        type: 'secantLine',
+        fn,
+        x,
+        dx,
+        length: 4.2,
+        origin: graph.origin,
+        scale: graph.scale,
+        stroke: '#f59e0b',
+        strokeWidth: 4,
+        label: 'secant: average rate',
+        showPoints: true,
+      },
+    },
+    {
+      id: `${spec.id}-tangent`,
+      type: 'tangentLine',
+      role: 'calculus-tangent',
+      intent: { role: 'tangent-line', importance: 'primary', generated: true, relationship: 'local derivative slope' },
+      props: {
+        type: 'tangentLine',
+        fn,
+        derivative,
+        x: x + dx,
+        length: 4.2,
+        origin: graph.origin,
+        scale: graph.scale,
+        stroke: '#22c55e',
+        strokeWidth: 4,
+        label: 'tangent: instantaneous rate',
+        showPoints: true,
+      },
+    },
+    ...createTextBoxPreset({
+      id: `${spec.id}-explain`,
+      x: width - SAFE_MARGIN_X - 360,
+      y: graph.y + 90,
+      width: 360,
+      height: 180,
+      text: 'As dx gets smaller, the secant line becomes a local tangent line. The derivative is the slope that remains.',
+      fontSize: 22,
+      minFontSize: 15,
+      lineHeight: 1.18,
+      fillToken: '$foreground',
+      backgroundFillToken: '$surface',
+      backgroundStrokeToken: '$border',
+      padding: { x: 22, y: 18 },
+      autoFit: 'shrink',
+      role: 'explanation',
+      importance: 'primary',
+    }),
+  ];
+  return createScenePreset({ width, height, background: spec.background, rootElementIds, elements });
+}
+
+export function createCalculusRiemannScenePreset(spec: ElucimCalculusRiemannSceneSpec): ElucimAgentSafeScenePreset {
+  assertTemplateId(spec.id, 'id');
+  const width = positiveOrDefault(spec.width, DEFAULT_WIDTH, 'width');
+  const height = positiveOrDefault(spec.height, DEFAULT_HEIGHT, 'height');
+  const graph = calculusGraph(width, height, spec.xRange ?? [-0.5, 4], spec.yRange ?? [-0.5, 8]);
+  const fn = spec.fn ?? 'x^2';
+  const interval = tupleOrDefault(spec.interval, [0, 3], 'interval');
+  const n = positiveIntOrDefault(spec.n, 6, 'n');
+  const method = spec.method ?? 'midpoint';
+  if (!['left', 'right', 'midpoint'].includes(method)) {
+    throw new Error('method must be "left", "right", or "midpoint".');
+  }
+  const titleElements = createTemplateTitle(
+    spec.id,
+    spec.title ?? 'Riemann sums approximate area',
+    spec.subtitle ?? 'Break the interval into rectangles, then refine the count to improve the estimate.',
+    width,
+  );
+  const rootElementIds = [
+    `${spec.id}-title`,
+    `${spec.id}-subtitle`,
+    `${spec.id}-axes`,
+    `${spec.id}-rectangles`,
+    `${spec.id}-curve`,
+    `${spec.id}-explain`,
+  ];
+  const elements: ElucimCompositeElement[] = [
+    ...titleElements,
+    calculusAxes(`${spec.id}-axes`, graph, 'Axes for Riemann sum lesson'),
+    {
+      id: `${spec.id}-rectangles`,
+      type: 'riemannSum',
+      role: 'calculus-riemann-sum',
+      intent: { role: 'area-approximation', importance: 'primary', generated: true, relationship: 'approximates accumulated area' },
+      props: {
+        type: 'riemannSum',
+        fn,
+        interval,
+        n,
+        method,
+        origin: graph.origin,
+        scale: graph.scale,
+        fill: '#8b5cf6',
+        stroke: '#c4b5fd',
+        opacity: 0.42,
+      },
+    },
+    calculusFunctionPlot(`${spec.id}-curve`, fn, graph, 'Function curve over Riemann rectangles'),
+    ...createTextBoxPreset({
+      id: `${spec.id}-explain`,
+      x: width - SAFE_MARGIN_X - 360,
+      y: graph.y + 90,
+      width: 360,
+      height: 176,
+      text: `This ${method} sum uses ${n} rectangles. Increasing n makes the rectangle area converge toward the true integral.`,
+      fontSize: 22,
+      minFontSize: 15,
+      lineHeight: 1.18,
+      fillToken: '$foreground',
+      backgroundFillToken: '$surface',
+      backgroundStrokeToken: '$border',
+      padding: { x: 22, y: 18 },
+      autoFit: 'shrink',
+      role: 'explanation',
+      importance: 'primary',
+    }),
+  ];
+  return createScenePreset({ width, height, background: spec.background, rootElementIds, elements });
+}
+
+export function createCalculusAccumulationScenePreset(spec: ElucimCalculusAccumulationSceneSpec): ElucimAgentSafeScenePreset {
+  assertTemplateId(spec.id, 'id');
+  const width = positiveOrDefault(spec.width, DEFAULT_WIDTH, 'width');
+  const height = positiveOrDefault(spec.height, DEFAULT_HEIGHT, 'height');
+  const graph = calculusGraph(width, height, spec.xRange ?? [-0.5, 4], spec.yRange ?? [-0.5, 8]);
+  const fn = spec.fn ?? 'x^2';
+  const from = finiteOrDefault(spec.from, 0, 'from');
+  const to = finiteOrDefault(spec.to, 2.6, 'to');
+  const samples = positiveIntOrDefault(spec.samples, 80, 'samples');
+  const titleElements = createTemplateTitle(
+    spec.id,
+    spec.title ?? 'Accumulation is signed area',
+    spec.subtitle ?? 'The integral tracks the area gathered under the curve from one bound to another.',
+    width,
+  );
+  const rootElementIds = [
+    `${spec.id}-title`,
+    `${spec.id}-subtitle`,
+    `${spec.id}-axes`,
+    `${spec.id}-area`,
+    `${spec.id}-curve`,
+    `${spec.id}-explain`,
+  ];
+  const elements: ElucimCompositeElement[] = [
+    ...titleElements,
+    calculusAxes(`${spec.id}-axes`, graph, 'Axes for accumulation lesson'),
+    {
+      id: `${spec.id}-area`,
+      type: 'accumulationArea',
+      role: 'calculus-accumulation-area',
+      intent: { role: 'integral-area', importance: 'primary', generated: true, relationship: 'visualizes accumulated integral' },
+      props: {
+        type: 'accumulationArea',
+        fn,
+        from,
+        to,
+        samples,
+        origin: graph.origin,
+        scale: graph.scale,
+        fill: '#14b8a6',
+        stroke: '#5eead4',
+        strokeWidth: 2,
+        opacity: 0.34,
+      },
+    },
+    calculusFunctionPlot(`${spec.id}-curve`, fn, graph, 'Function curve bounding accumulated area'),
+    ...createTextBoxPreset({
+      id: `${spec.id}-explain`,
+      x: width - SAFE_MARGIN_X - 360,
+      y: graph.y + 90,
+      width: 360,
+      height: 176,
+      text: `The shaded region accumulates f(x) from ${from} to ${to}. Moving the upper bound changes the total area.`,
+      fontSize: 22,
+      minFontSize: 15,
+      lineHeight: 1.18,
+      fillToken: '$foreground',
+      backgroundFillToken: '$surface',
+      backgroundStrokeToken: '$border',
+      padding: { x: 22, y: 18 },
+      autoFit: 'shrink',
+      role: 'explanation',
+      importance: 'primary',
+    }),
+  ];
+  return createScenePreset({ width, height, background: spec.background, rootElementIds, elements });
+}
+
 function createTemplateTitle(id: string, title: string, subtitle: string | undefined, width: number): ElucimCompositeElement[] {
   const contentWidth = width - SAFE_MARGIN_X * 2;
   return [
@@ -459,9 +730,103 @@ function elementsById(elements: ElucimCompositeElement[]): Record<string, Elucim
   return Object.fromEntries(elements.map(element => [element.id, element]));
 }
 
+function calculusAxes(id: string, graph: CalculusGraphLayout, description: string): ElucimCompositeElement {
+  return {
+    id,
+    type: 'axes',
+    role: 'math-axes',
+    intent: { role: 'coordinate-system', importance: 'supporting', generated: true, description },
+    props: {
+      type: 'axes',
+      origin: graph.origin,
+      domain: graph.xRange,
+      range: graph.yRange,
+      scale: graph.scale,
+      showGrid: true,
+      axisColor: '#94a3b8',
+    },
+  };
+}
+
+function calculusFunctionPlot(id: string, fn: string, graph: CalculusGraphLayout, description: string): ElucimCompositeElement {
+  return {
+    id,
+    type: 'functionPlot',
+    role: 'math-function',
+    intent: { role: 'function-curve', importance: 'primary', generated: true, description },
+    props: {
+      type: 'functionPlot',
+      fn,
+      domain: graph.xRange,
+      origin: graph.origin,
+      scale: graph.scale,
+      color: '#60a5fa',
+      strokeWidth: 4,
+    },
+  };
+}
+
+interface CalculusGraphLayout {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  origin: [number, number];
+  scale: number;
+  xRange: [number, number];
+  yRange: [number, number];
+}
+
+function calculusGraph(width: number, height: number, xRange: [number, number], yRange: [number, number]): CalculusGraphLayout {
+  const graphX = SAFE_MARGIN_X + 12;
+  const graphY = SAFE_MARGIN_Y + 132;
+  const graphWidth = Math.max(420, width - SAFE_MARGIN_X * 2 - 420);
+  const graphHeight = Math.max(320, height - graphY - SAFE_MARGIN_Y);
+  const scale = Math.min(graphWidth / Math.max(1, xRange[1] - xRange[0]), graphHeight / Math.max(1, yRange[1] - yRange[0]));
+  return {
+    x: graphX,
+    y: graphY,
+    width: graphWidth,
+    height: graphHeight,
+    origin: [graphX - xRange[0] * scale, graphY + yRange[1] * scale],
+    scale,
+    xRange,
+    yRange,
+  };
+}
+
 function positiveOrDefault(value: number | undefined, fallback: number, name: string) {
   if (value === undefined) return fallback;
   if (!Number.isFinite(value) || value <= 0) throw new Error(`${name} must be a positive finite number.`);
+  return value;
+}
+
+function finiteOrDefault(value: number | undefined, fallback: number, name: string) {
+  if (value === undefined) return fallback;
+  if (!Number.isFinite(value)) throw new Error(`${name} must be a finite number.`);
+  return value;
+}
+
+function nonZeroOrDefault(value: number | undefined, fallback: number, name: string) {
+  const resolved = finiteOrDefault(value, fallback, name);
+  if (resolved === 0) throw new Error(`${name} must be a non-zero number.`);
+  return resolved;
+}
+
+function positiveIntOrDefault(value: number | undefined, fallback: number, name: string) {
+  const resolved = positiveOrDefault(value, fallback, name);
+  if (!Number.isInteger(resolved)) throw new Error(`${name} must be a positive integer.`);
+  return resolved;
+}
+
+function tupleOrDefault(value: [number, number] | undefined, fallback: [number, number], name: string): [number, number] {
+  if (value === undefined) return fallback;
+  if (!Array.isArray(value) || value.length !== 2 || !value.every(Number.isFinite)) {
+    throw new Error(`${name} must be [number, number].`);
+  }
+  if (value[0] === value[1]) {
+    throw new Error(`${name} endpoints must be distinct.`);
+  }
   return value;
 }
 

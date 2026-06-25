@@ -202,7 +202,7 @@ import {
   applyAgentCommands,
   checkLayoutForAgent,
   createAgentSafeDocument,
-  createThreeCardFlowScenePreset,
+  createCalculusDerivativeScenePreset,
   evaluateSceneForAgent,
   inspectSceneForAgent,
   repairDocumentForAgent,
@@ -211,21 +211,19 @@ import {
   suggestLayoutRepairsForAgent,
 } from '@elucim/dsl/agent';
 
-const safeScene = createThreeCardFlowScenePreset({
-  id: 'slope-flow',
-  title: 'Slope as local change',
-  subtitle: 'Start from bounded text regions before adding motion.',
-  items: [
-    { id: 'compare', title: 'Compare points', body: 'Pick two nearby inputs and observe the output change.' },
-    { id: 'divide', title: 'Divide changes', body: 'The ratio turns movement into a rate.' },
-    { id: 'shrink', title: 'Shrink interval', body: 'As the interval gets smaller, the local rate becomes the slope.' },
-  ],
+const derivativeScene = createCalculusDerivativeScenePreset({
+  id: 'derivative',
+  title: 'Derivative as local slope',
+  fn: 'x^2',
+  derivative: '2*x',
+  x: 1,
+  dx: 0.5,
 });
 
-const doc = applyAgentCommands(createAgentSafeDocument(safeScene, {
-  metadata: { title: 'Slope intuition' },
+const doc = applyAgentCommands(createAgentSafeDocument(derivativeScene, {
+  metadata: { title: 'Derivative intuition' },
 }), [
-  { op: 'addRevealTimeline', timeline: { id: 'intro', targets: ['compare', 'divide', 'shrink'], preset: 'staggeredFadeIn' } },
+  { op: 'addRevealTimeline', timeline: { id: 'intro', targets: ['derivative-title', 'derivative-axes', 'derivative-secant', 'derivative-tangent'], preset: 'staggeredFadeIn' } },
   { op: 'createStateMachine', stateMachine: { id: 'main', timelineId: 'intro', start: 'onStart' } },
 ]).document;
 
@@ -244,7 +242,7 @@ const layoutRepair = repairLayoutForAgent(repaired.document);
 const inspection = inspectSceneForAgent(layoutRepair.document, { timelineId: 'intro' });
 ```
 
-The agent helpers intentionally produce timelines and state machines rather than wrapper animation props. Use them when you want an LLM to make targeted scene edits without memorizing the full document schema. Prefer `createTextCalloutScenePreset()`, `createThreeCardFlowScenePreset()`, `createComparisonScenePreset()`, and `createAgentSafeDocument()` for text-heavy generated scenes; these helpers allocate bounded textboxes before validation and repair. `evaluateSceneForAgent()` includes `report.layout`, `report.layoutRepairs`, and layout/text issue codes in `report.issues`; `report.valid` is true only when schema validation passes and layout preflight has no errors, so text overflow and textbox failures affect the quality score. Diagnostic helpers such as `getTimelineBounds()`, `repairDocumentForAgent()`, `sampleAnimationForAgent()`, `checkLayoutForAgent()`, `suggestLayoutRepairsForAgent()`, `repairLayoutForAgent()`, `inspectSceneForAgent()`, and `createLoopingStateMachine()` help agents detect timeline mistakes, auto-extend too-short timeline durations, prove that properties change over sampled frames, catch text overflow/likely overlaps, return deterministic layout repair suggestions, apply safe layout repairs with before/after checks, catch tiny/off-canvas/low-contrast scenes, and wire a generated timeline into live playback. Review-level layout repairs, especially overlap moves and copy rewrites, remain opt-in with `includeReview` or `reviewSuggestionIds`.
+The agent helpers intentionally produce timelines and state machines rather than wrapper animation props. Use them when you want an LLM to make targeted scene edits without memorizing the full document schema. Prefer `createTextCalloutScenePreset()`, `createThreeCardFlowScenePreset()`, `createComparisonScenePreset()`, and `createAgentSafeDocument()` for text-heavy generated scenes; these helpers allocate bounded textboxes before validation and repair. For calculus lessons, use `createCalculusDerivativeScenePreset()`, `createCalculusRiemannScenePreset()`, and `createCalculusAccumulationScenePreset()` so agents start from semantic math primitives instead of raw SVG geometry. `evaluateSceneForAgent()` includes `report.layout`, `report.layoutRepairs`, and layout/text issue codes in `report.issues`; `report.valid` is true only when schema validation passes and layout preflight has no errors, so text overflow and textbox failures affect the quality score. Diagnostic helpers such as `getTimelineBounds()`, `repairDocumentForAgent()`, `sampleAnimationForAgent()`, `checkLayoutForAgent()`, `suggestLayoutRepairsForAgent()`, `repairLayoutForAgent()`, `inspectSceneForAgent()`, and `createLoopingStateMachine()` help agents detect timeline mistakes, auto-extend too-short timeline durations, prove that properties change over sampled frames, catch text overflow/likely overlaps, return deterministic layout repair suggestions, apply safe layout repairs with before/after checks, catch tiny/off-canvas/low-contrast scenes, and wire a generated timeline into live playback. Review-level layout repairs, especially overlap moves and copy rewrites, remain opt-in with `includeReview` or `reviewSuggestionIds`.
 
 ### Diagram polish for agents
 
