@@ -41,6 +41,19 @@ export {
 export { Polygon, type PolygonProps } from './primitives/Polygon';
 export { Axes, type AxesProps, mathToSvg } from './primitives/Axes';
 export { FunctionPlot, type FunctionPlotProps } from './primitives/FunctionPlot';
+export {
+  AccumulationArea,
+  RiemannSum,
+  SecantLine,
+  TangentLine,
+  type AccumulationAreaProps,
+  type CalculusLineProps,
+  type MathSpaceProps,
+  type RiemannSumMethod,
+  type RiemannSumProps,
+  type SecantLineProps,
+  type TangentLineProps,
+} from './primitives/Calculus';
 export { Vector, type VectorProps } from './primitives/Vector';
 export { VectorField, type VectorFieldProps } from './primitives/VectorField';
 export { Matrix, type MatrixProps } from './primitives/Matrix';

@@ -3,7 +3,7 @@ import { renderToSvgString } from '../renderer/renderToSvgString';
 import type { ElucimDocument } from '../index';
 
 const doc = {
-  version: '1.0' as const,
+  version: 'render-tree' as const,
   root: {
     type: 'scene' as const,
     durationInFrames: 30,
@@ -36,7 +36,7 @@ describe('renderToSvgString', () => {
   });
 
   it('throws on invalid DSL', () => {
-    const bad = { version: '1.0', root: { type: 'scene', children: [] } };
+    const bad = { version: 'render-tree', root: { type: 'scene', children: [] } };
     expect(() => renderToSvgString(bad as any, 0)).toThrow('DSL validation failed');
   });
 

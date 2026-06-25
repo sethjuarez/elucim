@@ -6,7 +6,7 @@ import type { RenderableDocument as ElucimDocument, CircleNode, RectNode, LineNo
 
 function stateWithElements(...elements: any[]): EditorState {
   const doc: ElucimDocument = {
-    version: '1.0',
+    version: 'render-tree',
     root: {
       type: 'player',
       width: 800,

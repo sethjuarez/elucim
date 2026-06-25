@@ -5,7 +5,7 @@ describe('DSL Validator', () => {
   describe('document structure', () => {
     it('accepts a valid minimal scene', () => {
       const result = validate({
-        version: '1.0',
+        version: 'render-tree',
         root: {
           type: 'scene',
           durationInFrames: 60,
@@ -18,7 +18,7 @@ describe('DSL Validator', () => {
 
     it('accepts a valid player', () => {
       const result = validate({
-        version: '1.0',
+        version: 'render-tree',
         root: {
           type: 'player',
           durationInFrames: 90,
@@ -46,7 +46,7 @@ describe('DSL Validator', () => {
     });
 
     it('rejects missing root', () => {
-      const result = validate({ version: '1.0' });
+      const result = validate({ version: 'render-tree' });
       expect(result.valid).toBe(false);
       expect(result.errors.some(e => e.path === 'root')).toBe(true);
     });
@@ -64,7 +64,7 @@ describe('DSL Validator', () => {
 
   describe('primitive validation', () => {
     const wrap = (child: unknown) => ({
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', durationInFrames: 60, children: [child] },
     });
 
@@ -133,7 +133,7 @@ describe('DSL Validator', () => {
 
   describe('math node validation', () => {
     const wrap = (child: unknown) => ({
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', durationInFrames: 60, children: [child] },
     });
 
@@ -216,11 +216,56 @@ describe('DSL Validator', () => {
       const result = validate(wrap({ type: 'latex', x: 100, y: 100 }));
       expect(result.valid).toBe(false);
     });
+
+    describe('calculus nodes', () => {
+      it('accepts valid calculus primitives', () => {
+        const result = validate(wrap({
+          type: 'group',
+          children: [
+            { type: 'secantLine', fn: 'x^2', x: 1, dx: 0.5 },
+            { type: 'tangentLine', fn: 'x^2', derivative: '2*x', x: 1, showPoints: true },
+            { type: 'riemannSum', fn: 'x^2', interval: [0, 3], n: 7, method: 'midpoint' },
+            { type: 'accumulationArea', fn: 'x^2', from: 0, to: 2, samples: 40 },
+          ],
+        }));
+        expect(result.valid).toBe(true);
+      });
+
+      it('rejects secantLine without a usable function, x, or non-zero dx', () => {
+        const result = validate(wrap({ type: 'secantLine', fn: 'sin(', dx: 0 }));
+        expect(result.valid).toBe(false);
+        expect(result.errors.some(e => e.path.endsWith('.fn'))).toBe(true);
+        expect(result.errors.some(e => e.path.endsWith('.x'))).toBe(true);
+        expect(result.errors.some(e => e.path.endsWith('.dx'))).toBe(true);
+      });
+
+      it('rejects tangentLine with invalid function inputs', () => {
+        const result = validate(wrap({ type: 'tangentLine', fn: 'x^2', derivative: '2*', x: 1 }));
+        expect(result.valid).toBe(false);
+        expect(result.errors.some(e => e.path.endsWith('.derivative'))).toBe(true);
+      });
+
+      it('rejects riemannSum with invalid interval, count, or method', () => {
+        const result = validate(wrap({ type: 'riemannSum', fn: 'x^2', interval: [0], n: 2.5, method: 'trapezoid' }));
+        expect(result.valid).toBe(false);
+        expect(result.errors.some(e => e.path.endsWith('.interval'))).toBe(true);
+        expect(result.errors.some(e => e.path.endsWith('.n'))).toBe(true);
+        expect(result.errors.some(e => e.path.endsWith('.method'))).toBe(true);
+      });
+
+      it('rejects accumulationArea without bounds or with invalid samples', () => {
+        const result = validate(wrap({ type: 'accumulationArea', fn: 'x^2', samples: 0 }));
+        expect(result.valid).toBe(false);
+        expect(result.errors.some(e => e.path.endsWith('.from'))).toBe(true);
+        expect(result.errors.some(e => e.path.endsWith('.to'))).toBe(true);
+        expect(result.errors.some(e => e.path.endsWith('.samples'))).toBe(true);
+      });
+    });
   });
 
   describe('animation wrapper validation', () => {
     const wrap = (child: unknown) => ({
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', durationInFrames: 60, children: [child] },
     });
 
@@ -274,7 +319,7 @@ describe('DSL Validator', () => {
 
   describe('easing validation', () => {
     const wrap = (child: unknown) => ({
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', durationInFrames: 60, children: [child] },
     });
 
@@ -317,7 +362,7 @@ describe('DSL Validator', () => {
   describe('presentation validation', () => {
     it('accepts valid presentation', () => {
       const result = validate({
-        version: '1.0',
+        version: 'render-tree',
         root: {
           type: 'presentation',
           transition: 'fade',
@@ -332,7 +377,7 @@ describe('DSL Validator', () => {
 
     it('rejects invalid transition type', () => {
       const result = validate({
-        version: '1.0',
+        version: 'render-tree',
         root: {
           type: 'presentation',
           transition: 'wipe',
@@ -345,7 +390,7 @@ describe('DSL Validator', () => {
 
     it('rejects presentation without slides', () => {
       const result = validate({
-        version: '1.0',
+        version: 'render-tree',
         root: { type: 'presentation' },
       });
       expect(result.valid).toBe(false);
@@ -354,7 +399,7 @@ describe('DSL Validator', () => {
 
   describe('unknown types', () => {
     const wrap = (child: unknown) => ({
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', durationInFrames: 60, children: [child] },
     });
 
@@ -366,7 +411,7 @@ describe('DSL Validator', () => {
 
     it('rejects unknown root type', () => {
       const result = validate({
-        version: '1.0',
+        version: 'render-tree',
         root: { type: 'unknown' },
       });
       expect(result.valid).toBe(false);
@@ -375,7 +420,7 @@ describe('DSL Validator', () => {
 
   describe('sequence validation', () => {
     const wrap = (child: unknown) => ({
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', durationInFrames: 120, children: [child] },
     });
 
@@ -400,7 +445,7 @@ describe('DSL Validator', () => {
 
   describe('image node validation', () => {
     const wrap = (child: unknown) => ({
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', durationInFrames: 60, children: [child] },
     });
 
@@ -461,7 +506,7 @@ describe('DSL Validator', () => {
 
   describe('group node validation', () => {
     const wrap = (child: unknown) => ({
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', durationInFrames: 60, children: [child] },
     });
 
@@ -487,7 +532,7 @@ describe('DSL Validator', () => {
 
   describe('spatial props validation', () => {
     const wrap = (child: unknown) => ({
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', durationInFrames: 60, children: [child] },
     });
 

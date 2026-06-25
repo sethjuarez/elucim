@@ -8,7 +8,7 @@ import type { ElucimDocument as CanonicalElucimDocument, RenderableDocument as E
 
 function stateWithElements(...elements: any[]): EditorState {
   const doc: ElucimDocument = {
-    version: '1.0',
+    version: 'render-tree',
     root: {
       type: 'player',
       width: 800,
@@ -22,7 +22,7 @@ function stateWithElements(...elements: any[]): EditorState {
 
 function stateWithCanonicalDocument(): EditorState {
   const renderableDoc: ElucimDocument = {
-    version: '1.0',
+    version: 'render-tree',
     root: {
       type: 'player',
       width: 800,
@@ -82,7 +82,7 @@ describe('createInitialState', () => {
     expect(state.currentFrame).toBe(0);
     expect(state.isPlaying).toBe(false);
     expect(state.activeTool).toBe('select');
-    expect(state.document.version).toBe('1.0');
+    expect(state.document.version).toBe('render-tree');
     expect((state.document.root as any).width).toBe(1920);
     expect((state.document.root as any).height).toBe(1080);
   });
@@ -94,7 +94,7 @@ describe('createInitialState', () => {
 
   it('accepts a custom document', () => {
     const doc: ElucimDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', width: 400, height: 300, durationInFrames: 60, children: [circle1] },
     };
     const state = createInitialState(doc);
@@ -103,7 +103,7 @@ describe('createInitialState', () => {
 
   it('carries a canonical Elucim Document shadow model', () => {
     const renderableDoc: ElucimDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'scene', width: 400, height: 300, durationInFrames: 60, children: [circle1] },
     };
     const canonicalDocument: CanonicalElucimDocument = {
@@ -558,7 +558,7 @@ describe('document mutation actions', () => {
   it('IMPORT_RENDERABLE_DOCUMENT replaces the projection and creates canonical state', () => {
     const state = stateWithElements(circle1);
     const newDoc: ElucimDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'player', width: 400, height: 300, durationInFrames: 60, children: [rect1] },
     };
     const next = editorReducer(state, { type: 'IMPORT_RENDERABLE_DOCUMENT', document: newDoc });
@@ -871,7 +871,7 @@ describe('viewport, frame, tool actions', () => {
 describe('findElementById', () => {
   it('finds element by explicit id', () => {
     const doc: ElucimDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [circle1, rect1] },
     };
     const loc = findElementById(doc.root, 'c1');
@@ -882,7 +882,7 @@ describe('findElementById', () => {
   it('finds element by generated path', () => {
     const noId: CircleNode = { type: 'circle', cx: 50, cy: 50, r: 10 };
     const doc: ElucimDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [noId] },
     };
     const loc = findElementById(doc.root, 'root.circle[0]');
@@ -892,7 +892,7 @@ describe('findElementById', () => {
 
   it('returns null for unknown id', () => {
     const doc: ElucimDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [circle1] },
     };
     expect(findElementById(doc.root, 'nonexistent')).toBeNull();
@@ -902,7 +902,7 @@ describe('findElementById', () => {
 describe('collectAllIds', () => {
   it('collects all element ids', () => {
     const doc: ElucimDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [circle1, rect1] },
     };
     const ids = collectAllIds(doc.root);

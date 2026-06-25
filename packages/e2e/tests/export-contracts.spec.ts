@@ -4,6 +4,7 @@ const PNG_HEADER = [137, 80, 78, 71, 13, 10, 26, 10];
 
 type BrowserElucim = {
   renderToPng(document: unknown, frame?: number, options?: { scale?: number }): Promise<Uint8Array>;
+  renderToSvgString(document: unknown, frame?: number, options?: { width?: number; height?: number }): string;
   stripCssFunctions(value: string): string;
 };
 
@@ -111,6 +112,80 @@ test.describe('export contracts', () => {
     });
 
     expect(result.scale2).toBeGreaterThan(result.scale1);
+  });
+
+  test('renders calculus primitives from a canonical document to measurable SVG geometry', async ({ page }) => {
+    const result = await page.evaluate(() => {
+      const elucim = window.__elucim;
+      if (!elucim) throw new Error('Elucim browser API was not exposed');
+      const { renderToSvgString } = elucim;
+      const document = {
+        version: '2.0',
+        scene: {
+          type: 'scene',
+          width: 960,
+          height: 540,
+          children: ['axes', 'curve', 'riemann', 'area', 'secant', 'tangent'],
+        },
+        elements: {
+          axes: {
+            id: 'axes',
+            type: 'axes',
+            props: { type: 'axes', origin: [180, 470], xRange: [-1, 5], yRange: [-1, 8], scale: 70 },
+          },
+          curve: {
+            id: 'curve',
+            type: 'functionPlot',
+            props: { type: 'functionPlot', fn: 'x^2', xRange: [-0.5, 3.5], origin: [180, 470], scale: 70 },
+          },
+          riemann: {
+            id: 'riemann',
+            type: 'riemannSum',
+            props: { type: 'riemannSum', fn: 'x^2', interval: [0, 3], n: 7, method: 'midpoint', origin: [180, 470], scale: 70 },
+          },
+          area: {
+            id: 'area',
+            type: 'accumulationArea',
+            props: { type: 'accumulationArea', fn: 'x^2', from: 0, to: 2.4, samples: 80, origin: [180, 470], scale: 70 },
+          },
+          secant: {
+            id: 'secant',
+            type: 'secantLine',
+            props: { type: 'secantLine', fn: 'x^2', x: 1, dx: 0.85, length: 3, origin: [180, 470], scale: 70, showPoints: true },
+          },
+          tangent: {
+            id: 'tangent',
+            type: 'tangentLine',
+            props: { type: 'tangentLine', fn: 'x^2', derivative: '2*x', x: 1.85, length: 3, origin: [180, 470], scale: 70, showPoints: true },
+          },
+        },
+      };
+      const svg = renderToSvgString(document, 45, { width: 960, height: 540 });
+      const parsed = new DOMParser().parseFromString(svg, 'image/svg+xml');
+      const svgElement = parsed.querySelector('svg');
+      const element = (testId: string) => parsed.querySelector(`[data-testid="${testId}"]`);
+      const pathData = (testId: string) => element(testId)?.getAttribute('d') ?? '';
+
+      return {
+        hasSvg: svgElement !== null,
+        secantLines: element('elucim-secant-line')?.querySelectorAll('line').length ?? 0,
+        secantPoints: element('elucim-secant-line')?.querySelectorAll('circle').length ?? 0,
+        tangentLines: element('elucim-tangent-line')?.querySelectorAll('line').length ?? 0,
+        tangentPoints: element('elucim-tangent-line')?.querySelectorAll('circle').length ?? 0,
+        riemannRects: element('elucim-riemann-sum')?.querySelectorAll('rect').length ?? 0,
+        accumulationPathLength: pathData('elucim-accumulation-area').length,
+        functionPlotPathLength: pathData('elucim-function-plot').length,
+      };
+    });
+
+    expect(result.hasSvg).toBe(true);
+    expect(result.secantLines).toBe(1);
+    expect(result.secantPoints).toBe(2);
+    expect(result.tangentLines).toBe(1);
+    expect(result.tangentPoints).toBe(1);
+    expect(result.riemannRects).toBe(7);
+    expect(result.accumulationPathLength).toBeGreaterThan(100);
+    expect(result.functionPlotPathLength).toBeGreaterThan(100);
   });
 
   test('strips browser-only CSS color functions for standalone SVG export', async ({ page }) => {

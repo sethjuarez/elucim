@@ -10,7 +10,7 @@ import { EditorProvider } from '../state/EditorProvider';
 import { ElucimCanvas } from '../canvas/ElucimCanvas';
 
 const testDocument = {
-  version: '1.0',
+  version: 'render-tree',
   root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [] },
 } as const;
 

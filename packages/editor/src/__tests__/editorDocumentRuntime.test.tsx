@@ -9,7 +9,7 @@ import { EditorDocumentRuntime } from '../document/EditorDocumentRuntime';
 import { useEditorState } from '../state/EditorProvider';
 
 const renderableDocument: RenderableDocument = {
-  version: '1.0',
+  version: 'render-tree',
   root: {
     type: 'player',
     width: 800,

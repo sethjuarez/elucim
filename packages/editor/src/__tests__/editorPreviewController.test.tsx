@@ -101,7 +101,7 @@ describe('useEditorPreviewController', () => {
     });
 
     const card = result.current.previewDocument?.root.children[0] as { opacity?: number };
-    expect(result.current.previewDocument?.version).toBe('1.0');
+    expect(result.current.previewDocument?.version).toBe('render-tree');
     expect(card.opacity).toBe(1);
   });
 

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fromYaml, ElucimYamlError } from '../yaml/fromYaml';
 
 const validYaml = `
-version: "1.0"
+version: "render-tree"
 root:
   type: player
   preset: card
@@ -18,7 +18,7 @@ root:
 `;
 
 const validSceneYaml = `
-version: "1.0"
+version: "render-tree"
 root:
   type: scene
   durationInFrames: 120
@@ -34,7 +34,7 @@ root:
 describe('fromYaml', () => {
   it('parses valid YAML into ElucimDocument', () => {
     const doc = fromYaml(validYaml);
-    expect(doc.version).toBe('1.0');
+    expect(doc.version).toBe('render-tree');
     expect(doc.root.type).toBe('player');
     expect((doc.root as any).children).toHaveLength(1);
     expect((doc.root as any).children[0].type).toBe('circle');
@@ -73,14 +73,14 @@ root:
 
   it('throws ElucimYamlError when root is missing', () => {
     const yaml = `
-version: "1.0"
+version: "render-tree"
 `;
     expect(() => fromYaml(yaml)).toThrow(ElucimYamlError);
   });
 
   it('includes validation errors in the error object', () => {
     const yaml = `
-version: "1.0"
+version: "render-tree"
 root:
   type: player
   children: []
@@ -97,7 +97,7 @@ root:
   it('does not coerce YAML-specific booleans (JSON schema)', () => {
     // "on" and "yes" should stay as strings with JSON_SCHEMA
     const yaml = `
-version: "1.0"
+version: "render-tree"
 root:
   type: player
   preset: card
@@ -116,7 +116,7 @@ root:
 
   it('handles nested sequences and groups', () => {
     const yaml = `
-version: "1.0"
+version: "render-tree"
 root:
   type: player
   preset: card

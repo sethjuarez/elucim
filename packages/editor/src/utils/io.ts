@@ -52,8 +52,8 @@ export function importFromJson(json: string): ImportResult {
       const canonicalDocument = parsed as ElucimDocument;
       return { document: createRenderableDocument(canonicalDocument), canonicalDocument, errors: [] };
     }
-    if (parsed.version !== '1.0') {
-      return { document: null, errors: [`Unknown version: ${parsed.version}. Expected "1.0" or "2.0"`] };
+    if (parsed.version !== 'render-tree') {
+      return { document: null, errors: [`Unknown version: ${parsed.version}. Expected "render-tree" or "2.0"`] };
     }
     if (!parsed.root) {
       return { document: null, errors: ['Missing "root" property'] };

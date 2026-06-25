@@ -8,7 +8,7 @@ import { DslRenderer, type DslRendererRef } from '../renderer/DslRenderer';
 import { fromYaml } from '../yaml/fromYaml';
 
 const playerDsl = {
-  version: '1.0' as const,
+  version: 'render-tree' as const,
   root: {
     type: 'player' as const,
     durationInFrames: 60,
@@ -282,7 +282,7 @@ describe('DslRenderer error boundary', () => {
     // Use a valid DSL document whose children would normally render,
     // but we test the boundary by passing a broken child through a custom doc
     const brokenDsl = {
-      version: '1.0' as const,
+      version: 'render-tree' as const,
       root: {
         type: 'scene' as const,
         durationInFrames: 60,
@@ -323,7 +323,7 @@ describe('DslRenderer error boundary', () => {
 
 describe('DslRenderer override props (explicit verification)', () => {
   const docWithDefaults = {
-    version: '1.0' as const,
+    version: 'render-tree' as const,
     root: {
       type: 'player' as const,
       durationInFrames: 60,

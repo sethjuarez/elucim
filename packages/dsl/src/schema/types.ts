@@ -8,7 +8,7 @@ export interface ElucimDocument {
   /** JSON Schema URL for editor autocomplete */
   $schema?: string;
   /** DSL version */
-  version: '1.0';
+  version: 'render-tree';
   /** Root node — a Scene, Player, or Presentation */
   root: RootNode;
 }
@@ -353,6 +353,116 @@ export interface FunctionPlotNode {
   zIndex?: number;
 }
 
+export interface SecantLineNode {
+  type: 'secantLine';
+  id?: string;
+  /** Math expression string, e.g. "x^2" */
+  fn: string;
+  /** First x value. */
+  x: number;
+  /** Horizontal distance to the second sample point. */
+  dx: number;
+  length?: number;
+  origin?: [number, number];
+  scale?: number;
+  stroke?: string;
+  strokeWidth?: number;
+  opacity?: number;
+  label?: string;
+  labelOffset?: [number, number];
+  labelColor?: string;
+  labelFontSize?: number;
+  showPoints?: boolean;
+  pointRadius?: number;
+  fadeIn?: number;
+  fadeOut?: number;
+  draw?: number;
+  easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  translate?: [number, number];
+  zIndex?: number;
+}
+
+export interface TangentLineNode {
+  type: 'tangentLine';
+  id?: string;
+  /** Math expression string, e.g. "sin(x)" */
+  fn: string;
+  /** x value where the tangent touches the curve. */
+  x: number;
+  /** Optional exact derivative expression, e.g. "cos(x)" */
+  derivative?: string;
+  derivativeStep?: number;
+  length?: number;
+  origin?: [number, number];
+  scale?: number;
+  stroke?: string;
+  strokeWidth?: number;
+  opacity?: number;
+  label?: string;
+  labelOffset?: [number, number];
+  labelColor?: string;
+  labelFontSize?: number;
+  showPoints?: boolean;
+  pointRadius?: number;
+  fadeIn?: number;
+  fadeOut?: number;
+  draw?: number;
+  easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  translate?: [number, number];
+  zIndex?: number;
+}
+
+export interface RiemannSumNode {
+  type: 'riemannSum';
+  id?: string;
+  /** Math expression string, e.g. "x^2" */
+  fn: string;
+  interval: [number, number];
+  n: number;
+  method?: 'left' | 'right' | 'midpoint';
+  origin?: [number, number];
+  scale?: number;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  opacity?: number;
+  fadeIn?: number;
+  fadeOut?: number;
+  easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  translate?: [number, number];
+  zIndex?: number;
+}
+
+export interface AccumulationAreaNode {
+  type: 'accumulationArea';
+  id?: string;
+  /** Math expression string, e.g. "sin(x) + 1" */
+  fn: string;
+  from: number;
+  to: number;
+  samples?: number;
+  origin?: [number, number];
+  scale?: number;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  opacity?: number;
+  fadeIn?: number;
+  fadeOut?: number;
+  draw?: number;
+  easing?: EasingSpec;
+  rotation?: number;
+  rotationOrigin?: [number, number];
+  translate?: [number, number];
+  zIndex?: number;
+}
+
 export interface VectorNode {
   type: 'vector';
   id?: string;
@@ -657,6 +767,10 @@ export type ElementNode =
   // Math
   | AxesNode
   | FunctionPlotNode
+  | SecantLineNode
+  | TangentLineNode
+  | RiemannSumNode
+  | AccumulationAreaNode
   | VectorNode
   | VectorFieldNode
   | MatrixNode

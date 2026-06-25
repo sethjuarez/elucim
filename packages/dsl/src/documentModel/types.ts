@@ -80,7 +80,12 @@ export type ElucimAnimatableProperty =
   | 'scale'
   | 'rotate'
   | 'fill'
-  | 'stroke';
+  | 'stroke'
+  | 'x'
+  | 'dx'
+  | 'from'
+  | 'to'
+  | 'n';
 
 export interface ElucimKeyframe {
   frame: number;

@@ -4,7 +4,7 @@ import { renderToSvgString } from '../renderer/renderToSvgString';
 import { SEMANTIC_TOKENS } from '../renderer/resolveColor';
 
 const doc = {
-  version: '1.0' as const,
+  version: 'render-tree' as const,
   root: {
     type: 'scene' as const,
     durationInFrames: 30,
@@ -15,7 +15,7 @@ const doc = {
 };
 
 const tokenDoc = {
-  version: '1.0' as const,
+  version: 'render-tree' as const,
   root: {
     type: 'scene' as const,
     durationInFrames: 30,

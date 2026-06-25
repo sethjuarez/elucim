@@ -65,7 +65,7 @@ describe('canonical Elucim Document API', () => {
 
   it('exposes canonical document normalization and renderable compatibility helpers', () => {
     const renderable = {
-      version: '1.0' as const,
+      version: 'render-tree' as const,
       root: {
         type: 'player' as const,
         width: 640,

@@ -3,7 +3,7 @@ import { exportEditorDocumentToJson, exportToJson, importFromJson } from '../uti
 import type { ElucimDocument as CanonicalElucimDocument, RenderableDocument as ElucimDocument } from '@elucim/dsl';
 
 const validDoc: ElucimDocument = {
-  version: '1.0',
+  version: 'render-tree',
   root: {
     type: 'player',
     width: 800,
@@ -48,7 +48,7 @@ const canonicalDoc: CanonicalElucimDocument = {
 describe('exportToJson', () => {
   it('exports document as pretty JSON', () => {
     const json = exportToJson(validDoc);
-    expect(json).toContain('"version": "1.0"');
+    expect(json).toContain('"version": "render-tree"');
     expect(json).toContain('"circle"');
     const parsed = JSON.parse(json);
     expect(parsed.root.children).toHaveLength(2);
@@ -58,7 +58,7 @@ describe('exportToJson', () => {
     const json = exportToJson(validDoc, { pretty: false });
     expect(json).not.toContain('\n');
     const parsed = JSON.parse(json);
-    expect(parsed.version).toBe('1.0');
+    expect(parsed.version).toBe('render-tree');
   });
 
   it('exports canonical editor documents when canonical state is available', () => {
@@ -104,7 +104,7 @@ describe('importFromJson', () => {
   });
 
   it('returns error for missing root', () => {
-    const result = importFromJson('{"version": "1.0"}');
+    const result = importFromJson('{"version": "render-tree"}');
     expect(result.errors[0]).toContain('Missing "root"');
   });
 
@@ -112,7 +112,7 @@ describe('importFromJson', () => {
     const result = importFromJson(JSON.stringify(canonicalDoc));
 
     expect(result.errors).toHaveLength(0);
-    expect(result.document?.version).toBe('1.0');
+    expect(result.document?.version).toBe('render-tree');
     expect(result.document?.root.type).toBe('player');
     expect((result.document?.root as any).children[0]).toMatchObject({ type: 'text', id: 'title', content: 'Hello' });
     expect(result.canonicalDocument?.metadata?.title).toBe('Canonical concept');
@@ -123,7 +123,7 @@ describe('importFromJson', () => {
     const result = importFromJson(JSON.stringify(validDoc));
 
     expect(result.errors).toHaveLength(0);
-    expect(result.document?.version).toBe('1.0');
+    expect(result.document?.version).toBe('render-tree');
     expect(result.canonicalDocument?.version).toBe('2.0');
     expect(result.canonicalDocument?.scene.children).toEqual(['c1', 'r1']);
   });

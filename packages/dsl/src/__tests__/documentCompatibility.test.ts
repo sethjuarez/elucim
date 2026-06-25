@@ -109,7 +109,7 @@ describe('Elucim Document compatibility foundation', () => {
 
   it('migrates a renderable player into normalized elements with stable IDs', () => {
     const renderable: RenderableDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'player',
         width: 800,
@@ -141,7 +141,7 @@ describe('Elucim Document compatibility foundation', () => {
 
   it('deduplicates repeated renderable IDs during migration', () => {
     const renderable: RenderableDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'scene',
         durationInFrames: 60,
@@ -162,7 +162,7 @@ describe('Elucim Document compatibility foundation', () => {
 
   it('converts normalized documents back to renderable editor documents', () => {
     const doc = createDocumentFromRenderable({
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'player',
         width: 800,
@@ -176,7 +176,7 @@ describe('Elucim Document compatibility foundation', () => {
 
     const renderable = createRenderableDocument(doc);
 
-    expect(renderable.version).toBe('1.0');
+    expect(renderable.version).toBe('render-tree');
     expect(renderable.root.type).toBe('player');
     expect((renderable.root as any).children[0]).toMatchObject({
       type: 'group',
@@ -186,31 +186,20 @@ describe('Elucim Document compatibility foundation', () => {
     expect(validate(renderable).valid).toBe(true);
   });
 
-  it('normalizes legacy rootless documents to Elucim Documents', () => {
-    const result = normalizeDocument({
+  it('rejects old rootless visual documents instead of migrating them', () => {
+    expect(() => normalizeDocument({
       version: 1,
       title: 'Legacy visual',
       elements: [{ type: 'text', content: 'Metric', x: 100, y: 160 }],
-    });
-
-    expect(result.inputFormat).toBe('legacy-rootless');
-    expect(result.migrated).toBe(true);
-    expect(result.warnings[0]).toContain('legacy rootless');
-    expect(result.document.version).toBe('2.0');
-    expect(result.document.metadata?.notes?.[0]).toContain('Migrated');
-    expect(validateDocument(result.document).valid).toBe(true);
+    })).toThrow('Unsupported Elucim document format: version=1');
   });
 
-  it('exposes an official renderable compatibility adapter for canonical and legacy docs', () => {
-    const renderable = toRenderableDocument({
+  it('rejects old documents in the render-tree adapter', () => {
+    expect(() => toRenderableDocument({
       version: 1,
       title: 'Legacy visual',
       elements: [{ type: 'circle', cx: 100, cy: 100, r: 40 }],
-    });
-
-    expect(renderable.version).toBe('1.0');
-    expect(renderable.root.type).toBe('player');
-    expect(validate(renderable).valid).toBe(true);
+    })).toThrow('Unsupported Elucim document format: version=1');
   });
 
   it('applies default state-machine start frames in the renderable compatibility adapter', () => {

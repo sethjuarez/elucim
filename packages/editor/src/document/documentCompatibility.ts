@@ -6,7 +6,7 @@ import { createDocumentFromRenderable, createRenderableDocument, validate } from
  * Canonical Elucim Documents are validated first, then adapted for editing.
  */
 export function normalizeInitialDocument(document: RenderableDocument | ElucimDocument | undefined): RenderableDocument | undefined {
-  if (!document || document.version === '1.0') return document;
+  if (!document || document.version === 'render-tree') return document;
   const result = validate(document);
   if (!result.valid) {
     throw new Error(`Invalid editor document: ${result.errors.map(error => `${error.path}: ${error.message}`).join('; ')}`);
@@ -15,7 +15,7 @@ export function normalizeInitialDocument(document: RenderableDocument | ElucimDo
 }
 
 export function resolveInitialDocumentModel(document: RenderableDocument | ElucimDocument | undefined): ElucimDocument | undefined {
-  return document?.version === '1.0' ? undefined : document;
+  return document?.version === 'render-tree' ? undefined : document;
 }
 
 export function createDocumentFromEditorState(doc: RenderableDocument): ElucimDocument {

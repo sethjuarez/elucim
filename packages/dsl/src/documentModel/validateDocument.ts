@@ -2,7 +2,7 @@ import type { ElucimDocument, ElucimElement, ElucimTransition } from './types';
 import type { ValidationError, ValidationResult } from '../validator/validate';
 
 const VALID_ROOT_TYPES = new Set(['scene', 'player']);
-const VALID_TIMELINE_PROPERTIES = new Set(['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke']);
+const VALID_TIMELINE_PROPERTIES = new Set(['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke', 'x', 'dx', 'from', 'to', 'n']);
 const RESERVED_EVENT_NAMES = new Set(['complete', 'entry', 'exit', 'next']);
 const LEGACY_WRAPPER_ELEMENT_TYPES = new Set(['sequence', 'fadein', 'fadeout', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
 const LEGACY_ANIMATION_PROPS = new Set(['fadeIn', 'fadeOut', 'draw', 'write']);

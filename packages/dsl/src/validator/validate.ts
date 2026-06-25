@@ -36,8 +36,8 @@ export function validate(doc: unknown): ValidationResult {
   }
 
   // version
-  if (d.version !== '1.0') {
-    errors.push({ path: 'version', message: `Expected version "1.0", got "${d.version}"`, severity: 'error' });
+  if (d.version !== 'render-tree') {
+    errors.push({ path: 'version', message: `Expected version "render-tree", got "${d.version}"`, severity: 'error' });
   }
 
   // root
@@ -61,7 +61,8 @@ const VALID_PRESETS = ['card', 'slide', 'square'];
 const VALID_ELEMENT_TYPES = [
   'sequence', 'group',
   'bezierCurve', 'circle', 'line', 'arrow', 'rect', 'polygon', 'text', 'textbox', 'image',
-  'axes', 'functionPlot', 'vectorField', 'vector', 'matrix', 'graph', 'latex', 'barChart',
+  'axes', 'functionPlot', 'secantLine', 'tangentLine', 'riemannSum', 'accumulationArea',
+  'vectorField', 'vector', 'matrix', 'graph', 'latex', 'barChart',
   'fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel',
   'player', 'scene',
 ];
@@ -200,6 +201,10 @@ function validateElementNode(node: Record<string, unknown>, path: string, errors
     case 'image': validateImage(node, path, errors); break;
     case 'axes': validateAxes(node, path, errors); break;
     case 'functionPlot': validateFunctionPlot(node, path, errors); break;
+    case 'secantLine': validateSecantLine(node, path, errors); break;
+    case 'tangentLine': validateTangentLine(node, path, errors); break;
+    case 'riemannSum': validateRiemannSum(node, path, errors); break;
+    case 'accumulationArea': validateAccumulationArea(node, path, errors); break;
     case 'vector': validateVector(node, path, errors); break;
     case 'vectorField': validateVectorField(node, path, errors); break;
     case 'matrix': validateMatrix(node, path, errors); break;
@@ -368,6 +373,55 @@ function validateFunctionPlot(node: Record<string, unknown>, path: string, error
     }
   }
   optionalTuple2(node, 'domain', path, errors);
+  validateAnimationPropsNoScale(node, path, errors);
+}
+
+function validateSecantLine(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  validateFunctionExpression(node, 'fn', 'SecantLine', path, errors);
+  requireNumber(node, 'x', path, errors);
+  requireNonZeroNumber(node, 'dx', path, errors);
+  optionalPositiveNum(node, 'length', path, errors);
+  optionalTuple2(node, 'origin', path, errors);
+  optionalNumber(node, 'scale', path, errors);
+  optionalTuple2(node, 'labelOffset', path, errors);
+  optionalBoolean(node, 'showPoints', path, errors);
+  optionalPositiveNum(node, 'pointRadius', path, errors);
+  validateAnimationPropsNoScale(node, path, errors);
+}
+
+function validateTangentLine(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  validateFunctionExpression(node, 'fn', 'TangentLine', path, errors);
+  if (node.derivative !== undefined) validateFunctionExpression(node, 'derivative', 'TangentLine derivative', path, errors);
+  requireNumber(node, 'x', path, errors);
+  optionalPositiveNum(node, 'derivativeStep', path, errors);
+  optionalPositiveNum(node, 'length', path, errors);
+  optionalTuple2(node, 'origin', path, errors);
+  optionalNumber(node, 'scale', path, errors);
+  optionalTuple2(node, 'labelOffset', path, errors);
+  optionalBoolean(node, 'showPoints', path, errors);
+  optionalPositiveNum(node, 'pointRadius', path, errors);
+  validateAnimationPropsNoScale(node, path, errors);
+}
+
+function validateRiemannSum(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  validateFunctionExpression(node, 'fn', 'RiemannSum', path, errors);
+  requireTuple2(node, 'interval', path, errors);
+  requirePositiveInt(node, 'n', path, errors);
+  if (node.method !== undefined && node.method !== 'left' && node.method !== 'right' && node.method !== 'midpoint') {
+    errors.push({ path: `${path}.method`, message: '"method" must be one of: left, right, midpoint', severity: 'error' });
+  }
+  optionalTuple2(node, 'origin', path, errors);
+  optionalNumber(node, 'scale', path, errors);
+  validateAnimationPropsNoScale(node, path, errors);
+}
+
+function validateAccumulationArea(node: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  validateFunctionExpression(node, 'fn', 'AccumulationArea', path, errors);
+  requireNumber(node, 'from', path, errors);
+  requireNumber(node, 'to', path, errors);
+  optionalPositiveInt(node, 'samples', path, errors);
+  optionalTuple2(node, 'origin', path, errors);
+  optionalNumber(node, 'scale', path, errors);
   validateAnimationPropsNoScale(node, path, errors);
 }
 
@@ -638,6 +692,12 @@ function requireNumber(node: Record<string, unknown>, field: string, path: strin
   }
 }
 
+function requireNonZeroNumber(node: Record<string, unknown>, field: string, path: string, errors: ValidationError[]) {
+  if (typeof node[field] !== 'number' || node[field] === 0) {
+    errors.push({ path: `${path}.${field}`, message: `"${field}" must be a non-zero number`, severity: 'error' });
+  }
+}
+
 function requirePositiveNum(node: Record<string, unknown>, field: string, path: string, errors: ValidationError[]) {
   if (typeof node[field] !== 'number' || (node[field] as number) <= 0) {
     errors.push({ path: `${path}.${field}`, message: `"${field}" must be a positive number`, severity: 'error' });
@@ -688,6 +748,30 @@ function optionalTuple2(node: Record<string, unknown>, field: string, path: stri
     if (!Array.isArray(v) || v.length !== 2 || typeof v[0] !== 'number' || typeof v[1] !== 'number') {
       errors.push({ path: `${path}.${field}`, message: `"${field}" must be [number, number]`, severity: 'error' });
     }
+  }
+}
+
+function requireTuple2(node: Record<string, unknown>, field: string, path: string, errors: ValidationError[]) {
+  const v = node[field];
+  if (!Array.isArray(v) || v.length !== 2 || typeof v[0] !== 'number' || typeof v[1] !== 'number') {
+    errors.push({ path: `${path}.${field}`, message: `"${field}" must be [number, number]`, severity: 'error' });
+  }
+}
+
+function validateFunctionExpression(
+  node: Record<string, unknown>,
+  field: string,
+  label: string,
+  path: string,
+  errors: ValidationError[],
+) {
+  if (typeof node[field] !== 'string') {
+    errors.push({ path: `${path}.${field}`, message: `${label} requires a "${field}" expression string`, severity: 'error' });
+    return;
+  }
+  const err = validateExpression(node[field]);
+  if (err) {
+    errors.push({ path: `${path}.${field}`, message: `Invalid expression: ${err}`, severity: 'error' });
   }
 }
 

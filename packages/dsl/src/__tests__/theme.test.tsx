@@ -6,7 +6,7 @@ import { render } from '@testing-library/react';
 import { DslRenderer } from '../renderer/DslRenderer';
 
 const validDsl = {
-  version: '1.0' as const,
+  version: 'render-tree' as const,
   root: {
     type: 'player' as const,
     durationInFrames: 30,
@@ -18,7 +18,7 @@ const validDsl = {
 };
 
 const invalidDsl = {
-  version: '1.0' as const,
+  version: 'render-tree' as const,
   root: {
     type: 'scene' as const,
     // missing durationInFrames

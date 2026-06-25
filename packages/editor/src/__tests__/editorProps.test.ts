@@ -8,7 +8,7 @@ import { resolveInitialFrame, resolvePreviewDocument } from '../document/documen
 describe('initialFrame="last" resolution', () => {
   it('resolves "last" to durationInFrames - 1', () => {
     const doc: RenderableEditorDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'player',
         width: 800,
@@ -22,7 +22,7 @@ describe('initialFrame="last" resolution', () => {
 
   it('resolves "last" to 0 when durationInFrames is 1', () => {
     const doc: RenderableEditorDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'player',
         width: 800,
@@ -53,7 +53,7 @@ describe('initialFrame="last" resolution', () => {
 describe('createInitialState with initialFrame', () => {
   it('sets currentFrame from initialFrame parameter', () => {
     const doc: RenderableEditorDocument = {
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'player',
         width: 800,
@@ -112,7 +112,7 @@ describe('preview document resolution', () => {
     const preview = resolvePreviewDocument(document, [{ timelineId: 'intro', frame: 30 }]);
     const card = preview?.root.children[0] as { opacity?: number };
 
-    expect(preview?.version).toBe('1.0');
+    expect(preview?.version).toBe('render-tree');
     expect(card.opacity).toBe(1);
   });
 });

@@ -12,7 +12,7 @@ describe('textbox DSL nodes', () => {
     const { container } = render(
       <DslRenderer
         dsl={{
-          version: '1.0',
+          version: 'render-tree',
           root: {
             type: 'scene',
             width: 400,
@@ -40,7 +40,7 @@ describe('textbox DSL nodes', () => {
 
   it('validates textbox geometry and options', () => {
     const result = validate({
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'scene',
         durationInFrames: 1,
