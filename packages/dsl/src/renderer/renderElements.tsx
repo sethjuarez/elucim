@@ -6,7 +6,8 @@ import {
   Sequence,
   BezierCurve, Circle, Line, Arrow, Rect, Text, TextBox, Polygon,
   Image, Group,
-  Axes, FunctionPlot, Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
+  Axes, FunctionPlot, SecantLine, TangentLine, RiemannSum, AccumulationArea,
+  Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
   FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel,
 } from '@elucim/core';
 import type { TransitionType, PlayerRef } from '@elucim/core';
@@ -367,6 +368,150 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           easing={resolveEasing(node.easing)}
           opacity={node.opacity}
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
+          translate={node.translate}
+        />
+      );
+    }
+    case 'secantLine': {
+      let fn: (vars: Record<string, number>) => number;
+      try {
+        fn = compileExpression(node.fn);
+      } catch {
+        return (
+          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
+            fontSize={14} fill="red" opacity={0.8}>{`⚠ secant f(x) = ${node.fn}`}</Text>
+        );
+      }
+      return (
+        <SecantLine
+          key={key}
+          fn={(x: number) => fn({ x })}
+          x={node.x}
+          dx={node.dx}
+          length={node.length}
+          origin={node.origin}
+          scale={node.scale}
+          stroke={resolveColor(node.stroke)}
+          strokeWidth={node.strokeWidth}
+          opacity={node.opacity}
+          label={node.label}
+          labelOffset={node.labelOffset}
+          labelColor={resolveColor(node.labelColor)}
+          labelFontSize={node.labelFontSize}
+          showPoints={node.showPoints}
+          pointRadius={node.pointRadius}
+          fadeIn={node.fadeIn}
+          fadeOut={node.fadeOut}
+          draw={node.draw}
+          easing={resolveEasing(node.easing)}
+          rotation={node.rotation}
+          rotationOrigin={node.rotationOrigin}
+          translate={node.translate}
+        />
+      );
+    }
+    case 'tangentLine': {
+      let fn: (vars: Record<string, number>) => number;
+      let derivative: ((vars: Record<string, number>) => number) | undefined;
+      try {
+        fn = compileExpression(node.fn);
+        derivative = node.derivative ? compileExpression(node.derivative) : undefined;
+      } catch {
+        return (
+          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
+            fontSize={14} fill="red" opacity={0.8}>{`⚠ tangent f(x) = ${node.fn}`}</Text>
+        );
+      }
+      return (
+        <TangentLine
+          key={key}
+          fn={(x: number) => fn({ x })}
+          derivative={derivative ? (x: number) => derivative({ x }) : undefined}
+          derivativeStep={node.derivativeStep}
+          x={node.x}
+          length={node.length}
+          origin={node.origin}
+          scale={node.scale}
+          stroke={resolveColor(node.stroke)}
+          strokeWidth={node.strokeWidth}
+          opacity={node.opacity}
+          label={node.label}
+          labelOffset={node.labelOffset}
+          labelColor={resolveColor(node.labelColor)}
+          labelFontSize={node.labelFontSize}
+          showPoints={node.showPoints}
+          pointRadius={node.pointRadius}
+          fadeIn={node.fadeIn}
+          fadeOut={node.fadeOut}
+          draw={node.draw}
+          easing={resolveEasing(node.easing)}
+          rotation={node.rotation}
+          rotationOrigin={node.rotationOrigin}
+          translate={node.translate}
+        />
+      );
+    }
+    case 'riemannSum': {
+      let fn: (vars: Record<string, number>) => number;
+      try {
+        fn = compileExpression(node.fn);
+      } catch {
+        return (
+          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
+            fontSize={14} fill="red" opacity={0.8}>{`⚠ riemann f(x) = ${node.fn}`}</Text>
+        );
+      }
+      return (
+        <RiemannSum
+          key={key}
+          fn={(x: number) => fn({ x })}
+          interval={node.interval}
+          n={node.n}
+          method={node.method}
+          origin={node.origin}
+          scale={node.scale}
+          fill={resolveColor(node.fill)}
+          stroke={resolveColor(node.stroke)}
+          strokeWidth={node.strokeWidth}
+          opacity={node.opacity}
+          fadeIn={node.fadeIn}
+          fadeOut={node.fadeOut}
+          easing={resolveEasing(node.easing)}
+          rotation={node.rotation}
+          rotationOrigin={node.rotationOrigin}
+          translate={node.translate}
+        />
+      );
+    }
+    case 'accumulationArea': {
+      let fn: (vars: Record<string, number>) => number;
+      try {
+        fn = compileExpression(node.fn);
+      } catch {
+        return (
+          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
+            fontSize={14} fill="red" opacity={0.8}>{`⚠ area f(x) = ${node.fn}`}</Text>
+        );
+      }
+      return (
+        <AccumulationArea
+          key={key}
+          fn={(x: number) => fn({ x })}
+          from={node.from}
+          to={node.to}
+          samples={node.samples}
+          origin={node.origin}
+          scale={node.scale}
+          fill={resolveColor(node.fill)}
+          stroke={resolveColor(node.stroke)}
+          strokeWidth={node.strokeWidth}
+          opacity={node.opacity}
+          fadeIn={node.fadeIn}
+          fadeOut={node.fadeOut}
+          draw={node.draw}
+          easing={resolveEasing(node.easing)}
+          rotation={node.rotation}
+          rotationOrigin={node.rotationOrigin}
           translate={node.translate}
         />
       );

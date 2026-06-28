@@ -5,7 +5,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ElucimDocument } from '@elucim/dsl';
-import { normalizeDocument, toRenderableDocument, validateDocument } from '@elucim/dsl';
+import { toRenderableDocument, validateDocument } from '@elucim/dsl';
 import { ElucimEditor } from '../ElucimEditor';
 
 const canonicalFixture: ElucimDocument = {
@@ -62,27 +62,12 @@ describe('canonical document editor persistence', () => {
 
   afterEach(() => cleanup());
 
-  it('keeps legacy-rootless visuals valid through edit, canonical callback, validation, and renderable conversion', async () => {
-    const normalized = normalizeDocument({
+  it('rejects old rootless visuals instead of migrating them in editor persistence', () => {
+    expect(() => toRenderableDocument({
       version: 1,
       title: 'Legacy visual',
       elements: [{ type: 'text', id: 'caption', text: 'Before' }],
-    });
-    const onDocumentChange = vi.fn();
-
-    render(React.createElement(ElucimEditor, { initialDocument: normalized.document, onDocumentChange }));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Show Inspector' }));
-    fireEvent.click(screen.getByRole('tab', { name: 'Objects' }));
-    fireEvent.click(screen.getAllByText('caption')[0]);
-    fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'After' } });
-
-    await waitFor(() => {
-      const latest = onDocumentChange.mock.calls.at(-1)?.[0] as ElucimDocument | undefined;
-      expect(latest?.elements.caption.props.content).toBe('After');
-      expect(validateDocument(latest).valid).toBe(true);
-      expect(toRenderableDocument(latest).root.children).toHaveLength(2);
-    });
+    })).toThrow('Unsupported Elucim document format: version=1');
   });
 
   it('preserves canonical timelines/state machines and updates timeline targets after ID rename', async () => {

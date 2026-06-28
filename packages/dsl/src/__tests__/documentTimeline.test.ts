@@ -37,7 +37,7 @@ describe('document timelines and keyframes', () => {
         bad: {
           id: 'bad',
           duration: 10,
-          tracks: [{ target: 'title', property: 'x', keyframes: [{ frame: 12, value: 1 }] }],
+          tracks: [{ target: 'title', property: 'bogus', keyframes: [{ frame: 12, value: 1 }] }],
         },
       },
     });

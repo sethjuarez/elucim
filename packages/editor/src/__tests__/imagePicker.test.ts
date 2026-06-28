@@ -18,7 +18,7 @@ const image: ImageNode = {
 
 function stateWith(...elements: any[]) {
   return createInitialState({
-    version: '1.0',
+    version: 'render-tree',
     root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: elements },
   });
 }

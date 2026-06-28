@@ -4,7 +4,7 @@ import { validateDocument } from '@elucim/dsl';
 import { createDocumentFromEditorState, normalizeInitialDocument, resolveInitialDocumentModel } from '../document/documentCompatibility';
 
 const renderableDocument: RenderableDocument = {
-  version: '1.0',
+  version: 'render-tree',
   root: {
     type: 'player',
     width: 800,
@@ -55,7 +55,7 @@ describe('editor document compatibility helpers', () => {
   it('normalizes canonical Elucim Documents into renderable editor projections', () => {
     const normalized = normalizeInitialDocument(canonicalDocument);
 
-    expect(normalized?.version).toBe('1.0');
+    expect(normalized?.version).toBe('render-tree');
     expect(normalized?.root.type).toBe('player');
     expect((normalized?.root as any).children[0]).toMatchObject({ type: 'rect', id: 'card', x: 80, y: 96 });
   });

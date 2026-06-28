@@ -45,6 +45,9 @@ import {
   bringElementToFront,
   checkLayoutForAgent,
   createAgentSafeDocument,
+  createCalculusAccumulationScenePreset,
+  createCalculusDerivativeScenePreset,
+  createCalculusRiemannScenePreset,
   createComparisonScenePreset,
   createDocument,
   createAutoStaggerTimeline,
@@ -130,7 +133,7 @@ npx @elucim/cli sample-beats diagram.elc --timeline intro-flow --beats 4 --json
 
 ## Recommended agent loop
 
-1. **Create** a normalized starter document with `createDocument()`, or start text-heavy scenes from `createTextCalloutScenePreset()`, `createThreeCardFlowScenePreset()`, or `createComparisonScenePreset()` and wrap them with `createAgentSafeDocument()`.
+1. **Create** a normalized starter document with `createDocument()`, or start text-heavy scenes from `createTextCalloutScenePreset()`, `createThreeCardFlowScenePreset()`, or `createComparisonScenePreset()` and wrap them with `createAgentSafeDocument()`. For calculus explanations, start from `createCalculusDerivativeScenePreset()`, `createCalculusRiemannScenePreset()`, or `createCalculusAccumulationScenePreset()` so the lesson uses semantic math primitives instead of raw geometry.
 2. **Add** meaningful elements with stable IDs, roles, intent, and tokenized colors.
 3. **Order** siblings with `reorderElement()` or front/back helpers when overlap matters.
 4. **Animate** with `addTimeline()` or `addRevealTimeline()`.
@@ -148,7 +151,7 @@ import {
   addRevealTimeline,
   checkLayoutForAgent,
   createAgentSafeDocument,
-  createThreeCardFlowScenePreset,
+  createCalculusDerivativeScenePreset,
   createLoopingStateMachine,
   evaluateSceneForAgent,
   inspectSceneForAgent,
@@ -158,27 +161,25 @@ import {
   validateForAgent,
 } from '@elucim/dsl/agent';
 
-const safeScene = createThreeCardFlowScenePreset({
-  id: 'cache-flow',
-  title: 'Cache hit rate',
-  subtitle: 'Use bounded card textboxes before adding motion.',
-  items: [
-    { id: 'request', title: 'Request arrives', body: 'The app asks for a response with stable request metadata.' },
-    { id: 'lookup', title: 'Cache lookup', body: 'A cache key checks whether useful context is already available.' },
-    { id: 'respond', title: 'Respond', body: 'Hits return quickly; misses continue to retrieval or generation.' },
-  ],
+const derivativeScene = createCalculusDerivativeScenePreset({
+  id: 'derivative',
+  title: 'Derivative as local slope',
+  fn: 'x^2',
+  derivative: '2*x',
+  x: 1,
+  dx: 0.5,
 });
 
-let doc = createAgentSafeDocument(safeScene, {
+let doc = createAgentSafeDocument(derivativeScene, {
   metadata: {
-    title: 'Cache hit rate',
-    intent: 'Show why a small cache improves request latency.',
+    title: 'Derivative intuition',
+    intent: 'Show how secant slope approaches tangent slope.',
   },
 });
 
 doc = addRevealTimeline(doc, {
   id: 'intro',
-  targets: ['cache-flow-title', 'request', 'lookup', 'respond'],
+  targets: ['derivative-title', 'derivative-axes', 'derivative-secant', 'derivative-tangent', 'derivative-explain'],
   preset: 'staggeredFadeIn',
   duration: 60,
 }).document;
@@ -220,7 +221,7 @@ const semanticLayoutNudges = await suggestSemanticLayoutNudges(doc);
 | Review | `summarizeDocument`, `diffDocuments`, `suggestDocumentNudges`, `applyNudge` | Give hosts/humans compact context, JSON-patch-shaped diffs, and deterministic polish options. |
 | Semantic layout | `suggestSemanticLayoutNudges` | Use ELK as a review-only layout solver for explicit agent-authored relationships between ordinary elements. |
 | Operation catalog | `getAgentOperationCatalog` | Return the authoring, validation, inspection, polish, and layout operations a host can pass to an agent/tool planner. |
-| Presets | `createTextCalloutScenePreset`, `createThreeCardFlowScenePreset`, `createComparisonScenePreset`, `createAgentSafeDocument`, `createConnectorPreset`, `createTextBlockPreset`, `createTextBoxPreset`, `createStepCardPreset`, `createCardGridPreset`, `createDecisionNodePreset`, `createBoundaryPreset`, `createBadgePreset`, `createQueueStackPreset`, `createTimelineRoadmapPreset`, `createComparisonTablePreset`, `createAutoLayoutGroupPreset`, `createProgressiveRevealGroupPreset` | Start from semantic, theme-tokenized explanatory building blocks instead of raw shapes. The agent-safe scene presets use bounded textboxes for generated copy by construction. |
+| Presets | `createTextCalloutScenePreset`, `createThreeCardFlowScenePreset`, `createComparisonScenePreset`, `createCalculusDerivativeScenePreset`, `createCalculusRiemannScenePreset`, `createCalculusAccumulationScenePreset`, `createAgentSafeDocument`, `createConnectorPreset`, `createTextBlockPreset`, `createTextBoxPreset`, `createStepCardPreset`, `createCardGridPreset`, `createDecisionNodePreset`, `createBoundaryPreset`, `createBadgePreset`, `createQueueStackPreset`, `createTimelineRoadmapPreset`, `createComparisonTablePreset`, `createAutoLayoutGroupPreset`, `createProgressiveRevealGroupPreset` | Start from semantic, theme-tokenized explanatory building blocks instead of raw shapes. The agent-safe scene presets use bounded textboxes for generated copy by construction, and the calculus presets use semantic math primitives for derivative, Riemann sum, and accumulation lessons. |
 
 ## Command surface
 

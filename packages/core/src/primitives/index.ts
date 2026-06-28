@@ -15,6 +15,19 @@ export {
 export { Polygon, type PolygonProps } from './Polygon';
 export { Axes, type AxesProps, mathToSvg } from './Axes';
 export { FunctionPlot, type FunctionPlotProps } from './FunctionPlot';
+export {
+  AccumulationArea,
+  RiemannSum,
+  SecantLine,
+  TangentLine,
+  type AccumulationAreaProps,
+  type CalculusLineProps,
+  type MathSpaceProps,
+  type RiemannSumMethod,
+  type RiemannSumProps,
+  type SecantLineProps,
+  type TangentLineProps,
+} from './Calculus';
 export { Vector, type VectorProps } from './Vector';
 export { VectorField, type VectorFieldProps } from './VectorField';
 export { Matrix, type MatrixProps } from './Matrix';

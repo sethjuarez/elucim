@@ -7,6 +7,9 @@ import {
   bringElementToFront,
   checkLayoutForAgent,
   createAgentSafeDocument,
+  createCalculusAccumulationScenePreset,
+  createCalculusDerivativeScenePreset,
+  createCalculusRiemannScenePreset,
   createComparisonScenePreset,
   createDocument,
   createStepCardPreset,
@@ -32,6 +35,7 @@ import {
   transitionStateMachine,
   validateDocument,
   createTextBoxPreset,
+  renderToSvgString,
 } from '../index';
 
 describe('agent authoring API', () => {
@@ -195,6 +199,95 @@ describe('agent authoring API', () => {
         cells: ['One', 'Two'],
       })),
     })).toThrow(/supports at most/);
+  });
+
+  it('creates agent-safe calculus derivative scenes with semantic calculus primitives', () => {
+    const preset = createCalculusDerivativeScenePreset({
+      id: 'derivative',
+      fn: 'x^2',
+      derivative: '2*x',
+      x: 1,
+      dx: 0.5,
+    });
+    const doc = createAgentSafeDocument(preset, {
+      metadata: { title: 'Derivative lesson', intent: 'Teach secant-to-tangent intuition.' },
+    });
+
+    expect(validateDocument(doc).valid).toBe(true);
+    expect(doc.scene.children).toEqual([
+      'derivative-title',
+      'derivative-subtitle',
+      'derivative-axes',
+      'derivative-curve',
+      'derivative-secant',
+      'derivative-tangent',
+      'derivative-explain',
+    ]);
+    expect(doc.elements['derivative-secant']).toMatchObject({
+      type: 'secantLine',
+      props: expect.objectContaining({ type: 'secantLine', fn: 'x^2', dx: 0.5, showPoints: true }),
+      intent: expect.objectContaining({ relationship: 'approximates tangent slope' }),
+    });
+    expect(doc.elements['derivative-axes'].props).toMatchObject({
+      type: 'axes',
+      domain: [-1, 4],
+      range: [-1, 8],
+      axisColor: '#94a3b8',
+    });
+    expect(doc.elements['derivative-curve'].props).toMatchObject({
+      type: 'functionPlot',
+      domain: [-1, 4],
+      color: '#60a5fa',
+    });
+    expect(doc.elements['derivative-tangent']).toMatchObject({
+      type: 'tangentLine',
+      props: expect.objectContaining({ type: 'tangentLine', derivative: '2*x', showPoints: true }),
+      intent: expect.objectContaining({ relationship: 'local derivative slope' }),
+    });
+    const svg = renderToSvgString(doc, 0);
+    expect(svg).toContain('data-testid="elucim-secant-line"');
+    expect(svg).toContain('data-testid="elucim-tangent-line"');
+    expect(authoredRawText(doc)).toEqual([]);
+  });
+
+  it('creates agent-safe calculus Riemann and accumulation scenes', () => {
+    const riemannDoc = createAgentSafeDocument(createCalculusRiemannScenePreset({
+      id: 'riemann',
+      fn: 'x^2',
+      interval: [0, 3],
+      n: 8,
+      method: 'right',
+    }));
+    const accumulationDoc = createAgentSafeDocument(createCalculusAccumulationScenePreset({
+      id: 'accumulate',
+      fn: 'sin(x)+2',
+      from: 0,
+      to: 3,
+      samples: 64,
+    }));
+
+    expect(validateDocument(riemannDoc).valid).toBe(true);
+    expect(validateDocument(accumulationDoc).valid).toBe(true);
+    expect(riemannDoc.elements['riemann-rectangles']).toMatchObject({
+      type: 'riemannSum',
+      props: expect.objectContaining({ type: 'riemannSum', interval: [0, 3], n: 8, method: 'right' }),
+    });
+    expect(accumulationDoc.elements['accumulate-area']).toMatchObject({
+      type: 'accumulationArea',
+      props: expect.objectContaining({ type: 'accumulationArea', from: 0, to: 3, samples: 64 }),
+    });
+    expect(renderToSvgString(riemannDoc, 0)).toContain('data-testid="elucim-riemann-sum"');
+    expect(renderToSvgString(accumulationDoc, 0)).toContain('data-testid="elucim-accumulation-area"');
+    expect(authoredRawText(riemannDoc)).toEqual([]);
+    expect(authoredRawText(accumulationDoc)).toEqual([]);
+  });
+
+  it('rejects calculus presets with invalid runtime inputs before rendering', () => {
+    expect(() => createCalculusRiemannScenePreset({
+      id: 'bad-interval',
+      interval: [2, 2],
+    })).toThrow(/interval endpoints must be distinct/);
+    expect(() => createCalculusRiemannScenePreset(JSON.parse('{"id":"bad-method","method":"center"}'))).toThrow(/method must be/);
   });
 
   it('uses textbox content inside step card presets for generated title and body copy', () => {
@@ -374,6 +467,9 @@ describe('agent authoring API', () => {
 
     expect(catalog.map(operation => operation.name)).toContain('suggestSemanticLayoutNudges');
     expect(catalog.map(operation => operation.name)).toContain('inspectPolishHeuristics');
+    expect(catalog.map(operation => operation.name)).toContain('createCalculusDerivativeScenePreset');
+    expect(catalog.map(operation => operation.name)).toContain('createCalculusRiemannScenePreset');
+    expect(catalog.map(operation => operation.name)).toContain('createCalculusAccumulationScenePreset');
     expect(catalog.find(operation => operation.name === 'suggestSemanticLayoutNudges')).toMatchObject({
       kind: 'layout',
       async: true,

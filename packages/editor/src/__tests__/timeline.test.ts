@@ -17,7 +17,7 @@ afterEach(() => cleanup());
 
 function stateWith(...elements: any[]) {
   return createInitialState({
-    version: '1.0',
+    version: 'render-tree',
     root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: elements },
   });
 }
@@ -125,7 +125,7 @@ describe('selection via timeline track', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [wrapped] },
           },
         },
@@ -170,7 +170,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },
@@ -205,7 +205,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },
@@ -234,7 +234,7 @@ describe('canonical timeline clip rows', () => {
       EditorProvider,
       {
         initialDocument: {
-          version: '1.0',
+          version: 'render-tree',
           root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
         },
       },
@@ -312,7 +312,7 @@ describe('canonical timeline clip rows', () => {
       EditorProvider,
       {
         initialDocument: {
-          version: '1.0',
+          version: 'render-tree',
           root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
         },
       },
@@ -381,7 +381,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },
@@ -414,7 +414,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },
@@ -466,7 +466,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },
@@ -531,7 +531,7 @@ describe('canonical timeline clip rows', () => {
       EditorProvider,
       {
         initialDocument: {
-          version: '1.0',
+          version: 'render-tree',
           root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
         },
       },
@@ -574,7 +574,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },
@@ -624,7 +624,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },
@@ -684,7 +684,7 @@ describe('canonical timeline clip rows', () => {
       EditorProvider,
       {
         initialDocument: {
-          version: '1.0',
+          version: 'render-tree',
           root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
         },
       },
@@ -739,7 +739,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },
@@ -812,7 +812,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },
@@ -857,7 +857,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },
@@ -887,7 +887,7 @@ describe('canonical timeline clip rows', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
           },
         },

@@ -129,7 +129,7 @@ export type ContainerRoot = SceneNode | PlayerNode;
 
 export function createDefaultDocument(): ElucimDocument {
   return {
-    version: '1.0',
+    version: 'render-tree',
     root: {
       type: 'player',
       width: 1920,

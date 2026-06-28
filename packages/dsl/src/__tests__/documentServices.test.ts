@@ -46,7 +46,7 @@ describe('agent-readable document services', () => {
     });
   });
 
-  it('adds a specific repair hint for legacy rootless visuals', () => {
+  it('reports unsupported old document versions without migration hints', () => {
     const result = validateForAgent({
       version: 1,
       type: 'visual',
@@ -56,8 +56,8 @@ describe('agent-readable document services', () => {
 
     expect(result.valid).toBe(false);
     expect(result.repairHints[0]).toMatchObject({
-      path: '',
-      code: 'legacy-rootless-document',
+      path: 'version',
+      code: 'unsupported-version',
     });
   });
 

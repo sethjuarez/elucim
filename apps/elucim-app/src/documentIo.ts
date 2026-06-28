@@ -1,5 +1,5 @@
-import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
-import { createDocumentFromRenderable, validate } from '@elucim/dsl';
+import type { ElucimDocument } from '@elucim/dsl';
+import { validate } from '@elucim/dsl';
 
 export const ELUCIM_FILE_EXTENSION = 'elc';
 export const ELUCIM_FILE_FILTERS = [
@@ -38,17 +38,6 @@ export function parseDocument(contents: string): ParsedDocument {
       .filter(error => error.severity === 'warning')
       .map(error => `${error.path}: ${error.message}`);
     return { document: parsed as ElucimDocument, warnings };
-  }
-
-  if (version === '1.0') {
-    const result = validate(parsed);
-    if (!result.valid) {
-      throw new Error(formatValidationErrors(result.errors));
-    }
-    return {
-      document: createDocumentFromRenderable(parsed as RenderableDocument),
-      warnings: ['Imported a renderable compatibility document and converted it to an Elucim Document.'],
-    };
   }
 
   throw new Error(`Unknown Elucim document version: ${String(version)}.`);

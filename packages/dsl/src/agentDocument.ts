@@ -24,11 +24,17 @@ export {
 } from './documentModel/polish';
 export {
   createAgentSafeDocument,
+  createCalculusAccumulationScenePreset,
+  createCalculusDerivativeScenePreset,
+  createCalculusRiemannScenePreset,
   createComparisonScenePreset,
   createTextCalloutScenePreset,
   createThreeCardFlowScenePreset,
   type ElucimAgentSafeDocumentOptions,
   type ElucimAgentSafeScenePreset,
+  type ElucimCalculusAccumulationSceneSpec,
+  type ElucimCalculusDerivativeSceneSpec,
+  type ElucimCalculusRiemannSceneSpec,
   type ElucimComparisonSceneRowSpec,
   type ElucimComparisonSceneSpec,
   type ElucimTextCalloutSceneSpec,

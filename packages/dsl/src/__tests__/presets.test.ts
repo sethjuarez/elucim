@@ -4,7 +4,7 @@ import { validate } from '../validator/validate';
 describe('Scene preset validation', () => {
   it('accepts preset "card" on a scene node', () => {
     const result = validate({
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'scene',
         durationInFrames: 30,
@@ -18,7 +18,7 @@ describe('Scene preset validation', () => {
 
   it('accepts preset "slide" on a player node', () => {
     const result = validate({
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'player',
         durationInFrames: 60,
@@ -35,7 +35,7 @@ describe('Scene preset validation', () => {
 
   it('accepts preset "square" on a scene node', () => {
     const result = validate({
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'scene',
         durationInFrames: 30,
@@ -49,7 +49,7 @@ describe('Scene preset validation', () => {
 
   it('accepts preset on a presentation node', () => {
     const result = validate({
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'presentation',
         preset: 'card',
@@ -68,7 +68,7 @@ describe('Scene preset validation', () => {
 
   it('rejects an invalid preset value', () => {
     const result = validate({
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'scene',
         durationInFrames: 30,
@@ -82,7 +82,7 @@ describe('Scene preset validation', () => {
 
   it('includes valid options in the preset error message', () => {
     const result = validate({
-      version: '1.0',
+      version: 'render-tree',
       root: {
         type: 'scene',
         durationInFrames: 30,

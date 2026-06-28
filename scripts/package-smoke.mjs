@@ -138,7 +138,8 @@ import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import React from 'react';
 import { Circle, Player, interpolate } from '@elucim/core';
-import { normalizeDocument, validateDocument } from '@elucim/dsl';
+import { normalizeDocument, renderToSvgString, validateDocument } from '@elucim/dsl';
+import { createAgentSafeDocument, createCalculusDerivativeScenePreset } from '@elucim/dsl/agent';
 
 const consumerDir = dirname(fileURLToPath(import.meta.url));
 const cliEntry = join(consumerDir, 'node_modules', '@elucim', 'cli', 'dist', 'index.js');
@@ -166,6 +167,9 @@ const document = {
 const validation = validateDocument(document);
 assert.equal(validation.valid, true, validation.errors.map(error => error.message).join('\\n'));
 assert.equal(normalizeDocument(document).document.scene.children[0], 'title', '@elucim/dsl normalizeDocument should run');
+const calculusDoc = createAgentSafeDocument(createCalculusDerivativeScenePreset({ id: 'derivative' }));
+assert.equal(validateDocument(calculusDoc).valid, true, '@elucim/dsl calculus agent preset should validate');
+assert.equal(renderToSvgString(calculusDoc, 0).includes('elucim-tangent-line'), true, '@elucim/dsl calculus agent preset should render');
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
 globalThis.window = dom.window;

@@ -30,7 +30,6 @@ export interface ElucimRepairHint {
   path: string;
   message: string;
   code:
-    | 'legacy-rootless-document'
     | 'unsupported-version'
     | 'missing-reference'
     | 'id-mismatch'
@@ -79,17 +78,9 @@ export function summarizeDocument(doc: ElucimDocument): ElucimDocumentSummary {
 
 export function validateForAgent(doc: unknown): ElucimAgentValidationResult {
   const validation = validateDocument(doc);
-  const legacyHint = isLegacyRootlessDocument(doc)
-    ? [{
-      path: '',
-      message: 'Legacy rootless visual detected. Convert it with normalizeDocument() before validating or editing as an Elucim Document.',
-      code: 'legacy-rootless-document' as const,
-      suggestions: ['Use normalizeDocument(doc) to wrap elements in a player scene and migrate to the Elucim Document format.'],
-    }]
-    : [];
   return {
     ...validation,
-    repairHints: [...legacyHint, ...validation.errors.map(error => toRepairHint(error, doc))],
+    repairHints: validation.errors.map(error => toRepairHint(error, doc)),
   };
 }
 
@@ -130,13 +121,6 @@ function toRepairHint(error: ValidationError, doc: unknown): ElucimRepairHint {
     return { path: error.path, message: error.message, code: 'props-type-mismatch' };
   }
   return { path: error.path, message: error.message, code: 'unknown' };
-}
-
-function isLegacyRootlessDocument(doc: unknown): boolean {
-  return !!doc && typeof doc === 'object' && !Array.isArray(doc)
-    && ((doc as { version?: unknown }).version === 1 || (doc as { version?: unknown }).version === '1')
-    && !('root' in doc)
-    && Array.isArray((doc as { elements?: unknown }).elements);
 }
 
 function diffValue(before: unknown, after: unknown, path: string, patches: JsonPatchOperation[]) {

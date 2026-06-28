@@ -61,7 +61,7 @@ const functionPlot: FunctionPlotNode = {
 
 function stateWith(...elements: any[]) {
   return createInitialState({
-    version: '1.0',
+    version: 'render-tree',
     root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: elements },
   });
 }
@@ -107,7 +107,7 @@ describe('inspector function fields', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [functionPlot] },
           },
         },
@@ -147,7 +147,7 @@ describe('inspector textbox fields', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [textbox] },
           },
         },
@@ -223,7 +223,7 @@ describe('inspector style updates', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [tokenizedText] },
           },
         },
@@ -269,7 +269,7 @@ describe('inspector style updates', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [barChart] },
           },
         },
@@ -319,7 +319,7 @@ describe('inspector group editing', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [heroGroup] },
           },
         },
@@ -380,7 +380,7 @@ describe('inspector group editing', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [anonymousGroup] },
           },
         },
@@ -417,7 +417,7 @@ describe('inspector group editing', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [wrapper] },
           },
         },
@@ -463,7 +463,7 @@ describe('inspector animation updates', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [rect] },
           },
         },
@@ -502,7 +502,7 @@ describe('inspector transform updates', () => {
         EditorProvider,
         {
           initialDocument: {
-            version: '1.0',
+            version: 'render-tree',
             root: { type: 'player', width: 800, height: 600, durationInFrames: 120, children: [rect] },
           },
         },
