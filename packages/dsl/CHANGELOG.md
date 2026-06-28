@@ -1,5 +1,23 @@
 # @elucim/dsl
 
+## [0.24.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.23.0...dsl-v0.24.0) (2026-06-28)
+
+
+### Features
+
+* add calculus agent presets ([fbbbf7e](https://github.com/sethjuarez/elucim/commit/fbbbf7e3a21795255971648217d822d591422063))
+* add calculus primitives ([b8832aa](https://github.com/sethjuarez/elucim/commit/b8832aa199a319efe87d2a29b0e2ac8c7e55dc89))
+* add calculus primitives and agent presets ([0974603](https://github.com/sethjuarez/elucim/commit/097460394c86132ad09872e40db2e8c1d8accb01))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.24.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.24.0
+
 ## [0.23.0](https://github.com/sethjuarez/elucim/compare/dsl-v0.22.1...dsl-v0.23.0) (2026-05-29)
 
 
