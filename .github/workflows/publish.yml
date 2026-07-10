@@ -17,6 +17,7 @@ permissions:
   contents: write
   pull-requests: write
   id-token: write
+  packages: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -45,6 +46,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
@@ -78,3 +80,34 @@ jobs:
       - name: Publish @elucim/cli
         if: ${{ needs.release-please.outputs.cli_release == 'true' || (github.event_name == 'workflow_dispatch' && inputs.package == 'cli') }}
         run: pnpm --filter @elucim/cli publish --access public --no-git-checks --provenance
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://npm.pkg.github.com
+          scope: '@sethjuarez'
+
+      - name: Publish @sethjuarez/elucim-core to GitHub Packages
+        if: ${{ needs.release-please.outputs.core_release == 'true' }}
+        run: node scripts/publish-github-package.mjs @elucim/core
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish @sethjuarez/elucim-dsl to GitHub Packages
+        if: ${{ needs.release-please.outputs.dsl_release == 'true' }}
+        run: node scripts/publish-github-package.mjs @elucim/dsl
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish @sethjuarez/elucim-editor to GitHub Packages
+        if: ${{ needs.release-please.outputs.editor_release == 'true' }}
+        run: node scripts/publish-github-package.mjs @elucim/editor
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish @sethjuarez/elucim-cli to GitHub Packages
+        if: ${{ needs.release-please.outputs.cli_release == 'true' || (github.event_name == 'workflow_dispatch' && inputs.package == 'cli') }}
+        run: node scripts/publish-github-package.mjs @elucim/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
