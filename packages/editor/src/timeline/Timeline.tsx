@@ -95,18 +95,47 @@ function createUniqueStateMachineId(existing: Record<string, ElucimStateMachine>
   return `${preferred}-${index}`;
 }
 
+export function clampTimelineKeyframesToDuration(clip: ElucimTimeline, duration: number): ElucimTimeline {
+  const nextDuration = Math.max(1, Math.round(duration));
+  const clampKeyframes = <Keyframe extends { frame: number }>(keyframes: Keyframe[]): Keyframe[] => {
+    const clamped: Keyframe[] = [];
+    for (const keyframe of keyframes) {
+      const next = { ...keyframe, frame: Math.min(keyframe.frame, nextDuration) };
+      if (clamped[clamped.length - 1]?.frame === next.frame) {
+        clamped[clamped.length - 1] = next;
+      } else {
+        clamped.push(next);
+      }
+    }
+    return clamped;
+  };
+
+  return {
+    ...clip,
+    duration: nextDuration,
+    tracks: clip.tracks.map(track => ({ ...track, keyframes: clampKeyframes(track.keyframes) })),
+    ...(clip.camera ? {
+      camera: { ...clip.camera, keyframes: clampKeyframes(clip.camera.keyframes) },
+    } : {}),
+  };
+}
+
 function normalizeGraphId(value: string, fallback: string): string {
   const normalized = value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
   return normalized || fallback;
 }
 
-function previewFramesEqual(
+export function previewFramesEqual(
   left: ElucimTimelineFrameSelection[] | undefined,
   right: ElucimTimelineFrameSelection[] | undefined,
 ): boolean {
   if (left === right) return true;
   if (!left || !right || left.length !== right.length) return false;
-  return left.every((frame, index) => frame.timelineId === right[index].timelineId && frame.frame === right[index].frame);
+  return left.every((frame, index) => (
+    frame.timelineId === right[index].timelineId
+    && frame.frame === right[index].frame
+    && (frame.applyCamera !== false) === (right[index].applyCamera !== false)
+  ));
 }
 
 /**
@@ -302,10 +331,15 @@ export function Timeline({
 
   const handleActiveTimelineChange = useCallback((timelineId: string | undefined) => {
     setActiveTimelineId(timelineId);
+    dispatch({ type: 'SET_ACTIVE_TIMELINE', timelineId });
     const nextMaxFrame = timelineId && activeTimelines?.[timelineId] ? activeTimelines[timelineId].duration : (showLegacyElementTracks ? durationInFrames : timelineDurationFallback) - 1;
     if (currentFrame > nextMaxFrame) dispatch({ type: 'SET_FRAME', frame: nextMaxFrame });
     onActiveTimelineChange?.(timelineId);
   }, [currentFrame, dispatch, durationInFrames, onActiveTimelineChange, showLegacyElementTracks, timelineDurationFallback, activeTimelines]);
+
+  useEffect(() => {
+    dispatch({ type: 'SET_ACTIVE_TIMELINE', timelineId: effectiveActiveTimelineId });
+  }, [dispatch, effectiveActiveTimelineId]);
 
   const previewStateAnimation = useCallback((machineId: string, stateId: string, details?: { event?: string; previousStateId?: string; activeTransitionId?: string }) => {
     const timelineId = activeStateMachines?.[machineId]?.states[stateId]?.timeline;
@@ -1109,15 +1143,7 @@ function TimelineClipRows({
     if (machine) renameMachine(machine, value);
   };
   const updateDuration = (clip: ElucimTimeline, duration: number) => {
-    const nextDuration = Math.max(1, Math.round(duration));
-    onTimelineChange?.({
-      ...clip,
-      duration: nextDuration,
-      tracks: clip.tracks.map(track => ({
-        ...track,
-        keyframes: track.keyframes.map(keyframe => ({ ...keyframe, frame: Math.min(keyframe.frame, nextDuration) })),
-      })),
-    });
+    onTimelineChange?.(clampTimelineKeyframesToDuration(clip, duration));
   };
   const renameClip = (clip: ElucimTimeline, value: string) => {
     const baseId = normalizeGraphId(value, clip.id);
@@ -1799,7 +1825,7 @@ function TimelineClipRows({
             </div>
             <div style={{ minWidth: 0, display: 'grid', gridTemplateRows: '20px 1fr' }}>
               <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', paddingRight: 8 }}>
-                <div style={{ color: v('--elucim-editor-text-secondary'), fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                <div style={{ color: v('--elucim-editor-text-secondary'), fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {clip.id} - {clip.duration}f - {clip.tracks.length} track{clip.tracks.length === 1 ? '' : 's'}
                 </div>
               </div>

@@ -89,6 +89,7 @@ function App() {
 - **Minimap** for orientation in large scenes
 - **Zoom controls** with zoom-to-fit
 - Canvas itself is selectable — click empty space to edit scene properties (dimensions, background, FPS, duration)
+- **Camera framing** — draw and resize a crop rectangle, lock its aspect ratio, focus the current selection, then commit a keyframe to the selected timeline
 
 ### 🧰 Toolbar
 

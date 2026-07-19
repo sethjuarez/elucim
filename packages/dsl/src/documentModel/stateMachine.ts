@@ -24,6 +24,8 @@ export interface ElucimStateEvent {
 export interface ElucimStateMachineVisualFrame {
   timelineId: string;
   frame: number;
+  /** Whether this frame may override a legacy scene-camera fallback. */
+  applyCamera?: boolean;
 }
 
 export interface ElucimStateMachineRun {
@@ -171,10 +173,28 @@ export function getStateMachineVisualFrames(
 ): ElucimStateMachineVisualFrame[] {
   const machine = getMachine(doc, machineId);
   if (options.exited || options.finished) {
-    return Object.entries(doc.timelines ?? {}).map(([timelineId, timeline]) => ({ timelineId, frame: timeline.duration }));
+    const frames: ElucimStateMachineVisualFrame[] = Object.entries(doc.timelines ?? {}).map(([timelineId, timeline]) => ({
+      timelineId,
+      frame: timeline.duration,
+      ...(timeline.camera ? { applyCamera: false } : {}),
+    }));
+    const activeTimelineId = !options.exited ? machine.states[options.currentStateId]?.timeline : undefined;
+    const activeTimeline = activeTimelineId ? doc.timelines?.[activeTimelineId] : undefined;
+    if (activeTimelineId && activeTimeline) {
+      frames.push({
+        timelineId: activeTimelineId,
+        frame: activeTimeline.duration,
+        ...(activeTimeline.camera ? { applyCamera: true } : {}),
+      });
+    }
+    return frames;
   }
   const path = options.statePath?.length ? options.statePath : [options.currentStateId];
-  const frames: ElucimStateMachineVisualFrame[] = Object.keys(doc.timelines ?? {}).map(timelineId => ({ timelineId, frame: 0 }));
+  const frames: ElucimStateMachineVisualFrame[] = Object.keys(doc.timelines ?? {}).map(timelineId => ({
+    timelineId,
+    frame: 0,
+    ...(doc.timelines?.[timelineId]?.camera ? { applyCamera: false } : {}),
+  }));
   for (const stateId of path) {
     if (stateId === 'entry') continue;
     const state = machine.states[stateId];
@@ -191,6 +211,7 @@ export function getStateMachineVisualFrames(
     frames.push({
       timelineId: state.timeline,
       frame: stateId === options.currentStateId && !options.exited ? options.currentFrame : timeline.duration,
+      ...(timeline.camera ? { applyCamera: true } : {}),
     });
   }
   return frames;

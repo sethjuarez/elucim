@@ -88,6 +88,9 @@ function validateContainerNode(node: Record<string, unknown>, path: string, type
   optionalPositiveNum(node, 'height', path, errors);
   optionalPositiveNum(node, 'fps', path, errors);
   optionalString(node, 'background', path, errors);
+  if ('camera' in node) {
+    errors.push({ path: `${path}.camera`, message: 'Render-tree camera is not supported. Use timeline.camera keyframes in an Elucim Document.', severity: 'error' });
+  }
 
   if (node.preset !== undefined) {
     if (typeof node.preset !== 'string' || !VALID_PRESETS.includes(node.preset)) {

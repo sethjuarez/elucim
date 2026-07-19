@@ -47,6 +47,9 @@ export function createDocumentFromRenderable(doc: RenderableDocument): ElucimDoc
   }
 
   const root = doc.root as SceneNode | PlayerNode;
+  if ('camera' in root) {
+    throw new Error('Render-tree camera is not supported. Use timeline.camera keyframes in an Elucim Document.');
+  }
   const state: MigrationState = { elements: {}, usedIds: new Set() };
   const children = root.children.map((child, index) => migrateElement(child, `root.${child.type}[${index}]`, undefined, state));
   const scene: ElucimScene = {
@@ -75,6 +78,7 @@ export function createDocumentFromRenderable(doc: RenderableDocument): ElucimDoc
   };
 }
 
+/** Projects a canonical document for rendering. */
 export function createRenderableDocument(doc: ElucimDocument): RenderableDocument {
   const children = doc.scene.children.map(id => restoreElement(doc, id));
   return {
@@ -97,7 +101,7 @@ export function createRenderableDocument(doc: ElucimDocument): RenderableDocumen
   };
 }
 
-function applyDefaultStateMachineInitialFrame(doc: ElucimDocument): ElucimDocument {
+export function applyDefaultStateMachineInitialFrame(doc: ElucimDocument): ElucimDocument {
   if (!doc.defaultStateMachine || !doc.stateMachines?.[doc.defaultStateMachine]) return doc;
   const snapshot = getInitialStateSnapshot(doc, doc.defaultStateMachine);
   const frames = getStateMachineVisualFrames(doc, doc.defaultStateMachine, {

@@ -1,4 +1,4 @@
-import type { ElucimDocument as CanonicalElucimDocument, RenderableDocument as ElucimDocument, ElementNode, SceneNode, PlayerNode } from '@elucim/dsl';
+import type { CameraTrack, ElucimDocument as CanonicalElucimDocument, ElucimTimeline, RenderableDocument as ElucimDocument, ElementNode, SceneNode, PlayerNode } from '@elucim/dsl';
 
 // ─── Editor State ──────────────────────────────────────────────────────────
 
@@ -36,6 +36,14 @@ export interface EditorState {
   activeTool: EditorTool;
   /** Whether user is currently panning (Space held) */
   isPanning: boolean;
+  /** Whether the canvas is showing the full scene for camera framing authoring. */
+  isCameraFraming: boolean;
+  /** Timeline selected by the animation or state-machine workspace. */
+  activeTimelineId?: string;
+  /** Timeline that owns the camera edit currently in progress. */
+  cameraFramingTimelineId?: string;
+  /** Frame that owns the camera edit currently in progress. */
+  cameraFramingFrame?: number;
   /** Floating toolbar position */
   toolbarPosition: PanelPosition;
   /** Floating inspector position (null = auto-position near selection) */
@@ -102,6 +110,9 @@ export type EditorAction =
   | { type: 'SET_PLAYING'; playing: boolean }
   | { type: 'SET_TOOL'; tool: EditorTool }
   | { type: 'SET_PANNING'; panning: boolean }
+  | { type: 'SET_CAMERA_FRAMING'; framing: boolean; timelineId?: string; frame?: number }
+  | { type: 'SET_ACTIVE_TIMELINE'; timelineId?: string }
+  | { type: 'UPDATE_TIMELINE_CAMERA'; timelineId: string; camera: CameraTrack }
   | { type: 'SET_TOOLBAR_POSITION'; position: PanelPosition }
   | { type: 'SET_TOOLBAR_COLLAPSED'; collapsed: boolean }
   | { type: 'SET_INSPECTOR_POSITION'; position: PanelPosition | null }
@@ -157,6 +168,10 @@ export function createInitialState(document?: ElucimDocument, initialFrame?: num
     isPlaying: false,
     activeTool: 'select',
     isPanning: false,
+    isCameraFraming: false,
+    activeTimelineId: undefined,
+    cameraFramingTimelineId: undefined,
+    cameraFramingFrame: undefined,
     toolbarPosition: { x: 24, y: 24 },
     inspectorPosition: null,
     inspectorPinned: true,
@@ -176,6 +191,7 @@ export function isUndoableAction(action: EditorAction): boolean {
   switch (action.type) {
     case 'UPDATE_ELEMENT':
     case 'UPDATE_CANVAS':
+    case 'UPDATE_TIMELINE_CAMERA':
     case 'ADD_ELEMENT':
     case 'DELETE_ELEMENTS':
     case 'DUPLICATE_ELEMENTS':

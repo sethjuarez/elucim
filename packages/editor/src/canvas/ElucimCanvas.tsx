@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { Scene } from '@elucim/core';
-import { renderElement } from '@elucim/dsl';
-import type { RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
+import { resolveCameraViewport, SceneCameraViewport, renderElement } from '@elucim/dsl';
+import type { CameraNode, RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
 import { resolveColor, DARK_THEME, LIGHT_THEME, normalizeTheme, themeToVars, type ElucimTheme } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
@@ -21,12 +21,22 @@ import { exportEditorDocumentToJson, importFromJson } from '../utils/io';
 import { ContextMenu } from './ContextMenu';
 import type { ContextMenuItem } from './ContextMenu';
 import { buildElementContextMenuItems } from './contextMenuItems';
+import {
+  CameraFramingOverlay,
+  constrainCameraFrame,
+  focusCameraFrame,
+  getSceneCameraViewport,
+  type CameraFrameViewport,
+} from './CameraFramingOverlay';
+import { upsertTimelineCameraKeyframe } from '../timeline/cameraKeyframes';
 
 export interface ElucimCanvasProps {
   className?: string;
   style?: React.CSSProperties;
   /** Optional render-only document, used for timeline/state preview without mutating editor state. */
   previewDocument?: ElucimDocument;
+  /** Evaluated camera for a render-only timeline/state preview. */
+  previewCamera?: CameraNode;
   /** Optional preview mode chrome and event routing for render-only document previews. */
   previewMode?: {
     active: boolean;
@@ -62,6 +72,23 @@ function resolveSelectionBounds(
   const bounds = getElementBounds(loc.element);
   if (!bounds) return null;
   return applyAncestorTransforms(root, loc.parentPath, bounds);
+}
+
+function resolveLogicalSelectionBounds(root: ElucimDocument['root'], id: string): BoundingBox | null {
+  const loc = findElementById(root, id);
+  if (!loc) return null;
+  const bounds = getElementBounds(loc.element);
+  return bounds ? applyAncestorTransforms(root, loc.parentPath, bounds) : null;
+}
+
+function mapBoundsThroughCamera(bounds: BoundingBox, camera: CameraNode, width: number, height: number): BoundingBox {
+  const transform = resolveCameraViewport(camera, width, height);
+  return {
+    x: transform.offsetX + (bounds.x - transform.viewport.x) * transform.scale,
+    y: transform.offsetY + (bounds.y - transform.viewport.y) * transform.scale,
+    width: bounds.width * transform.scale,
+    height: bounds.height * transform.scale,
+  };
 }
 
 function measureNestedElementBounds(
@@ -262,9 +289,18 @@ function isDarkBackground(bg: string): boolean {
 /**
  * Full-bleed editor canvas with viewport pan/zoom, dot grid, minimap, and zoom controls.
  */
-export function ElucimCanvas({ className, style, previewDocument, previewMode, editorColorScheme, contentTheme }: ElucimCanvasProps) {
+export function ElucimCanvas({ className, style, previewDocument, previewCamera, previewMode, editorColorScheme, contentTheme }: ElucimCanvasProps) {
   const { state, dispatch } = useEditorState();
-  const { document: editorDocument, selectedIds, currentFrame, viewport, isPanning } = state;
+  const {
+    document: editorDocument,
+    selectedIds,
+    currentFrame,
+    viewport,
+    isPanning,
+    isCameraFraming,
+    cameraFramingTimelineId,
+    cameraFramingFrame,
+  } = state;
   const document = previewDocument ?? editorDocument;
   const root = document.root;
   const overlaySvgRef = useRef<SVGSVGElement>(null);
@@ -279,6 +315,10 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
   } | null>(null);
   const inlineEditRef = useRef<HTMLTextAreaElement>(null);
   const [isCanvasHovered, setIsCanvasHovered] = useState(false);
+  const [cameraDraft, setCameraDraft] = useState<CameraFrameViewport | null>(null);
+  const [cameraAspectLocked, setCameraAspectLocked] = useState(true);
+  const [isDrawingCameraFrame, setIsDrawingCameraFrame] = useState(false);
+  const cameraFramingSessionRef = useRef<string>();
   const previewModeActive = Boolean(previewMode?.active);
 
   // Resolve scene dimensions
@@ -288,6 +328,21 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
   const durationInFrames = ('durationInFrames' in root ? root.durationInFrames : undefined) ?? 120;
   const rawBackground = ('background' in root ? root.background : undefined) as string | undefined;
   const background = resolveColor(rawBackground) ?? '#0f172a';
+  const camera = previewDocument ? previewCamera : undefined;
+  const renderedCamera = isCameraFraming ? undefined : camera;
+
+  useEffect(() => {
+    if (!isCameraFraming) {
+      cameraFramingSessionRef.current = undefined;
+      return;
+    }
+    const session = `${cameraFramingTimelineId ?? ''}:${cameraFramingFrame ?? currentFrame}`;
+    if (cameraFramingSessionRef.current === session) return;
+    cameraFramingSessionRef.current = session;
+    setCameraDraft(getSceneCameraViewport(camera, width, height));
+    setCameraAspectLocked(true);
+    setIsDrawingCameraFrame(false);
+  }, [camera, cameraFramingFrame, cameraFramingTimelineId, currentFrame, height, isCameraFraming, width]);
 
   // Set --elucim-* content theme CSS vars so $token references in elements resolve correctly.
   // When editorColorScheme is explicitly light/dark, use it directly — this avoids
@@ -356,6 +411,7 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
     sceneWidth: width,
     sceneHeight: height,
     selectedIds,
+    camera: renderedCamera,
   });
 
   // Keyboard shortcuts
@@ -376,12 +432,20 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
     zoom: state.viewport.zoom,
     isPlaying: state.isPlaying,
     isCanvasHovered,
+    isCameraFraming,
     getDocumentJson,
     importDocument: handleImport,
   });
 
   // DOM-measured bounds — pixel-perfect for every element type
   const measuredBounds = useMeasuredBounds(sceneSvgRef, elementIds, children);
+  const interactionBounds = useMemo(() => {
+    if (!renderedCamera) return measuredBounds;
+    return new Map(elementIds.flatMap(id => {
+      const bounds = resolveLogicalSelectionBounds(root, id);
+      return bounds ? [[id, bounds] as const] : [];
+    }));
+  }, [elementIds, measuredBounds, renderedCamera, root]);
 
   // Marquee (lasso) selection — drag on empty canvas to select
   const {
@@ -395,13 +459,18 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
     containerRef,
     isPanning,
     activeTool: state.activeTool,
-    boundsMap: measuredBounds,
+    boundsMap: interactionBounds,
+    sceneWidth: width,
+    sceneHeight: height,
+    camera: renderedCamera,
   });
 
   // Collect selected element bounds for the overlay
   const selectedBounds = selectedIds
     .map(id => {
-      const bounds = resolveSelectionBounds(root, measuredBounds, sceneSvgRef.current, id);
+      const bounds = renderedCamera
+        ? resolveLogicalSelectionBounds(root, id)
+        : resolveSelectionBounds(root, measuredBounds, sceneSvgRef.current, id);
       return bounds ? { id, bounds } : null;
     })
     .filter((b): b is NonNullable<typeof b> => b !== null);
@@ -416,12 +485,59 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
       : null;
     if (!field) return false;
 
-    const bounds = resolveSelectionBounds(root, measuredBounds, sceneSvgRef.current, id);
+    const logicalBounds = renderedCamera
+      ? resolveLogicalSelectionBounds(root, id)
+      : resolveSelectionBounds(root, measuredBounds, sceneSvgRef.current, id);
+    const bounds = logicalBounds && renderedCamera
+      ? mapBoundsThroughCamera(logicalBounds, renderedCamera, width, height)
+      : logicalBounds;
     if (!bounds) return false;
     setInlineEdit({ id, field, value: element[field] ?? '', bounds });
     dispatch({ type: 'SELECT', ids: [id] });
     return true;
-  }, [dispatch, measuredBounds, root]);
+  }, [dispatch, height, measuredBounds, renderedCamera, root, width]);
+
+  const commitCameraFrame = useCallback((nextViewport: CameraFrameViewport) => {
+    const canonicalDocument = state.canonicalDocument;
+    const timeline = cameraFramingTimelineId
+      ? canonicalDocument?.timelines?.[cameraFramingTimelineId]
+      : undefined;
+    if (!canonicalDocument || !timeline) return;
+    const nextTimeline = upsertTimelineCameraKeyframe(
+      timeline,
+      camera,
+      cameraFramingFrame ?? currentFrame,
+      nextViewport,
+      width,
+      height,
+    );
+    dispatch({ type: 'UPDATE_TIMELINE_CAMERA', timelineId: timeline.id, camera: nextTimeline.camera! });
+  }, [camera, cameraFramingFrame, cameraFramingTimelineId, currentFrame, dispatch, height, state.canonicalDocument, width]);
+
+  const completeCameraFraming = useCallback(() => {
+    if (cameraDraft) commitCameraFrame(cameraDraft);
+    dispatch({ type: 'SET_CAMERA_FRAMING', framing: false });
+  }, [cameraDraft, commitCameraFrame, dispatch]);
+
+  const cancelCameraFraming = useCallback(() => {
+    dispatch({ type: 'SET_CAMERA_FRAMING', framing: false });
+  }, [dispatch]);
+
+  const focusSelectedCameraFrame = useCallback(() => {
+    if (selectedIds.length !== 1 || selectedIds[0] === '__canvas__') return;
+    const bounds = resolveLogicalSelectionBounds(root, selectedIds[0]);
+    if (bounds) setCameraDraft(focusCameraFrame(bounds, width, height));
+  }, [height, root, selectedIds, width]);
+
+  const updateCameraDraftField = useCallback((field: keyof CameraFrameViewport, value: string) => {
+    if (value === '') return;
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return;
+    setCameraDraft(current => current
+      ? constrainCameraFrame({ ...current, [field]: numericValue }, width, height)
+      : current,
+    );
+  }, [height, width]);
 
   const commitInlineEdit = useCallback(() => {
     if (!inlineEdit) return;
@@ -455,7 +571,7 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
   // Build hit-test targets for all elements
   const hitTargets = elementIds
     .map(id => {
-      const bounds = measuredBounds.get(id);
+      const bounds = interactionBounds.get(id);
       return bounds ? { id, bounds } : null;
     })
     .filter((t): t is NonNullable<typeof t> => t !== null);
@@ -503,17 +619,17 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
   }, [beginInlineEdit]);
 
   const handleContainerPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!shouldPreservePointerFocus(e.target)) {
-      e.currentTarget.focus({ preventScroll: true });
-    }
-    if (previewModeActive && !shouldPreservePointerFocus(e.target) && previewMode?.onClick?.()) {
+    if (shouldPreservePointerFocus(e.target)) return;
+    if (isCameraFraming) return;
+    e.currentTarget.focus({ preventScroll: true });
+    if (previewModeActive && previewMode?.onClick?.()) {
       e.preventDefault();
       e.stopPropagation();
       return;
     }
     handlePanStart(e);
     handleMarqueeStart(e);
-  }, [handleMarqueeStart, handlePanStart, previewMode, previewModeActive]);
+  }, [handleMarqueeStart, handlePanStart, isCameraFraming, previewMode, previewModeActive]);
 
   const handleContainerKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     if (!previewModeActive || shouldPreservePointerFocus(e.target)) return;
@@ -628,11 +744,13 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
           background={background}
           frame={currentFrame}
         >
-          {children.map((child, i) => (
-            <g key={elementIds[i]} data-measure-id={elementIds[i]}>
-              {renderElement(child, i)}
-            </g>
-          ))}
+          <SceneCameraViewport camera={renderedCamera} width={width} height={height}>
+            {children.map((child, i) => (
+              <g key={elementIds[i]} data-measure-id={elementIds[i]}>
+                {renderElement(child, i)}
+              </g>
+            ))}
+          </SceneCameraViewport>
         </Scene>
 
         {/* Overlay layer */}
@@ -653,42 +771,103 @@ export function ElucimCanvas({ className, style, previewDocument, previewMode, e
           onPointerUp={handlePointerUp}
           onDoubleClick={handleOverlayDoubleClick}
         >
-          {hitTargets.map(({ id, bounds }) => {
-            const { rotation, rotationCenter } = bounds;
-            const transform = rotation && rotationCenter
-              ? `rotate(${rotation}, ${rotationCenter[0]}, ${rotationCenter[1]})`
-              : undefined;
-            return (
+          <SceneCameraViewport camera={renderedCamera} width={width} height={height}>
+            {!isCameraFraming && hitTargets.map(({ id, bounds }) => {
+              const { rotation, rotationCenter } = bounds;
+              const transform = rotation && rotationCenter
+                ? `rotate(${rotation}, ${rotationCenter[0]}, ${rotationCenter[1]})`
+                : undefined;
+              return (
+                <rect
+                  key={`hit-${id}`}
+                  data-editor-id={id}
+                  x={bounds.x}
+                  y={bounds.y}
+                  width={bounds.width}
+                  height={bounds.height}
+                  fill="transparent"
+                  transform={transform}
+                  style={{ pointerEvents: 'all', cursor: isPanning ? 'grab' : 'default' }}
+                />
+              );
+            })}
+            {!isCameraFraming && <SelectionOverlay selections={selectedBounds} />}
+            {/* Marquee selection rectangle */}
+            {!isCameraFraming && marquee && (
               <rect
-                key={`hit-${id}`}
-                data-editor-id={id}
-                x={bounds.x}
-                y={bounds.y}
-                width={bounds.width}
-                height={bounds.height}
-                fill="transparent"
-                transform={transform}
-                style={{ pointerEvents: 'all', cursor: isPanning ? 'grab' : 'default' }}
+                x={marquee.x}
+                y={marquee.y}
+                width={marquee.width}
+                height={marquee.height}
+                fill={v('--elucim-editor-accent')}
+                fillOpacity={0.1}
+                stroke={v('--elucim-editor-accent')}
+                strokeWidth={1}
+                strokeDasharray="6 3"
+                style={{ pointerEvents: 'none' }}
               />
-            );
-          })}
-          <SelectionOverlay selections={selectedBounds} />
-          {/* Marquee selection rectangle */}
-          {marquee && (
-            <rect
-              x={marquee.x}
-              y={marquee.y}
-              width={marquee.width}
-              height={marquee.height}
-              fill={v('--elucim-editor-accent')}
-              fillOpacity={0.1}
-              stroke={v('--elucim-editor-accent')}
-              strokeWidth={1}
-              strokeDasharray="6 3"
-              style={{ pointerEvents: 'none' }}
+            )}
+          </SceneCameraViewport>
+          {isCameraFraming && cameraDraft && (
+            <CameraFramingOverlay
+              viewport={cameraDraft}
+              sceneWidth={width}
+              sceneHeight={height}
+              aspectLocked={cameraAspectLocked}
+              drawing={isDrawingCameraFrame}
+              onViewportChange={setCameraDraft}
+              onViewportCommit={setCameraDraft}
+              onDrawingComplete={() => setIsDrawingCameraFrame(false)}
             />
           )}
         </svg>
+        {isCameraFraming && cameraDraft && (
+          <div
+            aria-label="Camera framing controls"
+            style={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              zIndex: 6,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: 6,
+              border: `1px solid ${v('--elucim-editor-accent')}`,
+              borderRadius: 6,
+              background: v('--elucim-editor-panel'),
+              boxShadow: v('--elucim-editor-shadow-dropdown'),
+            }}
+          >
+            <strong style={{ fontSize: 11, color: v('--elucim-editor-fg') }}>Camera frame</strong>
+          {(['x', 'y', 'width', 'height'] as const).map(field => (
+            <label key={field} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10 }}>
+              {field === 'width' ? 'W' : field === 'height' ? 'H' : field.toUpperCase()}
+              <input
+                aria-label={`Camera frame ${field}`}
+                type="number"
+                min={field === 'width' || field === 'height' ? 1 : 0}
+                step={1}
+                value={cameraDraft[field]}
+                onChange={event => updateCameraDraftField(field, event.currentTarget.value)}
+                style={{ width: 54 }}
+              />
+            </label>
+          ))}
+          <button type="button" aria-pressed={cameraAspectLocked} onClick={() => setCameraAspectLocked(locked => !locked)}>
+              {cameraAspectLocked ? 'Lock aspect' : 'Free aspect'}
+            </button>
+            <button type="button" aria-pressed={isDrawingCameraFrame} onClick={() => setIsDrawingCameraFrame(drawing => !drawing)}>
+              {isDrawingCameraFrame ? 'Cancel draw' : 'Draw frame'}
+            </button>
+            <button type="button" disabled={selectedIds.length !== 1 || selectedIds[0] === '__canvas__'} onClick={focusSelectedCameraFrame}>
+              Focus selection
+            </button>
+            <button type="button" onClick={() => setCameraDraft({ x: 0, y: 0, width, height })}>Reset</button>
+            <button type="button" onClick={completeCameraFraming}>Done</button>
+            <button type="button" onClick={cancelCameraFraming}>Cancel</button>
+          </div>
+        )}
         {inlineEdit && (
           <textarea
             ref={inlineEditRef}

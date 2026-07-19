@@ -1,5 +1,6 @@
 import type { ElucimDocument, ElucimElement, ElucimTransition } from './types';
 import type { ValidationError, ValidationResult } from '../validator/validate';
+import { VALID_EASING_NAMES } from '../renderer/resolveEasing';
 
 const VALID_ROOT_TYPES = new Set(['scene', 'player']);
 const VALID_TIMELINE_PROPERTIES = new Set(['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke', 'x', 'dx', 'from', 'to', 'n']);
@@ -30,6 +31,9 @@ export function validateDocument(doc: unknown): ValidationResult {
     }
     if (!Array.isArray(d.scene.children)) {
       errors.push({ path: 'scene.children', message: 'scene.children must be an array of element IDs', severity: 'error' });
+    }
+    if ('camera' in d.scene) {
+      errors.push({ path: 'scene.camera', message: 'Scene camera is not part of Elucim Documents. Use timeline.camera keyframes.', severity: 'error' });
     }
   }
 
@@ -222,6 +226,129 @@ function validateTimelines(doc: ElucimDocument, errors: ValidationError[]) {
         });
       }
     });
+    validateTimelineCamera(timeline.camera, `timelines.${timelineId}.camera`, timeline.duration, errors);
+  }
+}
+
+function validateTimelineCamera(camera: unknown, path: string, duration: number, errors: ValidationError[]) {
+  if (camera === undefined) return;
+  if (!camera || typeof camera !== 'object' || Array.isArray(camera)) {
+    errors.push({ path, message: 'Camera track must be an object', severity: 'error' });
+    return;
+  }
+  const track = camera as Record<string, unknown>;
+  validateCameraOptions(track, path, errors);
+  if (!Array.isArray(track.keyframes) || track.keyframes.length === 0) {
+    errors.push({ path: `${path}.keyframes`, message: 'Camera track must have at least one keyframe', severity: 'error' });
+    return;
+  }
+  let previousFrame = -1;
+  track.keyframes.forEach((keyframe, index) => {
+    const keyframePath = `${path}.keyframes[${index}]`;
+    if (!keyframe || typeof keyframe !== 'object' || Array.isArray(keyframe)) {
+      errors.push({ path: keyframePath, message: 'Camera keyframe must be an object', severity: 'error' });
+      return;
+    }
+    const current = keyframe as Record<string, unknown>;
+    if (!Number.isInteger(current.frame) || (current.frame as number) < 0 || (current.frame as number) > duration) {
+      errors.push({ path: `${keyframePath}.frame`, message: 'Camera keyframe frame must be a non-negative integer within the timeline duration', severity: 'error' });
+    } else if ((current.frame as number) <= previousFrame) {
+      errors.push({ path: `${keyframePath}.frame`, message: 'Camera keyframe frames must be strictly increasing', severity: 'error' });
+    }
+    previousFrame = typeof current.frame === 'number' ? current.frame : previousFrame;
+    validateViewport(current.viewport, `${keyframePath}.viewport`, track.coordinateSpace, errors);
+    validateEasing(current.easing, `${keyframePath}.easing`, errors);
+  });
+}
+
+function validateEasing(easing: unknown, path: string, errors: ValidationError[]) {
+  if (easing === undefined) return;
+  if (typeof easing === 'string') {
+    if (!VALID_EASING_NAMES.includes(easing)) {
+      errors.push({ path, message: `Unknown easing "${easing}". Available: ${VALID_EASING_NAMES.join(', ')}`, severity: 'error' });
+    }
+    return;
+  }
+  if (!easing || typeof easing !== 'object' || Array.isArray(easing)) {
+    errors.push({ path, message: 'Easing must be a string name or { type: "spring"|"cubicBezier", ... }', severity: 'error' });
+    return;
+  }
+  const spec = easing as Record<string, unknown>;
+  if (spec.type === 'spring') {
+    validateOptionalFiniteEasingNumber(spec, 'stiffness', path, errors, true);
+    validateOptionalFiniteEasingNumber(spec, 'damping', path, errors, false);
+    validateOptionalFiniteEasingNumber(spec, 'mass', path, errors, true);
+    return;
+  }
+  if (spec.type === 'cubicBezier') {
+    for (const field of ['x1', 'y1', 'x2', 'y2']) {
+      if (!Number.isFinite(spec[field])) {
+        errors.push({ path: `${path}.${field}`, message: `cubicBezier requires finite numeric "${field}"`, severity: 'error' });
+      }
+    }
+    return;
+  }
+  errors.push({ path: `${path}.type`, message: 'Easing object type must be "spring" or "cubicBezier"', severity: 'error' });
+}
+
+function validateOptionalFiniteEasingNumber(
+  spec: Record<string, unknown>,
+  field: 'stiffness' | 'damping' | 'mass',
+  path: string,
+  errors: ValidationError[],
+  mustBePositive: boolean,
+) {
+  const value = spec[field];
+  if (value === undefined) return;
+  if (!Number.isFinite(value) || (mustBePositive ? (value as number) <= 0 : (value as number) < 0)) {
+    errors.push({
+      path: `${path}.${field}`,
+      message: `${field} must be a finite ${mustBePositive ? 'positive' : 'non-negative'} number`,
+      severity: 'error',
+    });
+  }
+}
+
+function validateCameraOptions(camera: Record<string, unknown>, path: string, errors: ValidationError[]) {
+  if (camera.coordinateSpace !== undefined && camera.coordinateSpace !== 'scene' && camera.coordinateSpace !== 'normalized') {
+    errors.push({ path: `${path}.coordinateSpace`, message: 'coordinateSpace must be "scene" or "normalized"', severity: 'error' });
+  }
+  if (camera.fit !== undefined && camera.fit !== 'cover' && camera.fit !== 'contain') {
+    errors.push({ path: `${path}.fit`, message: 'fit must be "cover" or "contain"', severity: 'error' });
+  }
+}
+
+function validateViewport(viewport: unknown, path: string, coordinateSpace: unknown, errors: ValidationError[]) {
+  if (!viewport || typeof viewport !== 'object' || Array.isArray(viewport)) {
+    errors.push({ path, message: 'Camera viewport must be an object', severity: 'error' });
+    return;
+  }
+  const current = viewport as Record<string, unknown>;
+  for (const key of ['x', 'y', 'width', 'height']) {
+    if (!Number.isFinite(current[key])) {
+      errors.push({ path: `${path}.${key}`, message: `Camera viewport ${key} must be a finite number`, severity: 'error' });
+    }
+  }
+  if (Number.isFinite(current.width) && (current.width as number) <= 0) {
+    errors.push({ path: `${path}.width`, message: 'Camera viewport width must be positive', severity: 'error' });
+  }
+  if (Number.isFinite(current.height) && (current.height as number) <= 0) {
+    errors.push({ path: `${path}.height`, message: 'Camera viewport height must be positive', severity: 'error' });
+  }
+  if (
+    coordinateSpace === 'normalized' &&
+    Number.isFinite(current.x) &&
+    Number.isFinite(current.y) &&
+    Number.isFinite(current.width) &&
+    Number.isFinite(current.height) &&
+    ((current.x as number) < 0 ||
+      (current.y as number) < 0 ||
+      (current.width as number) > 1 ||
+      (current.height as number) > 1 ||
+      (current.x as number) + (current.width as number) > 1 ||
+      (current.y as number) + (current.height as number) > 1)
+  ) {
+    errors.push({ path, message: 'Normalized camera viewport must stay within the unit scene rectangle', severity: 'error' });
   }
 }
 

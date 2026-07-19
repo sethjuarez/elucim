@@ -6,6 +6,7 @@ import {
   applyTimelineDocumentChange,
   getPreferredMotionType,
 } from '../timeline/EditorTimelinePanel';
+import { clampTimelineKeyframesToDuration, previewFramesEqual } from '../timeline/Timeline';
 
 const timeline: ElucimTimeline = {
   id: 'intro',
@@ -57,6 +58,52 @@ describe('editor timeline panel helpers', () => {
     expect(next.timelines?.intro.duration).toBe(60);
     expect(next.stateMachines?.deck.states.complete).toEqual({});
     expect(next.elements).toBe(document.elements);
+  });
+
+  it('preserves camera-only timelines', () => {
+    const cameraTimeline: ElucimTimeline = {
+      id: 'camera',
+      duration: 30,
+      tracks: [],
+      camera: {
+        keyframes: [{ frame: 0, viewport: { x: 0, y: 0, width: 800, height: 600 } }],
+      },
+    };
+
+    const next = applyTimelineDocumentChange(document, { camera: cameraTimeline });
+
+    expect(next.timelines?.camera.camera?.keyframes).toHaveLength(1);
+  });
+
+  it('coalesces camera keyframes when a timeline duration is reduced', () => {
+    const next = clampTimelineKeyframesToDuration({
+      id: 'camera',
+      duration: 30,
+      tracks: [],
+      camera: {
+        keyframes: [
+          { frame: 0, viewport: { x: 0, y: 0, width: 800, height: 600 } },
+          { frame: 20, viewport: { x: 100, y: 75, width: 400, height: 300 } },
+          { frame: 30, viewport: { x: 200, y: 150, width: 200, height: 150 } },
+        ],
+      },
+    }, 10);
+
+    expect(next.camera?.keyframes).toEqual([
+      { frame: 0, viewport: { x: 0, y: 0, width: 800, height: 600 } },
+      { frame: 10, viewport: { x: 200, y: 150, width: 200, height: 150 } },
+    ]);
+  });
+
+  it('refreshes state-machine preview frames when camera application changes', () => {
+    expect(previewFramesEqual(
+      [{ timelineId: 'inactive', frame: 0 }],
+      [{ timelineId: 'inactive', frame: 0, applyCamera: false }],
+    )).toBe(false);
+    expect(previewFramesEqual(
+      [{ timelineId: 'inactive', frame: 0 }],
+      [{ timelineId: 'inactive', frame: 0, applyCamera: true }],
+    )).toBe(true);
   });
 
   it('selects the state-machine motion tab only for the state-machine workspace', () => {

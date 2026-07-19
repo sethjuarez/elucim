@@ -23,11 +23,13 @@ afterEach(() => {
 function KeyboardHarness({
   isPlaying,
   isCanvasHovered = false,
+  isCameraFraming = false,
   dispatch,
   selectedIds = [],
 }: {
   isPlaying: boolean;
   isCanvasHovered?: boolean;
+  isCameraFraming?: boolean;
   dispatch: React.Dispatch<EditorAction>;
   selectedIds?: string[];
 }) {
@@ -38,6 +40,7 @@ function KeyboardHarness({
     zoom: 1,
     isPlaying,
     isCanvasHovered,
+    isCameraFraming,
     getDocumentJson: () => JSON.stringify(testDocument),
     importDocument: () => {},
   });
@@ -82,6 +85,17 @@ describe('keyboard shortcuts', () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete' }));
 
     expect(dispatch).toHaveBeenCalledWith({ type: 'DELETE_ELEMENTS', ids: ['rect-1'] });
+  });
+
+  it('reserves keyboard input for camera framing and cancels it with Escape', () => {
+    const dispatch = vi.fn();
+    render(<KeyboardHarness isPlaying={false} isCameraFraming selectedIds={['rect-1']} dispatch={dispatch} />);
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete' }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    expect(dispatch).not.toHaveBeenCalledWith({ type: 'DELETE_ELEMENTS', ids: ['rect-1'] });
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_CAMERA_FRAMING', framing: false });
   });
 
   it('focuses the canvas on pointer down so stale form focus does not trap Delete', () => {

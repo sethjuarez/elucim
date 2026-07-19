@@ -5,6 +5,7 @@ import { CANVAS_ID } from '../state/types';
 import type { BoundingBox } from '../utils/bounds';
 import { screenToScene } from './useViewport';
 import { startRafDrag } from '../interactions/rafDrag';
+import { resolveCameraViewport, type CameraNode } from '@elucim/dsl';
 
 export interface MarqueeRect {
   x: number;
@@ -21,6 +22,9 @@ interface UseMarqueeOptions {
   activeTool: string;
   /** Map of element ID → measured bounds */
   boundsMap: Map<string, BoundingBox>;
+  sceneWidth: number;
+  sceneHeight: number;
+  camera?: CameraNode;
 }
 
 /**
@@ -35,6 +39,9 @@ export function useMarquee({
   isPanning,
   activeTool,
   boundsMap,
+  sceneWidth,
+  sceneHeight,
+  camera,
 }: UseMarqueeOptions) {
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
   const startRef = useRef<{ sceneX: number; sceneY: number } | null>(null);
@@ -57,7 +64,7 @@ export function useMarquee({
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
-    const scene = screenToScene(e.clientX, e.clientY, rect, viewport);
+    const scene = screenToMarqueeScene(e.clientX, e.clientY, rect, viewport, sceneWidth, sceneHeight, camera);
 
     const start = { sceneX: scene.x, sceneY: scene.y };
     startRef.current = start;
@@ -68,7 +75,7 @@ export function useMarquee({
       event: e,
       onFrame: point => {
         const frameRect = container.getBoundingClientRect();
-        const current = screenToScene(point.clientX, point.clientY, frameRect, viewport);
+        const current = screenToMarqueeScene(point.clientX, point.clientY, frameRect, viewport, sceneWidth, sceneHeight, camera);
         const x = Math.min(start.sceneX, current.x);
         const y = Math.min(start.sceneY, current.y);
         const width = Math.abs(current.x - start.sceneX);
@@ -80,7 +87,7 @@ export function useMarquee({
       onCommit: point => {
         startRef.current = null;
         const commitRect = container.getBoundingClientRect();
-        const current = screenToScene(point.clientX, point.clientY, commitRect, viewport);
+        const current = screenToMarqueeScene(point.clientX, point.clientY, commitRect, viewport, sceneWidth, sceneHeight, camera);
         const x = Math.min(start.sceneX, current.x);
         const y = Math.min(start.sceneY, current.y);
         const w = Math.abs(current.x - start.sceneX);
@@ -125,7 +132,7 @@ export function useMarquee({
         setMarquee(null);
       },
     });
-  }, [dispatch, isPanning, activeTool, viewport, containerRef, boundsMap]);
+  }, [dispatch, isPanning, activeTool, viewport, containerRef, boundsMap, sceneWidth, sceneHeight, camera]);
 
   const handleMarqueeMove = useCallback((_e: React.PointerEvent) => {}, []);
 
@@ -136,6 +143,24 @@ export function useMarquee({
     handleMarqueeStart,
     handleMarqueeMove,
     handleMarqueeEnd,
+  };
+}
+
+export function screenToMarqueeScene(
+  clientX: number,
+  clientY: number,
+  rect: DOMRect,
+  viewport: Viewport,
+  sceneWidth: number,
+  sceneHeight: number,
+  camera?: CameraNode,
+): { x: number; y: number } {
+  const scene = screenToScene(clientX, clientY, rect, viewport);
+  if (!camera) return scene;
+  const transform = resolveCameraViewport(camera, sceneWidth, sceneHeight);
+  return {
+    x: (scene.x - transform.offsetX) / transform.scale + transform.viewport.x,
+    y: (scene.y - transform.offsetY) / transform.scale + transform.viewport.y,
   };
 }
 

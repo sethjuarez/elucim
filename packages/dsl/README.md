@@ -136,6 +136,38 @@ function App() {
 }
 ```
 
+### Timeline camera
+
+Camera animation belongs to a timeline, rather than to a synthetic root group. A camera keyframe describes the scene rectangle to view at a frame. The renderer maps that rectangle through a clipped SVG viewport, so the same document behaves consistently in browser previews, SVG rendering, and PNG export.
+
+```ts
+const doc: ElucimDocument = {
+  // scene and elements omitted
+  version: '2.0',
+  scene: { type: 'player', width: 1280, height: 720, children: ['detail'] },
+  elements: { /* ... */ },
+  timelines: {
+    focusDetail: {
+      id: 'focusDetail',
+      duration: 45,
+      tracks: [],
+      camera: {
+        coordinateSpace: 'scene',
+        fit: 'cover',
+        keyframes: [
+          { frame: 0, viewport: { x: 0, y: 0, width: 1280, height: 720 } },
+          { frame: 45, viewport: { x: 720, y: 180, width: 360, height: 240 }, easing: 'easeInOutCubic' },
+        ],
+      },
+    },
+  },
+};
+```
+
+- `coordinateSpace: 'scene'` (default) uses scene pixels. Use `'normalized'` for rectangles in the unit scene `[0, 1] × [0, 1]`.
+- `fit: 'cover'` (default) fills the scene surface without distortion; `'contain'` keeps the entire focus rectangle visible and may letterbox.
+- Author cameras as `timeline.camera` keyframes. State machines select the active timeline camera through their normal state path. Static scene and render-tree camera fields are rejected.
+
 ## API
 
 ### `<DslRenderer dsl={doc} />`
@@ -190,8 +222,10 @@ Renders a document to an SVG string without a browser DOM — useful for server-
 
 ```ts
 import { renderToSvgString } from '@elucim/dsl';
-const svg = renderToSvgString(myDoc, 0);
+const svg = renderToSvgString(myDoc, 0, { timelineId: 'focusDetail' });
 ```
+
+Pass `timelineId` to evaluate that normalized timeline, including its camera, at the requested frame. `renderToPng(doc, frame, { timelineId })` accepts the same option for browser-side PNG export.
 
 ### Agent authoring helpers
 

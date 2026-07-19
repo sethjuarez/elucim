@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import type { ElucimDocument, ElucimTimelineFrameSelection, RenderableDocument } from '@elucim/dsl';
-import { applyTimelineFrames, createRenderableDocument } from '@elucim/dsl';
+import type { CameraNode, ElucimDocument, ElucimTimelineFrameSelection, RenderableDocument } from '@elucim/dsl';
+import { applyTimelineFrames, createRenderableDocument, evaluateTimelineCameraFrames } from '@elucim/dsl';
 import { useEditorState } from '../state/EditorProvider';
 import { createDocumentFromEditorState } from './documentCompatibility';
 
@@ -28,6 +28,15 @@ export function resolvePreviewDocument(
   const renderableFrames = previewTimelineFrames.filter(frame => document.timelines?.[frame.timelineId]);
   if (renderableFrames.length === 0) return undefined;
   return createRenderableDocument(applyTimelineFrames(document, renderableFrames));
+}
+
+export function resolvePreviewCamera(
+  document: ElucimDocument | undefined,
+  previewTimelineFrames: ElucimTimelineFrameSelection[] | undefined,
+): CameraNode | undefined {
+  if (!document || !previewTimelineFrames?.length) return undefined;
+  const renderableFrames = previewTimelineFrames.filter(frame => document.timelines?.[frame.timelineId]);
+  return renderableFrames.length > 0 ? evaluateTimelineCameraFrames(document, renderableFrames) : undefined;
 }
 
 /** Emits canonical document changes from internal editor state. */

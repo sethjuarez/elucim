@@ -81,6 +81,7 @@ describe('createInitialState', () => {
     expect(state.future).toEqual([]);
     expect(state.currentFrame).toBe(0);
     expect(state.isPlaying).toBe(false);
+    expect(state.isCameraFraming).toBe(false);
     expect(state.activeTool).toBe('select');
     expect(state.document.version).toBe('render-tree');
     expect((state.document.root as any).width).toBe(1920);
@@ -133,6 +134,52 @@ describe('selection actions', () => {
     const state = stateWithElements(circle1, rect1);
     const next = editorReducer(state, { type: 'SELECT', ids: ['c1'] });
     expect(next.selectedIds).toEqual(['c1']);
+  });
+
+  describe('camera framing action', () => {
+    it('toggles framing mode without creating an undo history entry', () => {
+      const state = stateWithElements(circle1);
+      const next = editorReducer(state, { type: 'SET_CAMERA_FRAMING', framing: true, timelineId: 'focus' });
+
+      expect(next.isCameraFraming).toBe(true);
+      expect(next.cameraFramingTimelineId).toBe('focus');
+      expect(next.past).toEqual([]);
+      const complete = editorReducer(next, { type: 'SET_CAMERA_FRAMING', framing: false });
+      expect(complete.isCameraFraming).toBe(false);
+      expect(complete.cameraFramingTimelineId).toBeUndefined();
+    });
+
+    it('tracks the timeline selected by motion authoring', () => {
+      const next = editorReducer(stateWithElements(circle1), { type: 'SET_ACTIVE_TIMELINE', timelineId: 'focus' });
+
+      expect(next.activeTimelineId).toBe('focus');
+    });
+
+    it('captures the framing playhead and applies timeline camera edits as one undoable action', () => {
+      let state = stateWithCanonicalDocument();
+      state = editorReducer(state, { type: 'SET_CAMERA_FRAMING', framing: true, timelineId: 'intro', frame: 12 });
+
+      expect(state.cameraFramingFrame).toBe(12);
+
+      state = editorReducer(state, {
+        type: 'UPDATE_TIMELINE_CAMERA',
+        timelineId: 'intro',
+        camera: {
+          keyframes: [{ frame: 12, viewport: { x: 80, y: 60, width: 400, height: 300 } }],
+        },
+      });
+      expect(state.canonicalDocument?.timelines?.intro.camera?.keyframes).toEqual([
+        { frame: 12, viewport: { x: 80, y: 60, width: 400, height: 300 } },
+      ]);
+
+      state = editorReducer(state, { type: 'UNDO' });
+      expect(state.canonicalDocument?.timelines?.intro.camera).toBeUndefined();
+
+      state = editorReducer(state, { type: 'REDO' });
+      expect(state.canonicalDocument?.timelines?.intro.camera?.keyframes).toEqual([
+        { frame: 12, viewport: { x: 80, y: 60, width: 400, height: 300 } },
+      ]);
+    });
   });
 
   it('SELECT_ADD adds to selection', () => {

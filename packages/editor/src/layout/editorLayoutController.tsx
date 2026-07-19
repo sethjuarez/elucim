@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
+import type { CameraNode, ElucimDocument, RenderableDocument } from '@elucim/dsl';
 import type { ElucimTheme } from '@elucim/core';
 import type { EditorRootProps } from '../chrome/EditorRoot';
 import type { EditorWorkspaceSurfaceProps } from '../chrome/EditorWorkspaceSurface';
@@ -26,6 +26,7 @@ export interface EditorLayoutSlotsOptions {
   workspace: EditorWorkspace;
   preferredLeftTab?: 'objects' | 'polish';
   previewDocument?: RenderableDocument;
+  previewCamera?: CameraNode;
   previewMode: EditorStateMachinePreviewMode;
   timelinePreviewCallbacks: EditorTimelinePreviewCallbacks;
   colorScheme?: string;
@@ -85,7 +86,7 @@ export function useEditorLayoutComposition({
   });
   const { themeVars, colorScheme } = resolveEditorThemeVars(theme, editorTheme, state.themeOverrides);
   const liveDocument = activeDocument;
-  const { previewDocument, stateMachinePreviewMode, timelinePreviewCallbacks } = useEditorPreviewController(liveDocument);
+  const { previewDocument, previewCamera, stateMachinePreviewMode, timelinePreviewCallbacks } = useEditorPreviewController(liveDocument);
   const anchorCanvasForLeftOffsetChange = useCallback((currentLeftOffset: number, nextLeftOffset: number) => {
     const delta = currentLeftOffset - nextLeftOffset;
     if (delta !== 0) {
@@ -103,6 +104,7 @@ export function useEditorLayoutComposition({
     workspace: shell.workspace,
     preferredLeftTab: shell.preferredLeftTab,
     previewDocument,
+    previewCamera,
     previewMode: stateMachinePreviewMode,
     timelinePreviewCallbacks,
     colorScheme,
@@ -140,6 +142,7 @@ export function buildEditorLayoutSlots({
   workspace,
   preferredLeftTab,
   previewDocument,
+  previewCamera,
   previewMode,
   timelinePreviewCallbacks,
   colorScheme,
@@ -153,6 +156,7 @@ export function buildEditorLayoutSlots({
     canvas: (
       <EditorCanvasPanel
         previewDocument={previewDocument}
+        previewCamera={previewCamera}
         previewMode={previewMode}
         editorColorScheme={colorScheme}
         contentTheme={contentTheme}
