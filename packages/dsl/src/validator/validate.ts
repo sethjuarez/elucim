@@ -300,6 +300,9 @@ function validateText(node: Record<string, unknown>, path: string, errors: Valid
   if (node.wrap !== undefined && node.wrap !== 'none' && node.wrap !== 'word' && node.wrap !== 'char') {
     errors.push({ path: `${path}.wrap`, message: '"wrap" must be one of: none, word, char', severity: 'error' });
   }
+  if ('typing' in node) {
+    errors.push({ path: `${path}.typing`, message: 'Text typing is not supported in render-tree documents. Use a canonical timeline reveal effect.', severity: 'error' });
+  }
   validateAnimationProps(node, path, errors);
 }
 

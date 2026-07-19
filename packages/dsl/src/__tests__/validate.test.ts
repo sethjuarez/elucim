@@ -109,6 +109,19 @@ describe('DSL Validator', () => {
       expect(result.valid).toBe(false);
     });
 
+    it('rejects the removed text-local typing property', () => {
+      const invalid = validate(wrap({
+        type: 'text',
+        x: 100,
+        y: 100,
+        content: 'Hello',
+        typing: { durationInFrames: 24 },
+      }));
+
+      expect(invalid.valid).toBe(false);
+      expect(invalid.errors.some(error => error.path.endsWith('.typing'))).toBe(true);
+    });
+
     it('accepts a valid polygon', () => {
       const result = validate(wrap({
         type: 'polygon',

@@ -24,6 +24,7 @@ export interface ElucimStateEvent {
 export interface ElucimStateMachineVisualFrame {
   timelineId: string;
   frame: number;
+  includeContent?: boolean;
   /** Whether this frame may override a legacy scene-camera fallback. */
   applyCamera?: boolean;
 }
@@ -34,6 +35,8 @@ export interface ElucimStateMachineRun {
   timelineId?: string;
   statePath: string[];
   currentFrame: number;
+  /** Resolved local frames aligned with `statePath`. */
+  stateFrames: number[];
   playing: boolean;
   event?: string;
   previousStateId?: string;
@@ -55,6 +58,8 @@ export interface ElucimStateMachineRunResult extends ElucimStateMachineRun {
  */
 export interface ElucimStateMachineVisualFrameOptions {
   statePath?: string[];
+  /** Local elapsed frames for each state in `statePath`. */
+  stateFrames?: number[];
   currentStateId: string;
   currentFrame: number;
   exited?: boolean;
@@ -77,6 +82,7 @@ export function startStateMachineRun(doc: ElucimDocument, machineId: string): El
       stateId: 'entry',
       statePath: [],
       currentFrame: 0,
+      stateFrames: [],
       playing: false,
       event: 'start',
       activeTransitionId: entryTransition.id,
@@ -103,9 +109,11 @@ export function dispatchStateMachineRunEvent(
   if (!transition) {
     if ((eventName === 'complete' || eventName === 'next') && run.stateId !== 'entry') {
       const hasEventsToWaitFor = (machine.transitions ?? []).some(transition => transition.from === run.stateId && transition.trigger);
+      const currentFrame = getStateTimelineDuration(doc, machine, run.stateId);
       return {
         ...run,
-        currentFrame: getStateTimelineDuration(doc, machine, run.stateId),
+        currentFrame,
+        stateFrames: replaceCurrentStateFrame(run, currentFrame),
         playing: false,
         event: hasEventsToWaitFor ? run.event : eventName,
         finished: !hasEventsToWaitFor,
@@ -132,6 +140,7 @@ export function dispatchStateMachineRunEvent(
     previousStateId: run.stateId,
     activeTransitionId: transition.id,
     statePath: run.stateId === 'entry' ? [targetStateId] : [...run.statePath, targetStateId],
+    stateFrames: run.stateId === 'entry' ? [0] : [...replaceCurrentStateFrame(run, run.currentFrame), 0],
   }));
   return { ...next, changed: true };
 }
@@ -146,9 +155,13 @@ export function advanceStateMachineRunFrame(
   const duration = getStateTimelineDuration(doc, machine, run.stateId);
   const nextFrame = run.currentFrame + frameDelta;
   if (nextFrame > duration) {
-    return dispatchStateMachineRunEvent(doc, { ...run, currentFrame: duration }, 'complete');
+    return dispatchStateMachineRunEvent(doc, {
+      ...run,
+      currentFrame: duration,
+      stateFrames: replaceCurrentStateFrame(run, duration),
+    }, 'complete');
   }
-  return { ...run, currentFrame: nextFrame };
+  return { ...run, currentFrame: nextFrame, stateFrames: replaceCurrentStateFrame(run, nextFrame) };
 }
 
 export function getStateMachineRunVisualFrames(
@@ -157,6 +170,7 @@ export function getStateMachineRunVisualFrames(
 ): ElucimStateMachineVisualFrame[] {
   return getStateMachineVisualFrames(doc, run.machineId, {
     statePath: run.stateId === 'entry' ? ['entry'] : run.statePath,
+    stateFrames: run.stateFrames,
     currentStateId: run.stateId,
     currentFrame: run.currentFrame,
     exited: run.exited,
@@ -190,12 +204,13 @@ export function getStateMachineVisualFrames(
     return frames;
   }
   const path = options.statePath?.length ? options.statePath : [options.currentStateId];
-  const frames: ElucimStateMachineVisualFrame[] = Object.keys(doc.timelines ?? {}).map(timelineId => ({
+  const frames: ElucimStateMachineVisualFrame[] = Object.entries(doc.timelines ?? {}).map(([timelineId, timeline]) => ({
     timelineId,
     frame: 0,
-    ...(doc.timelines?.[timelineId]?.camera ? { applyCamera: false } : {}),
+    includeContent: false,
+    ...(timeline.camera ? { applyCamera: false } : {}),
   }));
-  for (const stateId of path) {
+  for (const [index, stateId] of path.entries()) {
     if (stateId === 'entry') continue;
     const state = machine.states[stateId];
     if (!state) {
@@ -210,7 +225,9 @@ export function getStateMachineVisualFrames(
     }
     frames.push({
       timelineId: state.timeline,
-      frame: stateId === options.currentStateId && !options.exited ? options.currentFrame : timeline.duration,
+      frame: stateId === options.currentStateId && !options.exited
+        ? options.currentFrame
+        : options.stateFrames?.[index] ?? timeline.duration,
       ...(timeline.camera ? { applyCamera: true } : {}),
     });
   }
@@ -295,7 +312,13 @@ function enterState(
   doc: ElucimDocument,
   machine: ElucimStateMachine,
   stateId: string,
-  details: { event: string; previousStateId?: string; activeTransitionId?: string; statePath?: string[] },
+  details: {
+    event: string;
+    previousStateId?: string;
+    activeTransitionId?: string;
+    statePath?: string[];
+    stateFrames?: number[];
+  },
 ): ElucimStateMachineRun {
   if (!machine.states[stateId]) throw new Error(`State "${stateId}" does not exist in machine "${machine.id}"`);
   const timelineId = machine.states[stateId].timeline;
@@ -305,6 +328,7 @@ function enterState(
     timelineId,
     statePath: details.statePath ?? [stateId],
     currentFrame: 0,
+    stateFrames: details.stateFrames ?? [0],
     playing: Boolean(timelineId && doc.timelines?.[timelineId]),
     event: details.event,
     previousStateId: details.previousStateId,
@@ -343,7 +367,17 @@ function settleImmediateTransitions(
     previousStateId: run.stateId,
     activeTransitionId: transition.id,
     statePath: [...run.statePath, targetStateId],
+    stateFrames: [...replaceCurrentStateFrame(run, run.currentFrame), 0],
   }), visited);
+}
+
+function replaceCurrentStateFrame(run: ElucimStateMachineRun, frame: number): number[] {
+  if (run.stateId === 'entry') return run.stateFrames;
+  const stateFrames = run.stateFrames.length === run.statePath.length
+    ? [...run.stateFrames]
+    : [...run.statePath.map(() => 0)];
+  stateFrames[stateFrames.length - 1] = frame;
+  return stateFrames;
 }
 
 function snapshot(machine: ElucimStateMachine, stateId: string): ElucimStateSnapshot {

@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState } from 'react';
-import { DEFAULT_LINEAR_DURATION_IN_FRAMES, getMaxTimelineDuration, getStateMachineVisualFrames, type ElementNode, type ElucimDocument, type ElucimStateMachine, type ElucimTimeline, type ElucimTimelineFrameSelection, type ElucimTransition } from '@elucim/dsl';
+import { DEFAULT_LINEAR_DURATION_IN_FRAMES, getMaxTimelineDuration, getStateMachineVisualFrames, type ElementNode, type ElucimDocument, type ElucimRevealEffect, type ElucimStateMachine, type ElucimTimeline, type ElucimTimelineFrameSelection, type ElucimTransition } from '@elucim/dsl';
 import { BaseEdge, EdgeLabelRenderer, Handle, MarkerType, Position, ReactFlow, applyNodeChanges, getSmoothStepPath, type Edge, type EdgeProps, type Node, type NodeMouseHandler, type NodeProps, type OnConnect, type OnNodeDrag, type OnNodesChange, type ReactFlowInstance, type Viewport as ReactFlowViewport } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorState } from '../state/EditorProvider';
@@ -178,6 +178,7 @@ export function Timeline({
   const elementIds = children.map((el, i) => getElementId(el, i));
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const rows = useMemo(() => getRows(children, expandedIds), [children, expandedIds]);
+  const elementTypes = useMemo(() => Object.fromEntries(rows.map(row => [row.id, row.element.type])), [rows]);
   const timelineClips = useMemo(() => Object.values(activeTimelines ?? {}), [activeTimelines]);
   const stateMachineClips = useMemo(() => Object.values(activeStateMachines ?? {}), [activeStateMachines]);
   const timelineDurationFallback = getMaxTimelineDuration(activeTimelines) ?? DEFAULT_LINEAR_DURATION_IN_FRAMES;
@@ -696,6 +697,7 @@ export function Timeline({
             onAddTimeline={onActiveTimelinesChange ? addBlankTimeline : undefined}
             onAddIntroTimeline={onActiveTimelinesChange ? addIntroTimeline : undefined}
             elementIds={rows.map(row => row.id)}
+            elementTypes={elementTypes}
             stateMachines={stateMachineClips}
             timelines={activeTimelines ?? {}}
             onStateMachineChange={onActiveStateMachinesChange ? updateStateMachine : undefined}
@@ -939,6 +941,7 @@ function TimelineClipRows({
   onAddTimeline,
   onAddIntroTimeline,
   elementIds,
+  elementTypes,
   stateMachines,
   timelines,
   onStateMachineChange,
@@ -975,6 +978,7 @@ function TimelineClipRows({
   onAddTimeline?: () => void;
   onAddIntroTimeline?: () => void;
   elementIds: string[];
+  elementTypes: Record<string, string>;
   stateMachines: ElucimStateMachine[];
   timelines: Record<string, ElucimTimeline>;
   onStateMachineChange?: (machine: ElucimStateMachine) => void;
@@ -1220,6 +1224,9 @@ function TimelineClipRows({
         : track),
     });
     selectMotionItem({ type: 'animation', timelineId: clip.id, trackIndex });
+  };
+  const updateEffects = (clip: ElucimTimeline, effects: ElucimRevealEffect[]) => {
+    onTimelineChange?.({ ...clip, effects });
   };
   const dragKeyframe = (event: React.PointerEvent<HTMLButtonElement>, clip: ElucimTimeline, trackIndex: number, keyframeIndex: number) => {
     if (!onTimelineChange) return;
@@ -2142,11 +2149,13 @@ function TimelineClipRows({
             keyframe={selectedKeyframe}
             selectedItem={selectedItem?.type === 'animation' ? selectedItem : null}
             elementIds={elementIds}
+            elementTypes={elementTypes}
             onRenameClip={renameClip}
             onUpdateDuration={updateDuration}
             onUpdateTrack={updateTrack}
             onUpdateKeyframe={updateKeyframe}
             onDeleteKeyframe={deleteKeyframe}
+            onUpdateEffects={updateEffects}
           />
         )}
       </div>

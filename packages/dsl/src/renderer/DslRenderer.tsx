@@ -9,6 +9,7 @@ import {
   getDocumentLinearDuration,
   getInitialStateSnapshot,
   getStateMachineVisualFrames,
+  resolveTimelineReveals,
   toRenderableDocument,
 } from '../document';
 import { renderRoot } from './renderElements';
@@ -16,6 +17,7 @@ import { useStateMachineRuntime } from './useStateMachineRuntime';
 import {
   type ElucimTheme,
   type ImageResolverFn,
+  type RevealState,
   ImageResolverProvider,
   DARK_THEME_VARS, LIGHT_THEME_VARS,
   normalizeTheme,
@@ -258,14 +260,34 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
       : themeWithCompatibilityAliases(theme),
   ) as React.CSSProperties;
 
-  const posterProjection = poster !== undefined ? resolvePosterRenderableDsl(poster, dsl) : undefined;
+  const posterFrame = poster === undefined
+    ? undefined
+    : dsl.version === '2.0'
+      ? resolveDocumentPosterFrame(poster, dsl)
+      : resolvePoster(poster, dsl).frame;
+  const posterTimelineFrames = poster !== undefined && dsl.version === '2.0'
+    ? getPosterTimelineFrames(dsl, posterFrame!)
+    : undefined;
+  const posterProjection = poster !== undefined
+    ? resolvePosterRenderableDsl(poster, dsl, posterTimelineFrames)
+    : undefined;
   const renderableDsl = stateMachineRuntime.renderableDsl ?? posterProjection?.document ?? toRenderableDocument(dsl);
   const camera = stateMachineRuntime.camera ?? posterProjection?.camera;
-  const posterOverrides = poster !== undefined && posterProjection === undefined ? resolvePoster(poster, renderableDsl) : undefined;
-  const rootOverrides = stateMachineRuntime.enabled ? { frame: stateMachineRuntime.frameOverride } : posterOverrides;
+  const posterOverrides = poster !== undefined && posterProjection === undefined
+    ? { ...resolvePoster(poster, renderableDsl), revealStates: undefined }
+    : undefined;
+  const rootOverrides = stateMachineRuntime.enabled
+    ? {
+      frame: stateMachineRuntime.frameOverride,
+      revealStates: stateMachineRuntime.revealStates,
+    }
+    : posterProjection
+      ? { frame: posterFrame, revealStates: posterProjection.revealStates }
+      : posterOverrides;
 
   const content = renderRoot(renderableDsl.root, {
     frame: rootOverrides?.frame,
+    revealStates: rootOverrides?.revealStates,
     playerRef,
     colorScheme: resolvedColorScheme,
     controls,
@@ -307,12 +329,16 @@ function resolvePoster(poster: 'first' | 'last' | number, dsl: RenderableDocumen
 function resolvePosterRenderableDsl(
   poster: 'first' | 'last' | number,
   dsl: ElucimDocument | RenderableDocument,
-): { document: RenderableDocument; camera?: CameraNode } | undefined {
+  frames?: ElucimTimelineFrameSelection[],
+): { document: RenderableDocument; camera?: CameraNode; revealStates: Record<string, RevealState> } | undefined {
   if (dsl.version !== '2.0') return undefined;
-  const frame = resolveDocumentPosterFrame(poster, dsl);
-  const frames = getPosterTimelineFrames(dsl, frame);
-  const posterDoc = frames.length > 0 ? applyTimelineFrames(dsl, frames) : dsl;
-  return { document: createRenderableDocument(posterDoc), camera: evaluateTimelineCameraFrames(dsl, frames) };
+  const posterFrames = frames ?? getPosterTimelineFrames(dsl, resolveDocumentPosterFrame(poster, dsl));
+  const posterDoc = posterFrames.length > 0 ? applyTimelineFrames(dsl, posterFrames) : dsl;
+  return {
+    document: createRenderableDocument(posterDoc),
+    camera: evaluateTimelineCameraFrames(dsl, posterFrames),
+    revealStates: resolveTimelineReveals(dsl, posterFrames),
+  };
 }
 
 function resolveDocumentPosterFrame(poster: 'first' | 'last' | number, dsl: ElucimDocument): number {

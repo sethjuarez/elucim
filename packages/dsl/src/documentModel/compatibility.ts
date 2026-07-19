@@ -1,5 +1,6 @@
 import type { ElucimDocument as RenderableDocument, ElementNode, PlayerNode, SceneNode } from '../schema/types';
 import type { ElucimDocument, ElucimElement, ElucimScene } from './types';
+import type { ElucimTimelineFrameSelection } from './timeline';
 import { getDocumentLinearDuration } from './duration';
 import { getInitialStateSnapshot, getStateMachineVisualFrames } from './stateMachine';
 import { applyTimelineFrames } from './timeline';
@@ -102,16 +103,20 @@ export function createRenderableDocument(doc: ElucimDocument): RenderableDocumen
 }
 
 export function applyDefaultStateMachineInitialFrame(doc: ElucimDocument): ElucimDocument {
-  if (!doc.defaultStateMachine || !doc.stateMachines?.[doc.defaultStateMachine]) return doc;
+  const frames = getDefaultStateMachineInitialFrames(doc);
+  return frames.length > 0 ? applyTimelineFrames(doc, frames) : doc;
+}
+
+export function getDefaultStateMachineInitialFrames(doc: ElucimDocument): ElucimTimelineFrameSelection[] {
+  if (!doc.defaultStateMachine || !doc.stateMachines?.[doc.defaultStateMachine]) return [];
   const snapshot = getInitialStateSnapshot(doc, doc.defaultStateMachine);
-  const frames = getStateMachineVisualFrames(doc, doc.defaultStateMachine, {
+  return getStateMachineVisualFrames(doc, doc.defaultStateMachine, {
     statePath: [snapshot.stateId],
     currentStateId: snapshot.stateId,
     currentFrame: 0,
     missingState: 'skip',
     missingTimeline: 'skip',
   });
-  return frames.length > 0 ? applyTimelineFrames(doc, frames) : doc;
 }
 
 function restoreElement(doc: ElucimDocument, id: string): ElementNode {

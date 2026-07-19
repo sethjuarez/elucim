@@ -6,12 +6,13 @@ import React, { useEffect } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { editorReducer } from '../state/reducer';
 import { createInitialState } from '../state/types';
-import type { CircleNode, RectNode } from '@elucim/dsl';
+import type { CircleNode, RectNode, TextNode } from '@elucim/dsl';
 import { EditorProvider, useEditorState } from '../state/EditorProvider';
 import { Timeline } from '../timeline/Timeline';
 
 const circle: CircleNode = { type: 'circle', id: 'c1', cx: 100, cy: 100, r: 50, fadeIn: 20, fadeOut: 10, draw: 40 };
 const rect: RectNode = { type: 'rect', id: 'r1', x: 50, y: 50, width: 100, height: 80 };
+const typedText: TextNode = { type: 'text', id: 't1', x: 50, y: 50, content: '42' };
 
 afterEach(() => cleanup());
 
@@ -272,6 +273,33 @@ describe('canonical timeline clip rows', () => {
     rerender(renderEditableTimeline());
     fireEvent.click(screen.getByRole('button', { name: 'Remove intro r1.scale track' }));
     await waitFor(() => expect(latestTimelines.intro.tracks).toHaveLength(1));
+  });
+
+  it('preserves string values while editing text content tracks', async () => {
+    let latestTimelines: any;
+    const { rerender } = render(
+      React.createElement(
+        EditorProvider,
+        { initialDocument: { version: 'render-tree', root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [typedText] } } },
+        React.createElement(Timeline, {
+          timelines: {
+            typing: {
+              id: 'typing',
+              duration: 20,
+              tracks: [{ target: 't1', property: 'content', keyframes: [{ frame: 0, value: '' }, { frame: 20, value: '42' }] }],
+            },
+          },
+          onTimelinesChange: timelines => { latestTimelines = timelines; },
+        }),
+      ),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Go to typing t1.content keyframe 20' }));
+    fireEvent.change(screen.getByLabelText('typing t1.content keyframe 2 value'), { target: { value: '43' } });
+    fireEvent.blur(screen.getByLabelText('typing t1.content keyframe 2 value'));
+    await waitFor(() => expect(latestTimelines.typing.tracks[0].keyframes[1].value).toBe('43'));
+
+    rerender(React.createElement('div'));
   });
 
   it('renames canonical timelines and updates state machine timeline references', async () => {
@@ -906,5 +934,44 @@ describe('canonical timeline clip rows', () => {
       expect(latestTimelines.timeline.tracks[0].target).toBe('r1');
       expect(latestTimelines.timeline.tracks[0].property).toBe('opacity');
     });
+  });
+
+  it('authors a timeline-owned reveal effect instead of element-local typing', async () => {
+    let latestTimelines: any = {
+      intro: {
+        id: 'intro',
+        duration: 30,
+        tracks: [{ target: 'r1', property: 'opacity', keyframes: [{ frame: 0, value: 1 }] }],
+      },
+    };
+
+    render(
+      React.createElement(
+        EditorProvider,
+        {
+          initialDocument: {
+            version: 'render-tree',
+            root: { type: 'player', width: 800, height: 600, durationInFrames: 120, fps: 60, children: [rect] },
+          },
+        },
+        React.createElement(Timeline, {
+          timelines: latestTimelines,
+          onTimelinesChange: timelines => {
+            latestTimelines = timelines;
+          },
+        }),
+      ),
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Add reveal to intro' }));
+
+    await waitFor(() => expect(latestTimelines.intro.effects).toEqual([{
+      id: 'reveal',
+      kind: 'reveal',
+      targets: ['r1'],
+      from: 0,
+      duration: 30,
+      strategy: 'auto',
+    }]));
   });
 });

@@ -106,6 +106,45 @@ describe('renderToSvgString', () => {
     expect(svg).toContain('overflow="hidden"');
   });
 
+  it('projects default state camera and reveal effects through the same frame selection', () => {
+    const normalized: ElucimDocument = {
+      version: '2.0',
+      scene: { type: 'scene', width: 400, height: 300, children: ['label'] },
+      elements: {
+        label: {
+          id: 'label',
+          type: 'text',
+          props: { type: 'text', x: 200, y: 150, content: 'Hello', fontSize: 24 },
+        },
+      },
+      timelines: {
+        idle: {
+          id: 'idle',
+          duration: 10,
+          tracks: [],
+          effects: [{ id: 'reveal-label', kind: 'reveal', targets: ['label'], from: 0, duration: 10, strategy: 'type' }],
+          camera: {
+            keyframes: [{ frame: 0, viewport: { x: 100, y: 75, width: 200, height: 150 } }],
+          },
+        },
+      },
+      stateMachines: {
+        presentation: {
+          id: 'presentation',
+          entry: 'idle',
+          states: { idle: { timeline: 'idle' } },
+          transitions: [{ id: 'entry-idle', from: 'entry', to: 'idle', trigger: 'onStart' }],
+        },
+      },
+      defaultStateMachine: 'presentation',
+    };
+
+    const svg = renderToSvgString(normalized, 0);
+
+    expect(svg).toContain('viewBox="100 75 200 150"');
+    expect(svg).not.toContain('Hello');
+  });
+
   it('evaluates a selected timeline camera for static SVG export', () => {
     const normalized: ElucimDocument = {
       version: '2.0',

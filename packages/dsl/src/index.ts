@@ -20,6 +20,9 @@ export type {
   ElucimGraphViewport,
   ElucimIntent,
   ElucimKeyframe,
+  ElucimRevealCursor,
+  ElucimRevealEffect,
+  ElucimRevealStrategy,
   ElucimLayout,
   ElucimMetadata,
   ElucimRepairHint,
@@ -108,6 +111,7 @@ export {
   evaluateCameraTrack,
   applyTimelineFrame,
   applyTimelineFrames,
+  resolveTimelineReveals,
   evaluateTimelineCameraFrames,
 } from './documentModel/timeline';
 export {

@@ -150,9 +150,9 @@ describe('document state machines', () => {
     });
 
     expect(frames).toEqual([
-      { timelineId: 'idle', frame: 0 },
-      { timelineId: 'intro', frame: 0 },
-      { timelineId: 'outro', frame: 0 },
+      { timelineId: 'idle', frame: 0, includeContent: false },
+      { timelineId: 'intro', frame: 0, includeContent: false },
+      { timelineId: 'outro', frame: 0, includeContent: false },
       { timelineId: 'idle', frame: 1 },
       { timelineId: 'intro', frame: 12 },
     ]);
@@ -167,9 +167,9 @@ describe('document state machines', () => {
     });
 
     expect(frames).toEqual([
-      { timelineId: 'idle', frame: 0 },
-      { timelineId: 'intro', frame: 0 },
-      { timelineId: 'outro', frame: 0 },
+      { timelineId: 'idle', frame: 0, includeContent: false },
+      { timelineId: 'intro', frame: 0, includeContent: false },
+      { timelineId: 'outro', frame: 0, includeContent: false },
       { timelineId: 'idle', frame: 1 },
       { timelineId: 'intro', frame: 12 },
     ]);
@@ -222,7 +222,12 @@ describe('document state machines', () => {
       currentFrame: 0,
     });
 
-    expect(frames).toContainEqual({ timelineId: 'outro', frame: 0, applyCamera: false });
+    expect(frames).toContainEqual({
+      timelineId: 'outro',
+      frame: 0,
+      includeContent: false,
+      applyCamera: false,
+    });
     expect(evaluateTimelineCameraFrames(cameraDoc, frames)?.viewport).toEqual({ x: 0, y: 0, width: 800, height: 600 });
   });
 
@@ -396,9 +401,9 @@ describe('document state machines', () => {
     const waiting = startStateMachineRun(gated, 'presentation');
     expect(waiting).toMatchObject({ stateId: 'entry', playing: false, statePath: [] });
     expect(getStateMachineRunVisualFrames(gated, waiting)).toEqual([
-      { timelineId: 'idle', frame: 0 },
-      { timelineId: 'intro', frame: 0 },
-      { timelineId: 'outro', frame: 0 },
+      { timelineId: 'idle', frame: 0, includeContent: false },
+      { timelineId: 'intro', frame: 0, includeContent: false },
+      { timelineId: 'outro', frame: 0, includeContent: false },
     ]);
 
     const idle = dispatchStateMachineRunEvent(gated, waiting, 'onClick');

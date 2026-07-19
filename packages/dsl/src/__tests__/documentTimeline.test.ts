@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyCommand, applyTimelineFrame, applyTimelineFrames, createRenderableDocument, evaluateCameraTrack, evaluateTimeline, evaluateTimelineCameraFrames, validateDocument, type ElucimDocument } from '../index';
+import { applyCommand, applyTimelineFrame, applyTimelineFrames, createRenderableDocument, evaluateCameraTrack, evaluateTimeline, evaluateTimelineCameraFrames, resolveTimelineReveals, validateDocument, type ElucimDocument } from '../index';
 
 const doc: ElucimDocument = {
   version: '2.0',
@@ -53,6 +53,150 @@ describe('document timelines and keyframes', () => {
     expect(frame.title.props?.opacity).toBe(0.5);
     expect(frame.title.layout?.translate).toEqual([0, 12]);
     expect(frame.title.props?.fill).toBe('#808080');
+  });
+
+  it('applies text content timeline tracks without mutating the source document', () => {
+    const next = applyTimelineFrame({
+      ...doc,
+      timelines: {
+        typing: {
+          id: 'typing',
+          duration: 20,
+          tracks: [{ target: 'title', property: 'content', keyframes: [{ frame: 0, value: '' }, { frame: 20, value: 'Hello' }] }],
+        },
+      },
+    }, 'typing', 20);
+
+    expect(next.elements.title.props.content).toBe('Hello');
+    expect(doc.elements.title.props.content).toBe('Hello');
+  });
+
+  it('validates content tracks only for text targets with string keyframes', () => {
+    const result = validateDocument({
+      ...doc,
+      timelines: {
+        invalid: {
+          id: 'invalid',
+          duration: 10,
+          tracks: [{ target: 'title', property: 'content', keyframes: [{ frame: 0, value: 1 }] }],
+        },
+      },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors.map(error => error.path)).toContain('timelines.invalid.tracks[0].keyframes[0].value');
+  });
+
+  it('resolves explicit reveal effects for text and group descendants', () => {
+      const revealDoc: ElucimDocument = {
+        ...doc,
+        scene: { ...doc.scene, children: ['group'] },
+        elements: {
+          ...doc.elements,
+          group: { id: 'group', type: 'group', children: ['title', 'subtitle'], props: {} },
+          subtitle: { id: 'subtitle', type: 'rect', parentId: 'group', props: { type: 'rect', x: 0, y: 0, width: 10, height: 10 } },
+          title: { ...doc.elements.title, parentId: 'group' },
+        },
+        timelines: {
+          intro: {
+            id: 'intro',
+            duration: 12,
+            tracks: [],
+            effects: [{
+              id: 'reveal-group',
+              kind: 'reveal',
+              targets: ['group'],
+              from: 2,
+              duration: 4,
+              staggerInFrames: 2,
+              cursor: { character: '_' },
+            }],
+          },
+        },
+      };
+
+      const reveals = resolveTimelineReveals(revealDoc, [{ timelineId: 'intro', frame: 4 }]);
+
+      expect(reveals.title).toEqual({ progress: 0.5, strategy: 'type', cursor: { character: '_' } });
+      expect(reveals.subtitle).toEqual({ progress: 0, strategy: 'fade', cursor: { character: '_' } });
+      expect(validateDocument(revealDoc).valid).toBe(true);
+    });
+
+    it('rejects reveal effects that overrun their timeline', () => {
+      const result = validateDocument({
+        ...doc,
+        timelines: {
+          intro: {
+            id: 'intro',
+            duration: 5,
+            tracks: [],
+            effects: [{ id: 'late', kind: 'reveal', targets: ['title'], from: 3, duration: 3 }],
+          },
+        },
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(error => error.path === 'timelines.intro.effects[0]')).toBe(true);
+  });
+
+  it('keeps the latest started reveal effect for repeated targets', () => {
+      const revealDoc: ElucimDocument = {
+        ...doc,
+        timelines: {
+          intro: {
+            id: 'intro',
+            duration: 10,
+            tracks: [],
+            effects: [
+              { id: 'first', kind: 'reveal', targets: ['title'], from: 0, duration: 2 },
+              { id: 'second', kind: 'reveal', targets: ['title'], from: 5, duration: 3 },
+            ],
+          },
+        },
+      };
+
+      expect(resolveTimelineReveals(revealDoc, [{ timelineId: 'intro', frame: 3 }]).title.progress).toBe(1);
+      expect(resolveTimelineReveals(revealDoc, [{ timelineId: 'intro', frame: 5 }]).title.progress).toBe(0);
+  });
+
+  it('accepts effect-only timelines while rejecting incomplete or incompatible effects', () => {
+      const effectOnly: ElucimDocument = {
+        ...doc,
+        timelines: {
+          intro: {
+            id: 'intro',
+            duration: 5,
+            tracks: [],
+            effects: [{ id: 'fade', kind: 'reveal', targets: ['title'], from: 0, duration: 5, strategy: 'fade' }],
+          },
+        },
+      };
+      const malformed = {
+        ...effectOnly,
+        timelines: {
+          intro: {
+            ...effectOnly.timelines!.intro,
+            effects: [{ id: 'missing-timing', kind: 'reveal', targets: ['title'] }],
+          },
+        },
+      };
+      const invalidStrategy = {
+        ...effectOnly,
+        elements: {
+          ...effectOnly.elements,
+          box: { id: 'box', type: 'rect', props: { type: 'rect', x: 0, y: 0, width: 1, height: 1 } },
+        },
+        timelines: {
+          intro: {
+            ...effectOnly.timelines!.intro,
+            effects: [{ id: 'wrong-strategy', kind: 'reveal', targets: ['box'], from: 0, duration: 5, strategy: 'type' }],
+          },
+        },
+      };
+
+      expect(validateDocument(effectOnly).valid).toBe(true);
+      expect(() => applyTimelineFrame(effectOnly, 'intro', 2)).not.toThrow();
+      expect(validateDocument(malformed).valid).toBe(false);
+      expect(validateDocument(invalidStrategy).valid).toBe(false);
   });
 
   it('applies timeline frames without mutating the source document', () => {

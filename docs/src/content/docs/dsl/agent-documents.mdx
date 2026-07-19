@@ -157,7 +157,28 @@ const playable = createLoopingStateMachine(repaired.document, { timelineId: 'int
 
 ## Timelines and state machines
 
-Timelines are keyframe clips over a small safe property set: `opacity`, `translate`, `scale`, `rotate`, `fill`, and `stroke`.
+Timelines combine keyframe tracks with procedural `effects`. Tracks cover a small safe property set: `opacity`, `translate`, `scale`, `rotate`, `fill`, `stroke`, and text `content`. A `reveal` effect owns reveal timing, so keep full content on the text element and schedule an explicit effect whenever that phrase should appear. `strategy: 'auto'` types text and fades other current primitives; group targets expand to leaf descendants in child order and can use `staggerInFrames`.
+
+```ts
+timelines: {
+  intro: {
+    id: 'intro',
+    duration: 72,
+    tracks: [],
+    effects: [{
+      id: 'headline-reveal',
+      kind: 'reveal',
+      targets: ['headline'],
+      from: 12,
+      duration: 36,
+      strategy: 'auto',
+      cursor: { character: '|' },
+    }],
+  },
+}
+```
+
+Do not add a `typing` property to text. A `content` track does not implicitly restart a reveal; add another reveal effect with the desired start and duration instead.
 
 ```ts
 import { applyTimelineFrame, transitionStateMachine } from '@elucim/dsl';

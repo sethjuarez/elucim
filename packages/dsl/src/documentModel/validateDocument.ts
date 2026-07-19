@@ -3,7 +3,7 @@ import type { ValidationError, ValidationResult } from '../validator/validate';
 import { VALID_EASING_NAMES } from '../renderer/resolveEasing';
 
 const VALID_ROOT_TYPES = new Set(['scene', 'player']);
-const VALID_TIMELINE_PROPERTIES = new Set(['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke', 'x', 'dx', 'from', 'to', 'n']);
+const VALID_TIMELINE_PROPERTIES = new Set(['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke', 'content', 'x', 'dx', 'from', 'to', 'n']);
 const RESERVED_EVENT_NAMES = new Set(['complete', 'entry', 'exit', 'next']);
 const LEGACY_WRAPPER_ELEMENT_TYPES = new Set(['sequence', 'fadein', 'fadeout', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
 const LEGACY_ANIMATION_PROPS = new Set(['fadeIn', 'fadeOut', 'draw', 'write']);
@@ -89,6 +89,13 @@ function validateElement(id: string, element: ElucimElement, errors: ValidationE
           severity: 'error',
         });
       }
+    }
+    if (element.type === 'text' && 'typing' in element.props) {
+      errors.push({
+        path: `${path}.props.typing`,
+        message: 'Text typing is not a document property. Use a timeline reveal effect.',
+        severity: 'error',
+      });
     }
   }
   if (element.children !== undefined && !Array.isArray(element.children)) {
@@ -202,6 +209,8 @@ function validateTimelines(doc: ElucimDocument, errors: ValidationError[]) {
       }
       if (!VALID_TIMELINE_PROPERTIES.has(track.property)) {
         errors.push({ path: `${trackPath}.property`, message: `Unsupported animatable property "${String(track.property)}"`, severity: 'error' });
+      } else if (track.property === 'content' && doc.elements[track.target]?.type !== 'text') {
+        errors.push({ path: `${trackPath}.property`, message: 'The "content" timeline property can only target text elements', severity: 'error' });
       }
       if (!Array.isArray(track.keyframes) || track.keyframes.length === 0) {
         errors.push({ path: `${trackPath}.keyframes`, message: 'Track must have at least one keyframe', severity: 'error' });
@@ -222,11 +231,165 @@ function validateTimelines(doc: ElucimDocument, errors: ValidationError[]) {
           }
           if (keyframe.value === undefined) {
             errors.push({ path: `${keyframePath}.value`, message: 'Keyframe value is required', severity: 'error' });
+          } else if (track.property === 'content' && typeof keyframe.value !== 'string') {
+            errors.push({ path: `${keyframePath}.value`, message: 'Text content keyframes must use string values', severity: 'error' });
           }
         });
       }
+
     });
+    validateTimelineEffects(doc, timelineId, timeline, errors);
     validateTimelineCamera(timeline.camera, `timelines.${timelineId}.camera`, timeline.duration, errors);
+  }
+}
+
+function validateTimelineEffects(
+  doc: ElucimDocument,
+  timelineId: string,
+  timeline: { duration: number; effects?: unknown },
+  errors: ValidationError[],
+): void {
+  if (timeline.effects === undefined) return;
+  if (!Array.isArray(timeline.effects)) {
+    errors.push({ path: `timelines.${timelineId}.effects`, message: 'Timeline effects must be an array', severity: 'error' });
+    return;
+  }
+  const effectIds = new Set<string>();
+  timeline.effects.forEach((effect, index) => {
+    const path = `timelines.${timelineId}.effects[${index}]`;
+    if (!effect || typeof effect !== 'object' || Array.isArray(effect)) {
+      errors.push({ path, message: 'Timeline effect must be an object', severity: 'error' });
+      return;
+    }
+    const reveal = effect as Record<string, unknown>;
+    if (typeof reveal.id !== 'string' || !reveal.id.trim()) {
+      errors.push({ path: `${path}.id`, message: 'Effect id must be a non-empty string', severity: 'error' });
+    } else if (effectIds.has(reveal.id)) {
+      errors.push({ path: `${path}.id`, message: `Duplicate effect id "${reveal.id}"`, severity: 'error' });
+    } else {
+      effectIds.add(reveal.id);
+    }
+    if (reveal.kind !== 'reveal') {
+      errors.push({ path: `${path}.kind`, message: 'Only "reveal" timeline effects are supported', severity: 'error' });
+      return;
+    }
+    if (!Array.isArray(reveal.targets) || reveal.targets.length === 0) {
+      errors.push({ path: `${path}.targets`, message: 'Reveal effects require at least one target', severity: 'error' });
+      return;
+    }
+    const targets = reveal.targets.filter((target): target is string => typeof target === 'string');
+    if (targets.length !== reveal.targets.length) {
+      errors.push({ path: `${path}.targets`, message: 'Reveal targets must be element ID strings', severity: 'error' });
+    }
+    const uniqueTargets = new Set(targets);
+    if (uniqueTargets.size !== targets.length) {
+      errors.push({ path: `${path}.targets`, message: 'Reveal targets must not contain duplicates', severity: 'error' });
+    }
+    targets.forEach((target, targetIndex) => {
+      if (!doc.elements[target]) {
+        errors.push({ path: `${path}.targets[${targetIndex}]`, message: `Unknown target "${target}"`, severity: 'error' });
+      }
+    });
+    validateRequiredNonNegativeInteger(reveal.from, `${path}.from`, errors);
+    validateRequiredPositiveInteger(reveal.duration, `${path}.duration`, errors);
+    validateNonNegativeInteger(reveal.staggerInFrames, `${path}.staggerInFrames`, errors);
+    if (reveal.strategy !== undefined && !['auto', 'type', 'fade'].includes(reveal.strategy as string)) {
+      errors.push({ path: `${path}.strategy`, message: 'Reveal strategy must be "auto", "type", or "fade"', severity: 'error' });
+    }
+    validateRevealCursor(reveal.cursor, `${path}.cursor`, errors);
+
+    const leafTargets = expandRevealTargets(doc, targets, path, errors);
+    if (reveal.strategy === 'type' && leafTargets?.some(target => doc.elements[target]?.type !== 'text')) {
+      errors.push({ path: `${path}.strategy`, message: 'The "type" reveal strategy can only target text leaves', severity: 'error' });
+    }
+    if (
+      Number.isInteger(reveal.from)
+      && Number.isInteger(reveal.duration)
+      && (reveal.staggerInFrames === undefined || Number.isInteger(reveal.staggerInFrames))
+      && leafTargets !== undefined
+    ) {
+      const lastFrame = (reveal.from as number)
+        + (reveal.duration as number)
+        + ((reveal.staggerInFrames as number | undefined) ?? 0) * Math.max(0, leafTargets.length - 1);
+      if (lastFrame > timeline.duration) {
+        errors.push({ path, message: 'Reveal effect completion cannot exceed timeline duration', severity: 'error' });
+      }
+    }
+  });
+}
+
+function validateRevealCursor(value: unknown, path: string, errors: ValidationError[]): void {
+  if (value === undefined || typeof value === 'boolean') return;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    errors.push({ path, message: 'Reveal cursor must be a boolean or object', severity: 'error' });
+    return;
+  }
+  const cursor = value as Record<string, unknown>;
+  if (cursor.character !== undefined && (typeof cursor.character !== 'string' || cursor.character.length === 0)) {
+    errors.push({ path: `${path}.character`, message: 'Reveal cursor character must be a non-empty string', severity: 'error' });
+  }
+  validatePositiveInteger(cursor.blinkEveryFrames, `${path}.blinkEveryFrames`, errors);
+  if (cursor.hideWhenComplete !== undefined && typeof cursor.hideWhenComplete !== 'boolean') {
+    errors.push({ path: `${path}.hideWhenComplete`, message: 'Reveal cursor hideWhenComplete must be a boolean', severity: 'error' });
+  }
+}
+
+function expandRevealTargets(
+  doc: ElucimDocument,
+  targets: string[],
+  path: string,
+  errors: ValidationError[],
+): string[] | undefined {
+  const leaves: string[] = [];
+  const seen = new Set<string>();
+  let valid = true;
+  const visit = (id: string, ancestry: Set<string>) => {
+    if (ancestry.has(id)) {
+      errors.push({ path, message: `Reveal target tree contains a cycle at "${id}"`, severity: 'error' });
+      valid = false;
+      return;
+    }
+    const element = doc.elements[id];
+    if (!element) {
+      valid = false;
+      return;
+    }
+    if (element.children?.length) {
+      const nextAncestry = new Set(ancestry);
+      nextAncestry.add(id);
+      element.children.forEach(child => visit(child, nextAncestry));
+      return;
+    }
+    if (!seen.has(id)) {
+      seen.add(id);
+      leaves.push(id);
+    }
+  };
+  targets.forEach(target => visit(target, new Set()));
+  return valid ? leaves : undefined;
+}
+
+function validateNonNegativeInteger(value: unknown, path: string, errors: ValidationError[]): void {
+  if (value !== undefined && (!Number.isInteger(value) || (value as number) < 0)) {
+    errors.push({ path, message: 'Must be a non-negative integer', severity: 'error' });
+  }
+}
+
+function validatePositiveInteger(value: unknown, path: string, errors: ValidationError[]): void {
+  if (value !== undefined && (!Number.isInteger(value) || (value as number) <= 0)) {
+    errors.push({ path, message: 'Must be a positive integer', severity: 'error' });
+  }
+}
+
+function validateRequiredNonNegativeInteger(value: unknown, path: string, errors: ValidationError[]): void {
+  if (!Number.isInteger(value) || (value as number) < 0) {
+    errors.push({ path, message: 'Must be a non-negative integer', severity: 'error' });
+  }
+}
+
+function validateRequiredPositiveInteger(value: unknown, path: string, errors: ValidationError[]): void {
+  if (!Number.isInteger(value) || (value as number) <= 0) {
+    errors.push({ path, message: 'Must be a positive integer', severity: 'error' });
   }
 }
 
@@ -349,6 +512,7 @@ function validateViewport(viewport: unknown, path: string, coordinateSpace: unkn
       (current.y as number) + (current.height as number) > 1)
   ) {
     errors.push({ path, message: 'Normalized camera viewport must stay within the unit scene rectangle', severity: 'error' });
+
   }
 }
 
