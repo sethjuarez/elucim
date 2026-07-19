@@ -173,6 +173,7 @@ describe('inspector textbox fields', () => {
     await waitFor(() => expect(latestTextbox?.fontWeight).toBe(700));
     cleanup();
   });
+
 });
 
 // ─── Style field updates ───────────────────────────────────────────────────

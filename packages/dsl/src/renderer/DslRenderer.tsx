@@ -8,6 +8,7 @@ import {
   getDocumentLinearDuration,
   getInitialStateSnapshot,
   getStateMachineVisualFrames,
+  resolveTimelineReveals,
   toRenderableDocument,
 } from '../document';
 import { renderRoot } from './renderElements';
@@ -257,13 +258,36 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
       : themeWithCompatibilityAliases(theme),
   ) as React.CSSProperties;
 
-  const posterRenderableDsl = poster !== undefined ? resolvePosterRenderableDsl(poster, dsl) : undefined;
+  const posterFrame = poster === undefined
+    ? undefined
+    : dsl.version === '2.0'
+      ? resolveDocumentPosterFrame(poster, dsl)
+      : resolvePoster(poster, dsl).frame;
+  const posterTimelineFrames = poster !== undefined && dsl.version === '2.0'
+    ? getPosterTimelineFrames(dsl, posterFrame!)
+    : undefined;
+  const posterRenderableDsl = poster !== undefined
+    ? resolvePosterRenderableDsl(poster, dsl, posterTimelineFrames)
+    : undefined;
+  const posterRevealStates = dsl.version === '2.0' && posterTimelineFrames
+    ? resolveTimelineReveals(dsl, posterTimelineFrames)
+    : undefined;
   const renderableDsl = stateMachineRuntime.renderableDsl ?? posterRenderableDsl ?? toRenderableDocument(dsl);
-  const posterOverrides = poster !== undefined && posterRenderableDsl === undefined ? resolvePoster(poster, renderableDsl) : undefined;
-  const rootOverrides = stateMachineRuntime.enabled ? { frame: stateMachineRuntime.frameOverride } : posterOverrides;
+  const rootOverrides = stateMachineRuntime.enabled
+    ? {
+      frame: stateMachineRuntime.frameOverride,
+      revealStates: stateMachineRuntime.revealStates,
+    }
+    : posterFrame === undefined
+      ? undefined
+      : {
+        frame: posterFrame,
+        revealStates: posterRevealStates,
+      };
 
   const content = renderRoot(renderableDsl.root, {
     frame: rootOverrides?.frame,
+    revealStates: rootOverrides?.revealStates,
     playerRef,
     colorScheme: resolvedColorScheme,
     controls,
@@ -301,11 +325,14 @@ function resolvePoster(poster: 'first' | 'last' | number, dsl: RenderableDocumen
   return { frame: poster };
 }
 
-function resolvePosterRenderableDsl(poster: 'first' | 'last' | number, dsl: ElucimDocument | RenderableDocument): RenderableDocument | undefined {
+function resolvePosterRenderableDsl(
+  poster: 'first' | 'last' | number,
+  dsl: ElucimDocument | RenderableDocument,
+  frames?: ElucimTimelineFrameSelection[],
+): RenderableDocument | undefined {
   if (dsl.version !== '2.0') return undefined;
-  const frame = resolveDocumentPosterFrame(poster, dsl);
-  const frames = getPosterTimelineFrames(dsl, frame);
-  const posterDoc = frames.length > 0 ? applyTimelineFrames(dsl, frames) : dsl;
+  const posterFrames = frames ?? getPosterTimelineFrames(dsl, resolveDocumentPosterFrame(poster, dsl));
+  const posterDoc = posterFrames.length > 0 ? applyTimelineFrames(dsl, posterFrames) : dsl;
   return createRenderableDocument(posterDoc);
 }
 

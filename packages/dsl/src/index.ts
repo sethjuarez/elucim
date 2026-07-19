@@ -15,6 +15,9 @@ export type {
   ElucimGraphViewport,
   ElucimIntent,
   ElucimKeyframe,
+  ElucimRevealCursor,
+  ElucimRevealEffect,
+  ElucimRevealStrategy,
   ElucimLayout,
   ElucimMetadata,
   ElucimRepairHint,
@@ -94,6 +97,7 @@ export {
   evaluateTimeline,
   applyTimelineFrame,
   applyTimelineFrames,
+  resolveTimelineReveals,
 } from './documentModel/timeline';
 export {
   getInitialStateSnapshot,

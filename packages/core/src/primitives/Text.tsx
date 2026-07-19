@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
-import { measureTextLayout, type TextWrapMode } from '../text/measureText';
+import { measureTextLayout, measureTextWidth, type TextWrapMode } from '../text/measureText';
+import { useRevealState, type RevealCursorOptions } from '../animations/Reveal';
 
 export interface TextProps extends AnimationProps, SpatialProps, BaseElementProps {
   x: number;
@@ -42,20 +43,25 @@ export function Text({
   translate,
 }: TextProps) {
   const anim = useAnimation({ fadeIn, fadeOut, easing });
+  const reveal = useRevealState();
+  const revealState = reveal?.strategy === 'type'
+    ? resolveTextReveal(children, reveal.progress, reveal.cursor)
+    : { content: children };
+  const content = revealState.content;
   const shouldUseLayout = maxWidth !== undefined || lineHeight !== undefined || wrap !== undefined;
   const layout = shouldUseLayout
-    ? measureTextLayout(children, { fontSize, fontFamily, fontWeight, lineHeight, maxWidth, wrap })
+    ? measureTextLayout(content, { fontSize, fontFamily, fontWeight, lineHeight, maxWidth, wrap })
     : undefined;
-  const shouldRenderLines = layout !== undefined && (layout.lines.length !== 1 || layout.lines[0]?.text !== children);
+  const shouldRenderLines = layout !== undefined && (layout.lines.length !== 1 || layout.lines[0]?.text !== content);
   const renderedContent = shouldRenderLines && layout
     ? layout.lines.map((line, index) => (
       <tspan key={index} x={x} dy={index === 0 ? 0 : layout.lineHeight}>
         {line.text}
       </tspan>
     ))
-    : children;
+    : content;
 
-  const el = (
+  const textEl = (
     <text
       x={x}
       y={y}
@@ -71,6 +77,55 @@ export function Text({
       {renderedContent}
     </text>
   );
+  const cursorLineIndex = shouldRenderLines && layout ? Math.max(0, layout.lines.length - 1) : 0;
+  const cursorLine = shouldRenderLines && layout
+    ? layout.lines[cursorLineIndex] ?? { text: '', width: 0 }
+    : { text: content, width: measureTextWidth(content, { fontSize, fontFamily, fontWeight }) };
+  const cursorX = textAnchor === 'middle'
+    ? x + cursorLine.width / 2
+    : textAnchor === 'end'
+      ? x
+      : x + cursorLine.width;
+  const cursorY = y + (shouldRenderLines && layout ? cursorLineIndex * layout.lineHeight : 0);
+  const el = revealState.cursor ? (
+    <g>
+      {textEl}
+      <text
+        x={cursorX}
+        y={cursorY}
+        fill={fill}
+        fontSize={fontSize}
+        fontFamily={fontFamily}
+        fontWeight={fontWeight}
+        dominantBaseline={dominantBaseline}
+        opacity={baseOpacity * anim.opacity}
+        data-testid="elucim-text-cursor"
+      >
+        {revealState.cursor}
+      </text>
+    </g>
+  ) : textEl;
 
   return withTransform(el, { rotation, rotationOrigin, scale, translate }, [x, y], [x, y]);
+}
+
+function resolveTextReveal(
+  content: string,
+  progress: number,
+  cursor: boolean | RevealCursorOptions | undefined,
+): { content: string; cursor?: string } {
+  const characters = Array.from(content);
+  const visibleCount = Math.floor(Math.max(0, Math.min(1, progress)) * characters.length);
+  const visibleContent = characters.slice(0, visibleCount).join('');
+  const complete = visibleCount >= characters.length;
+  const cursorOptions = cursor === false ? undefined : cursor ?? true;
+  const hideWhenComplete = typeof cursorOptions === 'object'
+    ? cursorOptions.hideWhenComplete ?? true
+    : true;
+  if (!cursorOptions || (complete && hideWhenComplete)) return { content: visibleContent };
+
+  return {
+    content: visibleContent,
+    cursor: typeof cursorOptions === 'object' ? cursorOptions.character ?? '|' : '|',
+  };
 }

@@ -147,6 +147,234 @@ describe('DslRenderer player override props', () => {
     expect(container.querySelector('[data-testid="elucim-text"]')?.getAttribute('opacity')).toBe('0.75');
   });
 
+  it('drives a text reveal effect from the active state-machine timeline frame', () => {
+    const ref = React.createRef<DslRendererRef>();
+    const { container } = render(
+      <DslRenderer
+        ref={ref}
+        dsl={{
+          version: '2.0',
+          scene: { type: 'player', width: 400, height: 300, children: ['title'] },
+          elements: {
+            title: {
+              id: 'title',
+              type: 'text',
+              props: { type: 'text', x: 20, y: 40, content: 'Hello' },
+            },
+          },
+          timelines: {
+            intro: {
+              id: 'intro',
+              duration: 10,
+              tracks: [{ target: 'title', property: 'opacity', keyframes: [{ frame: 0, value: 1 }] }],
+              effects: [{ id: 'type-title', kind: 'reveal', targets: ['title'], from: 0, duration: 4 }],
+            },
+          },
+          defaultStateMachine: 'deck',
+          stateMachines: {
+            deck: {
+              id: 'deck',
+              entry: 'intro',
+              states: { intro: { timeline: 'intro' } },
+              transitions: [{ id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' }],
+            },
+          },
+        }}
+      />,
+    );
+
+    act(() => { ref.current!.seekToFrame(2); });
+
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('He');
+    expect(container.querySelector('[data-testid="elucim-text-cursor"]')?.textContent).toBe('|');
+  });
+
+  it('freezes completed reveal effects at their selected state frame', () => {
+    const ref = React.createRef<DslRendererRef>();
+    const { container } = render(
+      <DslRenderer
+        ref={ref}
+        dsl={{
+          version: '2.0',
+          scene: { type: 'player', width: 400, height: 300, children: ['title'] },
+          elements: {
+            title: {
+              id: 'title',
+              type: 'text',
+              props: { type: 'text', x: 20, y: 40, content: 'Hello' },
+            },
+          },
+          timelines: {
+            intro: {
+              id: 'intro',
+              duration: 6,
+              tracks: [{
+                target: 'title',
+                property: 'content',
+                keyframes: [{ frame: 0, value: 'Hello' }, { frame: 5, value: 'World' }],
+              }],
+              effects: [{ id: 'type-title', kind: 'reveal', targets: ['title'], from: 0, duration: 4 }],
+            },
+            outro: { id: 'outro', duration: 6, tracks: [] },
+          },
+          defaultStateMachine: 'deck',
+          stateMachines: {
+            deck: {
+              id: 'deck',
+              entry: 'intro',
+              states: { intro: { timeline: 'intro' }, outro: { timeline: 'outro' } },
+              transitions: [
+                { id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' },
+                { id: 'intro-next', from: 'intro', to: 'outro', trigger: 'onClick' },
+              ],
+            },
+          },
+        }}
+      />,
+    );
+
+    act(() => { ref.current!.seekToFrame(2); });
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('He');
+
+    fireEvent.click(container.querySelector('[data-testid="dsl-root"]')!);
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('He');
+
+    act(() => { ref.current!.seekToFrame(4); });
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('He');
+  });
+
+  it('uses a new effect to reveal text changed by a state timeline', () => {
+    const ref = React.createRef<DslRendererRef>();
+    const { container } = render(
+      <DslRenderer
+        ref={ref}
+        dsl={{
+          version: '2.0',
+          scene: { type: 'player', width: 400, height: 300, children: ['title'] },
+          elements: {
+            title: {
+              id: 'title',
+              type: 'text',
+              props: { type: 'text', x: 20, y: 40, content: 'Hello' },
+            },
+          },
+          timelines: {
+            intro: {
+              id: 'intro',
+              duration: 6,
+              tracks: [],
+              effects: [{ id: 'type-intro', kind: 'reveal', targets: ['title'], from: 0, duration: 4 }],
+            },
+            replacement: {
+              id: 'replacement',
+              duration: 6,
+              tracks: [{
+                target: 'title',
+                property: 'content',
+                keyframes: [
+                  { frame: 0, value: 'Hello' },
+                  { frame: 1, value: 'World' },
+                  { frame: 3, value: 'Hello' },
+                ],
+              }],
+              effects: [{ id: 'type-replacement', kind: 'reveal', targets: ['title'], from: 1, duration: 4 }],
+            },
+          },
+          defaultStateMachine: 'deck',
+          stateMachines: {
+            deck: {
+              id: 'deck',
+              entry: 'intro',
+              states: { intro: { timeline: 'intro' }, replacement: { timeline: 'replacement' } },
+              transitions: [
+                { id: 'entry-start', from: 'entry', to: 'intro', trigger: 'onStart' },
+                { id: 'intro-next', from: 'intro', to: 'replacement', trigger: 'onClick' },
+              ],
+            },
+          },
+        }}
+      />,
+    );
+
+    act(() => { ref.current!.seekToFrame(2); });
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('He');
+
+    fireEvent.click(container.querySelector('[data-testid="dsl-root"]')!);
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('');
+
+    act(() => { ref.current!.seekToFrame(1); });
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('');
+    expect(container.querySelector('[data-testid="elucim-text-cursor"]')?.textContent).toBe('|');
+
+    act(() => { ref.current!.seekToFrame(2); });
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('W');
+
+    act(() => { ref.current!.seekToFrame(3); });
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('He');
+    expect(container.querySelector('[data-testid="elucim-text-cursor"]')?.textContent).toBe('|');
+  });
+
+  it('renders canonical text reveal effects at the requested poster frame', () => {
+    const dsl = {
+      version: '2.0' as const,
+      scene: { type: 'player' as const, width: 400, height: 300, children: ['title'] },
+      elements: {
+        title: {
+          id: 'title',
+          type: 'text',
+          props: { type: 'text', x: 20, y: 40, content: 'Hello' },
+        },
+      },
+      timelines: {
+        intro: {
+          id: 'intro',
+          duration: 4,
+          tracks: [{ target: 'title', property: 'opacity' as const, keyframes: [{ frame: 0, value: 1 }] }],
+          effects: [{ id: 'type-title', kind: 'reveal' as const, targets: ['title'], from: 0, duration: 4 }],
+        },
+      },
+    };
+    const { container, rerender } = render(<DslRenderer dsl={dsl} poster={2} />);
+
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('He');
+    expect(container.querySelector('[data-testid="elucim-text-cursor"]')?.textContent).toBe('|');
+
+    rerender(<DslRenderer dsl={dsl} poster="last" />);
+
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('Hello');
+    expect(container.querySelector('[data-testid="elucim-text-cursor"]')).toBeNull();
+  });
+
+  it('uses an explicit effect to reveal content changed by a canonical poster timeline', () => {
+    const dsl = {
+      version: '2.0' as const,
+      scene: { type: 'player' as const, width: 400, height: 300, children: ['title'] },
+      elements: {
+        title: {
+          id: 'title',
+          type: 'text',
+          props: { type: 'text', x: 20, y: 40, content: 'Hello' },
+        },
+      },
+      timelines: {
+        intro: {
+          id: 'intro',
+          duration: 4,
+          tracks: [{
+            target: 'title',
+            property: 'content' as const,
+            keyframes: [{ frame: 0, value: 'Hello' }, { frame: 2, value: 'World' }],
+          }],
+          effects: [{ id: 'type-world', kind: 'reveal' as const, targets: ['title'], from: 2, duration: 2 }],
+        },
+      },
+    };
+    const { container } = render(<DslRenderer dsl={dsl} poster={2} />);
+
+    expect(container.querySelector('[data-testid="elucim-text"]')?.textContent).toBe('');
+    expect(container.querySelector('[data-testid="elucim-text-cursor"]')?.textContent).toBe('|');
+  });
+
   it('renders document state machines parsed from YAML in the viewer', () => {
     const dsl = fromYaml(`
 version: '2.0'

@@ -51,3 +51,17 @@ Use `textAnchor="middle"` when centering text on a known x coordinate — this a
 :::tip
 Use [`textbox`](/primitives/textbox/) instead of loose `text` when generated copy must stay within a known rectangle.
 :::
+
+## Typing and text reveal
+
+Text remains a normal SVG layer. Use the shared `Reveal` animation to supply deterministic frame progress; `strategy="type"` reveals grapheme clusters and shows a cursor until the reveal completes.
+
+```tsx
+<Reveal from={12} durationInFrames={48} strategy="type" cursor={{ character: '|' }}>
+  <Text x={80} y={140} fontSize={28}>
+    Deploying your workspace...
+  </Text>
+</Reveal>
+```
+
+Set `cursor: false` to reveal text without a cursor. Canonical DSL documents use timeline `effects` instead of `Reveal`; both paths resolve the same primitive reveal state.

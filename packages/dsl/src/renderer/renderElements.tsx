@@ -8,9 +8,9 @@ import {
   Image, Group,
   Axes, FunctionPlot, SecantLine, TangentLine, RiemannSum, AccumulationArea,
   Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
-  FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel,
+  FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel, RevealStateProvider,
 } from '@elucim/core';
-import type { TransitionType, PlayerRef } from '@elucim/core';
+import type { TransitionType, PlayerRef, RevealState } from '@elucim/core';
 import { resolveEasing } from './resolveEasing';
 import { resolveColor } from './resolveColor';
 import { compileExpression, compileVectorExpression } from '../math/evaluator';
@@ -34,6 +34,7 @@ function resolvePreset(preset?: ScenePreset, width?: number, height?: number): {
 
 export interface RenderRootOverrides {
   frame?: number;
+  revealStates?: Record<string, RevealState>;
   playerRef?: React.RefObject<PlayerRef | null>;
   /** CSS color-scheme to pass to Scene/Player. When set, overrides browser prefers-color-scheme. */
   colorScheme?: 'light' | 'dark' | 'light dark';
@@ -93,7 +94,7 @@ export function renderScene(node: SceneNode, overrides?: RenderRootOverrides): R
       fitToContainer={overrides?.fitToContainer}
       {...(hasFrameOverride ? { frame: overrides!.frame, autoPlay: false } : {})}
     >
-      {node.children.map((child, i) => renderElement(child, i))}
+      {node.children.map((child, i) => renderElement(child, i, overrides))}
     </Scene>
   );
 }
@@ -115,7 +116,7 @@ export function renderPlayer(node: PlayerNode, overrides?: RenderRootOverrides):
       fitToContainer={overrides?.fitToContainer}
       colorScheme={overrides?.colorScheme}
     >
-      {node.children.map((child, i) => renderElement(child, i))}
+      {node.children.map((child, i) => renderElement(child, i, overrides))}
     </Player>
   );
 }
@@ -133,28 +134,34 @@ export function renderPresentation(node: PresentationNode, overrides?: RenderRoo
       showNotes={node.showNotes}
       colorScheme={overrides?.colorScheme}
     >
-      {node.slides.map((slide, i) => renderSlide(slide, i))}
+      {node.slides.map((slide, i) => renderSlide(slide, i, overrides))}
     </Presentation>
   );
 }
 
-export function renderSlide(node: SlideNode, key: number): React.ReactNode {
+export function renderSlide(node: SlideNode, key: number, overrides?: RenderRootOverrides): React.ReactNode {
   return (
     <Slide key={key} title={node.title} notes={node.notes} background={resolveColor(node.background)}>
-      {node.children?.map((child, i) => renderElement(child, i))}
+      {node.children?.map((child, i) => renderElement(child, i, overrides))}
     </Slide>
   );
 }
 
 // ─── Element renderer ───────────────────────────────────────────────────────
 
-export function renderElement(node: ElementNode, key: number): React.ReactNode {
+export function renderElement(node: ElementNode, key: number, overrides?: RenderRootOverrides): React.ReactNode {
+  const element = renderElementNode(node, key, overrides);
+  const reveal = 'id' in node && node.id ? overrides?.revealStates?.[node.id] : undefined;
+  return reveal ? <RevealStateProvider key={key} state={reveal}>{element}</RevealStateProvider> : element;
+}
+
+function renderElementNode(node: ElementNode, key: number, overrides?: RenderRootOverrides): React.ReactNode {
   switch (node.type) {
     // Structural
     case 'sequence':
       return (
         <Sequence key={key} from={node.from} durationInFrames={node.durationInFrames} name={node.name}>
-          {node.children.map((child, i) => renderElement(child, i))}
+          {node.children.map((child, i) => renderElement(child, i, overrides))}
         </Sequence>
       );
     case 'group':
@@ -167,7 +174,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           rotation={node.rotation} rotationOrigin={node.rotationOrigin}
           scale={node.scale} translate={node.translate}
         >
-          {node.children.map((child, i) => renderElement(child, i))}
+          {node.children.map((child, i) => renderElement(child, i, overrides))}
         </Group>
       );
 
@@ -619,25 +626,25 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
     case 'fadeIn':
       return (
         <FadeIn key={key} duration={node.duration} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i))}
+          {node.children.map((child, i) => renderElement(child, i, overrides))}
         </FadeIn>
       );
     case 'fadeOut':
       return (
         <FadeOut key={key} duration={node.duration} totalFrames={node.totalFrames} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i))}
+          {node.children.map((child, i) => renderElement(child, i, overrides))}
         </FadeOut>
       );
     case 'draw':
       return (
         <Draw key={key} duration={node.duration} pathLength={node.pathLength} easing={resolveEasing(node.easing)}>
-          {renderElement(node.children[0], 0) as React.ReactElement}
+          {renderElement(node.children[0], 0, overrides) as React.ReactElement}
         </Draw>
       );
     case 'write':
       return (
         <Write key={key} duration={node.duration} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i))}
+          {node.children.map((child, i) => renderElement(child, i, overrides))}
         </Write>
       );
     case 'transform':
@@ -651,7 +658,7 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           rotate={node.rotate}
           opacity={node.opacity}
         >
-          {node.children.map((child, i) => renderElement(child, i))}
+          {node.children.map((child, i) => renderElement(child, i, overrides))}
         </Transform>
       );
     case 'morph':
@@ -664,27 +671,27 @@ export function renderElement(node: ElementNode, key: number): React.ReactNode {
           fromOpacity={node.fromOpacity} toOpacity={node.toOpacity}
           fromScale={node.fromScale} toScale={node.toScale}
         >
-          {node.children.map((child, i) => renderElement(child, i))}
+          {node.children.map((child, i) => renderElement(child, i, overrides))}
         </Morph>
       );
     case 'stagger':
       return (
         <Stagger key={key} staggerDelay={node.staggerDelay} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i))}
+          {node.children.map((child, i) => renderElement(child, i, overrides))}
         </Stagger>
       );
     case 'parallel':
       return (
         <Parallel key={key}>
-          {node.children.map((child, i) => renderElement(child, i))}
+          {node.children.map((child, i) => renderElement(child, i, overrides))}
         </Parallel>
       );
 
     // Nested containers
     case 'scene':
-      return <React.Fragment key={key}>{renderScene(node)}</React.Fragment>;
+      return <React.Fragment key={key}>{renderScene(node, overrides)}</React.Fragment>;
     case 'player':
-      return <React.Fragment key={key}>{renderPlayer(node)}</React.Fragment>;
+      return <React.Fragment key={key}>{renderPlayer(node, overrides)}</React.Fragment>;
 
     default: {
       const _exhaustive: never = node;

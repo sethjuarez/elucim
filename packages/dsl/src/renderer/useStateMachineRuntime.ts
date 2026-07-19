@@ -7,8 +7,10 @@ import {
   createRenderableDocument,
   dispatchStateMachineRunEvent,
   getStateMachineRunVisualFrames,
+  resolveTimelineReveals,
   startStateMachineRun,
 } from '../document';
+import type { RevealState } from '@elucim/core';
 
 interface StateMachineRuntimeOptions {
   dsl: RenderableDocument | ElucimDocument;
@@ -22,6 +24,7 @@ interface StateMachineRuntime {
   enabled: boolean;
   renderableDsl?: RenderableDocument;
   frameOverride?: number;
+  revealStates?: Record<string, RevealState>;
   getTotalFrames(): number;
   seekToFrame(frame: number): void;
   play(): void;
@@ -51,6 +54,8 @@ export function useStateMachineRuntime({
     if (!enabled || !stateMachineDocument || !stateMachineId) return null;
     return run?.machineId === stateMachineId ? run : startStateMachineRun(stateMachineDocument, stateMachineId);
   }, [enabled, run, stateMachineDocument, stateMachineId]);
+  const effectiveRunRef = React.useRef<ElucimStateMachineRun | null>(effectiveRun);
+  effectiveRunRef.current = effectiveRun;
 
   useEffect(() => {
     if (!enabled || !stateMachineDocument || !stateMachineId) {
@@ -61,13 +66,15 @@ export function useStateMachineRuntime({
   }, [enabled, stateMachineDocument, stateMachineId]);
 
   const triggerEvent = useCallback((event: string, key?: string) => {
-    if (!enabled || !stateMachineDocument || !effectiveRun) return false;
-    const next = dispatchStateMachineRunEvent(stateMachineDocument, effectiveRun, key ? { name: event, key } : event);
+    const currentRun = effectiveRunRef.current;
+    if (!enabled || !stateMachineDocument || !currentRun) return false;
+    const next = dispatchStateMachineRunEvent(stateMachineDocument, currentRun, key ? { name: event, key } : event);
     if (!next.changed) return false;
+    effectiveRunRef.current = next;
     setRun(next);
     onPlayStateChange?.(next.playing);
     return true;
-  }, [effectiveRun, enabled, onPlayStateChange, stateMachineDocument]);
+  }, [enabled, onPlayStateChange, stateMachineDocument]);
 
   useEffect(() => {
     if (!enabled || !stateMachineDocument || !effectiveRun?.playing) return;
@@ -83,9 +90,11 @@ export function useStateMachineRuntime({
           const next = advanceStateMachineRunFrame(stateMachineDocument, current, frameDelta);
           if (shouldLoop && stateMachineId && (next.finished || next.exited)) {
             const restarted = startStateMachineRun(stateMachineDocument, stateMachineId);
+            effectiveRunRef.current = restarted;
             if (next.playing !== restarted.playing) onPlayStateChange?.(restarted.playing);
             return restarted;
           }
+          effectiveRunRef.current = next;
           if (next.playing !== current.playing) onPlayStateChange?.(next.playing);
           return next;
         });
@@ -99,6 +108,9 @@ export function useStateMachineRuntime({
 
   const renderableDsl = enabled && stateMachineDocument && effectiveRun
     ? stateMachineRunToRenderableDocument(stateMachineDocument, effectiveRun)
+    : undefined;
+  const revealStates = enabled && stateMachineDocument && effectiveRun
+    ? resolveTimelineReveals(stateMachineDocument, getStateMachineRunVisualFrames(stateMachineDocument, effectiveRun))
     : undefined;
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -122,10 +134,23 @@ export function useStateMachineRuntime({
   return {
     enabled,
     renderableDsl,
-    frameOverride: enabled ? 0 : undefined,
+    frameOverride: enabled ? effectiveRun?.currentFrame : undefined,
+    revealStates,
     getTotalFrames: () => effectiveRun ? getRunDuration(stateMachineDocument, effectiveRun) + 1 : 0,
     seekToFrame: frame => {
-      setRun(current => current ? { ...current, currentFrame: Math.max(0, Math.min(frame, getRunDuration(stateMachineDocument, current))) } : current);
+      setRun(current => {
+        if (!current) return current;
+        const currentFrame = Math.max(0, Math.min(frame, getRunDuration(stateMachineDocument, current)));
+        const next = {
+          ...current,
+          currentFrame,
+          stateFrames: current.stateFrames.map((value, index) =>
+            index === current.stateFrames.length - 1 ? currentFrame : value,
+          ),
+        };
+        effectiveRunRef.current = next;
+        return next;
+      });
     },
     play: () => {
       if (shouldLoop && effectiveRun && (effectiveRun.finished || effectiveRun.exited) && stateMachineDocument && stateMachineId) {

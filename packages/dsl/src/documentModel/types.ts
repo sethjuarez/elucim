@@ -81,6 +81,7 @@ export type ElucimAnimatableProperty =
   | 'rotate'
   | 'fill'
   | 'stroke'
+  | 'content'
   | 'x'
   | 'dx'
   | 'from'
@@ -99,10 +100,36 @@ export interface ElucimTimelineTrack {
   keyframes: ElucimKeyframe[];
 }
 
+export type ElucimRevealStrategy = 'auto' | 'type' | 'fade';
+
+export interface ElucimRevealCursor {
+  character?: string;
+  blinkEveryFrames?: number;
+  hideWhenComplete?: boolean;
+}
+
+/**
+ * A procedural animation scheduled by a timeline rather than a property track.
+ *
+ * `duration` is the reveal duration for each resolved leaf target. When a
+ * target expands to several descendants, `staggerInFrames` offsets each leaf.
+ */
+export interface ElucimRevealEffect {
+  id: string;
+  kind: 'reveal';
+  targets: string[];
+  from: number;
+  duration: number;
+  strategy?: ElucimRevealStrategy;
+  staggerInFrames?: number;
+  cursor?: boolean | ElucimRevealCursor;
+}
+
 export interface ElucimTimeline {
   id: string;
   duration: number;
   tracks: ElucimTimelineTrack[];
+  effects?: ElucimRevealEffect[];
 }
 
 export interface ElucimStateMachine {

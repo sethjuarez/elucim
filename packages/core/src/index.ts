@@ -72,12 +72,20 @@ export {
   type MeasureTextOptions,
   type TextWrapMode,
 } from './text/measureText';
-
 // Legacy animation wrappers
 export { FadeIn, FadeOut, type FadeInProps, type FadeOutProps } from './animations/Fade';
 export { Draw, Write, type DrawProps, type WriteProps } from './animations/DrawWrite';
 export { Transform, Morph, type TransformProps, type MorphProps } from './animations/Transform';
 export { Parallel, Stagger, type ParallelProps, type StaggerProps } from './animations/Groups';
+export {
+  Reveal,
+  RevealStateProvider,
+  useRevealState,
+  type RevealCursorOptions,
+  type RevealProps,
+  type RevealState,
+  type RevealStrategy,
+} from './animations/Reveal';
 
 // Theme
 export {

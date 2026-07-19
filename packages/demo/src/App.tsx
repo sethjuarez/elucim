@@ -25,6 +25,7 @@ import {
   Transform as AnimTransform,
   Morph,
   Stagger,
+  Reveal,
   interpolate,
   useCurrentFrame,
   easeOutCubic,
@@ -284,7 +285,7 @@ function RectDemo() {
 function TextDemo() {
   return (
     <section id="text-demo">
-      <h2 style={{ padding: '16px 0 8px' }}>Text — FadeIn</h2>
+      <h2 style={{ padding: '16px 0 8px' }}>Text — FadeIn &amp; reveal</h2>
       <Player
         width={400}
         height={200}
@@ -292,9 +293,19 @@ function TextDemo() {
         durationInFrames={60}
         background="#111127"
       >
-        <Text x={200} y={100} fill="#a29bfe" fontSize={36} textAnchor="middle" dominantBaseline="middle" fadeIn={30}>
-          Hello Elucim
-        </Text>
+        <Reveal strategy="type" durationInFrames={24}>
+          <Text
+            x={200}
+            y={100}
+            fill="#a29bfe"
+            fontSize={36}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fadeIn={15}
+          >
+            Hello Elucim
+          </Text>
+        </Reveal>
       </Player>
     </section>
   );

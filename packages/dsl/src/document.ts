@@ -7,6 +7,9 @@ export type {
   ElucimLayout as ElucimLayout,
   ElucimAnimatableProperty as ElucimAnimatableProperty,
   ElucimKeyframe as ElucimKeyframe,
+  ElucimRevealCursor as ElucimRevealCursor,
+  ElucimRevealEffect as ElucimRevealEffect,
+  ElucimRevealStrategy as ElucimRevealStrategy,
   ElucimTimelineTrack as ElucimTimelineTrack,
   ElucimTimeline as ElucimTimeline,
   ElucimStateMachine as ElucimStateMachine,
@@ -70,6 +73,7 @@ export {
   applyTimelineFrame,
   applyTimelineFrames,
   evaluateTimeline,
+  resolveTimelineReveals,
 } from './documentModel/timeline';
 export {
   advanceStateMachineRunFrame,
