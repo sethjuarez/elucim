@@ -1,6 +1,17 @@
-import type { ScenePreset, EasingSpec } from '../schema/types';
+import type {
+  CameraNode,
+  CameraTrack,
+  EasingSpec,
+  ScenePreset,
+} from '../schema/types';
 
 export type ElucimVersion = '2.0';
+export type ElucimCamera = CameraNode;
+export type ElucimTimelineCamera = CameraTrack;
+export type ElucimCameraKeyframe = CameraTrack['keyframes'][number];
+export type ElucimCameraViewport = CameraNode['viewport'];
+export type ElucimCameraCoordinateSpace = NonNullable<CameraNode['coordinateSpace']>;
+export type ElucimCameraFit = NonNullable<CameraNode['fit']>;
 
 export interface ElucimDocument {
   $schema?: string;
@@ -130,6 +141,8 @@ export interface ElucimTimeline {
   duration: number;
   tracks: ElucimTimelineTrack[];
   effects?: ElucimRevealEffect[];
+  /** Optional scene-level camera animation for this timeline. */
+  camera?: CameraTrack;
 }
 
 export interface ElucimStateMachine {

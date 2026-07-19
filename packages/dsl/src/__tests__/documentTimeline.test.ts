@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyCommand, applyTimelineFrame, applyTimelineFrames, createRenderableDocument, evaluateTimeline, resolveTimelineReveals, validateDocument, type ElucimDocument } from '../index';
+import { applyCommand, applyTimelineFrame, applyTimelineFrames, createRenderableDocument, evaluateCameraTrack, evaluateTimeline, evaluateTimelineCameraFrames, resolveTimelineReveals, validateDocument, type ElucimDocument } from '../index';
 
 const doc: ElucimDocument = {
   version: '2.0',
@@ -265,6 +265,129 @@ describe('document timelines and keyframes', () => {
     expect(title.scale).toBe(1);
     expect(title.translate).toEqual([0, 12]);
     expect(title.rotation).toBe(45);
+  });
+
+  it('interpolates a semantic camera viewport and applies it to the scene', () => {
+    const camera = {
+      coordinateSpace: 'normalized' as const,
+      fit: 'cover' as const,
+      keyframes: [
+        { frame: 0, viewport: { x: 0, y: 0, width: 1, height: 1 } },
+        { frame: 30, viewport: { x: 0.25, y: 0.25, width: 0.5, height: 0.5 }, easing: 'linear' as const },
+      ],
+    };
+    const cameraDoc = {
+      ...doc,
+      timelines: {
+        camera: { id: 'camera', duration: 30, tracks: [], camera },
+      },
+    };
+    const next = applyTimelineFrame(cameraDoc, 'camera', 15);
+
+    expect(evaluateCameraTrack(camera, 15)).toEqual({
+      coordinateSpace: 'normalized',
+      fit: 'cover',
+      viewport: { x: 0.125, y: 0.125, width: 0.75, height: 0.75 },
+    });
+
+    expect(evaluateTimelineCameraFrames(cameraDoc, [{ timelineId: 'camera', frame: 15 }])?.viewport)
+      .toEqual({ x: 0.125, y: 0.125, width: 0.75, height: 0.75 });
+    expect(next).toEqual(cameraDoc);
+  });
+
+  it('uses the complete public easing set for camera interpolation', () => {
+    const camera = {
+      keyframes: [
+        { frame: 0, viewport: { x: 0, y: 0, width: 100, height: 100 } },
+        { frame: 10, viewport: { x: 100, y: 100, width: 50, height: 50 }, easing: 'easeInQuart' as const },
+      ],
+    };
+
+    expect(evaluateCameraTrack(camera, 5).viewport).toEqual({ x: 6.25, y: 6.25, width: 96.875, height: 96.875 });
+  });
+
+  it('keeps camera dimensions positive when an easing overshoots', () => {
+    const camera = {
+      keyframes: [
+        { frame: 0, viewport: { x: 0, y: 0, width: 100, height: 100 } },
+        { frame: 10, viewport: { x: 0, y: 0, width: 1, height: 1 }, easing: 'easeOutBack' as const },
+      ],
+    };
+
+    const viewport = evaluateCameraTrack(camera, 5).viewport;
+
+    expect(viewport.width).toBeGreaterThan(0);
+    expect(viewport.height).toBeGreaterThan(0);
+  });
+
+  it('rejects malformed camera keyframes with structured paths', () => {
+    const result = validateDocument({
+      ...doc,
+      timelines: {
+        camera: {
+          id: 'camera',
+          duration: 30,
+          tracks: [],
+          camera: {
+            coordinateSpace: 'normalized',
+            keyframes: [{ frame: 0, viewport: { x: 0, y: 0, width: 1.2, height: 1 } }],
+          },
+        },
+      },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.map(error => error.path)).toContain('timelines.camera.camera.keyframes[0].viewport');
+  });
+
+  it('rejects invalid camera easing with a structured path', () => {
+    const result = validateDocument({
+      ...doc,
+      timelines: {
+        camera: {
+          id: 'camera',
+          duration: 30,
+          tracks: [],
+          camera: {
+            keyframes: [{
+              frame: 0,
+              viewport: { x: 0, y: 0, width: 100, height: 100 },
+              easing: 'not-an-easing',
+            }],
+          },
+        },
+      },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.map(error => error.path)).toContain('timelines.camera.camera.keyframes[0].easing');
+  });
+
+  it('rejects non-finite camera spring easing settings', () => {
+    const result = validateDocument({
+      ...doc,
+      timelines: {
+        camera: {
+          id: 'camera',
+          duration: 30,
+          tracks: [],
+          camera: {
+            keyframes: [{
+              frame: 0,
+              viewport: { x: 0, y: 0, width: 100, height: 100 },
+              easing: { type: 'spring', stiffness: 'bad', damping: -1, mass: 0 },
+            }],
+          },
+        },
+      },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.map(error => error.path)).toEqual(expect.arrayContaining([
+      'timelines.camera.camera.keyframes[0].easing.stiffness',
+      'timelines.camera.camera.keyframes[0].easing.damping',
+      'timelines.camera.camera.keyframes[0].easing.mass',
+    ]));
   });
 
   it('lets commands upsert and preview timeline clips', () => {

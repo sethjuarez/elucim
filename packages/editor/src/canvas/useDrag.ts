@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type { Dispatch } from 'react';
+import { resolveCameraViewport, type CameraNode } from '@elucim/dsl';
 import type { EditorAction } from '../state/types';
 import type { BoundingBox } from '../utils/bounds';
 import { startRafDrag, type RafDragPoint } from '../interactions/rafDrag';
@@ -21,6 +22,7 @@ interface UseDragOptions {
   sceneWidth: number;
   sceneHeight: number;
   selectedIds: string[];
+  camera?: CameraNode;
 }
 
 /** Convert a mouse event to SVG coordinates */
@@ -29,18 +31,24 @@ function toSvgCoords(
   svgEl: SVGSVGElement,
   sceneWidth: number,
   sceneHeight: number,
+  camera?: CameraNode,
 ): { x: number; y: number } {
   const rect = svgEl.getBoundingClientRect();
   const x = ((e.clientX - rect.left) / rect.width) * sceneWidth;
   const y = ((e.clientY - rect.top) / rect.height) * sceneHeight;
-  return { x, y };
+  if (!camera) return { x, y };
+  const transform = resolveCameraViewport(camera, sceneWidth, sceneHeight);
+  return {
+    x: (x - transform.offsetX) / transform.scale + transform.viewport.x,
+    y: (y - transform.offsetY) / transform.scale + transform.viewport.y,
+  };
 }
 
 /**
  * Hook providing drag-to-move, resize, and rotation interactions.
  * Returns pointer event handlers to attach to the overlay SVG.
  */
-export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight, selectedIds }: UseDragOptions) {
+export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight, selectedIds, camera }: UseDragOptions) {
   const dragRef = useRef<DragState | null>(null);
   const accDx = useRef(0);
   const accDy = useRef(0);
@@ -56,7 +64,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight, selectedIds
     const svg = svgRef.current;
     if (!svg) return;
 
-    const coords = toSvgCoords(e, svg, sceneWidth, sceneHeight);
+    const coords = toSvgCoords(e, svg, sceneWidth, sceneHeight, camera);
 
     // Check for resize handle
     const handleAttr = target.getAttribute('data-handle');
@@ -111,7 +119,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight, selectedIds
       const currentSvg = svgRef.current;
       if (!drag || !currentSvg) return;
 
-      const currentCoords = toSvgCoords(point, currentSvg, sceneWidth, sceneHeight);
+      const currentCoords = toSvgCoords(point, currentSvg, sceneWidth, sceneHeight, camera);
       const dx = currentCoords.x - drag.startX - accDx.current;
       const dy = currentCoords.y - drag.startY - accDy.current;
 
@@ -178,7 +186,7 @@ export function useDrag({ dispatch, svgRef, sceneWidth, sceneHeight, selectedIds
         activeDragType.current = null;
       },
     });
-  }, [dispatch, svgRef, sceneWidth, sceneHeight, selectedIds]);
+  }, [camera, dispatch, svgRef, sceneWidth, sceneHeight, selectedIds]);
 
   const handlePointerMove = useCallback((_e: React.PointerEvent<SVGSVGElement>) => {}, []);
 

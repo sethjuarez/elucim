@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceStateMachineRunFrame,
+  applyTimelineFrames,
+  evaluateTimelineCameraFrames,
   dispatchStateMachineRunEvent,
   getInitialStateSnapshot,
   getStateMachineRunVisualFrames,
@@ -193,6 +195,40 @@ describe('document state machines', () => {
       currentFrame: 0,
       finished: true,
     })).toEqual(frames);
+  });
+
+  it('does not let an unrelated timeline override the active state camera', () => {
+    const cameraDoc: ElucimDocument = {
+      ...doc,
+      timelines: {
+        ...doc.timelines,
+        idle: {
+          ...doc.timelines!.idle,
+          camera: {
+            keyframes: [{ frame: 0, viewport: { x: 0, y: 0, width: 800, height: 600 } }],
+          },
+        },
+        outro: {
+          ...doc.timelines!.outro,
+          camera: {
+            keyframes: [{ frame: 0, viewport: { x: 400, y: 300, width: 200, height: 150 } }],
+          },
+        },
+      },
+    };
+    const frames = getStateMachineVisualFrames(cameraDoc, 'presentation', {
+      statePath: ['idle'],
+      currentStateId: 'idle',
+      currentFrame: 0,
+    });
+
+    expect(frames).toContainEqual({
+      timelineId: 'outro',
+      frame: 0,
+      includeContent: false,
+      applyCamera: false,
+    });
+    expect(evaluateTimelineCameraFrames(cameraDoc, frames)?.viewport).toEqual({ x: 0, y: 0, width: 800, height: 600 });
   });
 
   it('validates transition targets', () => {

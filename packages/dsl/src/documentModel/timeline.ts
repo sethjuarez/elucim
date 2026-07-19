@@ -1,4 +1,6 @@
 import type {
+  ElucimCamera,
+  ElucimTimelineCamera,
   ElucimDocument,
   ElucimRevealEffect,
   ElucimLayout,
@@ -7,6 +9,7 @@ import type {
 } from './types';
 import type { RevealState } from '@elucim/core';
 import type { EasingSpec } from '../schema/types';
+import { resolveEasing } from '../renderer/resolveEasing';
 
 export interface ElucimTimelinePatch {
   layout?: Partial<ElucimLayout>;
@@ -20,6 +23,8 @@ export interface ElucimTimelineFrameSelection {
   frame: number;
   /** Whether text content tracks contribute to this selection. Default: true. */
   includeContent?: boolean;
+  /** Whether this selection may contribute its timeline camera. Default: true. */
+  applyCamera?: boolean;
 }
 
 export function evaluateTimeline(timeline: ElucimTimeline, frame: number): ElucimTimelineFrame {
@@ -135,7 +140,24 @@ function clamp(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
-function applyTimelineFrameToDocument(doc: ElucimDocument, selection: ElucimTimelineFrameSelection): void {
+/** Evaluates the effective camera for ordered timeline selections without mutating the document. */
+export function evaluateTimelineCameraFrames(
+  doc: ElucimDocument,
+  frames: ElucimTimelineFrameSelection[],
+): ElucimCamera | undefined {
+  let camera: ElucimCamera | undefined;
+  for (const { timelineId, frame, applyCamera = true } of frames) {
+    const timeline = doc.timelines?.[timelineId];
+    if (!timeline) throw new Error(`Timeline "${timelineId}" does not exist`);
+    if (timeline.camera && applyCamera) camera = evaluateCameraTrack(timeline.camera, frame);
+  }
+  return camera;
+}
+
+function applyTimelineFrameToDocument(
+  doc: ElucimDocument,
+  selection: ElucimTimelineFrameSelection,
+): void {
   const { timelineId, frame, includeContent = true } = selection;
   const timeline = doc.timelines?.[timelineId];
   if (!timeline) throw new Error(`Timeline "${timelineId}" does not exist`);
@@ -151,6 +173,42 @@ function applyTimelineFrameToDocument(doc: ElucimDocument, selection: ElucimTime
   }
 }
 
+export function evaluateCameraTrack(track: ElucimTimelineCamera, frame: number): ElucimCamera {
+  const keyframes = [...track.keyframes].sort((a, b) => a.frame - b.frame);
+  if (keyframes.length === 0) throw new Error('Camera track must have at least one keyframe');
+  if (frame <= keyframes[0].frame) {
+    return {
+      viewport: { ...keyframes[0].viewport },
+      ...(track.coordinateSpace ? { coordinateSpace: track.coordinateSpace } : {}),
+      ...(track.fit ? { fit: track.fit } : {}),
+    };
+  }
+  const last = keyframes[keyframes.length - 1];
+  if (frame >= last.frame) {
+    return {
+      viewport: { ...last.viewport },
+      ...(track.coordinateSpace ? { coordinateSpace: track.coordinateSpace } : {}),
+      ...(track.fit ? { fit: track.fit } : {}),
+    };
+  }
+
+  const nextIndex = keyframes.findIndex(keyframe => keyframe.frame >= frame);
+  const from = keyframes[nextIndex - 1];
+  const to = keyframes[nextIndex];
+  const span = to.frame - from.frame;
+  const t = span === 0 ? 1 : ease((frame - from.frame) / span, to.easing ?? from.easing);
+  return {
+    viewport: {
+      x: interpolateNumber(from.viewport.x, to.viewport.x, t),
+      y: interpolateNumber(from.viewport.y, to.viewport.y, t),
+      width: interpolateCameraDimension(from.viewport.width, to.viewport.width, t),
+      height: interpolateCameraDimension(from.viewport.height, to.viewport.height, t),
+    },
+    ...(track.coordinateSpace ? { coordinateSpace: track.coordinateSpace } : {}),
+    ...(track.fit ? { fit: track.fit } : {}),
+  };
+}
+
 function evaluateTrack(track: ElucimTimelineTrack, frame: number): unknown {
   const keyframes = [...track.keyframes].sort((a, b) => a.frame - b.frame);
   if (keyframes.length === 0) throw new Error('Timeline track must have at least one keyframe');
@@ -164,6 +222,14 @@ function evaluateTrack(track: ElucimTimelineTrack, frame: number): unknown {
   const span = to.frame - from.frame;
   const t = span === 0 ? 1 : ease((frame - from.frame) / span, to.easing ?? from.easing);
   return interpolateValue(from.value, to.value, t);
+}
+
+function interpolateNumber(from: number, to: number, t: number): number {
+  return from + (to - from) * t;
+}
+
+function interpolateCameraDimension(from: number, to: number, t: number): number {
+  return Math.max(Number.EPSILON, interpolateNumber(from, to, t));
 }
 
 function interpolateValue(from: unknown, to: unknown, t: number): unknown {
@@ -182,31 +248,7 @@ function interpolateValue(from: unknown, to: unknown, t: number): unknown {
 
 function ease(t: number, easing?: EasingSpec): number {
   const clamped = Math.max(0, Math.min(1, t));
-  if (!easing || easing === 'linear') return clamped;
-  if (typeof easing !== 'string') {
-    return easing.type === 'cubicBezier' ? cubicBezierY(clamped, easing.y1, easing.y2) : easeOutCubic(clamped);
-  }
-  switch (easing) {
-    case 'easeInQuad': return clamped * clamped;
-    case 'easeOutQuad': return 1 - (1 - clamped) * (1 - clamped);
-    case 'easeInOutQuad': return clamped < 0.5 ? 2 * clamped * clamped : 1 - Math.pow(-2 * clamped + 2, 2) / 2;
-    case 'easeInCubic': return clamped * clamped * clamped;
-    case 'easeOutCubic': return easeOutCubic(clamped);
-    case 'easeInOutCubic': return clamped < 0.5 ? 4 * clamped * clamped * clamped : 1 - Math.pow(-2 * clamped + 2, 3) / 2;
-    case 'easeInSine': return 1 - Math.cos((clamped * Math.PI) / 2);
-    case 'easeOutSine': return Math.sin((clamped * Math.PI) / 2);
-    case 'easeInOutSine': return -(Math.cos(Math.PI * clamped) - 1) / 2;
-    default: return clamped;
-  }
-}
-
-function easeOutCubic(t: number): number {
-  return 1 - Math.pow(1 - t, 3);
-}
-
-function cubicBezierY(t: number, y1: number, y2: number): number {
-  const inverse = 1 - t;
-  return 3 * inverse * inverse * t * y1 + 3 * inverse * t * t * y2 + t * t * t;
+  return resolveEasing(easing)?.(clamped) ?? clamped;
 }
 
 function parseHexColor(value: unknown): [number, number, number] | undefined {

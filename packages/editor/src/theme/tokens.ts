@@ -20,6 +20,7 @@ export const EDITOR_TOKENS: Record<string, string> = {
   '--elucim-editor-surface':         '#12122a',
   '--elucim-editor-panel':           'rgba(22, 22, 42, 0.93)',
   '--elucim-editor-chrome':          'rgba(15, 23, 42, 0.8)',
+  '--elucim-editor-overlay':         'rgba(2, 6, 23, 0.58)',
 
   // ── Text ──────────────────────────────────────────────────────────────
   '--elucim-editor-fg':              '#e0e0e0',
@@ -63,6 +64,7 @@ export const EDITOR_TOKENS_LIGHT: Record<string, string> = {
   '--elucim-editor-surface':         '#ffffff',
   '--elucim-editor-panel':           'rgba(255, 255, 255, 0.95)',
   '--elucim-editor-chrome':          'rgba(241, 245, 249, 0.9)',
+  '--elucim-editor-overlay':         'rgba(15, 23, 42, 0.28)',
   '--elucim-editor-fg':              '#1e293b',
   '--elucim-editor-text-secondary':  '#334155',
   '--elucim-editor-text-muted':      '#64748b',

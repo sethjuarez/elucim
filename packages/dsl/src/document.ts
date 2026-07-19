@@ -1,6 +1,12 @@
 export type {
   ElucimDocument as ElucimDocument,
   ElucimScene as ElucimScene,
+  ElucimCamera as ElucimCamera,
+  ElucimTimelineCamera as ElucimTimelineCamera,
+  ElucimCameraKeyframe as ElucimCameraKeyframe,
+  ElucimCameraViewport as ElucimCameraViewport,
+  ElucimCameraCoordinateSpace as ElucimCameraCoordinateSpace,
+  ElucimCameraFit as ElucimCameraFit,
   ElucimElement as ElucimElement,
   ElucimMetadata as ElucimMetadata,
   ElucimIntent as ElucimIntent,
@@ -72,6 +78,8 @@ export {
 export {
   applyTimelineFrame,
   applyTimelineFrames,
+  evaluateTimelineCameraFrames,
+  evaluateCameraTrack,
   evaluateTimeline,
   resolveTimelineReveals,
 } from './documentModel/timeline';

@@ -186,6 +186,42 @@ describe('Elucim Document compatibility foundation', () => {
     expect(validate(renderable).valid).toBe(true);
   });
 
+  it('rejects static render-tree cameras during canonical migration', () => {
+    const renderable: RenderableDocument = {
+      version: 'render-tree',
+      root: {
+        type: 'scene',
+        width: 800,
+        height: 600,
+        durationInFrames: 1,
+        camera: { viewport: { x: 100, y: 75, width: 400, height: 300 }, fit: 'cover' },
+        children: [],
+      },
+    };
+
+    expect(() => createDocumentFromRenderable(renderable)).toThrow(
+      'Render-tree camera is not supported. Use timeline.camera keyframes in an Elucim Document.',
+    );
+  });
+
+  it('rejects static scene cameras in canonical documents', () => {
+    const result = validateDocument({
+      version: '2.0',
+      scene: {
+        type: 'scene',
+        children: [],
+        camera: { viewport: { x: 0, y: 0, width: 800, height: 600 } },
+      },
+      elements: {},
+    });
+
+    expect(result.errors).toContainEqual({
+      path: 'scene.camera',
+      message: 'Scene camera is not part of Elucim Documents. Use timeline.camera keyframes.',
+      severity: 'error',
+    });
+  });
+
   it('rejects old rootless visual documents instead of migrating them', () => {
     expect(() => normalizeDocument({
       version: 1,

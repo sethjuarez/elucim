@@ -111,7 +111,9 @@ function syncCanonicalTimelines(
     if (tracks.length < timeline.tracks.length) {
       warnings.push(`Timeline "${id}" has ${timeline.tracks.length - tracks.length} track(s) targeting missing elements and will be omitted from document output.`);
     }
-    if (tracks.length > 0) nextTimelines[id] = { ...timeline, tracks };
+    if (tracks.length > 0 || timeline.camera || timeline.tracks.length === 0) {
+      nextTimelines[id] = { ...timeline, tracks };
+    }
   }
   return { timelines: Object.keys(nextTimelines).length > 0 ? nextTimelines : undefined, warnings };
 }
@@ -594,6 +596,33 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'DESELECT_ALL':
       return state.selectedIds.length === 0 ? state : { ...state, selectedIds: [] };
 
+    case 'SET_CAMERA_FRAMING':
+      if (!action.framing) {
+        return !state.isCameraFraming && !state.cameraFramingTimelineId && state.cameraFramingFrame === undefined
+          ? state
+          : {
+              ...state,
+              isCameraFraming: false,
+              cameraFramingTimelineId: undefined,
+              cameraFramingFrame: undefined,
+            };
+      }
+      return state.isCameraFraming
+        && state.cameraFramingTimelineId === action.timelineId
+        && state.cameraFramingFrame === action.frame
+        ? state
+        : {
+            ...state,
+            isCameraFraming: true,
+            cameraFramingTimelineId: action.timelineId,
+            cameraFramingFrame: action.frame,
+          };
+
+    case 'SET_ACTIVE_TIMELINE':
+      return state.activeTimelineId === action.timelineId
+        ? state
+        : { ...state, activeTimelineId: action.timelineId };
+
     case 'IMPORT_RENDERABLE_DOCUMENT':
       return {
         ...state,
@@ -617,6 +646,24 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         canonicalDocument: action.document,
         compatibilityWarnings: action.warnings ?? [],
       };
+
+    case 'UPDATE_TIMELINE_CAMERA': {
+      const canonicalDocument = state.canonicalDocument;
+      const timeline = canonicalDocument?.timelines?.[action.timelineId];
+      if (!canonicalDocument || !timeline) return state;
+      const nextCanonicalDocument: CanonicalElucimDocument = {
+        ...canonicalDocument,
+        timelines: {
+          ...canonicalDocument.timelines,
+          [action.timelineId]: { ...timeline, camera: action.camera },
+        },
+      };
+      const projectedDocument = createRenderableDocument(nextCanonicalDocument);
+      return syncCanonicalFromProjection(
+        { ...state, canonicalDocument: nextCanonicalDocument, compatibilityWarnings: [] },
+        documentsEqual(projectedDocument, state.document) ? state.document : projectedDocument,
+      );
+    }
 
     case 'UPDATE_ELEMENT': {
       const doc = cloneDoc(state.document);

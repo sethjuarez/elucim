@@ -2,13 +2,16 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 import { renderRoot } from './renderElements';
 import { validate } from '../validator/validate';
-import { toRenderableDocument } from '../document';
+import { applyTimelineFrames, createRenderableDocument, evaluateTimelineCameraFrames, resolveTimelineReveals, toRenderableDocument } from '../document';
+import { getDefaultStateMachineInitialFrames } from '../documentModel/compatibility';
 import type { ElucimDocument as RenderableDocument } from '../schema/types';
 import type { ElucimDocument } from '../document';
 
 export interface RenderToSvgStringOptions {
   width?: number;
   height?: number;
+  /** Canonical timeline to evaluate before rendering this frame. */
+  timelineId?: string;
 }
 
 /**
@@ -31,7 +34,23 @@ export function renderToSvgString(
     );
   }
 
-  const renderable = toRenderableDocument(dsl);
+  const timelineFrames = dsl.version === '2.0'
+    ? [
+      ...getDefaultStateMachineInitialFrames(dsl),
+      ...(options?.timelineId ? [{ timelineId: options.timelineId, frame }] : []),
+    ]
+    : [];
+  const camera = dsl.version === '2.0'
+    ? evaluateTimelineCameraFrames(dsl, timelineFrames)
+    : undefined;
+  const revealStates = dsl.version === '2.0'
+    ? resolveTimelineReveals(dsl, timelineFrames)
+    : undefined;
+  const renderable = dsl.version === '2.0'
+    ? createRenderableDocument(
+      timelineFrames.length > 0 ? applyTimelineFrames(dsl, timelineFrames) : dsl,
+    )
+    : toRenderableDocument(dsl);
 
   // Clone the root and apply size overrides
   const root = { ...renderable.root };
@@ -39,7 +58,7 @@ export function renderToSvgString(
   if (options?.height) root.height = options.height;
 
   // Render the tree with a controlled frame override
-  const element = renderRoot(root, { frame });
+  const element = renderRoot(root, { frame, camera, revealStates });
 
   return renderToStaticMarkup(element as React.ReactElement);
 }

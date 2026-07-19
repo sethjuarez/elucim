@@ -25,6 +25,8 @@ export interface ElucimStateMachineVisualFrame {
   timelineId: string;
   frame: number;
   includeContent?: boolean;
+  /** Whether this frame may override a legacy scene-camera fallback. */
+  applyCamera?: boolean;
 }
 
 export interface ElucimStateMachineRun {
@@ -185,13 +187,28 @@ export function getStateMachineVisualFrames(
 ): ElucimStateMachineVisualFrame[] {
   const machine = getMachine(doc, machineId);
   if (options.exited || options.finished) {
-    return Object.entries(doc.timelines ?? {}).map(([timelineId, timeline]) => ({ timelineId, frame: timeline.duration }));
+    const frames: ElucimStateMachineVisualFrame[] = Object.entries(doc.timelines ?? {}).map(([timelineId, timeline]) => ({
+      timelineId,
+      frame: timeline.duration,
+      ...(timeline.camera ? { applyCamera: false } : {}),
+    }));
+    const activeTimelineId = !options.exited ? machine.states[options.currentStateId]?.timeline : undefined;
+    const activeTimeline = activeTimelineId ? doc.timelines?.[activeTimelineId] : undefined;
+    if (activeTimelineId && activeTimeline) {
+      frames.push({
+        timelineId: activeTimelineId,
+        frame: activeTimeline.duration,
+        ...(activeTimeline.camera ? { applyCamera: true } : {}),
+      });
+    }
+    return frames;
   }
   const path = options.statePath?.length ? options.statePath : [options.currentStateId];
-  const frames: ElucimStateMachineVisualFrame[] = Object.keys(doc.timelines ?? {}).map(timelineId => ({
+  const frames: ElucimStateMachineVisualFrame[] = Object.entries(doc.timelines ?? {}).map(([timelineId, timeline]) => ({
     timelineId,
     frame: 0,
     includeContent: false,
+    ...(timeline.camera ? { applyCamera: false } : {}),
   }));
   for (const [index, stateId] of path.entries()) {
     if (stateId === 'entry') continue;
@@ -211,6 +228,7 @@ export function getStateMachineVisualFrames(
       frame: stateId === options.currentStateId && !options.exited
         ? options.currentFrame
         : options.stateFrames?.[index] ?? timeline.duration,
+      ...(timeline.camera ? { applyCamera: true } : {}),
     });
   }
   return frames;

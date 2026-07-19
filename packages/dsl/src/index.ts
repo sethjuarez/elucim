@@ -8,6 +8,11 @@ export type {
   ElucimCommandResult,
   ElucimDocument,
   ElucimDocumentSummary,
+  ElucimCamera,
+  ElucimCameraCoordinateSpace,
+  ElucimCameraFit,
+  ElucimCameraKeyframe,
+  ElucimCameraViewport,
   ElucimElement,
   ElucimElementSummary,
   ElucimExportPolicy,
@@ -33,6 +38,7 @@ export type {
   ElucimStateMachineVisualFrameOptions,
   ElucimStateTransitionResult,
   ElucimTimeline,
+  ElucimTimelineCamera,
   ElucimTimelineFrame,
   ElucimTimelineFrameSelection,
   ElucimTimelinePatch,
@@ -81,11 +87,18 @@ export type {
   GraphEdgeDef,
   BarChartNode,
   BarChartBarDef,
+  CameraNode,
+  CameraTrack,
+  CameraKeyframe,
+  CameraViewport,
+  CameraCoordinateSpace,
+  CameraFit,
   ImageNode,
   ScenePreset,
 } from './schema/types';
 
 export { DEFAULT_LINEAR_DURATION_IN_FRAMES } from './documentModel/duration';
+export { SceneCameraViewport, resolveCameraViewport } from './renderer/CameraViewport';
 export { applyCommand } from './documentModel/commands';
 export {
   summarizeDocument,
@@ -95,9 +108,11 @@ export {
 } from './documentModel/services';
 export {
   evaluateTimeline,
+  evaluateCameraTrack,
   applyTimelineFrame,
   applyTimelineFrames,
   resolveTimelineReveals,
+  evaluateTimelineCameraFrames,
 } from './documentModel/timeline';
 export {
   getInitialStateSnapshot,

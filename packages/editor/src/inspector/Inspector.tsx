@@ -54,6 +54,8 @@ export function Inspector({ className, style, showCanvasDuration = true }: Inspe
   // Canvas inspector
   if (isCanvasSelected) {
     const root = document.root as any;
+    const activeTimelineId = state.activeTimelineId;
+    const activeTimeline = activeTimelineId ? state.canonicalDocument?.timelines?.[activeTimelineId] : undefined;
     return (
       <div
         ref={inspectorRef}
@@ -71,6 +73,36 @@ export function Inspector({ className, style, showCanvasDuration = true }: Inspe
 
         <InspectorSection title="Appearance">
           <ColorField label="Background" value={root.background ?? '#0f172a'} onChange={val => handleCanvasChange('background', val)} />
+        </InspectorSection>
+
+        <InspectorSection title="Camera">
+          {activeTimeline ? (
+            <>
+              <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, lineHeight: 1.4, marginBottom: 8 }}>
+                Camera framing creates or replaces a keyframe in <strong>{activeTimeline.id}</strong> at the current playhead.
+                State-machine states use this timeline camera through their normal active path.
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  dispatch({ type: 'SET_PLAYING', playing: false });
+                  dispatch({
+                    type: 'SET_CAMERA_FRAMING',
+                    framing: true,
+                    timelineId: activeTimeline.id,
+                    frame: state.currentFrame,
+                  });
+                }}
+                style={{ width: '100%', padding: '5px 8px', border: `1px solid ${v('--elucim-editor-accent')}`, borderRadius: 4, background: 'transparent', color: v('--elucim-editor-fg'), cursor: 'pointer', fontSize: 11 }}
+              >
+                Frame timeline camera
+              </button>
+            </>
+          ) : (
+            <div style={{ color: v('--elucim-editor-text-muted'), fontSize: 10, lineHeight: 1.4 }}>
+              Select or create an animation timeline to author camera keyframes. State-machine camera behavior is defined by the timeline assigned to each state.
+            </div>
+          )}
         </InspectorSection>
 
         <InspectorSection title="Playback">
@@ -371,7 +403,7 @@ function NumberField({ label, value, onChange, step = 1, liveUpdate = true }: {
   }, [value]);
   const commit = (str: string) => {
     const num = parseFloat(str);
-    if (!isNaN(num)) { onChange(num); committedRef.current = num; }
+    if (Number.isFinite(num)) { onChange(num); committedRef.current = num; }
     else setLocalStr(String(value ?? ''));
   };
   return (
@@ -384,7 +416,7 @@ function NumberField({ label, value, onChange, step = 1, liveUpdate = true }: {
         onChange={e => {
           setLocalStr(e.target.value);
           const num = parseFloat(e.target.value);
-          if (liveUpdate && !isNaN(num)) { onChange(num); committedRef.current = num; }
+          if (liveUpdate && Number.isFinite(num)) { onChange(num); committedRef.current = num; }
         }}
         onBlur={() => commit(localStr)}
         onKeyDown={e => { if (e.key === 'Enter') commit(localStr); }}

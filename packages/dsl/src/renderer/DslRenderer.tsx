@@ -1,10 +1,11 @@
 import React, { forwardRef, useImperativeHandle, useMemo, useRef, useSyncExternalStore } from 'react';
 import { validate } from '../validator/validate';
-import type { ElucimDocument as RenderableDocument } from '../schema/types';
+import type { CameraNode, ElucimDocument as RenderableDocument } from '../schema/types';
 import type { ElucimDocument, ElucimTimelineFrameSelection } from '../document';
 import {
   applyTimelineFrames,
   createRenderableDocument,
+  evaluateTimelineCameraFrames,
   getDocumentLinearDuration,
   getInitialStateSnapshot,
   getStateMachineVisualFrames,
@@ -16,6 +17,7 @@ import { useStateMachineRuntime } from './useStateMachineRuntime';
 import {
   type ElucimTheme,
   type ImageResolverFn,
+  type RevealState,
   ImageResolverProvider,
   DARK_THEME_VARS, LIGHT_THEME_VARS,
   normalizeTheme,
@@ -266,24 +268,22 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
   const posterTimelineFrames = poster !== undefined && dsl.version === '2.0'
     ? getPosterTimelineFrames(dsl, posterFrame!)
     : undefined;
-  const posterRenderableDsl = poster !== undefined
+  const posterProjection = poster !== undefined
     ? resolvePosterRenderableDsl(poster, dsl, posterTimelineFrames)
     : undefined;
-  const posterRevealStates = dsl.version === '2.0' && posterTimelineFrames
-    ? resolveTimelineReveals(dsl, posterTimelineFrames)
+  const renderableDsl = stateMachineRuntime.renderableDsl ?? posterProjection?.document ?? toRenderableDocument(dsl);
+  const camera = stateMachineRuntime.camera ?? posterProjection?.camera;
+  const posterOverrides = poster !== undefined && posterProjection === undefined
+    ? { ...resolvePoster(poster, renderableDsl), revealStates: undefined }
     : undefined;
-  const renderableDsl = stateMachineRuntime.renderableDsl ?? posterRenderableDsl ?? toRenderableDocument(dsl);
   const rootOverrides = stateMachineRuntime.enabled
     ? {
       frame: stateMachineRuntime.frameOverride,
       revealStates: stateMachineRuntime.revealStates,
     }
-    : posterFrame === undefined
-      ? undefined
-      : {
-        frame: posterFrame,
-        revealStates: posterRevealStates,
-      };
+    : posterProjection
+      ? { frame: posterFrame, revealStates: posterProjection.revealStates }
+      : posterOverrides;
 
   const content = renderRoot(renderableDsl.root, {
     frame: rootOverrides?.frame,
@@ -295,6 +295,7 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
     loop,
     fitToContainer,
     onPlayStateChange,
+    camera,
   });
 
   const inner = (
@@ -329,11 +330,15 @@ function resolvePosterRenderableDsl(
   poster: 'first' | 'last' | number,
   dsl: ElucimDocument | RenderableDocument,
   frames?: ElucimTimelineFrameSelection[],
-): RenderableDocument | undefined {
+): { document: RenderableDocument; camera?: CameraNode; revealStates: Record<string, RevealState> } | undefined {
   if (dsl.version !== '2.0') return undefined;
   const posterFrames = frames ?? getPosterTimelineFrames(dsl, resolveDocumentPosterFrame(poster, dsl));
   const posterDoc = posterFrames.length > 0 ? applyTimelineFrames(dsl, posterFrames) : dsl;
-  return createRenderableDocument(posterDoc);
+  return {
+    document: createRenderableDocument(posterDoc),
+    camera: evaluateTimelineCameraFrames(dsl, posterFrames),
+    revealStates: resolveTimelineReveals(dsl, posterFrames),
+  };
 }
 
 function resolveDocumentPosterFrame(poster: 'first' | 'last' | number, dsl: ElucimDocument): number {

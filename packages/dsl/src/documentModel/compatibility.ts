@@ -1,5 +1,6 @@
 import type { ElucimDocument as RenderableDocument, ElementNode, PlayerNode, SceneNode } from '../schema/types';
 import type { ElucimDocument, ElucimElement, ElucimScene } from './types';
+import type { ElucimTimelineFrameSelection } from './timeline';
 import { getDocumentLinearDuration } from './duration';
 import { getInitialStateSnapshot, getStateMachineVisualFrames } from './stateMachine';
 import { applyTimelineFrames } from './timeline';
@@ -47,6 +48,9 @@ export function createDocumentFromRenderable(doc: RenderableDocument): ElucimDoc
   }
 
   const root = doc.root as SceneNode | PlayerNode;
+  if ('camera' in root) {
+    throw new Error('Render-tree camera is not supported. Use timeline.camera keyframes in an Elucim Document.');
+  }
   const state: MigrationState = { elements: {}, usedIds: new Set() };
   const children = root.children.map((child, index) => migrateElement(child, `root.${child.type}[${index}]`, undefined, state));
   const scene: ElucimScene = {
@@ -75,6 +79,7 @@ export function createDocumentFromRenderable(doc: RenderableDocument): ElucimDoc
   };
 }
 
+/** Projects a canonical document for rendering. */
 export function createRenderableDocument(doc: ElucimDocument): RenderableDocument {
   const children = doc.scene.children.map(id => restoreElement(doc, id));
   return {
@@ -97,17 +102,21 @@ export function createRenderableDocument(doc: ElucimDocument): RenderableDocumen
   };
 }
 
-function applyDefaultStateMachineInitialFrame(doc: ElucimDocument): ElucimDocument {
-  if (!doc.defaultStateMachine || !doc.stateMachines?.[doc.defaultStateMachine]) return doc;
+export function applyDefaultStateMachineInitialFrame(doc: ElucimDocument): ElucimDocument {
+  const frames = getDefaultStateMachineInitialFrames(doc);
+  return frames.length > 0 ? applyTimelineFrames(doc, frames) : doc;
+}
+
+export function getDefaultStateMachineInitialFrames(doc: ElucimDocument): ElucimTimelineFrameSelection[] {
+  if (!doc.defaultStateMachine || !doc.stateMachines?.[doc.defaultStateMachine]) return [];
   const snapshot = getInitialStateSnapshot(doc, doc.defaultStateMachine);
-  const frames = getStateMachineVisualFrames(doc, doc.defaultStateMachine, {
+  return getStateMachineVisualFrames(doc, doc.defaultStateMachine, {
     statePath: [snapshot.stateId],
     currentStateId: snapshot.stateId,
     currentFrame: 0,
     missingState: 'skip',
     missingTimeline: 'skip',
   });
-  return frames.length > 0 ? applyTimelineFrames(doc, frames) : doc;
 }
 
 function restoreElement(doc: ElucimDocument, id: string): ElementNode {

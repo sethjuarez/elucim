@@ -18,6 +18,41 @@ export type RootNode = SceneNode | PlayerNode | PresentationNode;
 /** Preset dimensions for common scene sizes */
 export type ScenePreset = 'card' | 'slide' | 'square';
 
+/** Coordinates of the scene region viewed by a camera. */
+export interface CameraViewport {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Coordinate system used by a camera viewport. */
+export type CameraCoordinateSpace = 'scene' | 'normalized';
+
+/** How a camera viewport is mapped onto the scene surface. */
+export type CameraFit = 'cover' | 'contain';
+
+/** An evaluated timeline camera viewport used only while rendering. */
+export interface CameraNode {
+  viewport: CameraViewport;
+  coordinateSpace?: CameraCoordinateSpace;
+  fit?: CameraFit;
+}
+
+/** A frame-accurate camera viewport sample. */
+export interface CameraKeyframe {
+  frame: number;
+  viewport: CameraViewport;
+  easing?: EasingSpec;
+}
+
+/** A semantic scene camera animation owned by a normalized timeline. */
+export interface CameraTrack {
+  coordinateSpace?: CameraCoordinateSpace;
+  fit?: CameraFit;
+  keyframes: CameraKeyframe[];
+}
+
 // ─── Container Nodes ────────────────────────────────────────────────────────
 
 export interface SceneNode {
