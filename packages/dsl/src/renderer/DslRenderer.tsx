@@ -1,10 +1,11 @@
 import React, { forwardRef, useImperativeHandle, useMemo, useRef, useSyncExternalStore } from 'react';
 import { validate } from '../validator/validate';
-import type { ElucimDocument as RenderableDocument } from '../schema/types';
+import type { CameraNode, ElucimDocument as RenderableDocument } from '../schema/types';
 import type { ElucimDocument, ElucimTimelineFrameSelection } from '../document';
 import {
   applyTimelineFrames,
   createRenderableDocument,
+  evaluateTimelineCameraFrames,
   getDocumentLinearDuration,
   getInitialStateSnapshot,
   getStateMachineVisualFrames,
@@ -257,9 +258,10 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
       : themeWithCompatibilityAliases(theme),
   ) as React.CSSProperties;
 
-  const posterRenderableDsl = poster !== undefined ? resolvePosterRenderableDsl(poster, dsl) : undefined;
-  const renderableDsl = stateMachineRuntime.renderableDsl ?? posterRenderableDsl ?? toRenderableDocument(dsl);
-  const posterOverrides = poster !== undefined && posterRenderableDsl === undefined ? resolvePoster(poster, renderableDsl) : undefined;
+  const posterProjection = poster !== undefined ? resolvePosterRenderableDsl(poster, dsl) : undefined;
+  const renderableDsl = stateMachineRuntime.renderableDsl ?? posterProjection?.document ?? toRenderableDocument(dsl);
+  const camera = stateMachineRuntime.camera ?? posterProjection?.camera;
+  const posterOverrides = poster !== undefined && posterProjection === undefined ? resolvePoster(poster, renderableDsl) : undefined;
   const rootOverrides = stateMachineRuntime.enabled ? { frame: stateMachineRuntime.frameOverride } : posterOverrides;
 
   const content = renderRoot(renderableDsl.root, {
@@ -271,6 +273,7 @@ export const DslRenderer = forwardRef<DslRendererRef, DslRendererProps>(function
     loop,
     fitToContainer,
     onPlayStateChange,
+    camera,
   });
 
   const inner = (
@@ -301,12 +304,15 @@ function resolvePoster(poster: 'first' | 'last' | number, dsl: RenderableDocumen
   return { frame: poster };
 }
 
-function resolvePosterRenderableDsl(poster: 'first' | 'last' | number, dsl: ElucimDocument | RenderableDocument): RenderableDocument | undefined {
+function resolvePosterRenderableDsl(
+  poster: 'first' | 'last' | number,
+  dsl: ElucimDocument | RenderableDocument,
+): { document: RenderableDocument; camera?: CameraNode } | undefined {
   if (dsl.version !== '2.0') return undefined;
   const frame = resolveDocumentPosterFrame(poster, dsl);
   const frames = getPosterTimelineFrames(dsl, frame);
   const posterDoc = frames.length > 0 ? applyTimelineFrames(dsl, frames) : dsl;
-  return createRenderableDocument(posterDoc);
+  return { document: createRenderableDocument(posterDoc), camera: evaluateTimelineCameraFrames(dsl, frames) };
 }
 
 function resolveDocumentPosterFrame(poster: 'first' | 'last' | number, dsl: ElucimDocument): number {

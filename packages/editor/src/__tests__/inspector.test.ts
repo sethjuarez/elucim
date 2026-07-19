@@ -77,6 +77,60 @@ describe('inspector position updates', () => {
     expect(el.cy).toBe(200); // unchanged
   });
 
+  describe('canvas camera inspector', () => {
+    it('starts camera framing for the selected timeline', async () => {
+      let latestFraming = false;
+      let latestTimelineId: string | undefined;
+
+      function SelectTimeline() {
+        const { state, dispatch } = useEditorState();
+        useEffect(() => {
+          dispatch({ type: 'SET_ACTIVE_TIMELINE', timelineId: 'intro' });
+        }, [dispatch]);
+        useEffect(() => {
+          latestFraming = state.isCameraFraming;
+          latestTimelineId = state.cameraFramingTimelineId;
+        }, [state.cameraFramingTimelineId, state.isCameraFraming]);
+        return null;
+      }
+
+      render(
+        React.createElement(
+          EditorProvider,
+          {
+            initialDocument: {
+              version: 'render-tree',
+              root: {
+                type: 'player',
+                width: 800,
+                height: 600,
+                durationInFrames: 120,
+                children: [],
+              },
+            },
+            initialCanonicalDocument: {
+              version: '2.0',
+              scene: { type: 'player', width: 800, height: 600, children: [] },
+              elements: {},
+              timelines: {
+                intro: { id: 'intro', duration: 120, tracks: [] },
+              },
+            },
+          },
+          React.createElement(SelectTimeline),
+          React.createElement(Inspector),
+        ),
+      );
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Frame timeline camera' }));
+
+      await waitFor(() => {
+        expect(latestFraming).toBe(true);
+        expect(latestTimelineId).toBe('intro');
+      });
+    });
+  });
+
   it('updates rect x/y/width/height', () => {
     let state = stateWith(rect);
     state = editorReducer(state, { type: 'UPDATE_ELEMENT', id: 'r1', changes: { width: 200, height: 150 } as any });

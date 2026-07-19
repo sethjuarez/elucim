@@ -16,6 +16,8 @@ interface UseKeyboardOptions {
   isPlaying: boolean;
   /** Whether the pointer is over the canvas workspace */
   isCanvasHovered: boolean;
+  /** Whether visual camera framing has exclusive editor input. */
+  isCameraFraming?: boolean;
   /** Callback to get the current document as JSON string */
   getDocumentJson: () => string;
   /** Callback to import a document from JSON string */
@@ -43,11 +45,17 @@ let elementClipboard: string | null = null;
  * - Ctrl+] / Ctrl+[: Bring forward / send backward
  * - Ctrl+Shift+] / Ctrl+Shift+[: Bring to front / send to back
  */
-export function useKeyboardShortcuts({ dispatch, selectedIds, document, zoom, isPlaying, isCanvasHovered, getDocumentJson, importDocument }: UseKeyboardOptions) {
+export function useKeyboardShortcuts({ dispatch, selectedIds, document, zoom, isPlaying, isCanvasHovered, isCameraFraming = false, getDocumentJson, importDocument }: UseKeyboardOptions) {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     // Don't intercept if user is typing in an input
     const tag = (e.target as HTMLElement).tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    if (isCameraFraming) {
+      e.preventDefault();
+      if (e.key === 'Escape') dispatch({ type: 'SET_CAMERA_FRAMING', framing: false });
+      return;
+    }
 
     const ctrl = e.ctrlKey || e.metaKey;
     const hasSelection = selectedIds.length > 0 && !(selectedIds.length === 1 && selectedIds[0] === CANVAS_ID);
@@ -202,13 +210,14 @@ export function useKeyboardShortcuts({ dispatch, selectedIds, document, zoom, is
         }
         break;
     }
-  }, [dispatch, selectedIds, document, zoom, isPlaying, isCanvasHovered, getDocumentJson, importDocument]);
+  }, [dispatch, selectedIds, document, zoom, isPlaying, isCanvasHovered, isCameraFraming, getDocumentJson, importDocument]);
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
+    if (isCameraFraming) return;
     if (e.key === ' ') {
       dispatch({ type: 'SET_PANNING', panning: false });
     }
-  }, [dispatch]);
+  }, [dispatch, isCameraFraming]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);

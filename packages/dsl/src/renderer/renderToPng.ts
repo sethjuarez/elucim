@@ -31,6 +31,8 @@ export interface RenderToPngOptions {
   height?: number;
   /** Device pixel ratio for retina output (default: 2) */
   scale?: number;
+  /** Canonical timeline to evaluate before rendering this frame. */
+  timelineId?: string;
 }
 
 /**
@@ -67,6 +69,7 @@ export async function renderToPng(
   const htmlString = renderToSvgString(dsl, frame, {
     width: options?.width,
     height: options?.height,
+    timelineId: options?.timelineId,
   });
 
   // 2. Extract the <svg>...</svg> element (Scene wraps SVG in a <div>)

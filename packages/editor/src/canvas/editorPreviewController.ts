@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { ElucimDocument, ElucimTimelineFrameSelection, RenderableDocument } from '@elucim/dsl';
-import { resolvePreviewDocument } from '../document/documentLifecycle';
+import type { CameraNode, ElucimDocument, ElucimTimelineFrameSelection, RenderableDocument } from '@elucim/dsl';
+import { resolvePreviewCamera, resolvePreviewDocument } from '../document/documentLifecycle';
 
 export interface EditorStateMachinePreviewMode {
   active: boolean;
@@ -21,6 +21,7 @@ export interface EditorTimelinePreviewCallbacks {
 
 export interface EditorPreviewController {
   previewDocument: RenderableDocument | undefined;
+  previewCamera: CameraNode | undefined;
   stateMachinePreviewMode: EditorStateMachinePreviewMode;
   timelinePreviewCallbacks: EditorTimelinePreviewCallbacks;
 }
@@ -46,6 +47,10 @@ export function useEditorPreviewController(liveDocument: ElucimDocument | undefi
 
   const previewDocument = useMemo(
     () => resolvePreviewDocument(liveDocument, previewTimelineFrames),
+    [liveDocument, previewTimelineFrames],
+  );
+  const previewCamera = useMemo(
+    () => resolvePreviewCamera(liveDocument, previewTimelineFrames),
     [liveDocument, previewTimelineFrames],
   );
 
@@ -76,5 +81,5 @@ export function useEditorPreviewController(liveDocument: ElucimDocument | undefi
     setPreviewExitHandler,
   ]);
 
-  return { previewDocument, stateMachinePreviewMode, timelinePreviewCallbacks };
+  return { previewDocument, previewCamera, stateMachinePreviewMode, timelinePreviewCallbacks };
 }

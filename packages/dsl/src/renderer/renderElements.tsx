@@ -14,6 +14,8 @@ import type { TransitionType, PlayerRef } from '@elucim/core';
 import { resolveEasing } from './resolveEasing';
 import { resolveColor } from './resolveColor';
 import { compileExpression, compileVectorExpression } from '../math/evaluator';
+import { SceneCameraViewport } from './CameraViewport';
+import type { CameraNode } from '../schema/types';
 
 // ─── Preset dimensions ─────────────────────────────────────────────────────
 
@@ -47,6 +49,8 @@ export interface RenderRootOverrides {
   fitToContainer?: boolean;
   /** Callback fired when playback state changes. */
   onPlayStateChange?: (playing: boolean) => void;
+  /** Evaluated camera from the active timeline or state-machine path. */
+  camera?: CameraNode;
 }
 
 export function renderRoot(
@@ -82,6 +86,8 @@ export function renderRoot(
 export function renderScene(node: SceneNode, overrides?: RenderRootOverrides): React.ReactNode {
   const hasFrameOverride = overrides?.frame !== undefined;
   const { width, height } = resolvePreset(node.preset, node.width, node.height);
+  const sceneWidth = width ?? 1920;
+  const sceneHeight = height ?? 1080;
   return (
     <Scene
       width={width}
@@ -93,13 +99,17 @@ export function renderScene(node: SceneNode, overrides?: RenderRootOverrides): R
       fitToContainer={overrides?.fitToContainer}
       {...(hasFrameOverride ? { frame: overrides!.frame, autoPlay: false } : {})}
     >
-      {node.children.map((child, i) => renderElement(child, i))}
+      <SceneCameraViewport camera={overrides?.camera} width={sceneWidth} height={sceneHeight}>
+        {node.children.map((child, i) => renderElement(child, i))}
+      </SceneCameraViewport>
     </Scene>
   );
 }
 
 export function renderPlayer(node: PlayerNode, overrides?: RenderRootOverrides): React.ReactNode {
   const { width, height } = resolvePreset(node.preset, node.width, node.height);
+  const sceneWidth = width ?? 1920;
+  const sceneHeight = height ?? 1080;
   return (
     <Player
       ref={overrides?.playerRef as React.Ref<PlayerRef> | undefined}
@@ -115,7 +125,9 @@ export function renderPlayer(node: PlayerNode, overrides?: RenderRootOverrides):
       fitToContainer={overrides?.fitToContainer}
       colorScheme={overrides?.colorScheme}
     >
-      {node.children.map((child, i) => renderElement(child, i))}
+      <SceneCameraViewport camera={overrides?.camera} width={sceneWidth} height={sceneHeight}>
+        {node.children.map((child, i) => renderElement(child, i))}
+      </SceneCameraViewport>
     </Player>
   );
 }
