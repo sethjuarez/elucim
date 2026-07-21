@@ -125,9 +125,8 @@ export function getThemeDefaults(colorScheme: ThemeColorScheme = 'dark'): Normal
 /**
  * Normalize a partial theme into the canonical semantic theme shape.
  *
- * This is the compatibility layer for the `primary`/`accent` overlap: new code
- * should read `accent` for semantic highlights, while existing `primary`-only
- * themes still drive accent styling.
+ * When only one of `primary` or `accent` is provided, use it for both semantic
+ * highlight tokens.
  */
 export function normalizeTheme(
   theme?: ElucimTheme,

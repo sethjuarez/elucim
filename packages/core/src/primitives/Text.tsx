@@ -1,10 +1,9 @@
 import React from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 import { measureTextLayout, measureTextWidth, type TextWrapMode } from '../text/measureText';
-import { useRevealState, type RevealCursorOptions } from '../animations/Reveal';
+import { useRevealState, type RevealCursorOptions } from '../motion/RevealState';
 
-export interface TextProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface TextProps extends SpatialProps, BaseElementProps {
   x: number;
   y: number;
   children: string;
@@ -34,15 +33,11 @@ export function Text({
   maxWidth,
   lineHeight,
   wrap,
-  fadeIn,
-  fadeOut,
-  easing,
   rotation,
   rotationOrigin,
   scale,
   translate,
 }: TextProps) {
-  const anim = useAnimation({ fadeIn, fadeOut, easing });
   const reveal = useRevealState();
   const revealState = reveal?.strategy === 'type'
     ? resolveTextReveal(children, reveal.progress, reveal.cursor)
@@ -71,7 +66,7 @@ export function Text({
       fontWeight={fontWeight}
       textAnchor={textAnchor}
       dominantBaseline={dominantBaseline}
-      opacity={baseOpacity * anim.opacity}
+      opacity={baseOpacity}
       data-testid="elucim-text"
     >
       {renderedContent}
@@ -98,7 +93,7 @@ export function Text({
         fontFamily={fontFamily}
         fontWeight={fontWeight}
         dominantBaseline={dominantBaseline}
-        opacity={baseOpacity * anim.opacity}
+        opacity={baseOpacity}
         data-testid="elucim-text-cursor"
       >
         {revealState.cursor}

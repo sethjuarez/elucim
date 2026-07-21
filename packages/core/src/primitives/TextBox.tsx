@@ -1,6 +1,5 @@
 import React from 'react';
 import { measureTextLayout, measureTextWidth, type MeasuredTextLine } from '../text/measureText';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
 export type TextBoxPadding = number | { x?: number; y?: number };
@@ -8,7 +7,7 @@ export type TextBoxAlign = 'start' | 'middle' | 'end';
 export type TextBoxVerticalAlign = 'top' | 'middle' | 'bottom';
 export type TextBoxAutoFit = 'none' | 'shrink' | 'truncate';
 
-export interface TextBoxProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface TextBoxProps extends SpatialProps, BaseElementProps {
   x: number;
   y: number;
   width: number;
@@ -143,9 +142,6 @@ export function TextBox({
   backgroundStrokeWidth = 1,
   radius = 8,
   opacity: baseOpacity = 1,
-  fadeIn,
-  fadeOut,
-  easing,
   rotation,
   rotationOrigin,
   scale,
@@ -216,10 +212,8 @@ export function TextBox({
     : align === 'end'
       ? x + width - pad.x
       : x + pad.x;
-  const anim = useAnimation({ fadeIn, fadeOut, easing });
-
   const el = (
-    <g opacity={baseOpacity * anim.opacity} data-testid="elucim-textbox">
+    <g opacity={baseOpacity} data-testid="elucim-textbox">
       <rect
         x={x}
         y={y}

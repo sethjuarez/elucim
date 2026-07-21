@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import type { CameraNode, ElucimDocument as RenderableDocument } from '../schema/types';
+import type { CameraNode } from '../schema/types';
 import type { ElucimDocument, ElucimStateMachineRun } from '../document';
 import {
   advanceStateMachineRunFrame,
   applyTimelineFrames,
-  createRenderableDocument,
   dispatchStateMachineRunEvent,
   evaluateTimelineCameraFrames,
   getStateMachineRunVisualFrames,
@@ -14,7 +13,7 @@ import {
 import type { RevealState } from '@elucim/core';
 
 interface StateMachineRuntimeOptions {
-  dsl: RenderableDocument | ElucimDocument;
+  dsl: ElucimDocument;
   valid: boolean;
   poster?: 'first' | 'last' | number;
   loop?: boolean;
@@ -23,7 +22,7 @@ interface StateMachineRuntimeOptions {
 
 interface StateMachineRuntime {
   enabled: boolean;
-  renderableDsl?: RenderableDocument;
+  document?: ElucimDocument;
   camera?: CameraNode;
   frameOverride?: number;
   revealStates?: Record<string, RevealState>;
@@ -109,7 +108,7 @@ export function useStateMachineRuntime({
   }, [effectiveRun?.playing, enabled, onPlayStateChange, shouldLoop, stateMachineDocument, stateMachineId]);
 
   const renderProjection = enabled && stateMachineDocument && effectiveRun
-    ? stateMachineRunToRenderableDocument(stateMachineDocument, effectiveRun)
+    ? stateMachineRunToDocument(stateMachineDocument, effectiveRun)
     : undefined;
   const revealStates = enabled && stateMachineDocument && effectiveRun
     ? resolveTimelineReveals(stateMachineDocument, getStateMachineRunVisualFrames(stateMachineDocument, effectiveRun))
@@ -135,7 +134,7 @@ export function useStateMachineRuntime({
 
   return {
     enabled,
-    renderableDsl: renderProjection?.document,
+    document: renderProjection?.document,
     camera: renderProjection?.camera,
     frameOverride: enabled ? 0 : undefined,
     revealStates,
@@ -181,17 +180,17 @@ export function useStateMachineRuntime({
   };
 }
 
-function getStateMachineDocument(dsl: RenderableDocument | ElucimDocument): ElucimDocument | undefined {
-  return dsl.version === '2.0' && dsl.defaultStateMachine ? dsl : undefined;
+function getStateMachineDocument(dsl: ElucimDocument): ElucimDocument | undefined {
+  return dsl.defaultStateMachine ? dsl : undefined;
 }
 
-function stateMachineRunToRenderableDocument(
+function stateMachineRunToDocument(
   doc: ElucimDocument,
   run: ElucimStateMachineRun,
-): { document: RenderableDocument; camera?: CameraNode } {
+): { document: ElucimDocument; camera?: CameraNode } {
   const frames = getStateMachineRunVisualFrames(doc, run);
   return {
-    document: createRenderableDocument(frames.length > 0 ? applyTimelineFrames(doc, frames) : doc),
+    document: frames.length > 0 ? applyTimelineFrames(doc, frames) : doc,
     camera: evaluateTimelineCameraFrames(doc, frames),
   };
 }

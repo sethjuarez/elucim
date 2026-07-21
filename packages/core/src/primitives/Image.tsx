@@ -1,9 +1,8 @@
 import React, { useEffect, useId, useState } from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 import { useImageResolver } from '../providers/ImageResolverProvider';
 
-export interface ImageProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface ImageProps extends SpatialProps, BaseElementProps {
   /** Image URL or data URI (used directly, or as fallback when imageRef is set) */
   src?: string;
   /** Opaque consumer reference resolved via ImageResolverProvider at render time */
@@ -41,16 +40,12 @@ export function Image({
   borderRadius = 0,
   clipShape = 'none',
   opacity: baseOpacity = 1,
-  fadeIn,
-  fadeOut,
-  easing,
   rotation,
   rotationOrigin,
   scale,
   translate,
 }: ImageProps) {
   const clipId = useId();
-  const anim = useAnimation({ fadeIn, fadeOut, easing });
   const needsClip = borderRadius > 0 || clipShape !== 'none';
   const resolver = useImageResolver();
 
@@ -98,7 +93,7 @@ export function Image({
   ) : null;
 
   const el = (
-    <g data-testid="elucim-image" opacity={baseOpacity * anim.opacity}>
+    <g data-testid="elucim-image" opacity={baseOpacity}>
       {clipPathContent}
       <image
         href={resolvedSrc}

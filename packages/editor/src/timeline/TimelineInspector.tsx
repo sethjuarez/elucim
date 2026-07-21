@@ -1,4 +1,4 @@
-import type { ElucimRevealEffect, ElucimTimeline } from '@elucim/dsl';
+import type { ElucimRevealEffect, ElucimTimeline } from '@elucim/editor-projection';
 import { v } from '../theme/tokens';
 import { ANIMATABLE_PROPERTIES } from './constants';
 import { parseKeyframeValue } from './keyframeValue';

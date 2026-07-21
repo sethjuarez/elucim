@@ -2,7 +2,6 @@
 
 // Components
 export { Scene, type SceneProps } from './components/Scene';
-export { Sequence, type SequenceProps } from './components/Sequence';
 export { Player, type PlayerProps, type PlayerRef } from './components/Player';
 export {
   Presentation, type PresentationProps,
@@ -62,7 +61,6 @@ export { LaTeX, type LaTeXProps } from './primitives/LaTeX';
 export { BarChart, type BarChartProps, type BarDef } from './primitives/BarChart';
 export { Image, type ImageProps } from './primitives/Image';
 export { Group, type GroupProps } from './primitives/Group';
-export { useAnimation, type AnimationProps } from './primitives/animation';
 export { buildTransform, withTransform, sortByZIndex, type SpatialProps, type BaseElementProps } from './primitives/transform';
 export {
   measureTextLayout,
@@ -72,20 +70,13 @@ export {
   type MeasureTextOptions,
   type TextWrapMode,
 } from './text/measureText';
-// Legacy animation wrappers
-export { FadeIn, FadeOut, type FadeInProps, type FadeOutProps } from './animations/Fade';
-export { Draw, Write, type DrawProps, type WriteProps } from './animations/DrawWrite';
-export { Transform, Morph, type TransformProps, type MorphProps } from './animations/Transform';
-export { Parallel, Stagger, type ParallelProps, type StaggerProps } from './animations/Groups';
 export {
-  Reveal,
   RevealStateProvider,
   useRevealState,
   type RevealCursorOptions,
-  type RevealProps,
   type RevealState,
   type RevealStrategy,
-} from './animations/Reveal';
+} from './motion/RevealState';
 
 // Theme
 export {

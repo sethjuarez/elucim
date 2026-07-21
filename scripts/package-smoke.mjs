@@ -138,7 +138,7 @@ import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import React from 'react';
 import { Circle, Player, interpolate } from '@elucim/core';
-import { normalizeDocument, renderToSvgString, validateDocument } from '@elucim/dsl';
+import { renderToSvgString, validateDocument } from '@elucim/dsl';
 import { createAgentSafeDocument, createCalculusDerivativeScenePreset } from '@elucim/dsl/agent';
 
 const consumerDir = dirname(fileURLToPath(import.meta.url));
@@ -166,7 +166,6 @@ const document = {
 };
 const validation = validateDocument(document);
 assert.equal(validation.valid, true, validation.errors.map(error => error.message).join('\\n'));
-assert.equal(normalizeDocument(document).document.scene.children[0], 'title', '@elucim/dsl normalizeDocument should run');
 const calculusDoc = createAgentSafeDocument(createCalculusDerivativeScenePreset({ id: 'derivative' }));
 assert.equal(validateDocument(calculusDoc).valid, true, '@elucim/dsl calculus agent preset should validate');
 assert.equal(renderToSvgString(calculusDoc, 0).includes('elucim-tangent-line'), true, '@elucim/dsl calculus agent preset should render');

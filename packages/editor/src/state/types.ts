@@ -1,4 +1,4 @@
-import type { CameraTrack, ElucimDocument as CanonicalElucimDocument, ElucimTimeline, RenderableDocument as ElucimDocument, ElementNode, SceneNode, PlayerNode } from '@elucim/dsl';
+import type { CameraTrack, ElucimDocument as CanonicalElucimDocument, ElucimTimeline, EditorProjection as ElucimDocument, ElementNode, SceneNode, PlayerNode } from '@elucim/editor-projection';
 
 // ─── Editor State ──────────────────────────────────────────────────────────
 
@@ -18,8 +18,6 @@ export interface EditorState {
   document: ElucimDocument;
   /** Canonical Elucim Document shadow model carried while the canvas still uses a renderable projection. */
   canonicalDocument?: CanonicalElucimDocument;
-  /** Warnings from adapting the current editor projection back to the canonical document. */
-  compatibilityWarnings: string[];
   /** IDs of currently selected elements (uses id field or generated path) */
   selectedIds: string[];
   /** Canvas viewport (pan/zoom) */
@@ -59,7 +57,6 @@ export interface EditorState {
 export interface EditorHistoryEntry {
   document: ElucimDocument;
   canonicalDocument?: CanonicalElucimDocument;
-  compatibilityWarnings: string[];
 }
 
 export type EditorTool =
@@ -75,15 +72,14 @@ export type EditorTool =
 
 export type AlignDirection = 'left' | 'right' | 'top' | 'bottom' | 'center-h' | 'center-v';
 export type DistributeDirection = 'horizontal' | 'vertical';
-export type AnimationWrapperType = 'fadeIn' | 'fadeOut' | 'draw' | 'write' | 'transform' | 'morph' | 'stagger' | 'parallel';
 
 export type EditorAction =
   | { type: 'SELECT'; ids: string[] }
   | { type: 'SELECT_ADD'; id: string }
   | { type: 'SELECT_TOGGLE'; id: string }
   | { type: 'DESELECT_ALL' }
-  | { type: 'IMPORT_RENDERABLE_DOCUMENT'; document: ElucimDocument }
-  | { type: 'SET_CANONICAL_DOCUMENT'; document?: CanonicalElucimDocument; warnings?: string[]; syncProjection?: boolean }
+  | { type: 'IMPORT_CANONICAL_DOCUMENT'; document: CanonicalElucimDocument }
+  | { type: 'SET_CANONICAL_DOCUMENT'; document?: CanonicalElucimDocument; syncProjection?: boolean }
   | { type: 'UPDATE_ELEMENT'; id: string; changes: Partial<ElementNode> }
   | { type: 'UPDATE_CANVAS'; changes: Record<string, any> }
   | { type: 'ADD_ELEMENT'; element: ElementNode; parentPath?: string }
@@ -95,8 +91,6 @@ export type EditorAction =
   | { type: 'ROTATE_ELEMENT'; id: string; angleDeg: number }
   | { type: 'GROUP_ELEMENTS'; ids: string[] }
   | { type: 'UNGROUP'; id: string }
-  | { type: 'WRAP_IN_ANIMATION'; id: string; wrapper: AnimationWrapperType }
-  | { type: 'UNWRAP_ANIMATION'; id: string }
   | { type: 'RENAME_ELEMENT'; id: string; newId: string }
   | { type: 'REORDER_ELEMENT'; id: string; newIndex: number }
   | { type: 'BRING_FORWARD'; ids: string[] }
@@ -140,7 +134,6 @@ export type ContainerRoot = SceneNode | PlayerNode;
 
 export function createDefaultDocument(): ElucimDocument {
   return {
-    version: 'render-tree',
     root: {
       type: 'player',
       width: 1920,
@@ -159,7 +152,6 @@ export function createInitialState(document?: ElucimDocument, initialFrame?: num
   return {
     document: document ?? createDefaultDocument(),
     canonicalDocument,
-    compatibilityWarnings: [],
     selectedIds: [CANVAS_ID],
     viewport: { x: 0, y: 0, zoom: 1 },
     past: [],
@@ -198,11 +190,9 @@ export function isUndoableAction(action: EditorAction): boolean {
     case 'MOVE_ELEMENT':
     case 'RESIZE_ELEMENT':
     case 'ROTATE_ELEMENT':
-    case 'IMPORT_RENDERABLE_DOCUMENT':
+    case 'IMPORT_CANONICAL_DOCUMENT':
     case 'GROUP_ELEMENTS':
     case 'UNGROUP':
-    case 'WRAP_IN_ANIMATION':
-    case 'UNWRAP_ANIMATION':
     case 'REORDER_ELEMENT':
     case 'BRING_FORWARD':
     case 'SEND_BACKWARD':

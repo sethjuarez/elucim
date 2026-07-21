@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import type { CameraNode, ElucimDocument, RenderableDocument } from '@elucim/dsl';
+import type { CameraNode, ElucimDocument, EditorProjection } from '@elucim/editor-projection';
 import type { ElucimTheme } from '@elucim/core';
 import type { EditorRootProps } from '../chrome/EditorRoot';
 import type { EditorWorkspaceSurfaceProps } from '../chrome/EditorWorkspaceSurface';
@@ -25,7 +25,7 @@ export interface EditorLayoutSlotsOptions {
   liveDocument?: ElucimDocument;
   workspace: EditorWorkspace;
   preferredLeftTab?: 'objects' | 'polish';
-  previewDocument?: RenderableDocument;
+  previewDocument?: EditorProjection;
   previewCamera?: CameraNode;
   previewMode: EditorStateMachinePreviewMode;
   timelinePreviewCallbacks: EditorTimelinePreviewCallbacks;
@@ -59,7 +59,7 @@ export interface EditorLayoutComposition {
 export function useEditorLayoutController(onDocumentChange?: (document: ElucimDocument) => void): EditorLayoutController {
   const { state, dispatch } = useEditorState();
   const commitDocumentChange = useCallback((document: ElucimDocument) => {
-    dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [] });
+    dispatch({ type: 'SET_CANONICAL_DOCUMENT', document });
     onDocumentChange?.(document);
   }, [dispatch, onDocumentChange]);
   const stopPlayback = useCallback(() => {

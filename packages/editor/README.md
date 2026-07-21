@@ -156,9 +156,8 @@ For application persistence, prefer the top-level editor callback:
 ```tsx
 <ElucimEditor
   initialDocument={document}
-  onDocumentChange={(nextDocument, details) => {
+  onDocumentChange={nextDocument => {
     saveDocument(nextDocument);
-    if (details.warnings.length > 0) showWarnings(details.warnings);
   }}
 />
 ```
@@ -215,35 +214,6 @@ const vars = buildThemeVars({ accent: '#e040fb', bg: '#1e1e2e' });
 // → { '--elucim-editor-accent': '#e040fb', '--elucim-editor-bg': '#1e1e2e', ... }
 ```
 
-## State Management
-
-The editor uses normalized `ElucimDocument` as its native input/output shape. Integrations should pass and persist normalized documents through `initialDocument` and `onDocumentChange`.
-
-The editor uses a reducer-based state model. Access it programmatically via context hooks:
-
-```tsx
-import { EditorProvider, useEditorState, useEditorDocument, useEditorSelection } from '@elucim/editor';
-
-function MyCustomPanel() {
-  const [state, dispatch] = useEditorState();
-  const document = useEditorDocument();
-  const selectedIds = useEditorSelection();
-
-  return <div>Selected: {selectedIds.length} elements</div>;
-}
-```
-
-### Canvas as Object
-
-Click on empty canvas space to select the canvas itself. The inspector switches to show scene-level properties:
-
-```tsx
-import { CANVAS_ID } from '@elucim/editor';
-
-// Check if canvas is selected
-const isCanvasSelected = selectedIds.length === 1 && selectedIds[0] === CANVAS_ID;
-```
-
 ## Keyboard Shortcuts
 
 | Shortcut | Action |
@@ -277,18 +247,6 @@ The editor wraps its entire component tree in an error boundary. If a rendering 
 | `DotGrid` | Zoom-adaptive dot grid background |
 | `Minimap` | Canvas overview minimap |
 | `ZoomControls` | Zoom buttons and zoom-to-fit |
-
-### Hooks
-
-| Export | Description |
-|--------|-------------|
-| `useEditorState()` | `[state, dispatch]` — full editor state and action dispatcher |
-| `useEditorDocument()` | Current internal editor document for advanced composition; integrations should persist via `onDocumentChange` |
-| `useEditorSelection()` | Array of selected element IDs |
-| `useViewport()` | Zoom/pan state and handlers |
-| `useDrag()` | Element drag/resize/rotate interactions |
-| `useMarquee()` | Lasso selection interactions |
-| `useMeasuredBounds()` | DOM-based element bounds measurement |
 
 ### Utilities
 

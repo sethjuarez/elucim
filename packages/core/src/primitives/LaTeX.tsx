@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import katex from 'katex';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface LaTeXProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface LaTeXProps extends SpatialProps, BaseElementProps {
   /** LaTeX expression string (e.g., "\\frac{a}{b}") */
   expression: string;
   /** SVG x position */
@@ -37,16 +36,11 @@ export function LaTeX({
   color = '#fff',
   fontSize = 24,
   align = 'center',
-  fadeIn,
-  fadeOut,
-  easing,
   rotation,
   rotationOrigin,
   scale,
   translate,
 }: LaTeXProps) {
-  const anim = useAnimation({ fadeIn, fadeOut, easing });
-
   const html = useMemo(() => {
     try {
       return katex.renderToString(expression, {
@@ -74,7 +68,6 @@ export function LaTeX({
       y={y - fontSize * 1.5}
       width={foWidth}
       height={height}
-      opacity={anim.opacity}
       data-testid="elucim-latex"
       style={{ overflow: 'visible' }}
     >

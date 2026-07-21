@@ -1,7 +1,5 @@
 import { renderToSvgString } from './renderToSvgString';
-import { resolveColor, SEMANTIC_TOKENS } from './resolveColor';
-import { toRenderableDocument } from '../document';
-import type { ElucimDocument as RenderableDocument } from '../schema/types';
+import { resolveColor, SEMANTIC_TOKENS } from '@elucim/core';
 import type { ElucimDocument } from '../document';
 
 /**
@@ -58,12 +56,11 @@ export interface RenderToPngOptions {
  * ```
  */
 export async function renderToPng(
-  dsl: ElucimDocument | RenderableDocument,
+  dsl: ElucimDocument,
   frame: number,
   options?: RenderToPngOptions,
 ): Promise<Uint8Array> {
   const scale = options?.scale ?? 2;
-  const renderable = toRenderableDocument(dsl);
 
   // 1. Render DSL → HTML string containing <svg> (server-side, no DOM needed)
   const htmlString = renderToSvgString(dsl, frame, {
@@ -97,9 +94,9 @@ export async function renderToPng(
   // Remove position:absolute style (not needed standalone)
   svgString = svgString.replace(/style="[^"]*position:\s*absolute[^"]*"/, '');
 
-  // 5. Inject background rect from the DSL root
+  // 5. Inject background rect from the canonical scene
   //    $token → resolveColor → var(--elucim-X, #hex) → strip to #hex
-  let bg: string = (renderable.root as any).background ?? '#ffffff';
+  let bg = dsl.scene.background ?? '#ffffff';
   if (bg.startsWith('$')) {
     bg = resolveColor(bg) ?? '#ffffff';
   }

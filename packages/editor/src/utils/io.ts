@@ -1,11 +1,11 @@
-import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
-import { createDocumentFromRenderable, createRenderableDocument, validate } from '@elucim/dsl';
+import type { ElucimDocument, EditorProjection } from '@elucim/editor-projection';
+import { documentFromProjection, validate } from '@elucim/editor-projection';
 
 export interface ExportOptions {
   pretty?: boolean;
 }
 
-export type ExportableDocument = ElucimDocument | RenderableDocument;
+export type ExportableDocument = ElucimDocument;
 
 /**
  * Export an ElucimDocument to a JSON string.
@@ -15,17 +15,16 @@ export function exportToJson(document: ExportableDocument, options: ExportOption
   return JSON.stringify(document, null, pretty ? 2 : undefined);
 }
 
-export function getEditorExportDocument(document: RenderableDocument, canonicalDocument?: ElucimDocument): ElucimDocument {
-  return canonicalDocument ?? createDocumentFromRenderable(document);
+export function getEditorExportDocument(document: EditorProjection, canonicalDocument?: ElucimDocument): ElucimDocument {
+  return canonicalDocument ?? documentFromProjection(document);
 }
 
-export function exportEditorDocumentToJson(document: RenderableDocument, canonicalDocument?: ElucimDocument, options: ExportOptions = {}): string {
+export function exportEditorDocumentToJson(document: EditorProjection, canonicalDocument?: ElucimDocument, options: ExportOptions = {}): string {
   return exportToJson(getEditorExportDocument(document, canonicalDocument), options);
 }
 
 export interface ImportResult {
-  document: RenderableDocument | null;
-  canonicalDocument?: ElucimDocument;
+  document: ElucimDocument | null;
   errors: string[];
 }
 
@@ -41,36 +40,14 @@ export function importFromJson(json: string): ImportResult {
     if (!parsed || typeof parsed !== 'object') {
       return { document: null, errors: ['JSON must be an object'] };
     }
-    if (parsed.version === '2.0') {
-      const result = validate(parsed);
-      if (!result.valid) {
-        return {
-          document: null,
-          errors: result.errors.map(e => `${e.path}: ${e.message}`),
-        };
-      }
-      const canonicalDocument = parsed as ElucimDocument;
-      return { document: createRenderableDocument(canonicalDocument), canonicalDocument, errors: [] };
-    }
-    if (parsed.version !== 'render-tree') {
-      return { document: null, errors: [`Unknown version: ${parsed.version}. Expected "render-tree" or "2.0"`] };
-    }
-    if (!parsed.root) {
-      return { document: null, errors: ['Missing "root" property'] };
-    }
-
-    const doc = parsed as RenderableDocument;
-
-    // Run DSL validator
-    const result = validate(doc);
+    const result = validate(parsed);
     if (!result.valid) {
       return {
-        document: doc, // Return it anyway — user may want partial import
+        document: null,
         errors: result.errors.map(e => `${e.path}: ${e.message}`),
       };
     }
-
-    return { document: doc, canonicalDocument: createDocumentFromRenderable(doc), errors: [] };
+    return { document: parsed as ElucimDocument, errors: [] };
   } catch (err) {
     return { document: null, errors: [`Invalid JSON: ${(err as Error).message}`] };
   }

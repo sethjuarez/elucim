@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ElementNode } from '@elucim/dsl';
+import type { ElementNode } from '@elucim/editor-projection';
 import type { BoundingBox } from '../utils/bounds';
 import { getElementBounds } from '../utils/bounds';
 

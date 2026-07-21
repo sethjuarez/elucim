@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { Scene } from '@elucim/core';
-import { resolveCameraViewport, SceneCameraViewport, renderElement } from '@elucim/dsl';
-import type { CameraNode, RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
+import { resolveCameraViewport, SceneCameraViewport } from '@elucim/editor-projection';
+import type { CameraNode, EditorProjection as ElucimDocument, ElementNode } from '@elucim/editor-projection';
 import { resolveColor, DARK_THEME, LIGHT_THEME, normalizeTheme, themeToVars, type ElucimTheme } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { getElementId } from '../state/types';
@@ -29,6 +29,7 @@ import {
   type CameraFrameViewport,
 } from './CameraFramingOverlay';
 import { upsertTimelineCameraKeyframe } from '../timeline/cameraKeyframes';
+import { renderProjectionElement } from '../document/renderProjectionElement';
 
 export interface ElucimCanvasProps {
   className?: string;
@@ -418,11 +419,7 @@ export function ElucimCanvas({ className, style, previewDocument, previewCamera,
   const getDocumentJson = useCallback(() => exportEditorDocumentToJson(state.document, state.canonicalDocument), [state.canonicalDocument, state.document]);
   const handleImport = useCallback((json: string) => {
     const result = importFromJson(json);
-    if (result.canonicalDocument) {
-      dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.canonicalDocument, syncProjection: true });
-    } else if (result.document) {
-      dispatch({ type: 'IMPORT_RENDERABLE_DOCUMENT', document: result.document });
-    }
+    if (result.document) dispatch({ type: 'IMPORT_CANONICAL_DOCUMENT', document: result.document });
   }, [dispatch]);
 
   useKeyboardShortcuts({
@@ -747,7 +744,7 @@ export function ElucimCanvas({ className, style, previewDocument, previewCamera,
           <SceneCameraViewport camera={renderedCamera} width={width} height={height}>
             {children.map((child, i) => (
               <g key={elementIds[i]} data-measure-id={elementIds[i]}>
-                {renderElement(child, i)}
+                {renderProjectionElement(child, i)}
               </g>
             ))}
           </SceneCameraViewport>

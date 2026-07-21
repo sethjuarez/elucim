@@ -1,8 +1,7 @@
 import React from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface PolygonProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface PolygonProps extends SpatialProps, BaseElementProps {
   /** Array of [x, y] points */
   points: [number, number][];
   /** Fill color. Default: 'none' */
@@ -18,7 +17,7 @@ export interface PolygonProps extends AnimationProps, SpatialProps, BaseElementP
 }
 
 /**
- * SVG polygon or polyline with animation support.
+ * SVG polygon or polyline.
  */
 export function Polygon({
   points,
@@ -27,29 +26,11 @@ export function Polygon({
   strokeWidth = 2,
   opacity: baseOpacity = 1,
   closed = true,
-  fadeIn,
-  fadeOut,
-  draw,
-  easing,
   rotation,
   rotationOrigin,
   scale,
   translate,
 }: PolygonProps) {
-  // Compute perimeter for draw animation
-  let perimeter = 0;
-  for (let i = 1; i < points.length; i++) {
-    const dx = points[i][0] - points[i - 1][0];
-    const dy = points[i][1] - points[i - 1][1];
-    perimeter += Math.sqrt(dx * dx + dy * dy);
-  }
-  if (closed && points.length > 1) {
-    const dx = points[0][0] - points[points.length - 1][0];
-    const dy = points[0][1] - points[points.length - 1][1];
-    perimeter += Math.sqrt(dx * dx + dy * dy);
-  }
-
-  const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, perimeter);
   const pointsStr = points.map(([x, y]) => `${x},${y}`).join(' ');
 
   const Element = closed ? 'polygon' : 'polyline';
@@ -67,9 +48,7 @@ export function Polygon({
       fill={fill}
       stroke={stroke}
       strokeWidth={strokeWidth}
-      opacity={baseOpacity * anim.opacity}
-      strokeDasharray={anim.strokeDasharray}
-      strokeDashoffset={anim.strokeDashoffset}
+      opacity={baseOpacity}
       strokeLinejoin="round"
       data-testid="elucim-polygon"
     />

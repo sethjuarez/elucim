@@ -186,12 +186,14 @@ describe('add element + undo', () => {
 // ─── Preset resize ─────────────────────────────────────────────────────────
 
 describe('preset resize', () => {
-  it('changes scene dimensions via compatibility document import', () => {
+  it('changes scene dimensions through a canonical document import', () => {
     let state = createInitialState();
-    const doc = JSON.parse(JSON.stringify(state.document));
-    doc.root.width = 1280;
-    doc.root.height = 720;
-    state = editorReducer(state, { type: 'IMPORT_RENDERABLE_DOCUMENT', document: doc });
+    const doc = {
+      version: '2.0' as const,
+      scene: { type: 'player' as const, width: 1280, height: 720, children: [] },
+      elements: {},
+    };
+    state = editorReducer(state, { type: 'IMPORT_CANONICAL_DOCUMENT', document: doc });
     expect((state.document.root as any).width).toBe(1280);
     expect((state.document.root as any).height).toBe(720);
     expect(state.canonicalDocument?.scene.width).toBe(1280);

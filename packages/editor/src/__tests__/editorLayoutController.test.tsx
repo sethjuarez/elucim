@@ -4,7 +4,7 @@
 import React from 'react';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { ElucimDocument } from '@elucim/editor-projection';
 import { buildEditorLayoutSlots, useEditorLayoutComposition, useEditorLayoutController } from '../layout/editorLayoutController';
 import { EditorProvider, useEditorState } from '../state/EditorProvider';
 import { createDefaultDocument } from '../state/types';
@@ -41,9 +41,8 @@ describe('editor layout controller', () => {
     act(() => {
       result.current.commitDocumentChange(documentModel);
     });
-
     expect(result.current.state.canonicalDocument).toBe(documentModel);
-    expect(result.current.state.compatibilityWarnings).toEqual([]);
+    expect(result.current.state.canonicalDocument).toBe(documentModel);
     expect(onDocumentChange).toHaveBeenCalledWith(documentModel);
   });
 

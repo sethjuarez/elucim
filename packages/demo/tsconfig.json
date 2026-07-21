@@ -5,9 +5,11 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
+      "@elucim/dsl/react": ["../dsl/src/react.ts"],
       "@elucim/core": ["../core/src/index.ts"],
       "@elucim/dsl": ["../dsl/src/index.ts"],
-      "@elucim/editor": ["../editor/src/index.ts"]
+      "@elucim/editor": ["../editor/src/index.ts"],
+      "@elucim/editor-projection": ["../editor/src/document/projection.ts"]
     }
   },
   "include": ["src", "../core/src", "../dsl/src", "../editor/src"],

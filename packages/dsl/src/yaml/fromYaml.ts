@@ -1,6 +1,5 @@
 import yaml from 'js-yaml';
 import { validate } from '../validator/validate';
-import type { ElucimDocument as RenderableDocument } from '../schema/types';
 import type { ElucimDocument } from '../document';
 import type { ValidationError } from '../validator/validate';
 
@@ -13,7 +12,7 @@ import type { ValidationError } from '../validator/validate';
  *
  * @throws {ElucimYamlError} if YAML parsing fails or validation produces errors.
  */
-export function fromYaml(input: string): RenderableDocument | ElucimDocument {
+export function fromYaml(input: string): ElucimDocument {
   let parsed: unknown;
   try {
     parsed = yaml.load(input, { schema: yaml.JSON_SCHEMA });
@@ -26,7 +25,7 @@ export function fromYaml(input: string): RenderableDocument | ElucimDocument {
     throw new ElucimYamlError('YAML must be an Elucim document object', []);
   }
 
-  const doc = parsed as RenderableDocument | ElucimDocument;
+  const doc = parsed as ElucimDocument;
   const result = validate(doc);
   const errors = result.errors.filter(e => e.severity === 'error');
 

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
 export interface GraphNode {
@@ -19,7 +18,7 @@ export interface GraphEdge {
   label?: string;
 }
 
-export interface GraphProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface GraphProps extends SpatialProps, BaseElementProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
   /** Default node color. Default: '#6c5ce7' */
@@ -48,16 +47,11 @@ export function Graph({
   edgeWidth = 2,
   labelColor = '#fff',
   labelFontSize = 14,
-  fadeIn,
-  fadeOut,
-  easing,
   rotation,
   rotationOrigin,
   scale,
   translate,
 }: GraphProps) {
-  const anim = useAnimation({ fadeIn, fadeOut, easing });
-
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
   const xs = nodes.map((n) => n.x);
@@ -72,7 +66,7 @@ export function Graph({
     : [0, 0];
 
   const el = (
-    <g opacity={anim.opacity} data-testid="elucim-graph">
+    <g data-testid="elucim-graph">
       {/* Edges */}
       {edges.map((edge, i) => {
         const fromNode = nodeMap.get(edge.from);

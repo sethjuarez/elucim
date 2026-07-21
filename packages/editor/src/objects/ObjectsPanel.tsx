@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import type { ElementNode, ElucimDocument } from '@elucim/dsl';
+import type { ElementNode, ElucimDocument } from '@elucim/editor-projection';
 import { useEditorState } from '../state/EditorProvider';
 import { CANVAS_ID, getElementId } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
@@ -67,15 +67,12 @@ function getRows(elements: ElementNode[], collapsedIds: Set<string>, parentPath 
 
 function getTypeColor(type: string): string {
   if (type === 'group') return v('--elucim-editor-accent');
-  if (['fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel'].includes(type)) {
-    return v('--elucim-editor-warning');
-  }
   return v('--elucim-editor-text-secondary');
 }
 
 /**
  * Persistent Objects tree inspired by motion-design editors.
- * Keeps nested groups and animation wrappers visible without opening the inspector.
+ * Keeps nested groups visible without opening the inspector.
  */
 export function ObjectsPanel({ className, style, document: documentModel }: ObjectsPanelProps) {
   const { state, dispatch } = useEditorState();

@@ -1,18 +1,18 @@
 ---
-title: Stroke & Text Reveals
-description: Reveal shapes and labels with explicit timeline tracks.
+title: Opacity Reveal Tracks
+description: Animate element visibility with explicit canonical timeline tracks.
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
-import { DrawDemo } from '@components/Demos.tsx';
+import { LineDemo } from '@components/Demos.tsx';
 
 <LiveDemo client:visible height="250px">
-  <DrawDemo client:visible />
+  <LineDemo client:visible />
 </LiveDemo>
 
-Normalized documents do not use `Draw` or `Write` wrappers. Use timeline tracks over visible properties such as `opacity`, `stroke`, `fill`, `scale`, or `translate`. Stroke-dash reveal support can be modeled as element props plus a timeline once a target primitive exposes a timeline-safe dash property.
+Normalized documents do not have a stroke-drawing API. Use timeline tracks over supported properties such as `opacity`, `stroke`, `fill`, `scale`, or `translate`. Do not call an opacity fade a drawing effect.
 
-## Reveal a stroke-based shape
+## Reveal a shape with opacity
 
 ```ts
 elements: {
@@ -40,7 +40,7 @@ elements: {
   label: {
     id: 'label',
     type: 'text',
-    props: { type: 'text', x: 250, y: 132, content: 'Draw', fill: '$accent', fontSize: 16, textAnchor: 'middle', opacity: 0 },
+    props: { type: 'text', x: 250, y: 132, content: 'Visible', fill: '$accent', fontSize: 16, textAnchor: 'middle', opacity: 0 },
   },
 },
 timelines: {

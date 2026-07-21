@@ -6,7 +6,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { ElucimDocument } from '@elucim/editor-projection';
 import { ElucimEditor } from '../ElucimEditor';
 
 const documentModel: ElucimDocument = {
@@ -170,32 +170,6 @@ describe('StateMachinePanel', () => {
     fireEvent.change(screen.getByLabelText('Selected role'), { target: { value: 'hero' } });
 
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0].elements.title.intent.role).toBe('hero'));
-  });
-
-  it('surfaces warnings for lossy canonical compatibility output', async () => {
-    render(React.createElement(ElucimEditor, {
-      initialDocument: {
-        ...documentModel,
-        elements: {
-          ...documentModel.elements,
-          ghost: { id: 'ghost', type: 'text', props: { type: 'text', content: 'Hidden', x: 100, y: 200 } },
-        },
-        timelines: {
-          ...documentModel.timelines,
-          ghostTimeline: {
-            id: 'ghostTimeline',
-            duration: 10,
-            tracks: [{ target: 'ghost', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 10, value: 1 }] }],
-          },
-        },
-      },
-    }));
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Polish' }));
-
-    expect(screen.getByText('Document compatibility warnings')).toBeTruthy();
-    expect(screen.getByText(/Timeline "ghostTimeline"/)).toBeTruthy();
-    await waitFor(() => expect(screen.queryByText('Checking semantic layout relationships...')).toBeNull());
   });
 
   it('creates state machines and authors states/transitions from the motion graph', async () => {

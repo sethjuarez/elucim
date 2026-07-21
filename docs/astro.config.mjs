@@ -115,6 +115,7 @@ export default defineConfig({
           label: 'DSL (JSON & YAML)',
           items: [
             { slug: 'dsl/overview' },
+            { slug: 'dsl/react-authoring' },
             { slug: 'dsl/renderer' },
             { slug: 'dsl/validation' },
             { slug: 'dsl/themes' },

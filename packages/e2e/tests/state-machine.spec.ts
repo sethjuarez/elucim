@@ -171,7 +171,6 @@ test.describe('Editor state-machine interactions', () => {
   test('supports inspector-authored event edits in state-machine preview', async ({ page }) => {
     await openStateMachineWorkspace(page);
     const introRect = page.locator('[data-measure-id="rect-1"] [data-testid="elucim-rect"]').first();
-    const focusText = page.locator('[data-measure-id="text-1"] text').first();
     expect(await opacity(introRect)).toBeGreaterThan(0.99);
 
     await page.getByRole('button', { name: 'Edit Next transition from idle' }).click();
@@ -182,15 +181,17 @@ test.describe('Editor state-machine interactions', () => {
 
     await page.getByRole('button', { name: 'Preview state machine walkthrough' }).click();
     await expect(page.getByText(/Previewing idle/)).toBeVisible();
+    const previewIntroRect = page.locator('[data-measure-id="rect-1"] [data-testid="elucim-rect"]').first();
+    const previewFocusText = page.locator('[data-measure-id="text-1"] text').first();
     await page.waitForTimeout(50);
-    expect(await opacity(introRect)).toBeLessThan(0.3);
-    expect(await opacity(focusText)).toBeLessThan(0.1);
-    await expect.poll(() => opacity(introRect), { timeout: 3000 }).toBeGreaterThan(0.45);
+    expect(await opacity(previewIntroRect)).toBeLessThan(0.3);
+    expect(await opacity(previewFocusText)).toBeLessThan(0.1);
+    await expect.poll(() => opacity(previewIntroRect), { timeout: 3000 }).toBeGreaterThan(0.45);
     await expect(page.getByRole('button', { name: 'Trigger continue event from idle' })).toBeVisible({ timeout: 6000 });
     await page.getByRole('button', { name: 'Trigger continue event from idle' }).click();
     await expect(page.getByText(/Previewing focus via continue from idle/)).toBeVisible();
-    await expect.poll(() => opacity(introRect), { timeout: 3000 }).toBeGreaterThan(0.85);
-    await expect.poll(() => opacity(focusText), { timeout: 3000 }).toBeGreaterThan(0.35);
+    await expect.poll(() => opacity(previewIntroRect), { timeout: 3000 }).toBeGreaterThan(0.85);
+    await expect.poll(() => opacity(previewFocusText), { timeout: 3000 }).toBeGreaterThan(0.35);
   });
 
   test('holds the finished preview and restarts preview to the Entry wait state', async ({ page }) => {

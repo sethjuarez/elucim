@@ -25,7 +25,7 @@ export interface ElucimStateMachineVisualFrame {
   timelineId: string;
   frame: number;
   includeContent?: boolean;
-  /** Whether this frame may override a legacy scene-camera fallback. */
+  /** Whether this frame contributes the active timeline camera. */
   applyCamera?: boolean;
 }
 

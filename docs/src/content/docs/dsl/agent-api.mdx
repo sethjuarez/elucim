@@ -17,7 +17,7 @@ Rules:
 - Use stable element IDs. Sibling order in `scene.children` and `elements[id].children` is the stacking order; later siblings paint on top.
 - Put element visuals in `elements[id].props`; use `layout` for reusable spatial metadata.
 - Use semantic color tokens like `$background`, `$surface`, `$title`, `$subtitle`, `$accent`, `$border`, `$muted` when possible.
-- Do not use React wrapper animation syntax or legacy element types such as `fadeIn`, `draw`, `sequence`, `stagger`, or `parallel`.
+- Do not use React wrapper animation syntax or removed element types such as `fadeIn`, `draw`, `sequence`, `stagger`, or `parallel`.
 - Author motion with `timelines` and `stateMachines`.
 - Make a default state machine for playback when the scene has timelines.
 - Validate with `validateForAgent()`.

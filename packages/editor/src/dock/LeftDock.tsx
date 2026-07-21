@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { ElucimDocument } from '@elucim/editor-projection';
 import { ObjectsPanel } from '../objects/ObjectsPanel';
 import { PolishPanel } from '../panels/PolishPanel';
 import { Toolbar } from '../toolbar/Toolbar';

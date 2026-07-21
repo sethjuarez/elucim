@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { ElementNode } from '@elucim/dsl';
+import type { ElementNode } from '@elucim/editor-projection';
 import { TOKEN_NAMES } from '@elucim/core';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';

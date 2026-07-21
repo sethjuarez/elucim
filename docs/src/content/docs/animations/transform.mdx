@@ -4,10 +4,10 @@ description: Animate translate, scale, rotate, color, and opacity with normalize
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
-import { TransformDemo } from '@components/Demos.tsx';
+import { RectDemo } from '@components/Demos.tsx';
 
 <LiveDemo client:visible height="250px">
-  <TransformDemo client:visible />
+  <RectDemo client:visible />
 </LiveDemo>
 
 Use `layout` for static placement and timelines for motion. Normalized documents animate `translate`, `scale`, and `rotate` through timeline tracks instead of `<Transform>` or `<Morph>` wrappers.

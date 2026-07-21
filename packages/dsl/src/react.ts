@@ -15,6 +15,29 @@ export type {
 } from './document';
 
 export { DslRenderer, type DslRendererProps, type DslRendererRef } from './renderer/DslRenderer';
+export {
+  Scene,
+  Element,
+  Group,
+  Text,
+  Timeline,
+  Track,
+  Reveal,
+  StateMachine,
+  State,
+  Transition,
+  createDocumentFromReact,
+  type CanonicalElementProps,
+  type CanonicalGroupProps,
+  type CanonicalRevealProps,
+  type CanonicalSceneProps,
+  type CanonicalStateMachineProps,
+  type CanonicalStateProps,
+  type CanonicalTextProps,
+  type CanonicalTimelineProps,
+  type CanonicalTrackProps,
+  type CanonicalTransitionProps,
+} from './reactAuthoring';
 export type { ElucimTheme, ImageResolverFn } from '@elucim/core';
 export {
   DARK_THEME,

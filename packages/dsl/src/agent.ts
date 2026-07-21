@@ -223,7 +223,9 @@ export interface AgentTimelineSpec {
   tracks: AgentTimelineTrackSpec[];
 }
 
-export type AgentRevealPreset = 'fadeIn' | 'fadeOut' | 'staggeredFadeIn' | 'draw' | 'pulse';
+const AGENT_REVEAL_PRESETS = ['fadeIn', 'fadeOut', 'staggeredFadeIn', 'pulse'] as const;
+
+export type AgentRevealPreset = (typeof AGENT_REVEAL_PRESETS)[number];
 
 export interface AgentRevealTimelineSpec {
   id?: string;
@@ -998,7 +1000,10 @@ function getRequiredElementOrder(doc: AgentDocument, id: string): AgentElementOr
 function buildRevealTimeline(doc: AgentDocument, spec: AgentRevealTimelineSpec): AgentTimelineSpec {
   const targets = spec.targets.filter(target => doc.elements[target]);
   if (targets.length === 0) throw new Error('addRevealTimeline requires at least one existing target');
-  const preset = spec.preset ?? 'staggeredFadeIn';
+  const preset: unknown = spec.preset ?? 'staggeredFadeIn';
+  if (!isAgentRevealPreset(preset)) {
+    throw new Error(`Unknown reveal preset "${String(preset)}". Stroke drawing is not a reveal preset; author supported timeline tracks instead.`);
+  }
   const duration = spec.duration ?? (preset === 'pulse' ? 60 : 45);
   const stagger = spec.stagger ?? (preset === 'staggeredFadeIn' ? 6 : 0);
   const fadeDuration = Math.max(1, duration - Math.max(0, targets.length - 1) * stagger);
@@ -1008,7 +1013,6 @@ function buildRevealTimeline(doc: AgentDocument, spec: AgentRevealTimelineSpec):
     tracks: targets.flatMap((target, index): ElucimTimelineTrack[] => {
       const start = Math.min(index * stagger, Math.max(0, duration - 1));
       const end = Math.min(duration, start + fadeDuration);
-      if (preset === 'draw') return [track(target, 'opacity', [{ frame: start, value: 0 }, { frame: end, value: 1, easing: 'easeOutCubic' }])];
       if (preset === 'fadeOut') return [track(target, 'opacity', [{ frame: start, value: 1 }, { frame: end, value: 0, easing: 'easeOutCubic' }])];
       if (preset === 'pulse') {
         return [
@@ -1018,6 +1022,11 @@ function buildRevealTimeline(doc: AgentDocument, spec: AgentRevealTimelineSpec):
       return [track(target, 'opacity', [{ frame: start, value: 0 }, { frame: end, value: 1, easing: 'easeOutCubic' }])];
     }),
   };
+}
+
+function isAgentRevealPreset(value: unknown): value is AgentRevealPreset {
+  return typeof value === 'string'
+    && (AGENT_REVEAL_PRESETS as readonly string[]).includes(value);
 }
 
 function track(target: string, property: ElucimAnimatableProperty, keyframes: ElucimKeyframe[]): ElucimTimelineTrack {

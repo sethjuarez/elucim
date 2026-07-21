@@ -27,6 +27,7 @@ import {
   sampleAnimationForAgent,
   sendElementBackward,
   sendElementToBack,
+  type AgentRevealPreset,
 } from '../agent';
 import {
   applyTimelineFrames,
@@ -484,6 +485,19 @@ describe('agent authoring API', () => {
     expect(() => addRevealTimeline(createDocument(), { targets: ['missing'] })).toThrow(
       'addRevealTimeline requires at least one existing target',
     );
+  });
+
+  it('rejects the removed draw reveal preset instead of treating it as an opacity fade', () => {
+    const document = addElement(createDocument(), {
+      id: 'line',
+      type: 'line',
+      props: { x1: 0, y1: 0, x2: 100, y2: 0 },
+    }).document;
+
+    expect(() => addRevealTimeline(document, {
+      targets: ['line'],
+      preset: 'draw' as unknown as AgentRevealPreset,
+    })).toThrow('Stroke drawing is not a reveal preset');
   });
 
   it('reserves state machine ids when commands are applied repeatedly', () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ElucimDocument } from '@elucim/dsl';
+import type { ElucimDocument } from '@elucim/editor-projection';
 import type { ElucimTheme } from '@elucim/core';
 import { EditorRoot } from './chrome/EditorRoot';
 import { EditorWorkspaceSurface } from './chrome/EditorWorkspaceSurface';

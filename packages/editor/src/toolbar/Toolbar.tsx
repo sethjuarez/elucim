@@ -4,7 +4,7 @@ import { useEditorState } from '../state/EditorProvider';
 import { getTemplatesByCategory, CATEGORY_LABELS, type ElementTemplate } from './templates';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
-import type { RenderableDocument as ElucimDocument, ElementNode } from '@elucim/dsl';
+import type { EditorProjection as ElucimDocument, ElementNode } from '@elucim/editor-projection';
 import { exportEditorDocumentToJson, importFromJson } from '../utils/io';
 
 // ─── Built-in scene themes ─────────────────────────────────────────────────
@@ -160,11 +160,7 @@ export function Toolbar({ className, style }: ToolbarProps) {
     const reader = new FileReader();
     reader.onload = () => {
       const result = importFromJson(reader.result as string);
-      if (result.canonicalDocument) {
-        dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.canonicalDocument, syncProjection: true });
-      } else if (result.document) {
-        dispatch({ type: 'IMPORT_RENDERABLE_DOCUMENT', document: result.document });
-      }
+      if (result.document) dispatch({ type: 'IMPORT_CANONICAL_DOCUMENT', document: result.document });
     };
     reader.readAsText(file);
     e.target.value = '';

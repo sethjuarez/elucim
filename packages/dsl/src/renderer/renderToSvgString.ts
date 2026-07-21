@@ -1,10 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
-import { renderRoot } from './renderElements';
+import { renderDocument } from './renderElements';
 import { validate } from '../validator/validate';
-import { applyTimelineFrames, createRenderableDocument, evaluateTimelineCameraFrames, resolveTimelineReveals, toRenderableDocument } from '../document';
-import { getDefaultStateMachineInitialFrames } from '../documentModel/compatibility';
-import type { ElucimDocument as RenderableDocument } from '../schema/types';
+import { applyTimelineFrames, evaluateTimelineCameraFrames, getInitialStateSnapshot, getStateMachineVisualFrames, resolveTimelineReveals } from '../document';
 import type { ElucimDocument } from '../document';
 
 export interface RenderToSvgStringOptions {
@@ -18,11 +16,10 @@ export interface RenderToSvgStringOptions {
  * Render a DSL document to an SVG string at a specific frame, without mounting to the DOM.
  * Uses react-dom/server's renderToStaticMarkup.
  *
- * Note: This renders the scene at the given frame by overriding the root node's properties.
- * For 'player' roots, it converts to a 'scene' internally (no controls needed for static output).
+ * Player documents are rendered as static scenes when a frame is supplied.
  */
 export function renderToSvgString(
-  dsl: ElucimDocument | RenderableDocument,
+  dsl: ElucimDocument,
   frame: number,
   options?: RenderToSvgStringOptions,
 ): string {
@@ -34,31 +31,38 @@ export function renderToSvgString(
     );
   }
 
-  const timelineFrames = dsl.version === '2.0'
-    ? [
-      ...getDefaultStateMachineInitialFrames(dsl),
-      ...(options?.timelineId ? [{ timelineId: options.timelineId, frame }] : []),
-    ]
-    : [];
-  const camera = dsl.version === '2.0'
-    ? evaluateTimelineCameraFrames(dsl, timelineFrames)
-    : undefined;
-  const revealStates = dsl.version === '2.0'
-    ? resolveTimelineReveals(dsl, timelineFrames)
-    : undefined;
-  const renderable = dsl.version === '2.0'
-    ? createRenderableDocument(
-      timelineFrames.length > 0 ? applyTimelineFrames(dsl, timelineFrames) : dsl,
-    )
-    : toRenderableDocument(dsl);
+  const timelineFrames = [
+    ...getDefaultStateMachineInitialFrames(dsl),
+    ...(options?.timelineId ? [{ timelineId: options.timelineId, frame }] : []),
+  ];
+  const projected = timelineFrames.length > 0 ? applyTimelineFrames(dsl, timelineFrames) : dsl;
+  const sizedDocument: ElucimDocument = {
+    ...projected,
+    scene: {
+      ...projected.scene,
+      ...(options?.width ? { width: options.width } : {}),
+      ...(options?.height ? { height: options.height } : {}),
+    },
+  };
 
-  // Clone the root and apply size overrides
-  const root = { ...renderable.root };
-  if (options?.width) root.width = options.width;
-  if (options?.height) root.height = options.height;
-
-  // Render the tree with a controlled frame override
-  const element = renderRoot(root, { frame, camera, revealStates });
+  const element = renderDocument(sizedDocument, {
+    frame,
+    camera: evaluateTimelineCameraFrames(dsl, timelineFrames),
+    revealStates: resolveTimelineReveals(dsl, timelineFrames),
+  });
 
   return renderToStaticMarkup(element as React.ReactElement);
+}
+
+function getDefaultStateMachineInitialFrames(dsl: ElucimDocument) {
+  const machineId = dsl.defaultStateMachine;
+  if (!machineId || !dsl.stateMachines?.[machineId]) return [];
+  const snapshot = getInitialStateSnapshot(dsl, machineId);
+  return getStateMachineVisualFrames(dsl, machineId, {
+    statePath: [snapshot.stateId],
+    currentStateId: snapshot.stateId,
+    currentFrame: 0,
+    missingState: 'skip',
+    missingTimeline: 'skip',
+  });
 }

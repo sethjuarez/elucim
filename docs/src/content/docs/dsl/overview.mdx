@@ -3,7 +3,7 @@ title: DSL Overview
 description: Describe Elucim scenes, timelines, and state machines as JSON or YAML documents with the @elucim/dsl package.
 ---
 
-The `@elucim/dsl` package lets agents and content pipelines describe Elucim visuals as **JSON or YAML documents** instead of JSX. Elucim documents are normalized scene graphs with explicit elements, timelines, and optional state machines.
+The `@elucim/dsl` package lets agents, content pipelines, and React applications describe Elucim visuals as normalized **JSON, YAML, or canonical JSX documents**. Elucim documents are normalized scene graphs with explicit elements, timelines, and optional state machines.
 
 ## ElucimDocument
 
@@ -194,6 +194,7 @@ Animation is represented by timeline tracks and state-machine transitions, not w
 ## Next Steps
 
 - [DslRenderer](/dsl/renderer/) — render a document in React
+- [Canonical React authoring](/dsl/react-authoring/) — author the same document model with JSX
 - [Validation](/dsl/validation/) — validate documents before rendering
 - [Agent documents](/dsl/agent-documents/) — author interactive timeline flows
 - [Themes](/dsl/themes/) — semantic color tokens (`$accent`, `$foreground`, etc.)
