@@ -183,7 +183,7 @@ globalThis.ResizeObserver = class {
 
 const editor = await import('@elucim/editor');
 assert.equal(typeof editor.ElucimEditor, 'function', '@elucim/editor ElucimEditor export should import');
-assert.equal(editor.createDefaultDocument().root.type, 'player', '@elucim/editor createDefaultDocument should run');
+assert.equal('createDefaultDocument' in editor, false, '@elucim/editor should not expose projection-only document state');
 assert.equal(React.isValidElement(React.createElement(editor.ElucimEditor, {})), true, '@elucim/editor component should be usable with React');
 
 assert.equal(existsSync(cliEntry), true, '@elucim/cli dist entry should exist');
