@@ -1,4 +1,4 @@
-import { compileExpression, type ElementNode } from '@elucim/dsl';
+import { compileExpression, type ElementNode } from '@elucim/editor-projection';
 
 export interface BoundingBox {
   x: number;

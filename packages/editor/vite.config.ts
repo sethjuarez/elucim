@@ -12,6 +12,7 @@ export default defineConfig({
     alias: {
       '@elucim/core': resolve(__dirname, '../core/src/index.ts'),
       '@elucim/dsl': resolve(__dirname, '../dsl/src/index.ts'),
+      '@elucim/editor-projection': resolve(__dirname, 'src/document/projection.ts'),
     },
   },
   build: {

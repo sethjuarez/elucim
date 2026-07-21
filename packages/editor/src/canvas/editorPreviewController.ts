@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { CameraNode, ElucimDocument, ElucimTimelineFrameSelection, RenderableDocument } from '@elucim/dsl';
+import type { CameraNode, ElucimDocument, ElucimTimelineFrameSelection, EditorProjection } from '@elucim/editor-projection';
 import { resolvePreviewCamera, resolvePreviewDocument } from '../document/documentLifecycle';
 
 export interface EditorStateMachinePreviewMode {
@@ -20,7 +20,7 @@ export interface EditorTimelinePreviewCallbacks {
 }
 
 export interface EditorPreviewController {
-  previewDocument: RenderableDocument | undefined;
+  previewDocument: EditorProjection | undefined;
   previewCamera: CameraNode | undefined;
   stateMachinePreviewMode: EditorStateMachinePreviewMode;
   timelinePreviewCallbacks: EditorTimelinePreviewCallbacks;

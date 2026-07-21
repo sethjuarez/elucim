@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface VectorFieldProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface VectorFieldProps extends SpatialProps, BaseElementProps {
   /** Function mapping (x, y) → [dx, dy] direction vector */
   fn: (x: number, y: number) => [number, number];
   /** X domain [min, max]. Default: [-4, 4] */
@@ -45,14 +44,10 @@ export function VectorField({
   headSize = 4,
   normalize = false,
   maxLength = 1.5,
-  fadeIn,
-  fadeOut,
-  easing,
   rotation,
   rotationOrigin,
   translate,
 }: VectorFieldProps) {
-  const anim = useAnimation({ fadeIn, fadeOut, easing });
   const [ox, oy] = origin;
 
   const arrows = useMemo(() => {
@@ -102,7 +97,7 @@ export function VectorField({
   }, [fn, domain, range, step, ox, oy, scale, arrowScale, normalize, maxLength]);
 
   const el = (
-    <g opacity={anim.opacity} data-testid="elucim-vector-field">
+    <g data-testid="elucim-vector-field">
       {arrows.map((a, i) => {
         const angle = Math.atan2(a.y2 - a.y1, a.x2 - a.x1);
         const ha = Math.PI / 6;

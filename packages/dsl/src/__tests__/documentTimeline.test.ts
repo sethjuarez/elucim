@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyCommand, applyTimelineFrame, applyTimelineFrames, createRenderableDocument, evaluateCameraTrack, evaluateTimeline, evaluateTimelineCameraFrames, resolveTimelineReveals, validateDocument, type ElucimDocument } from '../index';
+import { applyCommand, applyTimelineFrame, applyTimelineFrames, evaluateCameraTrack, evaluateTimeline, evaluateTimelineCameraFrames, resolveTimelineReveals, validateDocument, type ElucimDocument } from '../index';
 
 const doc: ElucimDocument = {
   version: '2.0',
@@ -258,13 +258,12 @@ describe('document timelines and keyframes', () => {
       },
     }, 'intro', 15);
 
-    const restored = createRenderableDocument(next);
-    const title = restored.root.children[0] as any;
+    const title = next.elements.title;
 
-    expect(title.opacity).toBe(0.5);
-    expect(title.scale).toBe(1);
-    expect(title.translate).toEqual([0, 12]);
-    expect(title.rotation).toBe(45);
+    expect(title.props.opacity).toBe(0.5);
+    expect(title.layout?.scale).toBe(1);
+    expect(title.layout?.translate).toEqual([0, 12]);
+    expect(title.layout?.rotation).toBe(45);
   });
 
   it('interpolates a semantic camera viewport and applies it to the scene', () => {

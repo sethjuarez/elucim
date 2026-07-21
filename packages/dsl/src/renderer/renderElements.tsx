@@ -1,23 +1,38 @@
 import React from 'react';
-import type { ElementNode, SceneNode, PlayerNode, PresentationNode, SlideNode, ScenePreset } from '../schema/types';
 import {
-  Scene, Player,
-  Presentation, Slide,
-  Sequence,
-  BezierCurve, Circle, Line, Arrow, Rect, Text, TextBox, Polygon,
-  Image, Group,
-  Axes, FunctionPlot, SecantLine, TangentLine, RiemannSum, AccumulationArea,
-  Vector, VectorField, Matrix, Graph, LaTeX, BarChart,
-  FadeIn, FadeOut, Draw, Write, Transform, Morph, Stagger, Parallel, RevealStateProvider,
+  AccumulationArea,
+  Arrow,
+  Axes,
+  BarChart,
+  BezierCurve,
+  Circle,
+  FunctionPlot,
+  Graph,
+  Group,
+  Image,
+  LaTeX,
+  Line,
+  Matrix,
+  Player,
+  Polygon,
+  Rect,
+  RiemannSum,
+  Scene,
+  SecantLine,
+  TangentLine,
+  Text,
+  TextBox,
+  Vector,
+  VectorField,
+  RevealStateProvider,
+  type PlayerRef,
+  type RevealState,
 } from '@elucim/core';
-import type { TransitionType, PlayerRef, RevealState } from '@elucim/core';
-import { resolveEasing } from './resolveEasing';
-import { resolveColor } from './resolveColor';
+import type { CameraNode, ScenePreset } from '../schema/types';
+import type { ElucimDocument, ElucimElement } from '../document';
 import { compileExpression, compileVectorExpression } from '../math/evaluator';
 import { SceneCameraViewport } from './CameraViewport';
-import type { CameraNode } from '../schema/types';
-
-// ─── Preset dimensions ─────────────────────────────────────────────────────
+import { resolveColor } from '@elucim/core';
 
 const PRESETS: Record<ScenePreset, [number, number]> = {
   card: [640, 360],
@@ -25,689 +40,221 @@ const PRESETS: Record<ScenePreset, [number, number]> = {
   square: [600, 600],
 };
 
-/** Resolve width/height from preset, with explicit values taking precedence. */
-function resolvePreset(preset?: ScenePreset, width?: number, height?: number): { width?: number; height?: number } {
-  if (!preset) return { width, height };
-  const [pw, ph] = PRESETS[preset];
-  return { width: width ?? pw, height: height ?? ph };
-}
+const COLOR_KEYS = new Set([
+  'fill', 'stroke', 'color', 'axisColor', 'gridColor', 'labelColor',
+  'nodeColor', 'edgeColor', 'bracketColor', 'barColor',
+  'backgroundFill', 'backgroundStroke',
+]);
 
-// ─── Root renderer ──────────────────────────────────────────────────────────
+type RenderableCoreComponent = React.ComponentType<Record<string, unknown>>;
 
-export interface RenderRootOverrides {
+const PRIMITIVES: Record<string, RenderableCoreComponent> = {
+  arrow: Arrow as unknown as RenderableCoreComponent,
+  axes: Axes as unknown as RenderableCoreComponent,
+  accumulationArea: AccumulationArea as unknown as RenderableCoreComponent,
+  barChart: BarChart as unknown as RenderableCoreComponent,
+  bezierCurve: BezierCurve as unknown as RenderableCoreComponent,
+  circle: Circle as unknown as RenderableCoreComponent,
+  functionPlot: FunctionPlot as unknown as RenderableCoreComponent,
+  graph: Graph as unknown as RenderableCoreComponent,
+  image: Image as unknown as RenderableCoreComponent,
+  latex: LaTeX as unknown as RenderableCoreComponent,
+  line: Line as unknown as RenderableCoreComponent,
+  matrix: Matrix as unknown as RenderableCoreComponent,
+  polygon: Polygon as unknown as RenderableCoreComponent,
+  rect: Rect as unknown as RenderableCoreComponent,
+  riemannSum: RiemannSum as unknown as RenderableCoreComponent,
+  secantLine: SecantLine as unknown as RenderableCoreComponent,
+  tangentLine: TangentLine as unknown as RenderableCoreComponent,
+  text: Text as unknown as RenderableCoreComponent,
+  textbox: TextBox as unknown as RenderableCoreComponent,
+  vector: Vector as unknown as RenderableCoreComponent,
+  vectorField: VectorField as unknown as RenderableCoreComponent,
+};
+
+export interface RenderDocumentOverrides {
   frame?: number;
   revealStates?: Record<string, RevealState>;
   playerRef?: React.RefObject<PlayerRef | null>;
-  /** CSS color-scheme to pass to Scene/Player. When set, overrides browser prefers-color-scheme. */
   colorScheme?: 'light' | 'dark' | 'light dark';
-  /** Override Player controls visibility. */
   controls?: boolean;
-  /** Override Player autoPlay setting. */
   autoPlay?: boolean;
-  /** Override Player loop setting. */
   loop?: boolean;
-  /** When true, scene fills its parent container. */
   fitToContainer?: boolean;
-  /** Callback fired when playback state changes. */
   onPlayStateChange?: (playing: boolean) => void;
-  /** Evaluated camera from the active timeline or state-machine path. */
   camera?: CameraNode;
 }
 
-export function renderRoot(
-  node: SceneNode | PlayerNode | PresentationNode,
-  overrides?: RenderRootOverrides,
+/**
+ * Renders only normalized Elucim documents. Motion is evaluated before this
+ * projection, so this layer never interprets removed animation wrappers.
+ */
+export function renderDocument(
+  document: ElucimDocument,
+  overrides?: RenderDocumentOverrides,
 ): React.ReactNode {
-  switch (node.type) {
-    case 'scene':
-      return renderScene(node, overrides);
-    case 'player':
-      if (overrides?.frame !== undefined) {
-        // Static rendering: render player as a Scene (no controls needed)
-        const { width, height } = resolvePreset(node.preset, node.width, node.height);
-        return renderScene(
-          {
-            type: 'scene',
-            width,
-            height,
-            fps: node.fps,
-            durationInFrames: node.durationInFrames,
-            background: node.background,
-            children: node.children,
-          },
-          overrides,
-        );
-      }
-      return renderPlayer(node, overrides);
-    case 'presentation':
-      return renderPresentation(node, overrides);
-  }
-}
-
-export function renderScene(node: SceneNode, overrides?: RenderRootOverrides): React.ReactNode {
-  const hasFrameOverride = overrides?.frame !== undefined;
-  const { width, height } = resolvePreset(node.preset, node.width, node.height);
+  const { width, height } = resolvePreset(document.scene.preset, document.scene.width, document.scene.height);
   const sceneWidth = width ?? 1920;
   const sceneHeight = height ?? 1080;
-  return (
-    <Scene
-      width={width}
-      height={height}
-      fps={node.fps}
-      durationInFrames={node.durationInFrames}
-      background={resolveColor(node.background)}
-      colorScheme={overrides?.colorScheme}
-      fitToContainer={overrides?.fitToContainer}
-      {...(hasFrameOverride ? { frame: overrides!.frame, autoPlay: false } : {})}
-    >
-      <SceneCameraViewport camera={overrides?.camera} width={sceneWidth} height={sceneHeight}>
-        {node.children.map((child, i) => renderElement(child, i, overrides))}
-      </SceneCameraViewport>
-    </Scene>
+  const children = (
+    <SceneCameraViewport camera={overrides?.camera} width={sceneWidth} height={sceneHeight}>
+      {document.scene.children.map((id, index) => renderElement(document, id, index, overrides))}
+    </SceneCameraViewport>
   );
-}
 
-export function renderPlayer(node: PlayerNode, overrides?: RenderRootOverrides): React.ReactNode {
-  const { width, height } = resolvePreset(node.preset, node.width, node.height);
-  const sceneWidth = width ?? 1920;
-  const sceneHeight = height ?? 1080;
+  if (document.scene.type === 'scene' || overrides?.frame !== undefined) {
+    return (
+      <Scene
+        width={width}
+        height={height}
+        fps={document.scene.fps}
+        durationInFrames={getDocumentDuration(document)}
+        background={resolveColor(document.scene.background)}
+        colorScheme={overrides?.colorScheme}
+        fitToContainer={overrides?.fitToContainer}
+        {...(overrides?.frame !== undefined ? { frame: overrides.frame, autoPlay: false } : {})}
+      >
+        {children}
+      </Scene>
+    );
+  }
+
   return (
     <Player
       ref={overrides?.playerRef as React.Ref<PlayerRef> | undefined}
       width={width}
       height={height}
-      fps={node.fps}
-      durationInFrames={node.durationInFrames}
-      background={resolveColor(node.background)}
-      controls={overrides?.controls ?? node.controls}
-      loop={overrides?.loop ?? node.loop}
-      autoPlay={overrides?.autoPlay ?? node.autoPlay}
+      fps={document.scene.fps}
+      durationInFrames={getDocumentDuration(document)}
+      background={resolveColor(document.scene.background)}
+      controls={overrides?.controls ?? document.scene.controls}
+      loop={overrides?.loop ?? document.scene.loop}
+      autoPlay={overrides?.autoPlay ?? document.scene.autoPlay}
       onPlayStateChange={overrides?.onPlayStateChange}
       fitToContainer={overrides?.fitToContainer}
       colorScheme={overrides?.colorScheme}
     >
-      <SceneCameraViewport camera={overrides?.camera} width={sceneWidth} height={sceneHeight}>
-        {node.children.map((child, i) => renderElement(child, i, overrides))}
-      </SceneCameraViewport>
+      {children}
     </Player>
   );
 }
 
-export function renderPresentation(node: PresentationNode, overrides?: RenderRootOverrides): React.ReactNode {
-  const { width, height } = resolvePreset(node.preset, node.width, node.height);
-  return (
-    <Presentation
-      width={width}
-      height={height}
-      background={resolveColor(node.background)}
-      transition={node.transition as TransitionType}
-      transitionDuration={node.transitionDuration}
-      showHUD={node.showHud}
-      showNotes={node.showNotes}
-      colorScheme={overrides?.colorScheme}
-    >
-      {node.slides.map((slide, i) => renderSlide(slide, i, overrides))}
-    </Presentation>
-  );
-}
-
-export function renderSlide(node: SlideNode, key: number, overrides?: RenderRootOverrides): React.ReactNode {
-  return (
-    <Slide key={key} title={node.title} notes={node.notes} background={resolveColor(node.background)}>
-      {node.children?.map((child, i) => renderElement(child, i, overrides))}
-    </Slide>
-  );
-}
-
-// ─── Element renderer ───────────────────────────────────────────────────────
-
-export function renderElement(node: ElementNode, key: number, overrides?: RenderRootOverrides): React.ReactNode {
-  const element = renderElementNode(node, key, overrides);
-  const reveal = 'id' in node && node.id ? overrides?.revealStates?.[node.id] : undefined;
-  return reveal ? <RevealStateProvider key={key} state={reveal}>{element}</RevealStateProvider> : element;
-}
-
-function renderElementNode(node: ElementNode, key: number, overrides?: RenderRootOverrides): React.ReactNode {
-  switch (node.type) {
-    // Structural
-    case 'sequence':
-      return (
-        <Sequence key={key} from={node.from} durationInFrames={node.durationInFrames} name={node.name}>
-          {node.children.map((child, i) => renderElement(child, i, overrides))}
-        </Sequence>
-      );
-    case 'group':
-      return (
-        <Group
-          key={key}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          opacity={node.opacity}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        >
-          {node.children.map((child, i) => renderElement(child, i, overrides))}
-        </Group>
-      );
-
-    // Primitives
-    case 'bezierCurve':
-      return (
-        <BezierCurve
-          key={key}
-          x1={node.x1} y1={node.y1}
-          cx1={node.cx1} cy1={node.cy1}
-          cx2={node.cx2} cy2={node.cy2}
-          x2={node.x2} y2={node.y2}
-          stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
-          fill={resolveColor(node.fill)}
-          strokeDasharray={node.strokeDasharray}
-          lineStyle={node.lineStyle}
-          strokeLinecap={node.strokeLinecap}
-          strokeLinejoin={node.strokeLinejoin}
-          startCap={node.startCap}
-          endCap={node.endCap}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-    case 'circle':
-      return (
-        <Circle
-          key={key}
-          cx={node.cx} cy={node.cy} r={node.r}
-          fill={resolveColor(node.fill)} stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-    case 'line':
-      return (
-        <Line
-          key={key}
-          x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2}
-          stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
-          strokeDasharray={node.strokeDasharray}
-          lineStyle={node.lineStyle}
-          strokeLinecap={node.strokeLinecap}
-          startCap={node.startCap}
-          endCap={node.endCap}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-    case 'arrow':
-      return (
-        <Arrow
-          key={key}
-          x1={node.x1} y1={node.y1} x2={node.x2} y2={node.y2}
-          stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth} headSize={node.headSize}
-          strokeDasharray={node.strokeDasharray}
-          lineStyle={node.lineStyle}
-          strokeLinecap={node.strokeLinecap}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-    case 'rect':
-      return (
-        <Rect
-          key={key}
-          x={node.x} y={node.y} width={node.width} height={node.height}
-          fill={resolveColor(node.fill)} stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
-          rx={node.rx} ry={node.ry}
-          strokeDasharray={node.strokeDasharray}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-    case 'polygon':
-      return (
-        <Polygon
-          key={key}
-          points={node.points}
-          fill={resolveColor(node.fill)} stroke={resolveColor(node.stroke)} strokeWidth={node.strokeWidth}
-          closed={node.closed}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-    case 'text':
-      return (
-        <Text
-          key={key}
-          x={node.x} y={node.y}
-          fill={resolveColor(node.fill)} fontSize={node.fontSize}
-          fontFamily={node.fontFamily} fontWeight={node.fontWeight}
-          textAnchor={node.textAnchor} dominantBaseline={node.dominantBaseline}
-          maxWidth={node.maxWidth} lineHeight={node.lineHeight} wrap={node.wrap}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        >
-          {node.content}
-        </Text>
-      );
-    case 'textbox':
-      return (
-        <TextBox
-          key={key}
-          x={node.x} y={node.y} width={node.width} height={node.height}
-          padding={node.padding}
-          fill={resolveColor(node.fill)} fontSize={node.fontSize} minFontSize={node.minFontSize}
-          fontFamily={node.fontFamily} fontWeight={node.fontWeight} lineHeight={node.lineHeight}
-          align={node.align} verticalAlign={node.verticalAlign} autoFit={node.autoFit}
-          backgroundFill={resolveColor(node.background?.fill)}
-          backgroundStroke={resolveColor(node.background?.stroke)}
-          backgroundStrokeWidth={node.background?.strokeWidth}
-          radius={node.background?.radius}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        >
-          {node.content}
-        </TextBox>
-      );
-
-    case 'image':
-      return (
-        <Image
-          key={key}
-          src={node.src}
-          imageRef={node.ref}
-          x={node.x} y={node.y} width={node.width} height={node.height}
-          preserveAspectRatio={node.preserveAspectRatio}
-          borderRadius={node.borderRadius}
-          clipShape={node.clipShape}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-
-    // Math
-    case 'axes':
-      return (
-        <Axes
-          key={key}
-          domain={node.domain} range={node.range}
-          origin={node.origin} scale={node.scale}
-          showGrid={node.showGrid} showTicks={node.showTicks} showLabels={node.showLabels}
-          tickStep={node.tickStep}
-          axisColor={resolveColor(node.axisColor)} gridColor={resolveColor(node.gridColor)}
-          labelColor={resolveColor(node.labelColor)} labelFontSize={node.labelFontSize}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-        />
-      );
-    case 'functionPlot': {
-      let fn: (vars: Record<string, number>) => number;
-      try {
-        fn = compileExpression(node.fn);
-      } catch {
-        return (
-          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
-            fontSize={14} fill="red" opacity={0.8}>{`⚠ f(x) = ${node.fn}`}</Text>
-        );
-      }
-      return (
-        <FunctionPlot
-          key={key}
-          fn={(x: number) => fn({ x })}
-          domain={node.domain} yClamp={node.yClamp}
-          origin={node.origin} scale={node.scale}
-          color={resolveColor(node.color)} strokeWidth={node.strokeWidth} samples={node.samples}
-          draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          opacity={node.opacity}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-        />
-      );
-    }
-    case 'secantLine': {
-      let fn: (vars: Record<string, number>) => number;
-      try {
-        fn = compileExpression(node.fn);
-      } catch {
-        return (
-          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
-            fontSize={14} fill="red" opacity={0.8}>{`⚠ secant f(x) = ${node.fn}`}</Text>
-        );
-      }
-      return (
-        <SecantLine
-          key={key}
-          fn={(x: number) => fn({ x })}
-          x={node.x}
-          dx={node.dx}
-          length={node.length}
-          origin={node.origin}
-          scale={node.scale}
-          stroke={resolveColor(node.stroke)}
-          strokeWidth={node.strokeWidth}
-          opacity={node.opacity}
-          label={node.label}
-          labelOffset={node.labelOffset}
-          labelColor={resolveColor(node.labelColor)}
-          labelFontSize={node.labelFontSize}
-          showPoints={node.showPoints}
-          pointRadius={node.pointRadius}
-          fadeIn={node.fadeIn}
-          fadeOut={node.fadeOut}
-          draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation}
-          rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-        />
-      );
-    }
-    case 'tangentLine': {
-      let fn: (vars: Record<string, number>) => number;
-      let derivative: ((vars: Record<string, number>) => number) | undefined;
-      try {
-        fn = compileExpression(node.fn);
-        derivative = node.derivative ? compileExpression(node.derivative) : undefined;
-      } catch {
-        return (
-          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
-            fontSize={14} fill="red" opacity={0.8}>{`⚠ tangent f(x) = ${node.fn}`}</Text>
-        );
-      }
-      return (
-        <TangentLine
-          key={key}
-          fn={(x: number) => fn({ x })}
-          derivative={derivative ? (x: number) => derivative({ x }) : undefined}
-          derivativeStep={node.derivativeStep}
-          x={node.x}
-          length={node.length}
-          origin={node.origin}
-          scale={node.scale}
-          stroke={resolveColor(node.stroke)}
-          strokeWidth={node.strokeWidth}
-          opacity={node.opacity}
-          label={node.label}
-          labelOffset={node.labelOffset}
-          labelColor={resolveColor(node.labelColor)}
-          labelFontSize={node.labelFontSize}
-          showPoints={node.showPoints}
-          pointRadius={node.pointRadius}
-          fadeIn={node.fadeIn}
-          fadeOut={node.fadeOut}
-          draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation}
-          rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-        />
-      );
-    }
-    case 'riemannSum': {
-      let fn: (vars: Record<string, number>) => number;
-      try {
-        fn = compileExpression(node.fn);
-      } catch {
-        return (
-          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
-            fontSize={14} fill="red" opacity={0.8}>{`⚠ riemann f(x) = ${node.fn}`}</Text>
-        );
-      }
-      return (
-        <RiemannSum
-          key={key}
-          fn={(x: number) => fn({ x })}
-          interval={node.interval}
-          n={node.n}
-          method={node.method}
-          origin={node.origin}
-          scale={node.scale}
-          fill={resolveColor(node.fill)}
-          stroke={resolveColor(node.stroke)}
-          strokeWidth={node.strokeWidth}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn}
-          fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation}
-          rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-        />
-      );
-    }
-    case 'accumulationArea': {
-      let fn: (vars: Record<string, number>) => number;
-      try {
-        fn = compileExpression(node.fn);
-      } catch {
-        return (
-          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
-            fontSize={14} fill="red" opacity={0.8}>{`⚠ area f(x) = ${node.fn}`}</Text>
-        );
-      }
-      return (
-        <AccumulationArea
-          key={key}
-          fn={(x: number) => fn({ x })}
-          from={node.from}
-          to={node.to}
-          samples={node.samples}
-          origin={node.origin}
-          scale={node.scale}
-          fill={resolveColor(node.fill)}
-          stroke={resolveColor(node.stroke)}
-          strokeWidth={node.strokeWidth}
-          opacity={node.opacity}
-          fadeIn={node.fadeIn}
-          fadeOut={node.fadeOut}
-          draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation}
-          rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-        />
-      );
-    }
-    case 'vector':
-      return (
-        <Vector
-          key={key}
-          from={node.from} to={node.to}
-          origin={node.origin} scale={node.scale}
-          color={resolveColor(node.color)} strokeWidth={node.strokeWidth} headSize={node.headSize}
-          label={node.label} labelOffset={node.labelOffset}
-          labelColor={resolveColor(node.labelColor)} labelFontSize={node.labelFontSize}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut} draw={node.draw}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-        />
-      );
-    case 'vectorField': {
-      let vfn: (vars: Record<string, number>) => [number, number];
-      try {
-        vfn = compileVectorExpression(node.fn);
-      } catch {
-        return (
-          <Text key={key} x={(node.origin?.[0] ?? 400)} y={(node.origin?.[1] ?? 300) - 20}
-            fontSize={14} fill="red" opacity={0.8}>{`⚠ field = ${node.fn}`}</Text>
-        );
-      }
-      return (
-        <VectorField
-          key={key}
-          fn={(x: number, y: number) => vfn({ x, y })}
-          domain={node.domain} range={node.range} step={node.step}
-          origin={node.origin} scale={node.scale} arrowScale={node.arrowScale}
-          color={resolveColor(node.color)} strokeWidth={node.strokeWidth} headSize={node.headSize}
-          normalize={node.normalize} maxLength={node.maxLength}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          translate={node.translate}
-        />
-      );
-    }
-    case 'matrix':
-      return (
-        <Matrix
-          key={key}
-          values={node.values}
-          x={node.x} y={node.y}
-          cellSize={node.cellSize}
-          color={resolveColor(node.color)} bracketColor={resolveColor(node.bracketColor)}
-          fontSize={node.fontSize}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-    case 'graph':
-      return (
-        <Graph
-          key={key}
-          nodes={node.nodes} edges={node.edges}
-          nodeColor={resolveColor(node.nodeColor)} nodeRadius={node.nodeRadius}
-          edgeColor={resolveColor(node.edgeColor)} edgeWidth={node.edgeWidth}
-          labelColor={resolveColor(node.labelColor)} labelFontSize={node.labelFontSize}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-    case 'latex':
-      return (
-        <LaTeX
-          key={key}
-          expression={node.expression}
-          x={node.x} y={node.y}
-          color={resolveColor(node.color)} fontSize={node.fontSize} align={node.align}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-    case 'barChart':
-      return (
-        <BarChart
-          key={key}
-          bars={node.bars}
-          x={node.x} y={node.y} width={node.width} height={node.height}
-          barColor={resolveColor(node.barColor)} labelColor={resolveColor(node.labelColor)}
-          labelFontSize={node.labelFontSize}
-          showValues={node.showValues} maxValue={node.maxValue}
-          gap={node.gap} valueFormat={node.valueFormat}
-          fadeIn={node.fadeIn} fadeOut={node.fadeOut}
-          easing={resolveEasing(node.easing)}
-          rotation={node.rotation} rotationOrigin={node.rotationOrigin}
-          scale={node.scale} translate={node.translate}
-        />
-      );
-
-    // Animation wrappers
-    case 'fadeIn':
-      return (
-        <FadeIn key={key} duration={node.duration} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i, overrides))}
-        </FadeIn>
-      );
-    case 'fadeOut':
-      return (
-        <FadeOut key={key} duration={node.duration} totalFrames={node.totalFrames} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i, overrides))}
-        </FadeOut>
-      );
-    case 'draw':
-      return (
-        <Draw key={key} duration={node.duration} pathLength={node.pathLength} easing={resolveEasing(node.easing)}>
-          {renderElement(node.children[0], 0, overrides) as React.ReactElement}
-        </Draw>
-      );
-    case 'write':
-      return (
-        <Write key={key} duration={node.duration} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i, overrides))}
-        </Write>
-      );
-    case 'transform':
-      return (
-        <Transform
-          key={key}
-          duration={node.duration}
-          easing={resolveEasing(node.easing)}
-          translate={node.translate}
-          scale={node.scale}
-          rotate={node.rotate}
-          opacity={node.opacity}
-        >
-          {node.children.map((child, i) => renderElement(child, i, overrides))}
-        </Transform>
-      );
-    case 'morph':
-      return (
-        <Morph
-          key={key}
-          duration={node.duration}
-          easing={resolveEasing(node.easing)}
-          fromColor={resolveColor(node.fromColor)} toColor={resolveColor(node.toColor)}
-          fromOpacity={node.fromOpacity} toOpacity={node.toOpacity}
-          fromScale={node.fromScale} toScale={node.toScale}
-        >
-          {node.children.map((child, i) => renderElement(child, i, overrides))}
-        </Morph>
-      );
-    case 'stagger':
-      return (
-        <Stagger key={key} staggerDelay={node.staggerDelay} easing={resolveEasing(node.easing)}>
-          {node.children.map((child, i) => renderElement(child, i, overrides))}
-        </Stagger>
-      );
-    case 'parallel':
-      return (
-        <Parallel key={key}>
-          {node.children.map((child, i) => renderElement(child, i, overrides))}
-        </Parallel>
-      );
-
-    // Nested containers
-    case 'scene':
-      return <React.Fragment key={key}>{renderScene(node, overrides)}</React.Fragment>;
-    case 'player':
-      return <React.Fragment key={key}>{renderPlayer(node, overrides)}</React.Fragment>;
-
-    default: {
-      const _exhaustive: never = node;
-      return null;
-    }
+function renderElement(
+  document: ElucimDocument,
+  id: string,
+  index: number,
+  overrides?: RenderDocumentOverrides,
+): React.ReactNode {
+  const element = document.elements[id];
+  if (!element) {
+    throw new Error(`Cannot render canonical document: missing element "${id}".`);
   }
+
+  const rendered = renderElementNode(document, element, index, overrides);
+  const reveal = overrides?.revealStates?.[id];
+  return reveal
+    ? <RevealStateProvider key={id} state={reveal}>{rendered}</RevealStateProvider>
+    : rendered;
+}
+
+function renderElementNode(
+  document: ElucimDocument,
+  element: ElucimElement,
+  index: number,
+  overrides?: RenderDocumentOverrides,
+): React.ReactNode {
+  const props = resolveProps(element);
+  const children = element.children?.map((childId, childIndex) => renderElement(document, childId, childIndex, overrides));
+
+  if (element.type === 'group') {
+    return <Group key={element.id || index} {...props}>{children}</Group>;
+  }
+
+  const Primitive = PRIMITIVES[element.type];
+  if (!Primitive) {
+    throw new Error(`Unsupported canonical element type "${element.type}".`);
+  }
+
+  switch (element.type) {
+    case 'text':
+    case 'textbox': {
+      const content = props.content;
+      delete props.content;
+      return <Primitive key={element.id || index} {...props}>{typeof content === 'string' ? content : ''}</Primitive>;
+    }
+    case 'image': {
+      if (typeof props.ref === 'string' && props.imageRef === undefined) props.imageRef = props.ref;
+      delete props.ref;
+      return <Primitive key={element.id || index} {...props} />;
+    }
+    case 'functionPlot':
+      props.fn = resolveScalarExpression(props.fn, 'functionPlot.fn');
+      return <Primitive key={element.id || index} {...props} />;
+    case 'secantLine':
+    case 'tangentLine':
+    case 'riemannSum':
+    case 'accumulationArea':
+      props.fn = resolveScalarExpression(props.fn, `${element.type}.fn`);
+      if (props.derivative !== undefined) props.derivative = resolveScalarExpression(props.derivative, `${element.type}.derivative`);
+      return <Primitive key={element.id || index} {...props} />;
+    case 'vectorField':
+      props.fn = resolveVectorExpression(props.fn);
+      return <Primitive key={element.id || index} {...props} />;
+    default:
+      return <Primitive key={element.id || index} {...props} />;
+  }
+}
+
+function resolveProps(element: ElucimElement): Record<string, unknown> {
+  const props: Record<string, unknown> = { ...element.props, ...element.layout };
+  for (const key of COLOR_KEYS) {
+    if (typeof props[key] === 'string') props[key] = resolveColor(props[key] as string);
+  }
+  if (isRecord(props.background)) {
+    props.background = {
+      ...props.background,
+      fill: resolveColor(stringOrUndefined(props.background.fill)),
+      stroke: resolveColor(stringOrUndefined(props.background.stroke)),
+    };
+  }
+  return props;
+}
+
+function resolveScalarExpression(value: unknown, name: string): (input: number) => number {
+  if (typeof value === 'function') return value as (input: number) => number;
+  if (typeof value !== 'string') throw new Error(`${name} must be a safe math expression string.`);
+  const compiled = compileExpression(value);
+  return input => compiled({ x: input });
+}
+
+function resolveVectorExpression(value: unknown): (x: number, y: number) => [number, number] {
+  if (typeof value === 'function') return value as (x: number, y: number) => [number, number];
+  if (typeof value !== 'string') throw new Error('vectorField.fn must be a safe vector expression string.');
+  const compiled = compileVectorExpression(value);
+  return (x, y) => compiled({ x, y });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function stringOrUndefined(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function resolvePreset(
+  preset: ScenePreset | undefined,
+  width: number | undefined,
+  height: number | undefined,
+): { width?: number; height?: number } {
+  if (!preset) return { width, height };
+  const [presetWidth, presetHeight] = PRESETS[preset];
+  return { width: width ?? presetWidth, height: height ?? presetHeight };
+}
+
+function getDocumentDuration(document: ElucimDocument): number {
+  const durations = Object.values(document.timelines ?? {})
+    .map(timeline => timeline.duration)
+    .filter(duration => Number.isFinite(duration) && duration > 0);
+  return durations.length ? Math.max(...durations) : 120;
 }

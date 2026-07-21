@@ -166,7 +166,7 @@ const doc: ElucimDocument = {
 
 - `coordinateSpace: 'scene'` (default) uses scene pixels. Use `'normalized'` for rectangles in the unit scene `[0, 1] × [0, 1]`.
 - `fit: 'cover'` (default) fills the scene surface without distortion; `'contain'` keeps the entire focus rectangle visible and may letterbox.
-- Author cameras as `timeline.camera` keyframes. State machines select the active timeline camera through their normal state path. Static scene and render-tree camera fields are rejected.
+- Author cameras as `timeline.camera` keyframes. State machines select the active timeline camera through their normal state path. Camera fields outside timeline keyframes are rejected.
 
 ## API
 

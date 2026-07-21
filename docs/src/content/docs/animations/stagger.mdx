@@ -4,10 +4,10 @@ description: Coordinate multiple elements by offsetting keyframes in a normalize
 ---
 
 import LiveDemo from '@components/LiveDemo.tsx';
-import { StaggerDemo } from '@components/Demos.tsx';
+import { GroupDemo } from '@components/Demos.tsx';
 
 <LiveDemo client:visible height="250px">
-  <StaggerDemo client:visible />
+  <GroupDemo client:visible />
 </LiveDemo>
 
 Staggering is just keyframe offsets in a single timeline. There is no `Stagger` or `Parallel` wrapper in Elucim Documents.

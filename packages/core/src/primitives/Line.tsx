@@ -1,8 +1,7 @@
 import React from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface LineProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface LineProps extends SpatialProps, BaseElementProps {
   x1: number;
   y1: number;
   x2: number;
@@ -31,23 +30,15 @@ export function Line({
   strokeLinecap = lineStyle === 'dotted' ? 'round' : 'butt',
   startCap = 'none',
   endCap = 'none',
-  fadeIn,
-  fadeOut,
-  draw,
-  easing,
   rotation,
   rotationOrigin,
   scale,
   translate,
 }: LineProps) {
-  const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-  const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, length);
-
-  // draw animation dasharray takes precedence; otherwise use user-provided
   const styleDasharray = lineStyle === 'dashed' ? '8 6' : lineStyle === 'dotted' ? '1 6' : undefined;
-  const dasharray = anim.strokeDasharray ?? userDasharray ?? styleDasharray;
+  const dasharray = userDasharray ?? styleDasharray;
 
-  const finalOpacity = baseOpacity * anim.opacity;
+  const finalOpacity = baseOpacity;
   const angle = Math.atan2(y2 - y1, x2 - x1);
   const capRadius = Math.max(2, strokeWidth * 1.7);
   const arrowHead = (x: number, y: number, theta: number) => {
@@ -70,7 +61,6 @@ export function Line({
         stroke={stroke}
         strokeWidth={strokeWidth}
         strokeDasharray={dasharray}
-        strokeDashoffset={anim.strokeDashoffset}
         strokeLinecap={strokeLinecap}
       />
       {startCap === 'dot' && <circle cx={x1} cy={y1} r={capRadius} fill={stroke} />}

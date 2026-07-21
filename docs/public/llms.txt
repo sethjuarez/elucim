@@ -11,17 +11,16 @@
 
 ## Core Concepts
 
-Elucim is frame-based. A `Player` defines `fps` and `durationInFrames`, wrapping a `Scene` (SVG viewport). Components inside use `useCurrentFrame()` to read the current frame and `interpolate()` to map frame ranges to values. `Sequence` offsets children in time. Animations (`FadeIn`, `Draw`, `Transform`, `Stagger`) wrap primitives to animate them.
+Elucim is frame-based. A `Player` defines `fps` and `durationInFrames`, wrapping a `Scene` SVG viewport. Components inside use `useCurrentFrame()` to read the current frame and `interpolate()` to map frame ranges to values. Document motion is represented by timeline tracks, reveal effects, and state machines.
 
 ## Components
 
 ### Playback
 - `Player`: Interactive player with controls, scrubber, play/pause, keyboard shortcuts. Props: `width`, `height`, `fps`, `durationInFrames`, `controls`, `loop`, `autoPlay`, `background`
 - `Scene`: Raw SVG scene (used internally by Player). Props: `width`, `height`, `background`
-- `Sequence`: Time-offset wrapper. Props: `from` (start frame), `durationInFrames`
 
 ### Primitives
-- `Circle`: SVG circle. Props: `cx`, `cy`, `r`, `stroke`, `fill`, `strokeWidth`, `fadeIn`, `draw`
+- `Circle`: SVG circle. Props: `cx`, `cy`, `r`, `stroke`, `fill`, `strokeWidth`
 - `Rect`: Rectangle. Props: `x`, `y`, `width`, `height`, `rx`, `stroke`, `fill`
 - `Line`: Line segment or straight connector. Props: `x1`, `y1`, `x2`, `y2`, `stroke`, `strokeWidth`, `lineStyle`, `startCap`, `endCap`
 - `BezierCurve`: Smooth connector/path. Props: `x1`, `y1`, `cx1`, `cy1`, `cx2`, `cy2`, `x2`, `y2`, `stroke`, `strokeWidth`, `lineStyle`, `startCap`, `endCap`
@@ -38,15 +37,10 @@ Elucim is frame-based. A `Player` defines `fps` and `durationInFrames`, wrapping
 - `LaTeX`: LaTeX math expressions via KaTeX. Props: `expression`, `x`, `y`, `fontSize`, `color`, `align`
 - `BarChart`: Animated bar chart. Props: `bars` (BarDef[]), `x`, `y`, `width`, `height`
 
-### Animations
-- `FadeIn` / `FadeOut`: Opacity transitions. Props: `duration`, `easing`
-- `Draw`: Progressive stroke drawing. Props: `duration`, `easing`
-- `Write`: Stroke draw + fill fade. Props: `duration`, `easing`
-- `Transform`: Animate position/scale/rotation/opacity. Props: `translate`, `scale`, `rotate`, `opacity`, `duration`, `easing`
-- `Morph`: Color/scale morphing. Props: `fromColor`, `toColor`, `fromScale`, `toScale`, `duration`
-- `Stagger`: Sequential delayed entrance. Props: `staggerDelay`
-- `Parallel`: Run animations simultaneously
-- `Timeline`: Imperative animation sequencing
+### Motion
+- Timeline tracks: animate document element properties with keyframes and easing.
+- Reveal effects: progressively reveal content along a timeline.
+- State machines: compose timeline states and interactive transitions.
 
 ### Presentations
 - `Presentation`: Slide-deck system. Props: `width`, `height`, `background`, `transition` (`none`|`fade`|`slide-left`|`slide-up`|`zoom`), `transitionDuration`, `showHUD`, `showNotes`, `startSlide`
@@ -68,7 +62,7 @@ Generators: `spring({ stiffness, damping, mass })`, `cubicBezier(x1, y1, x2, y2)
 
 ## DSL
 
-The public DSL shape for new documents is the canonical `ElucimDocument`: `version: "2.0"`, a single `scene`, an ID-keyed `elements` registry, optional `timelines`, optional `stateMachines`, and optional `metadata`. Legacy render-tree documents with `version: "1.0"` and `root` are still migratable, but agents should not author new documents in that shape.
+The public DSL shape is the canonical `ElucimDocument`: `version: "2.0"`, a single `scene`, an ID-keyed `elements` registry, optional `timelines`, optional `stateMachines`, and optional `metadata`. Other document shapes are rejected.
 
 Do not put `durationInFrames` on a document `scene`. Timelines, state machines, and explicit export policies own time.
 
@@ -135,7 +129,7 @@ Do not put `durationInFrames` on a document `scene`. Timelines, state machines, 
 }
 ```
 
-Render with `<DslRenderer dsl={doc} />`. Validate with `validate(doc)` or `validateDocument(doc)`. Parse YAML with `fromYaml(yamlString)`. Convert legacy inputs with `normalizeDocument(doc)` when needed. Math expressions in `functionPlot` props use safe evaluation (sin, cos, sqrt, etc.).
+Render with `<DslRenderer dsl={doc} />`. Validate with `validate(doc)` or `validateDocument(doc)`. Parse YAML with `fromYaml(yamlString)`. Math expressions in `functionPlot` props use safe evaluation (sin, cos, sqrt, etc.).
 
 ### Agent diagram polish
 

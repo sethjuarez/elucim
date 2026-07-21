@@ -59,16 +59,6 @@ export type {
 } from './documentModel/stateMachine';
 // Deliberately omit ElucimStateSnapshot: motion exports a different ElucimStateSnapshot.
 
-export type {
-  NormalizeDocumentResult as NormalizeDocumentResult,
-} from './documentModel/compatibility';
-
-export {
-  createDocumentFromRenderable as createDocumentFromRenderable,
-  createRenderableDocument as createRenderableDocument,
-  normalizeDocument as normalizeDocument,
-  toRenderableDocument as toRenderableDocument,
-} from './documentModel/compatibility';
 export { validateDocument as validateDocument } from './documentModel/validateDocument';
 export {
   getDocumentLinearDuration,

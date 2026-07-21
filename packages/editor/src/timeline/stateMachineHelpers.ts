@@ -1,4 +1,4 @@
-import type { ElucimStateMachine, ElucimTransition } from '@elucim/dsl';
+import type { ElucimStateMachine, ElucimTransition } from '@elucim/editor-projection';
 import { EVENT_PRESET_SET, RESERVED_STATE_EVENT_NAMES } from './constants';
 
 export function displayKeyName(key: string): string | undefined {

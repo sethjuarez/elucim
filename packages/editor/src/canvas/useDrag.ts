@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type { Dispatch } from 'react';
-import { resolveCameraViewport, type CameraNode } from '@elucim/dsl';
+import { resolveCameraViewport, type CameraNode } from '@elucim/editor-projection';
 import type { EditorAction } from '../state/types';
 import type { BoundingBox } from '../utils/bounds';
 import { startRafDrag, type RafDragPoint } from '../interactions/rafDrag';

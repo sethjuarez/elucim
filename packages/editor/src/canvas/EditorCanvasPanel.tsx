@@ -1,10 +1,10 @@
 import type { ElucimTheme } from '@elucim/core';
-import type { CameraNode, RenderableDocument } from '@elucim/dsl';
+import type { CameraNode, EditorProjection } from '@elucim/editor-projection';
 import { ElucimCanvas } from './ElucimCanvas';
 import type { EditorStateMachinePreviewMode } from './editorPreviewController';
 
 export interface EditorCanvasPanelProps {
-  previewDocument?: RenderableDocument;
+  previewDocument?: EditorProjection;
   previewCamera?: CameraNode;
   previewMode: EditorStateMachinePreviewMode;
   editorColorScheme?: string;

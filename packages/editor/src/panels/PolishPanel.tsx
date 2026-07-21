@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { ElucimDocument, ElucimDocumentNudge } from '@elucim/dsl';
-import { analyzePolish, applyNudge, suggestDocumentNudges, suggestSemanticLayoutNudges } from '@elucim/dsl';
+import type { ElucimDocument, ElucimDocumentNudge } from '@elucim/editor-projection';
+import { analyzePolish, applyNudge, suggestDocumentNudges, suggestSemanticLayoutNudges } from '@elucim/editor-projection';
 import { useEditorState } from '../state/EditorProvider';
 import { findElementById } from '../state/reducer';
 import { CANVAS_ID } from '../state/types';
@@ -389,13 +389,6 @@ export function PolishPanel({ document, onDocumentChange }: { document?: ElucimD
               style={{ background: v('--elucim-editor-surface'), color: v('--elucim-editor-fg'), border: `1px solid ${v('--elucim-editor-border')}`, borderRadius: 4, padding: 4, resize: 'vertical' }}
             />
           </label>
-        </div>
-      )}
-
-      {state.compatibilityWarnings.length > 0 && (
-        <div role="status" style={{ padding: 8, border: `1px solid ${v('--elucim-editor-warning')}`, borderRadius: 6, background: `color-mix(in srgb, ${v('--elucim-editor-warning')} 10%, transparent)`, color: v('--elucim-editor-warning'), lineHeight: 1.4 }}>
-          <div style={{ fontWeight: 700, marginBottom: 4 }}>Document compatibility warnings</div>
-          {state.compatibilityWarnings.map(warning => <div key={warning}>{warning}</div>)}
         </div>
       )}
 

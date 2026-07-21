@@ -1,5 +1,4 @@
 import React from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
 export interface BarDef {
@@ -8,7 +7,7 @@ export interface BarDef {
   color?: string;
 }
 
-export interface BarChartProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface BarChartProps extends SpatialProps, BaseElementProps {
   bars: BarDef[];
   /** Top-left x of the chart area */
   x: number;
@@ -50,16 +49,11 @@ export function BarChart({
   maxValue,
   gap = 0.3,
   valueFormat = 'percent',
-  fadeIn,
-  fadeOut,
-  easing,
   rotation,
   rotationOrigin,
   scale,
   translate,
 }: BarChartProps) {
-  const anim = useAnimation({ fadeIn, fadeOut, easing });
-
   if (bars.length === 0) return null;
 
   const max = maxValue ?? Math.max(...bars.map((b) => b.value));
@@ -71,7 +65,7 @@ export function BarChart({
   const barGap = totalBarWidth * gap;
 
   const el = (
-    <g opacity={anim.opacity} data-testid="elucim-barchart">
+    <g data-testid="elucim-barchart">
       {bars.map((bar, i) => {
         const barHeight = max > 0 ? (bar.value / max) * barAreaHeight : 0;
         const bx = x + i * totalBarWidth + barGap / 2;

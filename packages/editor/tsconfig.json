@@ -6,7 +6,8 @@
     "baseUrl": ".",
     "paths": {
       "@elucim/core": ["../core/src/index.ts"],
-      "@elucim/dsl": ["../dsl/src/index.ts"]
+      "@elucim/dsl": ["../dsl/src/index.ts"],
+      "@elucim/editor-projection": ["src/document/projection.ts"]
     }
   },
   "include": ["src", "../core/src", "../dsl/src"],

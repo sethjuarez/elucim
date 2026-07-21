@@ -26,7 +26,6 @@ export const EASING_OPTIONS = [
 ];
 
 export const ANIMATABLE_PROPERTIES = ['opacity', 'translate', 'scale', 'rotate', 'fill', 'stroke', 'content'] as const;
-export const WRAPPER_TYPES = new Set(['fadeIn', 'fadeOut', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
 
 export const ENTRY_NODE_ID = '__entry__';
 export const EXIT_NODE_ID = '__exit__';

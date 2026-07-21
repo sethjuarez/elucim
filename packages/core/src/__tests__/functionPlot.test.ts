@@ -31,7 +31,6 @@ describe('FunctionPlot', () => {
       color: '#ff0000',
       strokeWidth: 3,
       samples: 100,
-      draw: 60,
       opacity: 0.8,
       rotation: 45,
       rotationOrigin: [200, 150],

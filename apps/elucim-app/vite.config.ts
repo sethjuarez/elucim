@@ -9,6 +9,7 @@ export default defineConfig({
       '@elucim/core': resolve(__dirname, '../../packages/core/src/index.ts'),
       '@elucim/dsl': resolve(__dirname, '../../packages/dsl/src/index.ts'),
       '@elucim/editor': resolve(__dirname, '../../packages/editor/src/index.ts'),
+      '@elucim/editor-projection': resolve(__dirname, '../../packages/editor/src/document/projection.ts'),
     },
   },
   server: {

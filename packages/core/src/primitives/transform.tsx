@@ -2,8 +2,7 @@ import React from 'react';
 
 /**
  * Static spatial transforms that any primitive or group can apply.
- * These compose uniformly with AnimationProps — transforms control
- * where/how an element appears, animations control timing.
+ * These control where and how an element appears.
  */
 export interface SpatialProps {
   /** Rotation in degrees */

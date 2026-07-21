@@ -75,10 +75,7 @@ export function App() {
     <ElucimEditor
       initialDocument={scene}
       initialFrame="last"
-      onDocumentChange={(doc, details) => {
-        saveDocument(doc);
-        if (details.warnings.length > 0) showCompatibilityWarnings(details.warnings);
-      }}
+      onDocumentChange={saveDocument}
       style={{ width: '100vw', height: '100vh' }}
     />
   );
@@ -95,7 +92,7 @@ The editor no longer asks you to switch between broad Design, Animate, State Mac
 |---------|------------|
 | **Objects** | Browse the scene tree, select Objects, inspect generated IDs, understand groups, and reorder scene structure. |
 | **Create** | Add template Objects to the scene. Templates become normal Elucim Document elements. |
-| **Polish** | Review scene metadata, selected-object intent, validation warnings, compatibility notes, polish diagnostics, and suggested document nudges. |
+| **Polish** | Review scene metadata, selected-object intent, validation warnings, polish diagnostics, and suggested document nudges. |
 | **Inspector** | Edit the selected canvas or Object's static properties, layout, style, transforms, and group details. |
 | **Timeline** | Edit animation timelines, property tracks, keyframes, easing, and preview frames. |
 | **Animations motion tab** | Author timeline-based motion for Objects. |
@@ -138,7 +135,7 @@ Templates insert normal scene Objects with sensible tokenized colors. Select the
 - Drag selected elements to move them; Alt+drag duplicates first, then drags the copy.
 - Drag handles to resize; Shift+drag constrains uniform resizing.
 - Use Objects or the right-click context menu for grouping, clipboard actions, layer order, align, and distribute.
-- Double-click an item in Objects to rename it. Renames are mapped back into normalized output where possible.
+- Double-click an item in Objects to rename it. Timeline references update with the renamed element.
 
 <img class="theme-img-dark" src="/images/editor/editor-element-selected.png" alt="Selected Object in the editor with Objects, inspector, and selection handles" />
 <img class="theme-img-light" src="/images/editor/editor-element-selected-light.png" alt="Selected Object in the editor light theme with Objects, inspector, and selection handles" />
@@ -156,7 +153,7 @@ Motion is not authored as wrapper JSX. Use:
 
 ## Import, export, and persistence
 
-For host applications, prefer `onDocumentChange`; it gives you the normalized output document. The toolbar **Save**, **Open**, and **Copy** actions are convenience UI for local JSON workflows. Imported Elucim Document JSON is validated and migrated into the editor working shape; output is restored to normalized document JSON when emitted.
+For host applications, prefer `onDocumentChange`; it gives you the canonical output document. The toolbar **Save**, **Open**, and **Copy** actions are convenience UI for local JSON workflows. Imported Elucim Document JSON is validated and projected into the editor's private canvas state; emitted output remains canonical document JSON.
 
 ## Keyboard shortcuts
 

@@ -19,7 +19,7 @@ pnpm add @elucim/core
 
 ## Advanced React Usage
 
-`@elucim/core` is the low-level React runtime and primitive layer. For normal user/agent-authored scenes, prefer normalized `ElucimDocument` files rendered with `@elucim/dsl`'s `<DslRenderer>`. Use core directly when you intentionally want hand-coded React components, custom hooks, or host-level presentation shells.
+`@elucim/core` is the low-level React runtime and primitive layer. For normal user/agent-authored scenes, prefer normalized `ElucimDocument` files or canonical JSX from `@elucim/dsl/react`; both render through `@elucim/dsl`'s `<DslRenderer>`. Use core directly when you intentionally want hand-coded React components, custom hooks, or host-level presentation shells.
 
 ```tsx
 import { Player, Circle, TextBox, Group, useCurrentFrame, interpolate } from '@elucim/core';

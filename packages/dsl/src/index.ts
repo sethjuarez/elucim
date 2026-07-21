@@ -44,56 +44,22 @@ export type {
   ElucimTimelinePatch,
   ElucimTimelineTrack,
   ElucimTransition,
-  NormalizeDocumentResult,
 } from './document';
 export {
-  createDocumentFromRenderable,
-  createRenderableDocument,
   getDocumentLinearDuration,
   getMaxTimelineDuration,
   resolveExportFrameCount,
-  normalizeDocument,
-  toRenderableDocument,
   validateDocument,
 } from './document';
 
 export type {
-  ElucimDocument as RenderableDocument,
-  RootNode,
-  SceneNode,
-  PlayerNode,
-  SequenceNode,
-  GroupNode,
-  ElementNode,
-  BezierCurveNode,
-  CircleNode,
-  LineNode,
-  ArrowNode,
-  RectNode,
-  PolygonNode,
-  TextNode,
-  TextBoxNode,
-  AxesNode,
-  FunctionPlotNode,
-  VectorNode,
-  VectorFieldNode,
-  MatrixNode,
-  GraphNode,
-  LaTeXNode,
-  EasingSpec,
-  SpringEasing,
-  CubicBezierEasing,
-  GraphNodeDef,
-  GraphEdgeDef,
-  BarChartNode,
-  BarChartBarDef,
   CameraNode,
   CameraTrack,
   CameraKeyframe,
   CameraViewport,
   CameraCoordinateSpace,
   CameraFit,
-  ImageNode,
+  EasingSpec,
   ScenePreset,
 } from './schema/types';
 
@@ -288,13 +254,6 @@ export {
 export { DslRenderer, type DslRendererProps, type DslRendererRef } from './renderer/DslRenderer';
 export { renderToSvgString, type RenderToSvgStringOptions } from './renderer/renderToSvgString';
 export { renderToPng, stripCssFunctions, type RenderToPngOptions } from './renderer/renderToPng';
-export {
-  renderRoot,
-  renderScene,
-  renderPlayer,
-  renderElement,
-  type RenderRootOverrides,
-} from './renderer/renderElements';
 
 // Easing resolver
 export { resolveEasing } from './renderer/resolveEasing';

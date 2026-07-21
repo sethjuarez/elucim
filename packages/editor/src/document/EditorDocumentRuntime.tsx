@@ -1,20 +1,18 @@
 import React, { useMemo, useRef } from 'react';
-import type { ElucimDocument, RenderableDocument } from '@elucim/dsl';
+import type { ElucimDocument } from '@elucim/editor-projection';
+import { projectDocument, validate } from '@elucim/editor-projection';
 import { EditorErrorBoundary } from '../panels/EditorErrorBoundary';
 import { EditorProvider } from '../state/EditorProvider';
-import { normalizeInitialDocument, resolveInitialDocumentModel } from './documentCompatibility';
 import {
   DocumentChangeEmitter,
   InitialDocumentModelSync,
   resolveInitialFrame,
-  type ElucimEditorChangeDetails,
 } from './documentLifecycle';
 
 export interface EditorDocumentRuntimeProps {
-  initialDocument?: RenderableDocument | ElucimDocument;
+  initialDocument?: ElucimDocument;
   initialFrame?: number | 'last';
-  onDocumentChange?: (document: ElucimDocument, details: ElucimEditorChangeDetails) => void;
-  onCompatibilityWarnings?: (warnings: string[]) => void;
+  onDocumentChange?: (document: ElucimDocument) => void;
   children: (onDocumentChange: (document: ElucimDocument) => void) => React.ReactNode;
 }
 
@@ -22,24 +20,33 @@ export function EditorDocumentRuntime({
   initialDocument,
   initialFrame,
   onDocumentChange,
-  onCompatibilityWarnings,
   children,
 }: EditorDocumentRuntimeProps) {
-  const normalizedInitialDocument = useMemo(() => normalizeInitialDocument(initialDocument), [initialDocument]);
-  const initialDocumentModel = useMemo(() => resolveInitialDocumentModel(initialDocument), [initialDocument]);
+  const initialCanonicalDocument = useMemo(() => {
+    if (!initialDocument) return undefined;
+    const result = validate(initialDocument);
+    if (!result.valid) {
+      throw new Error(`Invalid editor document: ${result.errors.map(error => `${error.path}: ${error.message}`).join('; ')}`);
+    }
+    return initialDocument;
+  }, [initialDocument]);
+  const initialProjection = useMemo(
+    () => initialCanonicalDocument ? projectDocument(initialCanonicalDocument) : undefined,
+    [initialCanonicalDocument],
+  );
   const lastEmittedDocumentModel = useRef<ElucimDocument | undefined>(undefined);
-  const handleDocumentChange = (document: ElucimDocument, details: ElucimEditorChangeDetails) => {
+  const handleDocumentChange = (document: ElucimDocument) => {
     lastEmittedDocumentModel.current = document;
-    onDocumentChange?.(document, details);
+    onDocumentChange?.(document);
   };
-  const resolvedFrame = resolveInitialFrame(initialFrame, normalizedInitialDocument);
+  const resolvedFrame = resolveInitialFrame(initialFrame, initialProjection);
 
   return (
     <EditorErrorBoundary>
-      <EditorProvider initialDocument={normalizedInitialDocument} initialCanonicalDocument={initialDocumentModel} initialFrame={resolvedFrame}>
-        <InitialDocumentModelSync document={initialDocumentModel} lastEmittedDocumentRef={lastEmittedDocumentModel} />
-        <DocumentChangeEmitter onChange={handleDocumentChange} onWarnings={onCompatibilityWarnings} />
-        {children(document => handleDocumentChange(document, { changedFormat: false, warnings: [] }))}
+      <EditorProvider initialDocument={initialProjection} initialCanonicalDocument={initialCanonicalDocument} initialFrame={resolvedFrame}>
+        <InitialDocumentModelSync document={initialCanonicalDocument} lastEmittedDocumentRef={lastEmittedDocumentModel} />
+        <DocumentChangeEmitter onChange={handleDocumentChange} />
+        {children(handleDocumentChange)}
       </EditorProvider>
     </EditorErrorBoundary>
   );

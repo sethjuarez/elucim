@@ -1,4 +1,4 @@
-import type { ElementNode, ElucimStateMachine, ElucimTimeline, ElucimTransition } from '@elucim/dsl';
+import type { ElementNode, ElucimStateMachine, ElucimTimeline, ElucimTransition } from '@elucim/editor-projection';
 
 export type GraphLayoutDirection = 'horizontal' | 'vertical';
 

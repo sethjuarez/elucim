@@ -1,4 +1,4 @@
-import type { CameraNode, ElucimTimeline } from '@elucim/dsl';
+import type { CameraNode, ElucimTimeline } from '@elucim/editor-projection';
 
 export interface SceneCameraViewport {
   x: number;

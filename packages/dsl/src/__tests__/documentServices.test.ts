@@ -46,7 +46,7 @@ describe('agent-readable document services', () => {
     });
   });
 
-  it('reports unsupported old document versions without migration hints', () => {
+  it('reports unsupported document versions with canonical guidance', () => {
     const result = validateForAgent({
       version: 1,
       type: 'visual',
@@ -58,6 +58,7 @@ describe('agent-readable document services', () => {
     expect(result.repairHints[0]).toMatchObject({
       path: 'version',
       code: 'unsupported-version',
+      suggestions: ['Use a version "2.0" ElucimDocument.'],
     });
   });
 

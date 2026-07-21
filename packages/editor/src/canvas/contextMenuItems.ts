@@ -1,5 +1,5 @@
 import type { Dispatch } from 'react';
-import type { ElementNode, RenderableDocument as ElucimDocument } from '@elucim/dsl';
+import type { ElementNode, EditorProjection as ElucimDocument } from '@elucim/editor-projection';
 import { findElementById } from '../state/reducer';
 import { CANVAS_ID, type EditorAction } from '../state/types';
 import type { ContextMenuItem } from './ContextMenu';

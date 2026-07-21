@@ -9,12 +9,11 @@ The main all-in-one editor component.
 
 ```ts
 interface ElucimEditorProps {
-  initialDocument?: RenderableDocument | ElucimDocument;
+  initialDocument?: ElucimDocument;
   initialFrame?: number | 'last';
   theme?: ElucimTheme;
   editorTheme?: Record<string, string>;
-  onDocumentChange?: (document: ElucimDocument, details: ElucimEditorChangeDetails) => void;
-  onCompatibilityWarnings?: (warnings: string[]) => void;
+  onDocumentChange?: (document: ElucimDocument) => void;
   onBrowseImage?: BrowseImageFn;
   imageResolver?: ImageResolverFn;
   className?: string;
@@ -24,12 +23,11 @@ interface ElucimEditorProps {
 
 | Prop | Description |
 |------|-------------|
-| `initialDocument` | Starting document. `ElucimDocument` is the public authoring path; renderable documents are accepted for compatibility. |
+| `initialDocument` | Starting canonical `ElucimDocument`. |
 | `initialFrame` | Starting frame, or `'last'` to open at the final linear frame. |
 | `theme` | Shared content `ElucimTheme`; editor chrome is derived from it. |
 | `editorTheme` | Editor chrome token overrides. Accepts bare names or full CSS variable names. |
-| `onDocumentChange` | Called after edits with Elucim Document output and compatibility details. Skips initial mount. |
-| `onCompatibilityWarnings` | Called when document output has warnings such as renamed IDs, pruned timelines, or invalid restored output. |
+| `onDocumentChange` | Called after edits with canonical Elucim Document output. Skips initial mount. |
 | `onBrowseImage` | Opens a host-provided image picker from image fields. |
 | `imageResolver` | Resolves opaque image refs in editor preview. |
 | `className` / `style` | Root editor container styling. |
@@ -40,61 +38,15 @@ interface ElucimEditorProps {
   initialFrame="last"
   theme={contentTheme}
   editorTheme={{ 'color-scheme': 'light', accent: '#2563eb' }}
-  onDocumentChange={(nextDoc, details) => {
-    save(nextDoc);
-    if (details.warnings.length > 0) showWarnings(details.warnings);
-  }}
+  onDocumentChange={save}
 />
 ```
-
-## `ElucimEditorChangeDetails`
-
-```ts
-interface ElucimEditorChangeDetails {
-  changedFormat: boolean;
-  warnings: string[];
-}
-```
-
-`warnings` describe compatibility work performed while restoring editor edits to normalized output, such as deleted timeline targets or state-machine states that lost a timeline link.
-
-## `ElucimEditorLayout`
-
-Internal shell layout for advanced composition inside an `EditorProvider`.
-
-```ts
-interface ElucimEditorLayoutProps {
-  theme?: ElucimTheme;
-  editorTheme?: Record<string, string>;
-  className?: string;
-  style?: React.CSSProperties;
-  document?: ElucimDocument;
-  onDocumentChange?: (document: ElucimDocument) => void;
-}
-```
-
-```tsx
-import { EditorProvider, ElucimEditorLayout, useEditorDocument } from '@elucim/editor';
-
-function CustomSaveButton() {
-  const doc = useEditorDocument();
-  return <button onClick={() => save(doc)}>Save working document</button>;
-}
-
-<EditorProvider initialDocument={doc}>
-  <ElucimEditorLayout document={doc} onDocumentChange={setDoc} />
-  <CustomSaveButton />
-</EditorProvider>;
-```
-
-Use the top-level `ElucimEditor` unless you specifically need custom panels inside the editor context.
 
 ## Exported components
 
 | Export | Description |
 |--------|-------------|
 | `ElucimEditor` | Main editor component. |
-| `ElucimEditorLayout` | Docked workspace shell for custom composition. |
 | `ElucimCanvas` | Canvas with zoom/pan, selection, preview frames, minimap hooks, and overlays. |
 | `Toolbar` | Create palette and file/history/theme controls. |
 | `Inspector` | Contextual property panel. |
@@ -108,102 +60,12 @@ Use the top-level `ElucimEditor` unless you specifically need custom panels insi
 
 ## Hooks
 
-### `useEditorState()`
-
-Returns the editor context object:
-
-```ts
-function useEditorState(): {
-  state: EditorState;
-  dispatch: React.Dispatch<EditorAction>;
-};
-```
-
-```tsx
-const { state, dispatch } = useEditorState();
-
-dispatch({ type: 'SELECT', ids: ['title'] });
-dispatch({ type: 'UNDO' });
-```
-
-### `useEditorDocument()`
-
-Returns the current editor working document.
-
-```ts
-function useEditorDocument(): RenderableDocument;
-```
-
-### `useEditorSelection()`
-
-Returns selected element IDs.
-
-```ts
-function useEditorSelection(): string[];
-```
-
-### Other hooks
-
 | Hook | Description |
 |------|-------------|
 | `useViewport()` | Zoom/pan state and helpers. |
 | `useDrag()` | Move, resize, and rotate interactions. |
 | `useMarquee()` | Marquee selection. |
 | `useMeasuredBounds()` | DOM-based element bounds measurement. |
-
-## State types
-
-```ts
-interface EditorState {
-  document: RenderableDocument;
-  selectedIds: string[];
-  viewport: { x: number; y: number; zoom: number };
-  past: RenderableDocument[];
-  future: RenderableDocument[];
-  currentFrame: number;
-  isPlaying: boolean;
-  activeTool: EditorTool;
-  isPanning: boolean;
-  toolbarPosition: { x: number; y: number };
-  inspectorPosition: { x: number; y: number } | null;
-  inspectorPinned: boolean;
-  toolbarCollapsed: boolean;
-  themeOverrides: Record<string, string>;
-}
-
-type EditorTool = 'select' | 'rect' | 'circle' | 'line' | 'arrow' | 'text' | 'latex';
-```
-
-`CANVAS_ID` is the sentinel used when the canvas root is selected:
-
-```ts
-import { CANVAS_ID } from '@elucim/editor';
-
-const canvasSelected = selectedIds.includes(CANVAS_ID);
-```
-
-## Editor actions
-
-The reducer supports selection, document replacement, element editing, grouping, ordering, arrangement, viewport, frame playback, panel state, theme overrides, and history:
-
-| Action | Payload |
-|--------|---------|
-| `SELECT`, `SELECT_ADD`, `SELECT_TOGGLE`, `DESELECT_ALL` | Selection updates |
-| `SET_DOCUMENT` | Replace the working document |
-| `UPDATE_ELEMENT`, `UPDATE_CANVAS` | Property updates |
-| `ADD_ELEMENT`, `DELETE_ELEMENTS`, `DUPLICATE_ELEMENTS` | Element CRUD |
-| `MOVE_ELEMENT`, `RESIZE_ELEMENT`, `ROTATE_ELEMENT` | Canvas transforms |
-| `GROUP_ELEMENTS`, `UNGROUP` | Grouping |
-| `RENAME_ELEMENT`, `REORDER_ELEMENT` | Identity and Object ordering |
-| `BRING_FORWARD`, `SEND_BACKWARD`, `BRING_TO_FRONT`, `SEND_TO_BACK` | Sibling order |
-| `ALIGN_ELEMENTS`, `DISTRIBUTE_ELEMENTS` | Multi-selection layout |
-| `SET_VIEWPORT`, `ZOOM_TO_FIT` | Viewport controls |
-| `SET_FRAME`, `SET_PLAYING` | Playback |
-| `SET_TOOL`, `SET_PANNING` | Interaction mode |
-| `SET_EDITOR_THEME` | Runtime chrome token overrides |
-| `UNDO`, `REDO` | History |
-
-The reducer still contains legacy wrapper compatibility actions for old editor working documents, but normalized public authoring should use timelines and state machines.
 
 ## Keyboard and mouse shortcuts
 
@@ -275,12 +137,12 @@ See [Editor Theming](/editor/theming/).
 ### Import/export
 
 ```ts
-function exportToJson(document: RenderableDocument, options?: { pretty?: boolean }): string;
-function importFromJson(json: string): { document: RenderableDocument | null; errors: string[] };
-function downloadAsJson(document: RenderableDocument, filename?: string): void;
+function exportToJson(document: ElucimDocument, options?: { pretty?: boolean }): string;
+function importFromJson(json: string): { document: ElucimDocument | null; errors: string[] };
+function downloadAsJson(document: ElucimDocument, filename?: string): void;
 ```
 
-`importFromJson()` accepts Elucim Document JSON, validates it, and migrates it into the editor working document shape. Host apps should persist `onDocumentChange` output when they need normalized document JSON.
+`importFromJson()` accepts and validates canonical Elucim Document JSON. Host apps should persist `onDocumentChange` output.
 
 ### Bounds and snapping
 

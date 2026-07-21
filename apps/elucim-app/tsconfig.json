@@ -7,7 +7,8 @@
     "paths": {
       "@elucim/core": ["../../packages/core/src/index.ts"],
       "@elucim/dsl": ["../../packages/dsl/src/index.ts"],
-      "@elucim/editor": ["../../packages/editor/src/index.ts"]
+      "@elucim/editor": ["../../packages/editor/src/index.ts"],
+      "@elucim/editor-projection": ["../../packages/editor/src/document/projection.ts"]
     }
   },
   "include": ["src", "../../packages/core/src", "../../packages/dsl/src", "../../packages/editor/src"],

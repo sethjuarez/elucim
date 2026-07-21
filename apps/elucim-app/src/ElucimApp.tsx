@@ -161,10 +161,6 @@ export function ElucimApp() {
     setSession(current => ({ ...current, document }));
   }, []);
 
-  const handleWarnings = useCallback((warnings: string[]) => {
-    setSession(current => ({ ...current, warnings }));
-  }, []);
-
   return (
     <div className="app-shell">
       <header className="app-titlebar">
@@ -196,7 +192,6 @@ export function ElucimApp() {
         <ElucimEditor
           initialDocument={session.document}
           onDocumentChange={handleDocumentChange}
-          onCompatibilityWarnings={handleWarnings}
           style={{ width: '100%', height: '100%' }}
         />
       </main>

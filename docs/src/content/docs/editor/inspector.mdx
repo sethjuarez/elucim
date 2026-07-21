@@ -44,7 +44,7 @@ Select the canvas to edit scene-level values:
 | Width / Height | Logical SVG scene size. |
 | Background | Scene background color or token. |
 | FPS | Playback frame rate. |
-| Duration | Shown for legacy/linear playback contexts; normalized timeline duration belongs to timelines. |
+| Duration | Shown for linear playback contexts; timeline duration belongs to timelines. |
 
 For Elucim Documents, timing should live in `timelines` and `stateMachines`, not in per-element wrapper props.
 
@@ -61,7 +61,7 @@ Use the inspector for an element's static starting state. Use the motion panel f
 | State machine states | State machines motion tab graph |
 | Transitions / triggers | State machines motion tab graph and details |
 
-The inspector does not create wrapper animation props. Legacy documents that already contain wrapper nodes can still be inspected through Objects, but new motion should be authored in timelines and state machines.
+The inspector does not create wrapper animation props. Motion is authored in timelines and state machines.
 
 ## Objects and nested selection
 

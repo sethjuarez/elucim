@@ -5,7 +5,7 @@ import { CANVAS_ID } from '../state/types';
 import type { BoundingBox } from '../utils/bounds';
 import { screenToScene } from './useViewport';
 import { startRafDrag } from '../interactions/rafDrag';
-import { resolveCameraViewport, type CameraNode } from '@elucim/dsl';
+import { resolveCameraViewport, type CameraNode } from '@elucim/editor-projection';
 
 export interface MarqueeRect {
   x: number;

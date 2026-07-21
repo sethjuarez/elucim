@@ -21,7 +21,6 @@ import {
   holdFinalFrame,
   inspectPolishHeuristics,
   lintMotion,
-  normalizeDocument,
   planMotionBeats,
   previewBeatDiffs,
   repairLayoutForAgent,
@@ -29,6 +28,7 @@ import {
   suggestLayoutRepairsForAgent,
   suggestSemanticLayoutNudges,
   validateForAgent,
+  type ElucimAgentValidationResult,
   type ElucimBeatPreviewOptions,
   type ElucimDocument,
   type ElucimDocumentNudge,
@@ -60,9 +60,7 @@ interface ParsedArgs {
 interface LoadedDocument {
   path: string;
   document: ElucimDocument;
-  inputFormat: string;
-  migrated: boolean;
-  warnings: string[];
+  validation: ElucimAgentValidationResult;
 }
 
 const COMMANDS = [
@@ -347,27 +345,20 @@ function readPackageVersion(): string {
 
 async function validateCommand(args: ParsedArgs, io: CliIo): Promise<number> {
   const loaded = await loadDocument(requiredFile(args));
-  const validation = validateForAgent(loaded.document);
   writeOutput(args, io, {
     command: 'validate',
     file: loaded.path,
-    inputFormat: loaded.inputFormat,
-    migrated: loaded.migrated,
-    warnings: loaded.warnings,
-    validation,
+    validation: loaded.validation,
   });
-  return validation.valid ? 0 : 1;
+  return loaded.validation.valid ? 0 : 1;
 }
 
 async function inspectCommand(args: ParsedArgs, io: CliIo): Promise<number> {
   const loaded = await loadDocument(requiredFile(args));
-  const validation = validateForAgent(loaded.document);
+  const { validation } = loaded;
   const payload = {
     command: 'inspect',
     file: loaded.path,
-    inputFormat: loaded.inputFormat,
-    migrated: loaded.migrated,
-    warnings: loaded.warnings,
     validation,
     summary: validation.valid ? summarizeDocument(loaded.document) : undefined,
     quality: validation.valid ? evaluateSceneForAgent(loaded.document) : undefined,
@@ -379,15 +370,12 @@ async function inspectCommand(args: ParsedArgs, io: CliIo): Promise<number> {
 
 async function checkLayoutCommand(args: ParsedArgs, io: CliIo): Promise<number> {
   const loaded = await loadDocument(requiredFile(args));
-  const validation = validateForAgent(loaded.document);
+  const { validation } = loaded;
   const layout = validation.valid ? checkLayoutForAgent(loaded.document) : undefined;
   const repairSuggestions = layout ? suggestLayoutRepairsForAgent(loaded.document, layout) : undefined;
   writeOutput(args, io, {
     command: 'check-layout',
     file: loaded.path,
-    inputFormat: loaded.inputFormat,
-    migrated: loaded.migrated,
-    warnings: loaded.warnings,
     validation,
     layout,
     repairSuggestions,
@@ -397,14 +385,11 @@ async function checkLayoutCommand(args: ParsedArgs, io: CliIo): Promise<number> 
 
 async function repairLayoutCommand(args: ParsedArgs, io: CliIo): Promise<number> {
   const loaded = await loadDocument(requiredFile(args));
-  const validation = validateForAgent(loaded.document);
+  const { validation } = loaded;
   if (!validation.valid) {
     writeOutput(args, io, {
       command: 'repair-layout',
       file: loaded.path,
-      inputFormat: loaded.inputFormat,
-      migrated: loaded.migrated,
-      warnings: loaded.warnings,
       validation,
       applied: [],
       skipped: [],
@@ -421,9 +406,6 @@ async function repairLayoutCommand(args: ParsedArgs, io: CliIo): Promise<number>
   writeOutput(args, io, {
     command: 'repair-layout',
     file: loaded.path,
-    inputFormat: loaded.inputFormat,
-    migrated: loaded.migrated,
-    warnings: loaded.warnings,
     outputPath,
     validation,
     changed: repair.changed,
@@ -909,14 +891,21 @@ async function loadDocument(filePath: string): Promise<LoadedDocument> {
   const raw = ext === '.yaml' || ext === '.yml'
     ? fromYaml(text)
     : JSON.parse(text) as unknown;
-  const normalized = normalizeDocument(raw);
+  const validation = validateForAgent(raw);
+  if (!isCanonicalDocument(raw)) {
+    throw new Error('Expected a version "2.0" ElucimDocument.');
+  }
   return {
     path: filePath,
-    document: normalized.document,
-    inputFormat: normalized.inputFormat,
-    migrated: normalized.migrated,
-    warnings: normalized.warnings,
+    document: raw,
+    validation,
   };
+}
+
+function isCanonicalDocument(value: unknown): value is ElucimDocument {
+  return Boolean(value)
+    && typeof value === 'object'
+    && (value as { version?: unknown }).version === '2.0';
 }
 
 async function maybeWriteDocument(args: ParsedArgs, inputPath: string, doc: ElucimDocument): Promise<string | undefined> {

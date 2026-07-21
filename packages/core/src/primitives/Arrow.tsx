@@ -1,9 +1,8 @@
 import React from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
 /** @deprecated Use Line or BezierCurve with startCap/endCap instead. */
-export interface ArrowProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface ArrowProps extends SpatialProps, BaseElementProps {
   x1: number;
   y1: number;
   x2: number;
@@ -31,10 +30,6 @@ export function Arrow({
   strokeDasharray: userDasharray,
   lineStyle = 'solid',
   strokeLinecap = lineStyle === 'dotted' ? 'round' : 'butt',
-  fadeIn,
-  fadeOut,
-  draw,
-  easing,
   rotation,
   rotationOrigin,
   scale,
@@ -56,12 +51,9 @@ export function Arrow({
   const lineEndX = x2 - baseOffset * Math.cos(angle);
   const lineEndY = y2 - baseOffset * Math.sin(angle);
 
-  const lineLength = showLine ? length - baseOffset : 0;
-  const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, lineLength);
-
-  const finalOpacity = baseOpacity * anim.opacity;
+  const finalOpacity = baseOpacity;
   const styleDasharray = lineStyle === 'dashed' ? '8 6' : lineStyle === 'dotted' ? '1 6' : undefined;
-  const dasharray = anim.strokeDasharray ?? userDasharray ?? styleDasharray;
+  const dasharray = userDasharray ?? styleDasharray;
 
   const el = (
     <g data-testid="elucim-arrow" opacity={finalOpacity}>
@@ -74,7 +66,6 @@ export function Arrow({
           stroke={stroke}
           strokeWidth={strokeWidth}
           strokeDasharray={dasharray}
-          strokeDashoffset={anim.strokeDashoffset}
           strokeLinecap={strokeLinecap}
         />
       )}

@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { mathToSvg } from './Axes';
 import { Circle } from './Circle';
 import { Line } from './Line';
@@ -18,7 +17,7 @@ export interface MathSpaceProps extends BaseElementProps {
   translate?: [number, number];
 }
 
-export interface CalculusLineProps extends AnimationProps, MathSpaceProps {
+export interface CalculusLineProps extends MathSpaceProps {
   /** The function to sample. */
   fn: (x: number) => number;
   /** Stroke color. Default: '#f59e0b' for secants and '#22c55e' for tangents */
@@ -59,7 +58,7 @@ export interface TangentLineProps extends CalculusLineProps {
   derivativeStep?: number;
 }
 
-export interface RiemannSumProps extends AnimationProps, MathSpaceProps {
+export interface RiemannSumProps extends MathSpaceProps {
   /** Function to approximate. */
   fn: (x: number) => number;
   /** Integration interval [a, b]. */
@@ -74,7 +73,7 @@ export interface RiemannSumProps extends AnimationProps, MathSpaceProps {
   opacity?: number;
 }
 
-export interface AccumulationAreaProps extends AnimationProps, MathSpaceProps {
+export interface AccumulationAreaProps extends MathSpaceProps {
   /** Function to accumulate under. */
   fn: (x: number) => number;
   /** Lower accumulation bound. */
@@ -105,10 +104,6 @@ export function SecantLine({
   labelFontSize = 14,
   showPoints = false,
   pointRadius = 4,
-  fadeIn,
-  fadeOut,
-  draw,
-  easing,
   rotation,
   rotationOrigin,
   translate,
@@ -144,10 +139,6 @@ export function SecantLine({
       labelColor={labelColor}
       labelFontSize={labelFontSize}
       pointRadius={pointRadius}
-      fadeIn={fadeIn}
-      fadeOut={fadeOut}
-      draw={draw}
-      easing={easing}
       rotation={rotation}
       rotationOrigin={rotationOrigin}
       translate={translate}
@@ -172,10 +163,6 @@ export function TangentLine({
   labelFontSize = 14,
   showPoints = false,
   pointRadius = 4,
-  fadeIn,
-  fadeOut,
-  draw,
-  easing,
   rotation,
   rotationOrigin,
   translate,
@@ -209,10 +196,6 @@ export function TangentLine({
       labelColor={labelColor}
       labelFontSize={labelFontSize}
       pointRadius={pointRadius}
-      fadeIn={fadeIn}
-      fadeOut={fadeOut}
-      draw={draw}
-      easing={easing}
       rotation={rotation}
       rotationOrigin={rotationOrigin}
       translate={translate}
@@ -231,9 +214,6 @@ export function RiemannSum({
   stroke = '#c4b5fd',
   strokeWidth = 1,
   opacity = 0.35,
-  fadeIn,
-  fadeOut,
-  easing,
   rotation,
   rotationOrigin,
   translate,
@@ -243,7 +223,6 @@ export function RiemannSum({
   assertRiemannMethod(method);
 
   const count = Math.max(1, Math.round(n));
-  const anim = useAnimation({ fadeIn, fadeOut, easing });
   const rectangles = useMemo(() => {
     const [a, b] = interval;
     const width = (b - a) / count;
@@ -267,7 +246,7 @@ export function RiemannSum({
   }, [fn, interval, count, method, origin, scale]);
 
   const el = (
-    <g data-testid="elucim-riemann-sum" opacity={opacity * anim.opacity}>
+    <g data-testid="elucim-riemann-sum" opacity={opacity}>
       {rectangles.map((rect, index) => (
         <rect
           key={index}
@@ -297,10 +276,6 @@ export function AccumulationArea({
   stroke = '#5eead4',
   strokeWidth = 0,
   opacity = 0.4,
-  fadeIn,
-  fadeOut,
-  draw,
-  easing,
   rotation,
   rotationOrigin,
   translate,
@@ -309,30 +284,22 @@ export function AccumulationArea({
   assertFiniteNumber('to', to);
   assertPositiveInteger('samples', samples);
 
-  const { pathData, pathLength } = useMemo(() => {
+  const pathData = useMemo(() => {
     const step = (to - from) / samples;
     const [startBaseX, startBaseY] = mathToSvg(from, 0, origin, scale);
     const commands = [`M ${startBaseX} ${startBaseY}`];
-    let length = 0;
-    let previous: [number, number] = [startBaseX, startBaseY];
-
     for (let i = 0; i <= samples; i++) {
       const x = from + step * i;
       const sample = fn(x);
       const y = Number.isFinite(sample) ? sample : 0;
       const [svgX, svgY] = mathToSvg(x, y, origin, scale);
       commands.push(`L ${svgX} ${svgY}`);
-      length += distance(previous, [svgX, svgY]);
-      previous = [svgX, svgY];
     }
 
     const [endBaseX, endBaseY] = mathToSvg(to, 0, origin, scale);
     commands.push(`L ${endBaseX} ${endBaseY}`, 'Z');
-    length += distance(previous, [endBaseX, endBaseY]);
-    length += distance([endBaseX, endBaseY], [startBaseX, startBaseY]);
-    return { pathData: commands.join(' '), pathLength: length };
+    return commands.join(' ');
   }, [fn, from, to, samples, origin, scale]);
-  const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, pathLength);
 
   const el = (
     <path
@@ -340,9 +307,7 @@ export function AccumulationArea({
       fill={fill}
       stroke={stroke}
       strokeWidth={strokeWidth}
-      strokeDasharray={anim.strokeDasharray}
-      strokeDashoffset={anim.strokeDashoffset}
-      opacity={opacity * anim.opacity}
+      opacity={opacity}
       data-testid="elucim-accumulation-area"
     />
   );
@@ -350,7 +315,7 @@ export function AccumulationArea({
   return withTransform(el, { rotation, rotationOrigin, translate }, origin);
 }
 
-interface CalculusLineInternalProps extends AnimationProps {
+interface CalculusLineInternalProps {
   testId: string;
   lineStart: [number, number];
   lineEnd: [number, number];
@@ -385,10 +350,6 @@ function CalculusLine({
   labelColor,
   labelFontSize,
   pointRadius,
-  fadeIn,
-  fadeOut,
-  draw,
-  easing,
   rotation,
   rotationOrigin,
   translate,
@@ -406,10 +367,6 @@ function CalculusLine({
         stroke={stroke}
         strokeWidth={strokeWidth}
         opacity={opacity}
-        fadeIn={fadeIn}
-        fadeOut={fadeOut}
-        draw={draw}
-        easing={easing}
       />
       {points.map(([pointX, pointY], index) => {
         const [cx, cy] = mathToSvg(pointX, pointY, origin, scale);
@@ -469,10 +426,6 @@ function assertPositiveInteger(name: string, value: number): void {
   if (!Number.isInteger(value) || value <= 0) {
     throw new Error(`${name} must be a positive integer`);
   }
-}
-
-function distance(from: [number, number], to: [number, number]): number {
-  return Math.sqrt((to[0] - from[0]) ** 2 + (to[1] - from[1]) ** 2);
 }
 
 function assertInterval(interval: [number, number]): void {

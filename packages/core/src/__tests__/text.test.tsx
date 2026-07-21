@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { Scene } from '../components/Scene';
 import { Text } from '../primitives/Text';
 import { measureTextWidth } from '../text/measureText';
-import { Reveal } from '../animations/Reveal';
+import { RevealStateProvider, type RevealState } from '../motion/RevealState';
 
 describe('Text', () => {
   function renderText(text: React.ReactElement) {
@@ -15,6 +15,16 @@ describe('Text', () => {
     );
   }
 
+  function renderRevealedText(state: RevealState, text = 'Hello') {
+    return renderToStaticMarkup(
+      <Scene durationInFrames={20} frame={0}>
+        <RevealStateProvider state={state}>
+          <Text x={10} y={20}>{text}</Text>
+        </RevealStateProvider>
+      </Scene>,
+    );
+  }
+
   it('preserves single-line text rendering by default', () => {
     const html = renderText(<Text x={10} y={20}>Hello</Text>);
 
@@ -22,7 +32,7 @@ describe('Text', () => {
     expect(html).not.toContain('<tspan');
   });
 
-  it('preserves newline content by default for compatibility', () => {
+  it('preserves newline content by default', () => {
     const html = renderText(<Text x={10} y={20}>{'Hello\nworld'}</Text>);
 
     expect(html).toContain('Hello\nworld</text>');
@@ -50,28 +60,10 @@ describe('Text', () => {
     expect(html).toContain('<tspan x="10" dy="15">cd</tspan>');
   });
 
-  it('reveals text deterministically and hides its cursor when complete', () => {
-    const initial = renderToStaticMarkup(
-      <Scene durationInFrames={20} frame={0}>
-        <Reveal strategy="type" durationInFrames={4}>
-          <Text x={10} y={20}>Hello</Text>
-        </Reveal>
-      </Scene>,
-    );
-    const midway = renderToStaticMarkup(
-      <Scene durationInFrames={20} frame={2}>
-        <Reveal strategy="type" durationInFrames={4}>
-          <Text x={10} y={20}>Hello</Text>
-        </Reveal>
-      </Scene>,
-    );
-    const complete = renderToStaticMarkup(
-      <Scene durationInFrames={20} frame={4}>
-        <Reveal strategy="type" durationInFrames={4}>
-          <Text x={10} y={20}>Hello</Text>
-        </Reveal>
-      </Scene>,
-    );
+  it('renders resolved canonical text reveal state and hides its cursor when complete', () => {
+    const initial = renderRevealedText({ progress: 0, strategy: 'type' });
+    const midway = renderRevealedText({ progress: 0.5, strategy: 'type', cursor: true });
+    const complete = renderRevealedText({ progress: 1, strategy: 'type' });
 
     expect(initial).toContain('data-testid="elucim-text-cursor"');
     expect(midway).toContain('>He</text>');
@@ -80,34 +72,20 @@ describe('Text', () => {
     expect(complete).not.toContain('elucim-text-cursor');
   });
 
-  it('supports a delayed reveal and persistent custom cursor', () => {
-    const html = renderToStaticMarkup(
-      <Scene durationInFrames={20} frame={3}>
-        <Reveal strategy="type" from={2} durationInFrames={3} cursor={{ character: '_', hideWhenComplete: false }}>
-          <Text x={10} y={20}>Hello</Text>
-        </Reveal>
-      </Scene>,
-    );
+  it('supports a resolved persistent custom cursor', () => {
+    const html = renderRevealedText({
+      progress: 1 / 3,
+      strategy: 'type',
+      cursor: { character: '_', hideWhenComplete: false },
+    });
 
     expect(html).toContain('>H</text>');
     expect(html).toContain('data-testid="elucim-text-cursor">_</text>');
   });
 
-  it('blinks a reveal cursor from the current frame', () => {
-    const hidden = renderToStaticMarkup(
-      <Scene durationInFrames={20} frame={1}>
-        <Reveal strategy="type" durationInFrames={4} cursor={{ blinkEveryFrames: 1 }}>
-          <Text x={10} y={20}>Hello</Text>
-        </Reveal>
-      </Scene>,
-    );
-    const visible = renderToStaticMarkup(
-      <Scene durationInFrames={20} frame={2}>
-        <Reveal strategy="type" durationInFrames={4} cursor={{ blinkEveryFrames: 1 }}>
-          <Text x={10} y={20}>Hello</Text>
-        </Reveal>
-      </Scene>,
-    );
+  it('renders a cursor only when the resolved canonical state requests one', () => {
+    const hidden = renderRevealedText({ progress: 0.5, strategy: 'type', cursor: false });
+    const visible = renderRevealedText({ progress: 0.5, strategy: 'type', cursor: true });
 
     expect(hidden).not.toContain('elucim-text-cursor');
     expect(visible).toContain('data-testid="elucim-text-cursor">|</text>');
@@ -115,17 +93,17 @@ describe('Text', () => {
 
   it('positions a cursor after centered text and at the end anchor without shifting the text', () => {
     const centered = renderToStaticMarkup(
-      <Scene durationInFrames={20} frame={2}>
-        <Reveal strategy="type" durationInFrames={4}>
+      <Scene durationInFrames={20} frame={0}>
+        <RevealStateProvider state={{ progress: 0.5, strategy: 'type', cursor: true }}>
           <Text x={100} y={20} textAnchor="middle">Hello</Text>
-        </Reveal>
+        </RevealStateProvider>
       </Scene>,
     );
     const endAligned = renderToStaticMarkup(
-      <Scene durationInFrames={20} frame={2}>
-        <Reveal strategy="type" durationInFrames={4}>
+      <Scene durationInFrames={20} frame={0}>
+        <RevealStateProvider state={{ progress: 0.5, strategy: 'type', cursor: true }}>
           <Text x={100} y={20} textAnchor="end">Hello</Text>
-        </Reveal>
+        </RevealStateProvider>
       </Scene>,
     );
 

@@ -2,7 +2,7 @@ import React, { useCallback, useState, useRef } from 'react';
 import { useEditorState } from '../state/EditorProvider';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
-import type { RenderableDocument as ElucimDocument } from '@elucim/dsl';
+import type { EditorProjection as ElucimDocument } from '@elucim/editor-projection';
 import { exportEditorDocumentToJson, importFromJson } from '../utils/io';
 
 const SEMANTIC_TOKENS = [
@@ -83,11 +83,7 @@ export function EditorMenuBar() {
     const reader = new FileReader();
     reader.onload = () => {
       const result = importFromJson(reader.result as string);
-      if (result.canonicalDocument) {
-        dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.canonicalDocument, syncProjection: true });
-      } else if (result.document) {
-        dispatch({ type: 'IMPORT_RENDERABLE_DOCUMENT', document: result.document });
-      }
+      if (result.document) dispatch({ type: 'IMPORT_CANONICAL_DOCUMENT', document: result.document });
     };
     reader.readAsText(file);
     e.target.value = ''; // reset for re-selecting same file

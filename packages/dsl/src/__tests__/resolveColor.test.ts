@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveColor, SEMANTIC_TOKENS, TOKEN_NAMES } from '../renderer/resolveColor';
+import { resolveColor, SEMANTIC_TOKENS, TOKEN_NAMES } from '@elucim/core';
 
 describe('resolveColor', () => {
   it('returns undefined for undefined input', () => {

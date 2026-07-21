@@ -1,17 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import type { CameraNode, ElucimDocument, ElucimTimelineFrameSelection, RenderableDocument } from '@elucim/dsl';
-import { applyTimelineFrames, createRenderableDocument, evaluateTimelineCameraFrames } from '@elucim/dsl';
+import type { CameraNode, ElucimDocument, ElucimTimelineFrameSelection, EditorProjection } from '@elucim/editor-projection';
+import { applyTimelineFrames, documentFromProjection, projectDocument, evaluateTimelineCameraFrames } from '@elucim/editor-projection';
 import { useEditorState } from '../state/EditorProvider';
-import { createDocumentFromEditorState } from './documentCompatibility';
-
-export interface ElucimEditorChangeDetails {
-  changedFormat: boolean;
-  warnings: string[];
-}
 
 export function resolveInitialFrame(
   initialFrame: number | 'last' | undefined,
-  document?: RenderableDocument,
+  document?: EditorProjection,
 ): number | undefined {
   if (initialFrame !== 'last') return initialFrame;
   const durationInFrames = document?.root && 'durationInFrames' in document.root
@@ -23,11 +17,11 @@ export function resolveInitialFrame(
 export function resolvePreviewDocument(
   document: ElucimDocument | undefined,
   previewTimelineFrames: ElucimTimelineFrameSelection[] | undefined,
-): RenderableDocument | undefined {
+): EditorProjection | undefined {
   if (!document || !previewTimelineFrames?.length) return undefined;
   const renderableFrames = previewTimelineFrames.filter(frame => document.timelines?.[frame.timelineId]);
   if (renderableFrames.length === 0) return undefined;
-  return createRenderableDocument(applyTimelineFrames(document, renderableFrames));
+  return projectDocument(applyTimelineFrames(document, renderableFrames));
 }
 
 export function resolvePreviewCamera(
@@ -42,17 +36,14 @@ export function resolvePreviewCamera(
 /** Emits canonical document changes from internal editor state. */
 export function DocumentChangeEmitter({
   onChange,
-  onWarnings,
 }: {
-  onChange?: (doc: ElucimDocument, details: ElucimEditorChangeDetails) => void;
-  onWarnings?: (warnings: string[]) => void;
+  onChange?: (doc: ElucimDocument) => void;
 }) {
   const { state, dispatch } = useEditorState();
   const doc = state.document;
   const sourceDocument = state.canonicalDocument;
   const cbRef = useRef(onChange);
   const previousDocRef = useRef(doc);
-  const previousWarningsRef = useRef('');
   cbRef.current = onChange;
   const isFirst = useRef(true);
 
@@ -60,23 +51,12 @@ export function DocumentChangeEmitter({
     if (isFirst.current) { isFirst.current = false; return; }
     const docChanged = previousDocRef.current !== doc;
     previousDocRef.current = doc;
-    const result = sourceDocument
-      ? { document: sourceDocument, warnings: state.compatibilityWarnings }
-      : { document: createDocumentFromEditorState(doc), warnings: [] };
-    const details: ElucimEditorChangeDetails = {
-      changedFormat: docChanged,
-      warnings: result.warnings,
-    };
     if (docChanged) {
-      dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: result.document, warnings: result.warnings });
-      cbRef.current?.(result.document, details);
+      const nextDocument = sourceDocument ?? documentFromProjection(doc);
+      dispatch({ type: 'SET_CANONICAL_DOCUMENT', document: nextDocument });
+      cbRef.current?.(nextDocument);
     }
-    const warningKey = result.warnings.join('\n');
-    if (warningKey !== previousWarningsRef.current) {
-      previousWarningsRef.current = warningKey;
-      onWarnings?.(result.warnings);
-    }
-  }, [dispatch, doc, onWarnings, sourceDocument, state.compatibilityWarnings]);
+  }, [dispatch, doc, sourceDocument]);
 
   return null;
 }
@@ -91,7 +71,7 @@ export function InitialDocumentModelSync({
   const { dispatch } = useEditorState();
   useEffect(() => {
     if (document === lastEmittedDocumentRef.current) return;
-    dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, warnings: [], syncProjection: true });
+    dispatch({ type: 'SET_CANONICAL_DOCUMENT', document, syncProjection: true });
   }, [dispatch, document, lastEmittedDocumentRef]);
   return null;
 }

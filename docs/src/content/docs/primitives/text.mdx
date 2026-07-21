@@ -54,14 +54,15 @@ Use [`textbox`](/primitives/textbox/) instead of loose `text` when generated cop
 
 ## Typing and text reveal
 
-Text remains a normal SVG layer. Use the shared `Reveal` animation to supply deterministic frame progress; `strategy="type"` reveals grapheme clusters and shows a cursor until the reveal completes.
+Text remains a normal SVG layer. In a canonical timeline, a `reveal` effect with `strategy: "type"` reveals grapheme clusters and shows a cursor until the effect completes.
 
 ```tsx
-<Reveal from={12} durationInFrames={48} strategy="type" cursor={{ character: '|' }}>
-  <Text x={80} y={140} fontSize={28}>
-    Deploying your workspace...
-  </Text>
-</Reveal>
+import { Reveal, Text, Timeline } from '@elucim/dsl/react';
+
+<Text id="status" x={80} y={140} fontSize={28}>Deploying your workspace...</Text>
+<Timeline id="intro" duration={60}>
+  <Reveal id="status-type" target="status" from={12} duration={48} strategy="type" cursor={{ character: '|' }} />
+</Timeline>
 ```
 
-Set `cursor: false` to reveal text without a cursor. Canonical DSL documents use timeline `effects` instead of `Reveal`; both paths resolve the same primitive reveal state.
+Set `cursor={false}` to reveal text without a cursor. JSON/YAML documents represent the same authored effect in `timelines.*.effects`.

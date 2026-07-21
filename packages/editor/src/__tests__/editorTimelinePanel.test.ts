@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ElucimDocument, ElucimStateMachine, ElucimTimeline } from '@elucim/dsl';
+import type { ElucimDocument, ElucimStateMachine, ElucimTimeline } from '@elucim/editor-projection';
 import {
   applyMotionDocumentChange,
   applyStateMachineDocumentChange,

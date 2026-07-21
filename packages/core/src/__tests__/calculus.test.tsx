@@ -111,14 +111,13 @@ describe('calculus primitives', () => {
     expect(path?.getAttribute('d')).toBe('M 0 100 L 0 100 L 10 90 L 20 80 L 20 100 Z');
   });
 
-  it('applies draw animation to accumulation area outlines', () => {
+  it('preserves explicit stroke styling on accumulation areas', () => {
     const container = renderPrimitive(
-      <AccumulationArea fn={x => x} from={0} to={2} samples={2} origin={[0, 100]} scale={10} draw={30} />,
+      <AccumulationArea fn={x => x} from={0} to={2} samples={2} origin={[0, 100]} scale={10} strokeWidth={3} />,
     );
     const path = container.querySelector('[data-testid="elucim-accumulation-area"]');
 
-    expect(Number(path?.getAttribute('stroke-dasharray'))).toBeGreaterThan(0);
-    expect(Number(path?.getAttribute('stroke-dashoffset'))).toBeGreaterThan(0);
+    expect(path?.getAttribute('stroke-width')).toBe('3');
   });
 
   it('keeps sampled composites renderable when a function sample is non-finite', () => {

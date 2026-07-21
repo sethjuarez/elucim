@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ElementNode, CircleNode, RectNode, LineNode, ArrowNode, TextNode, TextBoxNode, LaTeXNode, ImageNode, AxesNode, FunctionPlotNode, VectorNode, VectorFieldNode, MatrixNode, BarChartNode, GraphNode, BezierCurveNode, PolygonNode, GroupNode } from '@elucim/dsl';
+import type { ElementNode, CircleNode, RectNode, LineNode, ArrowNode, TextNode, TextBoxNode, LaTeXNode, ImageNode, AxesNode, FunctionPlotNode, VectorNode, VectorFieldNode, MatrixNode, BarChartNode, GraphNode, BezierCurveNode, PolygonNode, GroupNode } from '@elucim/editor-projection';
 import {
   IconRect, IconCircle, IconImage,
   IconLine, IconArrow, IconBezier,

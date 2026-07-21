@@ -104,7 +104,7 @@ describe('theme', () => {
       expect(normalized.accent).toBe('#ff00ff');
     });
 
-    it('treats primary as a compatibility alias for accent', () => {
+    it('uses primary for accent when accent is unset', () => {
       const normalized = normalizeTheme({ primary: '#123456' }, 'dark');
       expect(normalized.primary).toBe('#123456');
       expect(normalized.accent).toBe('#123456');

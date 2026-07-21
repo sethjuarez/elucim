@@ -1,4 +1,4 @@
-import type { ElucimDocument, ElucimStateMachine, ElucimTimeline, ElucimTimelineFrameSelection } from '@elucim/dsl';
+import type { ElucimDocument, ElucimStateMachine, ElucimTimeline, ElucimTimelineFrameSelection } from '@elucim/editor-projection';
 import type { EditorWorkspace } from '../shell/editorShell';
 import { Timeline } from './Timeline';
 

@@ -1,7 +1,4 @@
 import React, { useId, useMemo } from 'react';
-import { useCurrentFrame } from '../hooks/useCurrentFrame';
-import { interpolate } from '../hooks/interpolate';
-import type { EasingFunction } from '../easing/types';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
 export interface FunctionPlotProps extends SpatialProps, BaseElementProps {
@@ -21,17 +18,12 @@ export interface FunctionPlotProps extends SpatialProps, BaseElementProps {
   strokeWidth?: number;
   /** Number of sample points. Default: 200 */
   samples?: number;
-  /** Draw animation: progressively reveal the curve over N frames */
-  draw?: number;
-  /** Easing for the draw animation */
-  easing?: EasingFunction;
   /** Base opacity. Default: 1 */
   opacity?: number;
 }
 
 /**
  * Plots a continuous mathematical function on Axes coordinates.
- * Supports progressive draw animation.
  */
 export function FunctionPlot({
   fn,
@@ -42,14 +34,11 @@ export function FunctionPlot({
   color = '#4a9eff',
   strokeWidth = 2,
   samples = 200,
-  draw,
-  easing,
   opacity = 1,
   rotation,
   rotationOrigin,
   translate,
 }: FunctionPlotProps) {
-  const frame = useCurrentFrame();
   const clipId = useId();
 
   // Generate the path data
@@ -91,36 +80,6 @@ export function FunctionPlot({
     return points.join(' ');
   }, [fn, domain, softLimit, origin, scale, samples]);
 
-  // Approximate total path length for draw animation
-  const approxLength = useMemo(() => {
-    const [xMin, xMax] = domain;
-    const step = (xMax - xMin) / samples;
-    let len = 0;
-    let prevX = 0;
-    let prevY = 0;
-    let hasPrev = false;
-
-    for (let i = 0; i <= samples; i++) {
-      const x = xMin + i * step;
-      const y = fn(x);
-      if (!isFinite(y) || y < softLimit[0] || y > softLimit[1]) {
-        hasPrev = false;
-        continue;
-      }
-
-      const svgX = origin[0] + x * scale;
-      const svgY = origin[1] - y * scale;
-
-      if (hasPrev) {
-        len += Math.sqrt((svgX - prevX) ** 2 + (svgY - prevY) ** 2);
-      }
-      prevX = svgX;
-      prevY = svgY;
-      hasPrev = true;
-    }
-    return len;
-  }, [fn, domain, softLimit, origin, scale, samples]);
-
   // Clip rect: visible region based on domain and yClamp
   const clipRect = useMemo(() => {
     const [ox, oy] = origin;
@@ -131,16 +90,6 @@ export function FunctionPlot({
     const svgBottom = oy - yClamp[0] * scale;
     return { x: svgLeft, y: svgTop, width: svgRight - svgLeft, height: svgBottom - svgTop };
   }, [origin, domain, yClamp, scale]);
-
-  // Compute draw progress
-  let dashArray: string | undefined;
-  let dashOffset: number | undefined;
-
-  if (draw !== undefined && draw > 0) {
-    const progress = interpolate(frame, [0, draw], [0, 1], { easing });
-    dashArray = `${approxLength}`;
-    dashOffset = approxLength * (1 - progress);
-  }
 
   const el = (
     <g>
@@ -157,8 +106,6 @@ export function FunctionPlot({
         strokeLinecap="round"
         strokeLinejoin="round"
         opacity={opacity}
-        strokeDasharray={dashArray}
-        strokeDashoffset={dashOffset}
         clipPath={`url(#${clipId})`}
         data-testid="elucim-function-plot"
       />

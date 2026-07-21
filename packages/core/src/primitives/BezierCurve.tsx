@@ -1,8 +1,7 @@
 import React from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface BezierCurveProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface BezierCurveProps extends SpatialProps, BaseElementProps {
   /** Start point x */
   x1: number;
   /** Start point y */
@@ -100,7 +99,7 @@ function arrowHead(x: number, y: number, theta: number, strokeWidth: number): st
 }
 
 /**
- * SVG Bezier curve with animation support.
+ * SVG Bezier curve.
  *
  * Supports both quadratic (one control point) and cubic (two control points) Bezier curves.
  * When `cx2` and `cy2` are provided, a cubic Bezier is rendered; otherwise a quadratic Bezier.
@@ -124,10 +123,6 @@ export function BezierCurve({
   strokeLinejoin = 'round',
   startCap = 'none',
   endCap = 'none',
-  fadeIn,
-  fadeOut,
-  draw,
-  easing,
   rotation,
   rotationOrigin,
   scale,
@@ -135,26 +130,19 @@ export function BezierCurve({
 }: BezierCurveProps) {
   const isCubic = cx2 !== undefined && cy2 !== undefined;
 
-  const curveLength = isCubic
-    ? approximateCubicLength(x1, y1, cx1, cy1, cx2!, cy2!, x2, y2)
-    : approximateQuadraticLength(x1, y1, cx1, cy1, x2, y2);
-
-  const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, curveLength);
-
   const d = isCubic
     ? `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`
     : `M ${x1} ${y1} Q ${cx1} ${cy1}, ${x2} ${y2}`;
 
-  // draw animation dasharray takes precedence; otherwise use user-provided
   const styleDasharray = lineStyle === 'dashed' ? '8 6' : lineStyle === 'dotted' ? '1 6' : undefined;
-  const dasharray = anim.strokeDasharray ?? userDasharray ?? styleDasharray;
+  const dasharray = userDasharray ?? styleDasharray;
 
   const centerX = (x1 + x2) / 2;
   const centerY = (y1 + y2) / 2;
   const controlX2 = cx2 ?? cx1;
   const controlY2 = cy2 ?? cy1;
 
-  const finalOpacity = baseOpacity * anim.opacity;
+  const finalOpacity = baseOpacity;
   const capRadius = Math.max(2, strokeWidth * 1.7);
   const startTangent = isCubic
     ? nonZeroVector(
@@ -191,7 +179,6 @@ export function BezierCurve({
         strokeWidth={strokeWidth}
         fill={fill}
         strokeDasharray={dasharray}
-        strokeDashoffset={anim.strokeDashoffset}
         strokeLinecap={strokeLinecap}
         strokeLinejoin={strokeLinejoin}
       />

@@ -121,6 +121,17 @@ describe('elucim CLI', () => {
     });
   });
 
+  it('rejects render-tree input before running commands', async () => {
+    await withTempDoc({ version: 'render-tree', root: { type: 'scene', children: [] } }, async file => {
+      const output = capture();
+      const code = await runCli(['validate', file, '--json'], output.io);
+
+      expect(code).toBe(1);
+      expect(output.stdout()).toBe('');
+      expect(JSON.parse(output.stderr()).error).toBe('Expected a version "2.0" ElucimDocument.');
+    });
+  });
+
   it('ships valid copyable agent fixtures', async () => {
     for (const fixture of agentFixtures) {
       const file = join(fixtureDir, fixture);

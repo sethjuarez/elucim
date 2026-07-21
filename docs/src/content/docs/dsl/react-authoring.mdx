@@ -1,0 +1,114 @@
+---
+title: Canonical React Authoring
+description: Author normalized Elucim documents with JSX while using the same timelines, effects, state machines, validation, and renderer as JSON and YAML.
+---
+
+`@elucim/dsl/react` is the JSX projection of the canonical `ElucimDocument` model. It does not create a separate React animation system: JSX declarations build a normalized document, validate it, and render it through `DslRenderer`.
+
+## Author a Document with JSX
+
+```tsx
+import {
+  Scene,
+  Text,
+  Timeline,
+  Track,
+  Reveal,
+  StateMachine,
+  State,
+  Transition,
+} from '@elucim/dsl/react';
+
+export function Intro() {
+  return (
+    <Scene type="player" width={800} height={600} defaultStateMachine="main">
+      <Text id="headline" x={120} y={120} fontSize={48} fill="$foreground">
+        Ship faster
+      </Text>
+
+      <Timeline id="intro" duration={48}>
+        <Reveal id="headline-reveal" target="headline" from={8} duration={32} strategy="auto" />
+        <Track
+          target="headline"
+          property="opacity"
+          keyframes={[
+            { frame: 0, value: 0 },
+            { frame: 8, value: 1 },
+          ]}
+        />
+      </Timeline>
+
+      <StateMachine id="main" entry="intro">
+        <State id="intro" timeline="intro" />
+        <Transition id="entry-intro" from="entry" to="intro" trigger="onStart" />
+      </StateMachine>
+    </Scene>
+  );
+}
+```
+
+`Text`, `Group`, and `Element` declare canonical elements. Use `Element` for any primitive not covered by a named JSX declaration:
+
+```tsx
+<Element id="orb" type="circle" cx={400} cy={300} r={60} stroke="$accent" fill="none" />
+```
+
+Every element must have a stable `id`. Tracks and effects always target those IDs, exactly as they do in JSON/YAML and the visual editor.
+
+Timelines can also carry canonical camera keyframes:
+
+```tsx
+<Timeline
+  id="focus"
+  duration={30}
+  camera={{
+    keyframes: [
+      { frame: 0, viewport: { x: 0, y: 0, width: 800, height: 600 } },
+      { frame: 30, viewport: { x: 200, y: 150, width: 400, height: 300 } },
+    ],
+  }}
+/>
+```
+
+## Serialization and Validation
+
+Use `createDocumentFromReact()` when an application needs the normalized data rather than a rendered scene:
+
+```tsx
+import { createDocumentFromReact, Element } from '@elucim/dsl/react';
+
+const document = createDocumentFromReact({
+  width: 640,
+  height: 360,
+  children: <Element id="dot" type="circle" cx={320} cy={180} r={24} fill="$accent" />,
+});
+
+const json = JSON.stringify(document, null, 2);
+```
+
+The produced document has `version: "2.0"` and passes the same `validateDocument()` rules used for JSON/YAML input. It can be saved, imported into the editor, or rendered with `<DslRenderer dsl={document} />`.
+
+## Motion Semantics
+
+`Timeline`, `Track`, `Reveal`, `StateMachine`, `State`, and `Transition` map one-to-one to the canonical document fields:
+
+| JSX declaration | Canonical document field |
+| --- | --- |
+| `<Timeline id="intro">` | `timelines.intro` |
+| `<Track target="headline">` | `timelines.intro.tracks` |
+| `<Reveal target="headline">` | `timelines.intro.effects` |
+| `<StateMachine id="main">` | `stateMachines.main` |
+| `<State id="intro">` | `stateMachines.main.states.intro` |
+| `<Transition ...>` | `stateMachines.main.transitions` |
+
+Reveal effects retain the canonical rules: `auto` types text and fades other leaves, `type` is only valid for text leaves, group targets expand in child order, and repeated effects compose in timeline order. Content tracks never restart reveal timing.
+
+## Removed Core Motion APIs
+
+`@elucim/dsl/react` is the only JSX motion authoring API. The former core `FadeIn`, `FadeOut`, `Draw`, `Write`, `Transform`, `Morph`, `Stagger`, `Parallel`, and `Sequence` APIs have been removed. Use canonical `Track` and `Reveal` declarations instead. Stroke drawing is not modeled as a generic reveal effect.
+
+## Next Steps
+
+- [DSL overview](/dsl/overview/) — canonical document structure
+- [Validation](/dsl/validation/) — structured document errors
+- [DslRenderer](/dsl/renderer/) — render a document directly

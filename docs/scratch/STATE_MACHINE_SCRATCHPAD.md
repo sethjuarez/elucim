@@ -258,7 +258,6 @@ Canvas should not own canonical duration. Canvas is spatial/compositional; timel
 ### Required model change
 
 - `scene.durationInFrames` is not part of Elucim Documents.
-- Render-tree JSON is legacy compatibility only; use import helpers when old content needs to enter the canonical document model.
 - New documents should derive playback duration from the selected timeline, state, machine path, or export policy.
 - If a scene has animation, it gets that animation from timelines plus the selected/default state machine, not from a canvas duration.
 
@@ -323,11 +322,9 @@ Rules:
   - running/waiting/exited status.
 - Fixed duration controls belong in preview/export settings, not in canvas settings.
 
-### Migration implications
+### Duration implications
 
-- Existing legacy documents with root `durationInFrames` should migrate safely.
 - If a document has timelines, preserve each timeline's own duration.
-- If old content relied only on root duration, record that in migration notes or infer an explicit timeline/export setting rather than treating the canvas as timed.
 - Validation should reject Elucim Documents that put `durationInFrames` on `scene`.
 
 ## Multiple machines

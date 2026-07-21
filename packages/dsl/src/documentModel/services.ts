@@ -109,7 +109,7 @@ function toRepairHint(error: ValidationError, doc: unknown): ElucimRepairHint {
     return { path: error.path, message: error.message, code: 'missing-state' };
   }
   if (error.path === 'version') {
-    return { path: error.path, message: error.message, code: 'unsupported-version', suggestions: ['Use normalizeDocument(doc) to migrate supported renderable compatibility formats.'] };
+    return { path: error.path, message: error.message, code: 'unsupported-version', suggestions: ['Use a version "2.0" ElucimDocument.'] };
   }
   if (error.path.includes('.tracks') || error.path.startsWith('timelines.')) {
     return { path: error.path, message: error.message, code: 'invalid-timeline', suggestions: knownIds };

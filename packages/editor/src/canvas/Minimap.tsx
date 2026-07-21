@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import type { ElementNode } from '@elucim/dsl';
+import type { ElementNode } from '@elucim/editor-projection';
 import type { Viewport } from '../state/types';
 import { getElementBounds } from '../utils/bounds';
 import { getElementId } from '../state/types';

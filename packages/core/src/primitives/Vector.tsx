@@ -1,8 +1,7 @@
 import React from 'react';
-import { useAnimation, type AnimationProps } from './animation';
 import { withTransform, type SpatialProps, type BaseElementProps } from './transform';
 
-export interface VectorProps extends AnimationProps, SpatialProps, BaseElementProps {
+export interface VectorProps extends SpatialProps, BaseElementProps {
   /** Start point in math coordinates [x, y] */
   from?: [number, number];
   /** End point in math coordinates [x, y] */
@@ -42,10 +41,6 @@ export function Vector({
   labelOffset = [8, -8],
   labelColor,
   labelFontSize = 16,
-  fadeIn,
-  fadeOut,
-  draw,
-  easing,
   rotation,
   rotationOrigin,
   translate,
@@ -72,11 +67,8 @@ export function Vector({
   const lineEndX = x2 - baseOffset * Math.cos(angle);
   const lineEndY = y2 - baseOffset * Math.sin(angle);
 
-  const lineLength = showLine ? length - baseOffset : 0;
-  const anim = useAnimation({ fadeIn, fadeOut, draw, easing }, lineLength);
-
   const el = (
-    <g opacity={anim.opacity} data-testid="elucim-vector">
+    <g data-testid="elucim-vector">
       {showLine && (
         <line
           x1={x1}
@@ -85,8 +77,6 @@ export function Vector({
           y2={lineEndY}
           stroke={color}
           strokeWidth={strokeWidth}
-          strokeDasharray={anim.strokeDasharray}
-          strokeDashoffset={anim.strokeDashoffset}
         />
       )}
       <polygon

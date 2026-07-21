@@ -36,5 +36,4 @@ export { LaTeX, type LaTeXProps } from './LaTeX';
 export { BarChart, type BarChartProps, type BarDef } from './BarChart';
 export { Image, type ImageProps } from './Image';
 export { Group, type GroupProps } from './Group';
-export { useAnimation, type AnimationProps } from './animation';
 export { buildTransform, withTransform, sortByZIndex, type SpatialProps, type BaseElementProps } from './transform';

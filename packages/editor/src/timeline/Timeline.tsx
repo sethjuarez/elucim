@@ -1,14 +1,12 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState } from 'react';
-import { DEFAULT_LINEAR_DURATION_IN_FRAMES, getMaxTimelineDuration, getStateMachineVisualFrames, type ElementNode, type ElucimDocument, type ElucimRevealEffect, type ElucimStateMachine, type ElucimTimeline, type ElucimTimelineFrameSelection, type ElucimTransition } from '@elucim/dsl';
+import { DEFAULT_LINEAR_DURATION_IN_FRAMES, getMaxTimelineDuration, getStateMachineVisualFrames, type ElementNode, type ElucimDocument, type ElucimRevealEffect, type ElucimStateMachine, type ElucimTimeline, type ElucimTimelineFrameSelection, type ElucimTransition } from '@elucim/editor-projection';
 import { BaseEdge, EdgeLabelRenderer, Handle, MarkerType, Position, ReactFlow, applyNodeChanges, getSmoothStepPath, type Edge, type EdgeProps, type Node, type NodeMouseHandler, type NodeProps, type OnConnect, type OnNodeDrag, type OnNodesChange, type ReactFlowInstance, type Viewport as ReactFlowViewport } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorState } from '../state/EditorProvider';
-import { getElementId } from '../state/types';
 import { useEditorIcons } from '../theme/icons';
 import { v } from '../theme/tokens';
 import { clampFrame, clientXToRatio, frameToPercent as timelineFrameToPercent, ratioToFrame } from '../interactions/coordinates';
 import { startRafDrag } from '../interactions/rafDrag';
-import { AnimationBar } from './AnimationBar';
 import {
   CLIP_HEADER_HEIGHT,
   EASING_OPTIONS,
@@ -49,7 +47,7 @@ import {
 } from './styles';
 import { TimelineInspector } from './TimelineInspector';
 import { TimelinePlaybackControls } from './TimelinePlaybackControls';
-import { getAnimationUpdateProp, getAnimationValues, getRows } from './timelineRows';
+import { getRows } from './timelineRows';
 import type {
   GraphLayoutDirection,
   SelectedMotionItem,
@@ -172,20 +170,17 @@ export function Timeline({
   const animRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
 
-  const durationInFrames = ('durationInFrames' in root ? root.durationInFrames : undefined) ?? DEFAULT_LINEAR_DURATION_IN_FRAMES;
   const fps = ('fps' in root ? root.fps : undefined) ?? 60;
   const children: ElementNode[] = ('children' in root && Array.isArray(root.children)) ? root.children : [];
-  const elementIds = children.map((el, i) => getElementId(el, i));
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const rows = useMemo(() => getRows(children, expandedIds), [children, expandedIds]);
   const elementTypes = useMemo(() => Object.fromEntries(rows.map(row => [row.id, row.element.type])), [rows]);
   const timelineClips = useMemo(() => Object.values(activeTimelines ?? {}), [activeTimelines]);
   const stateMachineClips = useMemo(() => Object.values(activeStateMachines ?? {}), [activeStateMachines]);
   const timelineDurationFallback = getMaxTimelineDuration(activeTimelines) ?? DEFAULT_LINEAR_DURATION_IN_FRAMES;
-  const showLegacyElementTracks = timelineClips.length === 0 && stateMachineClips.length === 0;
   const [activeMotionType, setActiveMotionType] = useState<'animation' | 'stateMachine'>(preferredMotionType);
   const [activeTimelineId, setActiveTimelineId] = useState<string | undefined>(undefined);
-  const showAnimationTimeline = showLegacyElementTracks || activeMotionType === 'animation';
+  const showAnimationTimeline = activeMotionType === 'animation';
   const effectiveActiveTimelineId = activeTimelineId && activeTimelines?.[activeTimelineId]
     ? activeTimelineId
     : activeMotionType === 'animation'
@@ -193,7 +188,7 @@ export function Timeline({
       : undefined;
   const activeTimelineMaxFrame = effectiveActiveTimelineId && activeTimelines?.[effectiveActiveTimelineId]
     ? activeTimelines[effectiveActiveTimelineId].duration
-    : (showLegacyElementTracks ? durationInFrames : timelineDurationFallback) - 1;
+    : timelineDurationFallback - 1;
   const scopedPlayheadPercent = activeTimelineMaxFrame > 0 ? (Math.min(currentFrame, activeTimelineMaxFrame) / activeTimelineMaxFrame) * 100 : 0;
   const updateTimeline = useCallback((timeline: ElucimTimeline) => {
     onActiveTimelinesChange?.({ ...(activeTimelines ?? {}), [timeline.id]: timeline });
@@ -318,11 +313,8 @@ export function Timeline({
   const [editValue, setEditValue] = useState('');
 
   // ── Drag reorder state ──
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [dropIdx, setDropIdx] = useState<number | null>(null);
 
   // ── Easing picker state ──
-  const [easingPickerId, setEasingPickerId] = useState<string | null>(null);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [stateMachinePreview, setStateMachinePreview] = useState<StateMachinePreviewState | null>(null);
 
@@ -333,10 +325,10 @@ export function Timeline({
   const handleActiveTimelineChange = useCallback((timelineId: string | undefined) => {
     setActiveTimelineId(timelineId);
     dispatch({ type: 'SET_ACTIVE_TIMELINE', timelineId });
-    const nextMaxFrame = timelineId && activeTimelines?.[timelineId] ? activeTimelines[timelineId].duration : (showLegacyElementTracks ? durationInFrames : timelineDurationFallback) - 1;
+    const nextMaxFrame = timelineId && activeTimelines?.[timelineId] ? activeTimelines[timelineId].duration : timelineDurationFallback - 1;
     if (currentFrame > nextMaxFrame) dispatch({ type: 'SET_FRAME', frame: nextMaxFrame });
     onActiveTimelineChange?.(timelineId);
-  }, [currentFrame, dispatch, durationInFrames, onActiveTimelineChange, showLegacyElementTracks, timelineDurationFallback, activeTimelines]);
+  }, [currentFrame, dispatch, onActiveTimelineChange, timelineDurationFallback, activeTimelines]);
 
   useEffect(() => {
     dispatch({ type: 'SET_ACTIVE_TIMELINE', timelineId: effectiveActiveTimelineId });
@@ -517,74 +509,7 @@ export function Timeline({
 
   const handleRulerPointerUp = useCallback(() => {}, []);
 
-  // ── Rename handlers ──
-  const handleLabelDoubleClick = useCallback((id: string, currentLabel: string) => {
-    setEditingId(id);
-    setEditValue(currentLabel);
-  }, []);
 
-  const commitRename = useCallback(() => {
-    if (editingId && editValue.trim() && editValue.trim() !== editingId) {
-      dispatch({ type: 'RENAME_ELEMENT', id: editingId, newId: editValue.trim() });
-    }
-    setEditingId(null);
-  }, [dispatch, editingId, editValue]);
-
-  // ── Drag reorder handlers ──
-  const handleTrackDragStart = useCallback((idx: number) => (e: React.DragEvent) => {
-    setDragIdx(idx);
-    e.dataTransfer.effectAllowed = 'move';
-  }, []);
-
-  const handleTrackDragOver = useCallback((idx: number) => (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDropIdx(idx);
-  }, []);
-
-  const handleTrackDrop = useCallback((idx: number) => (e: React.DragEvent) => {
-    e.preventDefault();
-    if (dragIdx !== null && dragIdx !== idx) {
-      const id = elementIds[dragIdx];
-      dispatch({ type: 'REORDER_ELEMENT', id, newIndex: idx });
-    }
-    setDragIdx(null);
-    setDropIdx(null);
-  }, [dragIdx, elementIds, dispatch]);
-
-  const handleTrackDragEnd = useCallback(() => {
-    setDragIdx(null);
-    setDropIdx(null);
-  }, []);
-
-  // ── Animation bar edge drag ──
-  const handleBarEdgeDown = useCallback((elementId: string, prop: 'fadeIn' | 'fadeOut' | 'draw' | 'duration', startVal: number) => (e: React.PointerEvent) => {
-    const parent = (e.currentTarget as HTMLElement).closest('.elucim-editor-timeline');
-    if (!parent) return;
-    const trackArea = parent.querySelector('[data-track-area]') as HTMLElement;
-    if (!trackArea) return;
-    const trackWidth = Math.max(1, trackArea.clientWidth - LABEL_WIDTH);
-    const updateValue = (deltaX: number) => {
-      const frameDelta = Math.round((deltaX / trackWidth) * durationInFrames);
-      const adjustedDelta = prop === 'fadeOut' ? -frameDelta : frameDelta;
-      const newVal = Math.max(0, Math.min(durationInFrames, startVal + adjustedDelta));
-      dispatch({ type: 'UPDATE_ELEMENT', id: elementId, changes: { [prop]: newVal } as any });
-    };
-    startRafDrag({
-      event: e,
-      onFrame: point => updateValue(point.deltaX),
-      onCommit: point => updateValue(point.deltaX),
-    });
-  }, [dispatch, durationInFrames]);
-
-  const toggleExpanded = useCallback((id: string) => {
-    setExpandedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
 
   const playheadPercent = scopedPlayheadPercent;
   const playbackControls = (
@@ -625,65 +550,6 @@ export function Timeline({
       {/* Ruler + tracks */}
       <div style={{ position: 'relative', flex: 1, minHeight: 0 }} data-track-area>
         {/* Ruler */}
-        {showLegacyElementTracks && showAnimationTimeline && (
-          <div
-            ref={rulerRef}
-            onPointerDown={handleRulerPointerDown}
-            onPointerMove={handleRulerPointerMove}
-            onPointerUp={handleRulerPointerUp}
-            style={{
-              height: RULER_HEIGHT,
-              background: v('--elucim-editor-input-bg'),
-              cursor: 'ew-resize',
-              position: 'relative',
-              borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
-              marginLeft: LABEL_WIDTH,
-            }}
-          >
-            {Array.from({ length: 11 }, (_, i) => {
-              const pct = i * 10;
-              const frame = Math.round((pct / 100) * (durationInFrames - 1));
-              return (
-                <div key={i} style={{ position: 'absolute', left: `${pct}%`, top: 0, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{ width: 1, height: 6, background: v('--elucim-editor-text-disabled') }} />
-                  <span style={{ fontSize: 8, color: v('--elucim-editor-text-muted') }}>{frame}</span>
-                </div>
-              );
-            })}
-            <div
-              onPointerDown={handleRulerPointerDown}
-              onPointerMove={handleRulerPointerMove}
-              onPointerUp={handleRulerPointerUp}
-              style={{
-                position: 'absolute',
-                left: `${playheadPercent}%`,
-                top: 0,
-                transform: 'translateX(-6px)',
-                width: 12,
-                height: '100%',
-                cursor: 'ew-resize',
-                zIndex: 2,
-              }}
-            >
-              <div style={{
-                width: 0,
-                height: 0,
-                borderLeft: '6px solid transparent',
-                borderRight: '6px solid transparent',
-                borderTop: `8px solid ${v('--elucim-editor-accent')}`,
-              }} />
-              <div style={{
-                position: 'absolute',
-                left: 5,
-                top: 8,
-                width: 2,
-                height: 'calc(100% - 8px)',
-                background: v('--elucim-editor-accent'),
-                borderRadius: 1,
-              }} />
-            </div>
-          </div>
-        )}
 
         {(timelineClips.length > 0 || stateMachineClips.length > 0 || onActiveTimelinesChange || onActiveStateMachinesChange) && (
             <TimelineClipRows
@@ -727,203 +593,8 @@ export function Timeline({
         )}
 
         {/* Element tracks */}
-        {showLegacyElementTracks && (
-          <div style={{ maxHeight: 140, overflowY: 'auto' }}>
-            {rows.map((row, i) => {
-            const { element: el, id } = row;
-            const isSelected = selectedIds.includes(id);
-            const { fadeIn, fadeOut, draw } = getAnimationValues(el);
-            const label = row.label;
-            const isDropTarget = row.isTopLevel && dropIdx === row.rootIndex && dragIdx !== null && dragIdx !== row.rootIndex;
-            const canReorder = row.isTopLevel;
-            const expanded = expandedIds.has(id);
-
-            return (
-              <div
-                key={id}
-                draggable={canReorder}
-                onDragStart={canReorder ? handleTrackDragStart(row.rootIndex) : undefined}
-                onDragOver={canReorder ? handleTrackDragOver(row.rootIndex) : undefined}
-                onDrop={canReorder ? handleTrackDrop(row.rootIndex) : undefined}
-                onDragEnd={handleTrackDragEnd}
-                onClick={() => dispatch({ type: 'SELECT', ids: [id] })}
-                style={{
-                  height: TRACK_HEIGHT,
-                  display: 'flex',
-                  alignItems: 'center',
-                  borderBottom: `1px solid ${v('--elucim-editor-border-subtle')}`,
-                  borderTop: isDropTarget ? `2px solid ${v('--elucim-editor-accent')}` : undefined,
-                  background: isSelected ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 7%, transparent)` : 'transparent',
-                  cursor: 'default',
-                  opacity: dragIdx === row.rootIndex ? 0.5 : 1,
-                }}
-              >
-                {/* Label */}
-                <div
-                  onDoubleClick={() => handleLabelDoubleClick(id, label)}
-                  style={{
-                    width: LABEL_WIDTH,
-                    padding: '0 6px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    color: isSelected ? v('--elucim-editor-accent') : v('--elucim-editor-text-secondary'),
-                    fontSize: 10,
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                  }}
-                >
-                  <span style={{ display: 'inline-block', width: row.depth * 10, flexShrink: 0 }} />
-                  {row.hasChildren ? (
-                    <button
-                      type="button"
-                      aria-label={`${expanded ? 'Collapse' : 'Expand'} ${label}`}
-                      title={expanded ? 'Collapse children' : 'Expand children'}
-                      onClick={e => {
-                        e.stopPropagation();
-                        toggleExpanded(id);
-                      }}
-                      style={{
-                        width: 12,
-                        height: 14,
-                        padding: 0,
-                        border: 'none',
-                        background: 'transparent',
-                        color: v('--elucim-editor-text-muted'),
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {expanded ? icons.ChevronDown({ size: 10 }) : icons.ChevronRight({ size: 10 })}
-                    </button>
-                  ) : (
-                    <span style={{ width: 12, flexShrink: 0 }} />
-                  )}
-                  {editingId === id ? (
-                    <input
-                      autoFocus
-                      value={editValue}
-                      onChange={e => setEditValue(e.target.value)}
-                      onBlur={commitRename}
-                      onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditingId(null); }}
-                      onClick={e => e.stopPropagation()}
-                      style={{
-                        width: '100%',
-                        fontSize: 10,
-                        border: `1px solid ${v('--elucim-editor-accent')}`,
-                        borderRadius: 2,
-                        background: v('--elucim-editor-input-bg'),
-                        color: v('--elucim-editor-fg'),
-                        padding: '0 2px',
-                        outline: 'none',
-                      }}
-                    />
-                  ) : <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>}
-                </div>
-
-                {/* Track bars */}
-                <div style={{ flex: 1, position: 'relative', height: '100%' }}>
-                  {fadeIn > 0 && (
-                    <AnimationBar
-                      left={0}
-                      width={(fadeIn / durationInFrames) * 100}
-                      color={v('--elucim-editor-success')}
-                      title={`fadeIn: ${fadeIn}f`}
-                      onEdgeDrag={handleBarEdgeDown(id, getAnimationUpdateProp(el, 'fadeIn'), fadeIn)}
-                      onClick={() => setEasingPickerId(easingPickerId === `${id}-fadeIn` ? null : `${id}-fadeIn`)}
-                    />
-                  )}
-                  {draw > 0 && (
-                    <AnimationBar
-                      left={fadeIn > 0 ? (fadeIn / durationInFrames) * 100 : 0}
-                      width={(draw / durationInFrames) * 100}
-                      color={v('--elucim-editor-info')}
-                      title={`draw: ${draw}f`}
-                      onEdgeDrag={handleBarEdgeDown(id, getAnimationUpdateProp(el, 'draw'), draw)}
-                      onClick={() => setEasingPickerId(easingPickerId === `${id}-draw` ? null : `${id}-draw`)}
-                    />
-                  )}
-                  {fadeOut > 0 && (
-                    <AnimationBar
-                      left={100 - (fadeOut / durationInFrames) * 100}
-                      width={(fadeOut / durationInFrames) * 100}
-                      color={v('--elucim-editor-error')}
-                      title={`fadeOut: ${fadeOut}f`}
-                      onEdgeDrag={handleBarEdgeDown(id, getAnimationUpdateProp(el, 'fadeOut'), fadeOut)}
-                      onClick={() => setEasingPickerId(easingPickerId === `${id}-fadeOut` ? null : `${id}-fadeOut`)}
-                      edgeSide="left"
-                    />
-                  )}
-                </div>
-              </div>
-            );
-            })}
-          </div>
-        )}
-
-        {showLegacyElementTracks && (
-          <div style={{
-            position: 'absolute',
-            left: `calc(${LABEL_WIDTH}px + ${playheadPercent}% * (100% - ${LABEL_WIDTH}px) / 100%)`,
-            top: RULER_HEIGHT,
-            width: 1,
-            height: rows.length * TRACK_HEIGHT,
-            background: `color-mix(in srgb, ${v('--elucim-editor-accent')} 53%, transparent)`,
-            pointerEvents: 'none',
-          }} />
-        )}
       </div>
 
-      {/* Easing picker popover */}
-      {easingPickerId && (() => {
-        const [elemId, prop] = easingPickerId.split(/-(?=fadeIn|fadeOut|draw)/);
-        const elNode = rows.find(row => row.id === elemId)?.element;
-        const currentEasing = (elNode as any)?.easing ?? 'linear';
-        return (
-          <div style={{
-            position: 'absolute',
-            bottom: '100%',
-            left: LABEL_WIDTH,
-            background: v('--elucim-editor-surface'),
-            border: `1px solid ${v('--elucim-editor-border')}`,
-            borderRadius: 4,
-            padding: 4,
-            zIndex: 1000,
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 2,
-            maxWidth: 260,
-          }}>
-            <div style={{ width: '100%', fontSize: 9, color: v('--elucim-editor-text-muted'), padding: '2px 4px' }}>
-              Easing for {prop}
-            </div>
-            {EASING_OPTIONS.map(eOpt => (
-              <button
-                key={eOpt}
-                onClick={() => {
-                  dispatch({ type: 'UPDATE_ELEMENT', id: elemId, changes: { easing: eOpt } as any });
-                  setEasingPickerId(null);
-                }}
-                style={{
-                  fontSize: 9,
-                  padding: '2px 6px',
-                  border: `1px solid ${currentEasing === eOpt ? v('--elucim-editor-accent') : v('--elucim-editor-border-subtle')}`,
-                  borderRadius: 3,
-                  background: currentEasing === eOpt ? `color-mix(in srgb, ${v('--elucim-editor-accent')} 20%, transparent)` : 'transparent',
-                  color: v('--elucim-editor-fg'),
-                  cursor: 'pointer',
-                }}
-              >
-                {eOpt}
-              </button>
-            ))}
-          </div>
-        );
-      })()}
     </div>
   );
 }

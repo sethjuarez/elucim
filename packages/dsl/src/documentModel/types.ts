@@ -148,9 +148,9 @@ export interface ElucimTimeline {
 export interface ElucimStateMachine {
   id: string;
   entry: string;
-  inputs?: Record<string, ElucimStateMachineInput>;
   states: Record<string, ElucimState>;
   transitions?: ElucimTransition[];
+  inputs?: Record<string, ElucimStateMachineInput>;
   layout?: ElucimStateMachineLayout;
 }
 
