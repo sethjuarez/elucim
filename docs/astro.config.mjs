@@ -108,6 +108,7 @@ export default defineConfig({
             { slug: 'advanced/presentation' },
             { slug: 'advanced/export' },
             { slug: 'advanced/hooks' },
+            { slug: 'advanced/native-platforms' },
             { slug: 'animations/easing' },
           ],
         },
