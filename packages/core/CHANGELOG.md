@@ -1,5 +1,15 @@
 # @elucim/core
 
+## [0.25.0](https://github.com/sethjuarez/elucim/compare/core-v0.24.0...core-v0.25.0) (2026-08-05)
+
+
+### Features
+
+* add timeline reveal effects ([7ba393b](https://github.com/sethjuarez/elucim/commit/7ba393b54fbc2b71cae7b33262e07c77133e59aa))
+* add timeline reveal effects ([52b73b8](https://github.com/sethjuarez/elucim/commit/52b73b84d91e3ea3087a19fcb9d0eed45d19a517))
+* unify canonical motion authoring ([b2c1ac7](https://github.com/sethjuarez/elucim/commit/b2c1ac7c0954674109d8d50bffa72aa0dd3c074f))
+* unify canonical motion authoring ([e90e0b8](https://github.com/sethjuarez/elucim/commit/e90e0b88c88fc8a6587c0f8826ab2d10f9d144db))
+
 ## [0.24.0](https://github.com/sethjuarez/elucim/compare/core-v0.23.0...core-v0.24.0) (2026-06-28)
 
 
