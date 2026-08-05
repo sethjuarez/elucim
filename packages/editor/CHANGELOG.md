@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.25.0](https://github.com/sethjuarez/elucim/compare/editor-v0.24.0...editor-v0.25.0) (2026-08-05)
+
+
+### Features
+
+* add timeline reveal effects ([7ba393b](https://github.com/sethjuarez/elucim/commit/7ba393b54fbc2b71cae7b33262e07c77133e59aa))
+* add timeline reveal effects ([52b73b8](https://github.com/sethjuarez/elucim/commit/52b73b84d91e3ea3087a19fcb9d0eed45d19a517))
+* add timeline-native scene camera ([ac7d9c1](https://github.com/sethjuarez/elucim/commit/ac7d9c19dcd5605e6bbf9535a91ece7635ce1496))
+* add timeline-native scene camera ([82eda6a](https://github.com/sethjuarez/elucim/commit/82eda6a5a8cdb1c50193d39c162454afc13b0dc0))
+* unify canonical motion authoring ([b2c1ac7](https://github.com/sethjuarez/elucim/commit/b2c1ac7c0954674109d8d50bffa72aa0dd3c074f))
+* unify canonical motion authoring ([e90e0b8](https://github.com/sethjuarez/elucim/commit/e90e0b88c88fc8a6587c0f8826ab2d10f9d144db))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @elucim/core bumped to 0.25.0
+    * @elucim/dsl bumped to 0.25.0
+  * peerDependencies
+    * @elucim/core bumped from >=0.8.0 to >=0.25.0
+    * @elucim/dsl bumped from >=0.8.0 to >=0.25.0
+
 ## [0.24.0](https://github.com/sethjuarez/elucim/compare/editor-v0.23.0...editor-v0.24.0) (2026-06-28)
 
 

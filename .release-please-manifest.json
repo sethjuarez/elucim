@@ -1,6 +1,6 @@
 {
-  "packages/core": "0.24.0",
-  "packages/dsl": "0.24.0",
-  "packages/editor": "0.24.0",
-  "packages/cli": "0.24.0"
+  "packages/core": "0.25.0",
+  "packages/dsl": "0.25.0",
+  "packages/editor": "0.25.0",
+  "packages/cli": "0.25.0"
 }
