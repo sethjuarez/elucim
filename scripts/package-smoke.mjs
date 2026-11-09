@@ -132,7 +132,7 @@ function fileDependency(consumerDir, tarball) {
 function smokeSource() {
   return `import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
@@ -191,5 +191,30 @@ const opsOutput = execFileSync(process.execPath, [cliEntry, 'ops', '--json'], { 
 const ops = JSON.parse(opsOutput);
 assert.equal(Array.isArray(ops.cli?.commands), true, '@elucim/cli ops should return command catalog JSON');
 assert.equal(ops.cli.commands.some(command => command.name === 'validate'), true, '@elucim/cli command catalog should include validate');
+
+// The installed bin must run (npm links bins as symlinks on Unix and .cmd shims on Windows).
+const binDir = join(consumerDir, 'node_modules', '.bin');
+const runBin = args => process.platform === 'win32'
+  ? execFileSync(process.env.ComSpec ?? 'cmd.exe', ['/d', '/s', '/c', ['elucim', ...args].map(arg => /[\\s"]/u.test(arg) ? '"' + arg.replaceAll('"', '\\\\"') + '"' : arg).join(' ')], { cwd: consumerDir, encoding: 'utf8', env: { ...process.env, PATH: binDir + ';' + process.env.PATH } })
+  : execFileSync(join(binDir, 'elucim'), args, { cwd: consumerDir, encoding: 'utf8' });
+const timed = {
+  version: '2.0',
+  scene: { type: 'player', width: 64, height: 36, fps: 25, children: ['dot'] },
+  anchors: { spot: { x: 10, y: 10, width: 4, height: 4 } },
+  elements: { dot: { id: 'dot', type: 'circle', layout: { anchor: { id: 'spot' } }, props: { type: 'circle', cx: 12, cy: 12, r: 4, fill: '#ff0000', opacity: 0 } } },
+  timelines: { intro: { id: 'intro', duration: 20, markers: { show: 10 }, tracks: [{ target: 'dot', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 10, value: 1 }] }] } },
+};
+writeFileSync(join(consumerDir, 'timed.elc'), JSON.stringify(timed));
+const retime = JSON.parse(runBin(['retime', 'timed.elc', '--timeline', 'intro', '--map', 'show=15', '--out', 'retimed.elc', '--json']));
+assert.deepEqual(retime.markers, { show: 15 }, '@elucim/cli bin retime should move markers');
+const exported = JSON.parse(runBin(['export-frames', 'retimed.elc', '--out-dir', 'frames', '--fps', '25', '--count', '26', '--background', 'transparent', '--json']));
+assert.equal(exported.frameCount, 26, '@elucim/cli bin export-frames should write the requested frame count');
+assert.equal(readdirSync(join(consumerDir, 'frames')).filter(name => name.endsWith('.png')).length, 26);
+
+const cli = await import('@elucim/cli');
+const png = cli.renderFramePng(timed, 10, { background: 'transparent', anchors: { anchors: { spot: { x: 40, y: 20, w: 4, h: 4 } } } });
+assert.equal(Buffer.from(png.subarray(1, 4)).toString(), 'PNG', '@elucim/cli renderFramePng should return PNG bytes');
+assert.equal(png[25], 6, '@elucim/cli transparent PNG should be RGBA (color type 6)');
+assert.equal(cli.planFrameExport(timed, { fps: 25 }).frames.length, 21, '@elucim/cli planFrameExport should cover the timeline');
 `;
 }

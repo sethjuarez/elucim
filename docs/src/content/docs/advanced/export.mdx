@@ -136,6 +136,37 @@ const svg = renderToSvgString(doc, 30, { width: 800, height: 600 });
 `renderToSvgString` uses `react-dom/server` under the hood. It validates the DSL and throws on invalid input.
 :::
 
+## renderToStandaloneSvg()
+
+Returns a self-contained SVG file (with `xmlns`, pixel size, and an optional background) that rasterizers such as resvg can read directly.
+
+```ts
+import { renderToStandaloneSvg } from '@elucim/dsl';
+
+const svg = renderToStandaloneSvg(doc, 42, { width: 1920, background: 'transparent' });
+```
+
+`background` is `'scene'` (default), `'transparent'`, or any color. Passing only `width` or `height` keeps the scene's aspect ratio. It throws `ElucimStandaloneSvgError` for LaTeX (`foreignObject`) and remote `http(s)` images; inline images as `data:` URIs instead.
+
+## Headless frame sequences (CLI)
+
+`@elucim/cli` renders exact PNG or SVG frame sequences in Node without a browser:
+
+```bash
+npx @elucim/cli export-frames scene.elc --out-dir frames --fps 25 --count 150 --background transparent --json
+```
+
+Output frame `n` samples document frame `n * scene.fps / fps` (`scene.fps` defaults to 60), so frame `n` is always deterministic and the number of files equals the requested count or range. Frames past the timeline end hold the final state. Transparent PNGs are RGBA for compositing over video. Pass `--anchors boxes.json` to bind measured UI boxes to the document's named anchors, and `--font file.ttf` to skip slow system font scanning. The same features are available in code:
+
+```ts
+import { exportFrames, renderFramePng } from '@elucim/cli';
+
+const result = await exportFrames(doc, { outDir: 'frames', fps: 25, count: 150, background: 'transparent' });
+const png = renderFramePng(doc, 42, { background: 'transparent' });
+```
+
+See the [CLI README](https://github.com/sethjuarez/elucim/tree/main/packages/cli#cue-driven-timing-and-frame-export) for all flags.
+
 ## Browser Support
 
 Export relies on `HTMLCanvasElement`, `MediaRecorder`, and the `video/webm` MIME type. This works in Chrome, Edge, and Firefox. Safari support for `MediaRecorder` may vary — check [caniuse.com](https://caniuse.com/mediarecorder) for the latest status.

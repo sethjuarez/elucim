@@ -97,7 +97,7 @@ export function resolveTimelineReveals(
   return reveals;
 }
 
-function resolveRevealTargets(doc: ElucimDocument, effect: ElucimRevealEffect): string[] {
+export function resolveRevealTargets(doc: ElucimDocument, effect: ElucimRevealEffect): string[] {
   const result: string[] = [];
   const seen = new Set<string>();
   const visit = (id: string, ancestry: Set<string>) => {
@@ -209,7 +209,7 @@ export function evaluateCameraTrack(track: ElucimTimelineCamera, frame: number):
   };
 }
 
-function evaluateTrack(track: ElucimTimelineTrack, frame: number): unknown {
+export function evaluateTrack(track: ElucimTimelineTrack, frame: number): unknown {
   const keyframes = [...track.keyframes].sort((a, b) => a.frame - b.frame);
   if (keyframes.length === 0) throw new Error('Timeline track must have at least one keyframe');
   if (frame <= keyframes[0].frame) return keyframes[0].value;

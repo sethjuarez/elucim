@@ -7,6 +7,7 @@ const VALID_TIMELINE_PROPERTIES = new Set(['opacity', 'translate', 'scale', 'rot
 const RESERVED_EVENT_NAMES = new Set(['complete', 'entry', 'exit', 'next']);
 const REMOVED_WRAPPER_ELEMENT_TYPES = new Set(['sequence', 'fadein', 'fadeout', 'draw', 'write', 'transform', 'morph', 'stagger', 'parallel']);
 const REMOVED_ANIMATION_PROPS = new Set(['fadeIn', 'fadeOut', 'draw', 'write', 'easing']);
+const VALID_ANCHOR_POINTS = new Set<string>(['center', 'top', 'bottom', 'left', 'right', 'top-left', 'top-right', 'bottom-left', 'bottom-right']);
 
 export function validateDocument(doc: unknown): ValidationResult {
   const errors: ValidationError[] = [];
@@ -47,6 +48,7 @@ export function validateDocument(doc: unknown): ValidationResult {
     validateElement(id, element, errors);
   }
   validateReferences(d as ElucimDocument, errors);
+  validateAnchors(d as ElucimDocument, errors);
   validateTimelines(d as ElucimDocument, errors);
   validateStateMachines(d as ElucimDocument, errors);
   validateDefaultStateMachine(d as ElucimDocument, errors);
@@ -135,6 +137,51 @@ function validateLayout(element: ElucimElement, path: string, errors: Validation
   }
   if (element.layout.locked !== undefined && typeof element.layout.locked !== 'boolean') {
     errors.push({ path: `${path}.layout.locked`, message: 'layout.locked must be a boolean', severity: 'error' });
+  }
+  const anchor = element.layout.anchor;
+  if (anchor !== undefined) {
+    if (!anchor || typeof anchor !== 'object' || typeof anchor.id !== 'string') {
+      errors.push({ path: `${path}.layout.anchor`, message: 'layout.anchor must be an object with a string id', severity: 'error' });
+    } else {
+      if (anchor.point !== undefined && !VALID_ANCHOR_POINTS.has(anchor.point)) {
+        errors.push({ path: `${path}.layout.anchor.point`, message: `layout.anchor.point must be one of ${[...VALID_ANCHOR_POINTS].join(', ')}`, severity: 'error' });
+      }
+      if (anchor.endpoint !== undefined && anchor.endpoint !== 'start' && anchor.endpoint !== 'end') {
+        errors.push({ path: `${path}.layout.anchor.endpoint`, message: 'layout.anchor.endpoint must be "start" or "end"', severity: 'error' });
+      }
+    }
+  }
+}
+
+function validateAnchors(doc: ElucimDocument, errors: ValidationError[]) {
+  const anchors = doc.anchors;
+  if (anchors !== undefined) {
+    if (!anchors || typeof anchors !== 'object' || Array.isArray(anchors)) {
+      errors.push({ path: 'anchors', message: 'anchors must be an object keyed by anchor name', severity: 'error' });
+      return;
+    }
+    for (const [id, anchor] of Object.entries(anchors)) {
+      const path = `anchors.${id}`;
+      if (!anchor || typeof anchor !== 'object') {
+        errors.push({ path, message: 'Anchor must be an object with x and y', severity: 'error' });
+        continue;
+      }
+      for (const key of ['x', 'y'] as const) {
+        if (!Number.isFinite(anchor[key])) errors.push({ path: `${path}.${key}`, message: `Anchor ${key} must be a finite number`, severity: 'error' });
+      }
+      for (const key of ['width', 'height'] as const) {
+        const value = anchor[key];
+        if (value !== undefined && !(Number.isFinite(value) && value >= 0)) {
+          errors.push({ path: `${path}.${key}`, message: `Anchor ${key} must be a non-negative number`, severity: 'error' });
+        }
+      }
+    }
+  }
+  for (const [id, element] of Object.entries(doc.elements)) {
+    const ref = element?.layout?.anchor;
+    if (ref && typeof ref.id === 'string' && !anchors?.[ref.id]) {
+      errors.push({ path: `elements.${id}.layout.anchor.id`, message: `Unknown anchor "${ref.id}". Declare it in document.anchors.`, severity: 'error' });
+    }
   }
 }
 
@@ -240,6 +287,35 @@ function validateTimelines(doc: ElucimDocument, errors: ValidationError[]) {
     });
     validateTimelineEffects(doc, timelineId, timeline, errors);
     validateTimelineCamera(timeline.camera, `timelines.${timelineId}.camera`, timeline.duration, errors);
+    validateTimelineMarkers(timeline.markers, `timelines.${timelineId}.markers`, timeline.duration, errors);
+  }
+}
+
+function validateTimelineMarkers(markers: unknown, path: string, duration: number, errors: ValidationError[]): void {
+  if (markers === undefined) return;
+  if (!markers || typeof markers !== 'object' || Array.isArray(markers)) {
+    errors.push({ path, message: 'Timeline markers must be an object of marker name to frame', severity: 'error' });
+    return;
+  }
+  const byFrame = new Map<number, string>();
+  for (const [name, frame] of Object.entries(markers as Record<string, unknown>)) {
+    const markerPath = `${path}.${name}`;
+    if (!name.trim()) {
+      errors.push({ path: markerPath, message: 'Marker names must be non-empty', severity: 'error' });
+    }
+    if (typeof frame !== 'number' || !Number.isInteger(frame) || frame < 0) {
+      errors.push({ path: markerPath, message: 'Marker frame must be a non-negative integer', severity: 'error' });
+      continue;
+    }
+    if (Number.isFinite(duration) && frame > duration) {
+      errors.push({ path: markerPath, message: 'Marker frame cannot exceed timeline duration', severity: 'error' });
+    }
+    const existing = byFrame.get(frame);
+    if (existing !== undefined) {
+      errors.push({ path: markerPath, message: `Marker "${name}" shares frame ${frame} with marker "${existing}"`, severity: 'error' });
+    } else {
+      byFrame.set(frame, name);
+    }
   }
 }
 

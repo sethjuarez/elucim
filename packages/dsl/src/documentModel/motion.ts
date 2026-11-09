@@ -8,6 +8,7 @@ import type {
   ElucimTimelineTrack,
 } from './types';
 import { applyTimelineFrame } from './timeline';
+import { ElucimRetimeError, retimeTimeline, type ElucimCueMap } from './retime';
 
 export type ElucimSemanticMotionPreset =
   | 'revealFlow'
@@ -43,6 +44,8 @@ export interface ElucimMotionBeatPlanSpec {
   fps?: number;
   beats?: Array<{
     id: string;
+    /** Explicit start frame (e.g. a narration cue). Authoritative when set. */
+    start?: number;
     role?: ElucimMotionBeatRole;
     title?: string;
     duration?: number;
@@ -55,6 +58,7 @@ export interface ElucimMotionBeatPlanSpec {
 
 interface MotionBeatInput {
   id: string;
+  start?: number;
   role?: ElucimMotionBeatRole;
   title?: string;
   duration?: number;
@@ -116,7 +120,10 @@ export type ElucimMotionLintCode =
   | 'flashing'
   | 'excessive-motion'
   | 'static-timeline'
-  | 'missing-reduced-motion';
+  | 'missing-reduced-motion'
+  | 'squeezed-beat'
+  | 'collapsed-marker'
+  | 'invalid-cue';
 
 export interface ElucimMotionLintIssue {
   code: ElucimMotionLintCode;
@@ -132,6 +139,14 @@ export interface ElucimMotionLintOptions {
   maxSimultaneousChanges?: number;
   maxTranslateDistance?: number;
   requireReducedMotion?: boolean;
+  /**
+   * Lint against external timing: retime `timelineId` to these cue frames
+   * first (see `retimeTimeline`), then lint the result. Cue maps that cannot be
+   * applied are reported as errors instead of throwing: `collapsed-marker`
+   * when compression merges keyframes, markers, or reveals, and `invalid-cue`
+   * for unknown timelines/markers, bad frames, or out-of-order cues.
+   */
+  cues?: { timelineId: string; cues: ElucimCueMap; duration?: number };
 }
 
 export interface ElucimMotionLintReport {
@@ -162,6 +177,43 @@ export interface ElucimReducedMotionOptions {
   maxDuration?: number;
 }
 
+export type ElucimMotionPlanErrorCode =
+  | 'invalid-start'
+  | 'invalid-duration'
+  | 'start-out-of-range'
+  | 'out-of-order'
+  | 'overlap'
+  | 'no-room'
+  | 'duplicate-id';
+
+/** Thrown by planMotionBeats when explicit beat starts cannot be honored. */
+export class ElucimMotionPlanError extends Error {
+  readonly code: ElucimMotionPlanErrorCode;
+  readonly beatId?: string;
+
+  constructor(code: ElucimMotionPlanErrorCode, message: string, beatId?: string) {
+    super(message);
+    this.name = 'ElucimMotionPlanError';
+    this.code = code;
+    this.beatId = beatId;
+  }
+}
+
+/**
+ * Plans beats across `totalFrames`.
+ *
+ * Without any explicit `start`, beats are packed end to end: explicit
+ * `duration`s first, the rest shared by `weight` (legacy behavior).
+ *
+ * When any beat has an explicit integer `start` (for example a narration cue
+ * frame), that start is authoritative. Each pinned beat opens a segment that
+ * runs to the next pinned start (or `totalFrames`); the pinned beat and the
+ * unpinned beats after it share that segment. Beats before the first pin share
+ * `[0, firstPin)`. A pinned beat with an explicit `duration` that ends before the
+ * next pin leaves a deliberate gap. Decreasing/equal starts, starts outside
+ * `[0, totalFrames)`, durations that overrun the next pin or `totalFrames`, and
+ * duplicate ids throw {@link ElucimMotionPlanError}; nothing is clamped.
+ */
 export function planMotionBeats(spec: ElucimMotionBeatPlanSpec = {}): ElucimMotionBeat[] {
   const fps = spec.fps ?? 30;
   const totalFrames = spec.totalFrames ?? (spec.seconds ? Math.round(spec.seconds * fps) : 120);
@@ -171,6 +223,7 @@ export function planMotionBeats(spec: ElucimMotionBeatPlanSpec = {}): ElucimMoti
       id: defaultBeatId(index, spec.beatCount ?? 4),
       role: defaultBeatRole(index, spec.beatCount ?? 4),
     }));
+  if (rawBeats.some(beat => beat.start !== undefined)) return planPinnedBeats(rawBeats, totalFrames);
   const explicitDuration = rawBeats.reduce((sum, beat) => sum + (beat.duration ?? 0), 0);
   const weighted = rawBeats.filter(beat => beat.duration === undefined);
   const totalWeight = weighted.reduce((sum, beat) => sum + (beat.weight ?? 1), 0) || 1;
@@ -193,6 +246,97 @@ export function planMotionBeats(spec: ElucimMotionBeatPlanSpec = {}): ElucimMoti
     cursor += duration;
     return planned;
   });
+}
+
+function planPinnedBeats(rawBeats: MotionBeatInput[], totalFrames: number): ElucimMotionBeat[] {
+  if (!Number.isInteger(totalFrames) || totalFrames < 1) {
+    throw new ElucimMotionPlanError('no-room', `totalFrames must be a positive integer, got ${totalFrames}.`);
+  }
+  const seen = new Set<string>();
+  let previousStart = -1;
+  let previousId: string | undefined;
+  for (const beat of rawBeats) {
+    const id = sanitizeId(beat.id);
+    if (seen.has(id)) throw new ElucimMotionPlanError('duplicate-id', `Beat id "${id}" is used more than once.`, id);
+    seen.add(id);
+    if (beat.duration !== undefined && (!Number.isInteger(beat.duration) || beat.duration < 1)) {
+      throw new ElucimMotionPlanError('invalid-duration', `Beat "${id}" duration must be a positive integer frame count, got ${beat.duration}.`, id);
+    }
+    if (beat.start === undefined) continue;
+    if (!Number.isInteger(beat.start) || beat.start < 0) {
+      throw new ElucimMotionPlanError('invalid-start', `Beat "${id}" start must be a non-negative integer frame, got ${beat.start}.`, id);
+    }
+    if (beat.start >= totalFrames) {
+      throw new ElucimMotionPlanError('start-out-of-range', `Beat "${id}" starts at frame ${beat.start}, but the plan only has frames 0..${totalFrames - 1}.`, id);
+    }
+    if (beat.start <= previousStart) {
+      throw new ElucimMotionPlanError(
+        beat.start === previousStart ? 'overlap' : 'out-of-order',
+        `Beat "${id}" starts at frame ${beat.start}, which is not after beat "${previousId}" at frame ${previousStart}. Pinned starts must strictly increase in beat order.`,
+        id,
+      );
+    }
+    previousStart = beat.start;
+    previousId = id;
+  }
+
+  const segments: Array<{ start: number; beats: MotionBeatInput[] }> = [];
+  for (const beat of rawBeats) {
+    if (beat.start !== undefined || segments.length === 0) segments.push({ start: beat.start ?? 0, beats: [beat] });
+    else segments[segments.length - 1].beats.push(beat);
+  }
+  const planned: ElucimMotionBeat[] = [];
+  segments.forEach((segment, segmentIndex) => {
+    const next = segments[segmentIndex + 1];
+    const end = next ? next.start : totalFrames;
+    const length = end - segment.start;
+    const fixed = segment.beats.reduce((sum, beat) => sum + (beat.duration ?? 0), 0);
+    const flexible = segment.beats.filter(beat => beat.duration === undefined);
+    const free = length - fixed;
+    if (free < flexible.length) {
+      const id = sanitizeId(segment.beats[segment.beats.length - 1].id);
+      throw new ElucimMotionPlanError(
+        next ? 'overlap' : 'no-room',
+        next
+          ? `Beats from frame ${segment.start} need ${fixed + flexible.length} frame(s) but beat "${sanitizeId(next.beats[0].id)}" starts at frame ${next.start} (${length} frame(s) available).`
+          : `Beats from frame ${segment.start} need ${fixed + flexible.length} frame(s) but only ${length} remain before totalFrames ${totalFrames}.`,
+        id,
+      );
+    }
+    const shares = allocateByWeight(free, flexible.map(beat => beat.weight ?? 1));
+    let cursor = segment.start;
+    let flexIndex = 0;
+    for (const beat of segment.beats) {
+      const duration = beat.duration ?? shares[flexIndex++];
+      planned.push({
+        id: sanitizeId(beat.id),
+        role: beat.role,
+        title: beat.title,
+        start: cursor,
+        duration,
+        targets: beat.targets ? [...beat.targets] : undefined,
+        description: beat.description,
+      });
+      cursor += duration;
+    }
+  });
+  return planned;
+}
+
+/** Largest-remainder split of `total` integer frames, at least 1 per share. */
+function allocateByWeight(total: number, weights: number[]): number[] {
+  if (weights.length === 0) return [];
+  const safe = weights.map(weight => (Number.isFinite(weight) && weight > 0 ? weight : 1));
+  const spare = total - weights.length;
+  const weightSum = safe.reduce((sum, weight) => sum + weight, 0);
+  const exact = safe.map(weight => (spare * weight) / weightSum);
+  const shares = exact.map(value => 1 + Math.floor(value));
+  let leftover = total - shares.reduce((sum, share) => sum + share, 0);
+  const order = exact
+    .map((value, index) => ({ index, remainder: value - Math.floor(value) }))
+    .sort((a, b) => b.remainder - a.remainder || a.index - b.index);
+  for (let i = 0; leftover > 0; i = (i + 1) % order.length, leftover -= 1) shares[order[i].index] += 1;
+  return shares;
 }
 
 export function createSemanticMotionTimeline(doc: ElucimDocument, spec: ElucimSemanticMotionPresetSpec): ElucimTimeline {
@@ -256,6 +400,27 @@ export function createStateSnapshotMotion(spec: ElucimStateSnapshotMotionSpec): 
 }
 
 export function lintMotion(doc: ElucimDocument, options: ElucimMotionLintOptions = {}): ElucimMotionLintReport {
+  if (options.cues) {
+    const { timelineId, cues, duration } = options.cues;
+    const rest: ElucimMotionLintOptions = { ...options, cues: undefined };
+    try {
+      return lintMotion(retimeTimeline(doc, timelineId, cues, { duration }), rest);
+    } catch (error) {
+      if (!(error instanceof ElucimRetimeError)) throw error;
+      const report = lintMotion(doc, rest);
+      const collapsed = error.code === 'collapsed-keyframes' || error.code === 'collapsed-effect';
+      const issues: ElucimMotionLintIssue[] = [{
+        code: collapsed ? 'collapsed-marker' : 'invalid-cue',
+        severity: 'error',
+        path: !error.path ? `timelines.${timelineId}` : error.path.startsWith('timelines.') ? error.path : `timelines.${timelineId}.${error.path}`,
+        message: `Cue map cannot be applied to "${timelineId}" (${error.code}): ${error.message}`,
+        suggestions: collapsed
+          ? ['Give the squeezed segment more frames, move the cue, or drop a keyframe/marker.']
+          : ['Check the timeline id, marker names, and that cue frames are non-negative integers in marker order.'],
+      }, ...report.issues];
+      return { valid: false, score: Math.max(0, report.score - 30), issues };
+    }
+  }
   const issues: ElucimMotionLintIssue[] = [];
   const minTransitionFrames = options.minTransitionFrames ?? 6;
   const maxSimultaneousChanges = options.maxSimultaneousChanges ?? 6;
@@ -274,6 +439,7 @@ export function lintMotion(doc: ElucimDocument, options: ElucimMotionLintOptions
       });
     }
     const frameChanges = new Map<number, string[]>();
+    issues.push(...lintTimelineMarkers(doc, timeline, minTransitionFrames));
     for (const [trackIndex, motionTrack] of timeline.tracks.entries()) {
       if (trackHasNoChange(motionTrack)) {
         issues.push({
@@ -359,6 +525,54 @@ export function lintMotion(doc: ElucimDocument, options: ElucimMotionLintOptions
   }
   const penalty = issues.reduce((sum, issue) => sum + (issue.severity === 'error' ? 30 : issue.severity === 'warning' ? 12 : 5), 0);
   return { valid: !issues.some(issue => issue.severity === 'error'), score: Math.max(0, 100 - penalty), issues };
+}
+
+function lintTimelineMarkers(doc: ElucimDocument, timeline: ElucimTimeline, minTransitionFrames: number): ElucimMotionLintIssue[] {
+  const entries = Object.entries(timeline.markers ?? {})
+    .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && Number.isFinite(entry[1]))
+    .sort((a, b) => a[1] - b[1]);
+  if (entries.length === 0) return [];
+  const issues: ElucimMotionLintIssue[] = [];
+  const path = `timelines.${timeline.id}.markers`;
+  entries.forEach(([name, frame], index) => {
+    const next = entries[index + 1];
+    if (next && next[1] === frame) {
+      issues.push({
+        code: 'collapsed-marker',
+        severity: 'error',
+        path: `${path}.${next[0]}`,
+        message: `Markers "${name}" and "${next[0]}" both sit on frame ${frame}.`,
+        suggestions: ['Give each cue its own frame, or merge the two markers.'],
+      });
+      return;
+    }
+    const nextFrame = next ? next[1] : timeline.duration;
+    const span = nextFrame - frame;
+    if (span > 0 && span < minTransitionFrames) {
+      issues.push({
+        code: 'squeezed-beat',
+        severity: 'warning',
+        path: `${path}.${name}`,
+        message: next
+          ? `Beat at marker "${name}" (frame ${frame}) gets ${span} frame(s) before the next cue "${next[0]}" (frame ${nextFrame}).`
+          : `Beat at marker "${name}" (frame ${frame}) gets ${span} frame(s) before the timeline ends.`,
+        suggestions: [`Leave at least ${minTransitionFrames} frames per beat, or move the cue.`],
+      });
+    }
+  });
+  timeline.effects?.forEach((effect, index) => {
+    if (effect.duration >= minTransitionFrames) return;
+    const owner = [...entries].reverse().find(([, frame]) => frame <= effect.from);
+    issues.push({
+      code: 'squeezed-beat',
+      severity: 'warning',
+      path: `timelines.${timeline.id}.effects[${index}]`,
+      message: `Reveal "${effect.id}"${owner ? ` in the beat at marker "${owner[0]}"` : ''} gets ${effect.duration} frame(s) per target.`,
+      targets: effect.targets.filter(target => doc.elements[target]),
+      suggestions: [`Use at least ${minTransitionFrames} frames per reveal, or move the cue.`],
+    });
+  });
+  return issues;
 }
 
 export function previewBeatDiffs(doc: ElucimDocument, options: ElucimBeatPreviewOptions): ElucimBeatPreviewDiff[] {

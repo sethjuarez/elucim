@@ -9,6 +9,7 @@ import {
   planMotionBeats,
   previewBeatDiffs,
   validateDocument,
+  ElucimMotionPlanError,
   type ElucimDocument,
 } from '../index';
 
@@ -57,6 +58,68 @@ describe('semantic motion helpers', () => {
     expect(beats.map(beat => beat.id)).toEqual(['intro', 'context', 'decision', 'takeaway']);
     expect(beats[0]).toMatchObject({ start: 0, duration: 90 });
     expect(beats[3].start + beats[3].duration).toBe(360);
+  });
+
+  describe('explicit beat starts', () => {
+    it('pins beats to cue frames and shares frames between pins', () => {
+      const beats = planMotionBeats({
+        totalFrames: 100,
+        beats: [
+          { id: 'intro' },
+          { id: 'agent', start: 20 },
+          { id: 'detail', weight: 3 },
+          { id: 'tool', start: 60, duration: 10 },
+          { id: 'outro' },
+        ],
+      });
+      expect(beats.map(beat => [beat.id, beat.start, beat.duration])).toEqual([
+        ['intro', 0, 20],
+        ['agent', 20, 11],
+        ['detail', 31, 29],
+        ['tool', 60, 10],
+        ['outro', 70, 30],
+      ]);
+    });
+
+    it('keeps a deliberate gap when a pinned beat has a short explicit duration', () => {
+      const beats = planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: 5, duration: 10 }, { id: 'b', start: 30 }] });
+      expect(beats).toMatchObject([{ id: 'a', start: 5, duration: 10 }, { id: 'b', start: 30, duration: 20 }]);
+    });
+
+    it('splits integer frames by largest remainder so segments always sum exactly', () => {
+      const beats = planMotionBeats({ totalFrames: 10, beats: [{ id: 'a', start: 0 }, { id: 'b' }, { id: 'c' }] });
+      expect(beats.map(beat => beat.duration)).toEqual([4, 3, 3]);
+      expect(beats.reduce((sum, beat) => sum + beat.duration, 0)).toBe(10);
+    });
+
+    it('leaves legacy packing unchanged when no start is given', () => {
+      expect(planMotionBeats({ totalFrames: 48, beatCount: 3 }).map(beat => [beat.start, beat.duration]))
+        .toEqual([[0, 16], [16, 16], [32, 16]]);
+    });
+
+    const code = (fn: () => unknown) => {
+      try { fn(); } catch (error) {
+        expect(error).toBeInstanceOf(ElucimMotionPlanError);
+        return (error as ElucimMotionPlanError).code;
+      }
+      throw new Error('expected planMotionBeats to throw');
+    };
+
+    it('rejects out-of-order, equal, negative, fractional and out-of-range starts', () => {
+      expect(code(() => planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: 20 }, { id: 'b', start: 10 }] }))).toBe('out-of-order');
+      expect(code(() => planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: 10 }, { id: 'b', start: 10 }] }))).toBe('overlap');
+      expect(code(() => planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: -1 }] }))).toBe('invalid-start');
+      expect(code(() => planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: 1.5 }] }))).toBe('invalid-start');
+      expect(code(() => planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: 50 }] }))).toBe('start-out-of-range');
+    });
+
+    it('rejects durations that overrun the next cue or the end, and duplicate ids', () => {
+      expect(code(() => planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: 0, duration: 12 }, { id: 'b', start: 10 }] }))).toBe('overlap');
+      expect(code(() => planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: 0 }, { id: 'x' }, { id: 'b', start: 1 }] }))).toBe('overlap');
+      expect(code(() => planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: 45, duration: 10 }] }))).toBe('no-room');
+      expect(code(() => planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: 0 }, { id: 'a', start: 10 }] }))).toBe('duplicate-id');
+      expect(code(() => planMotionBeats({ totalFrames: 50, beats: [{ id: 'a', start: 0, duration: 0 }] }))).toBe('invalid-duration');
+    });
   });
 
   it('compiles semantic reveal flow and connector path presets to document timelines', () => {

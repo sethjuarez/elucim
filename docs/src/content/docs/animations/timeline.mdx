@@ -59,3 +59,45 @@ const previewDoc = applyTimelineFrame(doc, 'intro', 30);
 ```
 
 For most React rendering, pass the full document to `<DslRenderer dsl={doc} />` and let the default state machine run.
+
+## Markers and cue-driven retiming
+
+Name moments in a timeline with `markers`, authored at the natural pace:
+
+```ts
+intro: {
+  id: 'intro',
+  duration: 120,
+  markers: { agent: 40, tool: 80 },
+  tracks: [/* ... */],
+}
+```
+
+When narration decides the timing (for example TTS word cues at 25 fps), move each marker onto its cue frame:
+
+```ts
+import { retimeTimeline, lintMotion } from '@elucim/dsl';
+
+const timed = retimeTimeline(doc, 'intro', { agent: 50, tool: 110 }, { duration: 150 });
+const lint = lintMotion(doc, { cues: { timelineId: 'intro', cues: { agent: 50, tool: 110 }, duration: 150 } });
+```
+
+`retimeTimeline` is pure. It maps keyframes, camera keyframes, reveal effects, and markers without cues piecewise-linearly between frame 0, each cued marker, and the end. A keyframe segment that spans a cued marker is split there with the state the scene had at the marker, so that state lands exactly on the cue frame. Eased segments keep their easing on both halves. A staggered reveal becomes one reveal per target (`<id>-1`, `<id>-2`, ...) when it spans a cue or rounding leaves the targets unevenly spaced, so each target starts on its mapped frame. Frames are rounded to integers. It throws `ElucimRetimeError` for unknown markers, cues that are out of order or out of range, and keyframes, markers, or reveal starts that would collide. State machines reference timelines by id, so they follow automatically. `duration` defaults to keeping the tail after the last marker. Set `scene.fps` to the cue fps so cue frames and document frames are the same numbers. The CLI version is `elucim retime --map agent=50,tool=110` (or `--map-file cues.json --cue-fps 25`).
+
+`lintMotion` with `cues` reports these codes:
+- `squeezed-beat` when a marker gets fewer than `minTransitionFrames` before the next cue.
+- `collapsed-marker` when markers or keyframes would land on the same frame.
+- `invalid-cue` for unknown markers or out-of-order cues.
+
+## Pinning beats to frames
+
+`planMotionBeats` packs beats end to end by default. Give a beat a `start` to pin it to an exact frame; beats without one fill the gaps by weight or duration:
+
+```ts
+const beats = planMotionBeats({
+  totalFrames: 300,
+  beats: [{ id: 'intro' }, { id: 'agent', start: 120 }, { id: 'tool', start: 210, duration: 60 }],
+});
+```
+
+Overlapping, out-of-order, or out-of-range starts throw `ElucimMotionPlanError` instead of being clamped.

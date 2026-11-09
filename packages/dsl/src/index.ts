@@ -24,6 +24,9 @@ export type {
   ElucimRevealEffect,
   ElucimRevealStrategy,
   ElucimLayout,
+  ElucimAnchor,
+  ElucimAnchorPoint,
+  ElucimAnchorRef,
   ElucimMetadata,
   ElucimRepairHint,
   ElucimScene,
@@ -80,6 +83,24 @@ export {
   resolveTimelineReveals,
   evaluateTimelineCameraFrames,
 } from './documentModel/timeline';
+export {
+  createRetimeMap,
+  retimeTimeline,
+  ElucimRetimeError,
+  type ElucimCueMap,
+  type ElucimRetimeAnchor,
+  type ElucimRetimeErrorCode,
+  type ElucimRetimeMap,
+  type ElucimRetimeOptions,
+} from './documentModel/retime';
+export {
+  anchorPoint,
+  bindAnchors,
+  ElucimAnchorError,
+  type ElucimAnchorBindings,
+  type ElucimAnchorBox,
+  type ElucimAnchorErrorCode,
+} from './documentModel/anchors';
 export {
   getInitialStateSnapshot,
   startStateMachineRun,
@@ -218,6 +239,8 @@ export {
   lintMotion,
   planMotionBeats,
   previewBeatDiffs,
+  ElucimMotionPlanError,
+  type ElucimMotionPlanErrorCode,
   type ElucimAutoStaggerMotionSpec,
   type ElucimBeatPreviewDiff,
   type ElucimBeatPreviewOptions,
@@ -254,6 +277,11 @@ export {
 export { DslRenderer, type DslRendererProps, type DslRendererRef } from './renderer/DslRenderer';
 export { renderToSvgString, type RenderToSvgStringOptions } from './renderer/renderToSvgString';
 export { renderToPng, stripCssFunctions, type RenderToPngOptions } from './renderer/renderToPng';
+export {
+  renderToStandaloneSvg,
+  ElucimStandaloneSvgError,
+  type RenderToStandaloneSvgOptions,
+} from './renderer/renderToStandaloneSvg';
 
 // Easing resolver
 export { resolveEasing } from './renderer/resolveEasing';
