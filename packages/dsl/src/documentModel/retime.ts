@@ -1,5 +1,6 @@
 import type { ElucimDocument, ElucimRevealEffect, ElucimTimeline } from './types';
-import { resolveRevealTargets } from './timeline';
+import type { EasingSpec } from '../schema/types';
+import { evaluateCameraTrack, evaluateTrack, resolveRevealTargets } from './timeline';
 
 export type ElucimRetimeErrorCode =
   | 'unknown-timeline'
@@ -145,7 +146,11 @@ export function createRetimeMap(
  * Returns a new document whose timeline is retimed so each cued marker lands
  * on its target frame. Keyframes (tracks and camera), reveal effects and the
  * other markers are mapped piecewise-linearly between consecutive anchors and
- * rounded to integer frames (half up), so authored easing and ordering survive.
+ * rounded to integer frames (half up), so authored ordering survives. A
+ * segment that spans a cue is split there with the evaluated state, so the
+ * authored moment lands exactly on the cue; eased segments keep their easing
+ * on both halves. A staggered reveal that spans a cue becomes one reveal per
+ * target (`<id>-1`, `<id>-2`, ...) so every target starts on its mapped frame.
  *
  * Throws {@link ElucimRetimeError} for unknown markers, non-increasing cue
  * frames, or when compression would merge two keyframes of one track (or a
@@ -163,22 +168,30 @@ export function retimeTimeline(
   const toFrame = (frame: number) => Math.round(retime.map(frame));
   const timeline: ElucimTimeline = JSON.parse(JSON.stringify(source)) as ElucimTimeline;
   timeline.duration = retime.targetDuration;
+  // The time map bends at every anchor, so split segments there: the authored
+  // state at a marker then lands exactly on its cue frame.
+  const splitAt = retime.anchors.map(anchor => anchor.source);
 
   timeline.tracks.forEach((track, trackIndex) => {
-    track.keyframes = track.keyframes.map(keyframe => ({ ...keyframe, frame: toFrame(keyframe.frame) }));
+    const sourceTrack = source.tracks[trackIndex];
+    const split = splitKeyframes(track.keyframes, splitAt, frame => ({ value: clone(evaluateTrack(sourceTrack, frame)) }));
+    track.keyframes = split.map(keyframe => ({ ...keyframe, frame: toFrame(keyframe.frame) }));
     assertIncreasing(
       track.keyframes.map(keyframe => keyframe.frame),
       `timelines.${timelineId}.tracks[${trackIndex}]`,
       `Track on "${track.target}" (${track.property})`,
     );
   });
-  if (timeline.camera) {
-    timeline.camera.keyframes = timeline.camera.keyframes.map(keyframe => ({ ...keyframe, frame: toFrame(keyframe.frame) }));
+  if (timeline.camera && source.camera) {
+    const sourceCamera = source.camera;
+    const split = splitKeyframes(timeline.camera.keyframes, splitAt, frame => ({ viewport: evaluateCameraTrack(sourceCamera, frame).viewport }));
+    timeline.camera.keyframes = split.map(keyframe => ({ ...keyframe, frame: toFrame(keyframe.frame) }));
     assertIncreasing(timeline.camera.keyframes.map(keyframe => keyframe.frame), `timelines.${timelineId}.camera`, 'Camera track');
   }
   if (timeline.effects) {
-    timeline.effects = timeline.effects.map((effect, index) =>
-      retimeEffect(doc, effect, toFrame, `timelines.${timelineId}.effects[${index}]`));
+    const usedIds = new Set(timeline.effects.map(effect => effect.id));
+    timeline.effects = timeline.effects.flatMap((effect, index) =>
+      retimeEffect(doc, effect, retime, toFrame, usedIds, `timelines.${timelineId}.effects[${index}]`));
   }
   if (timeline.markers) {
     const markers: Record<string, number> = {};
@@ -193,34 +206,77 @@ export function retimeTimeline(
   return { ...doc, timelines: { ...doc.timelines, [timelineId]: timeline } };
 }
 
+/**
+ * Inserts a keyframe at each split frame that falls strictly inside a segment,
+ * holding the evaluated state there. Both halves keep the segment's easing, so
+ * linear motion is exact and eased motion stays eased into and out of the cue.
+ */
+function splitKeyframes<K extends { frame: number; easing?: EasingSpec }>(
+  keyframes: K[],
+  splitAt: number[],
+  evaluate: (frame: number) => Omit<K, 'frame' | 'easing'>,
+): K[] {
+  const sorted = [...keyframes].sort((a, b) => a.frame - b.frame);
+  const out: K[] = [];
+  sorted.forEach((keyframe, index) => {
+    const previous = sorted[index - 1];
+    if (previous) {
+      const easing = keyframe.easing ?? previous.easing;
+      for (const frame of splitAt) {
+        if (frame > previous.frame && frame < keyframe.frame) {
+          out.push({ ...evaluate(frame), frame, ...(easing === undefined ? {} : { easing }) } as K);
+        }
+      }
+    }
+    out.push(keyframe);
+  });
+  return out;
+}
+
+function clone<T>(value: T): T {
+  return value === undefined ? value : JSON.parse(JSON.stringify(value)) as T;
+}
+
 function retimeEffect(
   doc: ElucimDocument,
   effect: ElucimRevealEffect,
+  retime: ElucimRetimeMap,
   toFrame: (frame: number) => number,
+  usedIds: Set<string>,
   path: string,
-): ElucimRevealEffect {
-  const leaves = Math.max(1, resolveRevealTargets(doc, effect).length);
+): ElucimRevealEffect[] {
+  const leaves = resolveRevealTargets(doc, effect);
+  const count = Math.max(1, leaves.length);
   const stagger = effect.staggerInFrames ?? 0;
-  const span = effect.duration + stagger * (leaves - 1);
-  const from = toFrame(effect.from);
-  const end = toFrame(effect.from + span);
-  const newSpan = end - from;
-  if (newSpan < 1) {
-    throw new ElucimRetimeError('collapsed-effect', `Reveal "${effect.id}" would collapse to ${newSpan} frame(s) after retiming.`, path);
-  }
-  const next: ElucimRevealEffect = { ...effect, from };
-  if (leaves > 1 && stagger > 0) {
-    let newStagger = Math.floor((stagger * newSpan) / span);
-    newStagger = Math.min(newStagger, Math.floor((newSpan - 1) / (leaves - 1)));
-    next.staggerInFrames = newStagger;
-    next.duration = newSpan - newStagger * (leaves - 1);
-  } else {
-    next.duration = newSpan - stagger * (leaves - 1);
-    if (next.duration < 1) {
-      throw new ElucimRetimeError('collapsed-effect', `Reveal "${effect.id}" would collapse after retiming.`, path);
+  const sourceEnd = effect.from + effect.duration + stagger * (count - 1);
+  const crossesAnchor = retime.anchors.some(anchor => anchor.source > effect.from && anchor.source < sourceEnd);
+  const starts = Array.from({ length: count }, (_, i) => toFrame(effect.from + stagger * i));
+  const ends = Array.from({ length: count }, (_, i) => toFrame(effect.from + stagger * i + effect.duration));
+  for (let i = 0; i < count; i += 1) {
+    if (ends[i] - starts[i] < 1) {
+      throw new ElucimRetimeError('collapsed-effect', `Reveal "${effect.id}" would collapse to ${ends[i] - starts[i]} frame(s) after retiming.`, path);
+    }
+    if (i > 0 && stagger > 0 && starts[i] <= starts[i - 1]) {
+      throw new ElucimRetimeError('collapsed-effect', `Reveal "${effect.id}" stagger collapses: targets ${i - 1} and ${i} would both start on frame ${starts[i]}.`, path);
     }
   }
-  return next;
+
+  if (!crossesAnchor || count === 1 || stagger === 0) {
+    // One linear piece (or no stagger to preserve): keep a single uniform reveal.
+    const from = starts[0];
+    const newStagger = count > 1 && stagger > 0 ? Math.max(1, Math.round((starts[count - 1] - from) / (count - 1))) : stagger;
+    const duration = Math.max(1, ends[count - 1] - from - newStagger * (count - 1));
+    return [{ ...effect, from, duration, ...(effect.staggerInFrames === undefined ? {} : { staggerInFrames: newStagger }) }];
+  }
+
+  // The stagger spans a cue, so different targets get different stretch: give each its own reveal.
+  return leaves.map((leaf, i) => {
+    let id = `${effect.id}-${i + 1}`;
+    for (let n = 2; usedIds.has(id); n += 1) id = `${effect.id}-${i + 1}-${n}`;
+    usedIds.add(id);
+    const { staggerInFrames: _stagger, ...rest } = effect;
+    return { ...rest, id, targets: [leaf], from: starts[i], duration: ends[i] - starts[i] };
+  });
 }
 
 function assertIncreasing(frames: number[], path: string, label: string, names?: string[]): void {

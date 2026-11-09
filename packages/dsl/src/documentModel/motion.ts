@@ -122,7 +122,8 @@ export type ElucimMotionLintCode =
   | 'static-timeline'
   | 'missing-reduced-motion'
   | 'squeezed-beat'
-  | 'collapsed-marker';
+  | 'collapsed-marker'
+  | 'invalid-cue';
 
 export interface ElucimMotionLintIssue {
   code: ElucimMotionLintCode;
@@ -141,7 +142,9 @@ export interface ElucimMotionLintOptions {
   /**
    * Lint against external timing: retime `timelineId` to these cue frames
    * first (see `retimeTimeline`), then lint the result. Cue maps that cannot be
-   * applied are reported as `collapsed-marker` errors instead of throwing.
+   * applied are reported as errors instead of throwing: `collapsed-marker`
+   * when compression merges keyframes, markers, or reveals, and `invalid-cue`
+   * for unknown timelines/markers, bad frames, or out-of-order cues.
    */
   cues?: { timelineId: string; cues: ElucimCueMap; duration?: number };
 }
@@ -405,12 +408,15 @@ export function lintMotion(doc: ElucimDocument, options: ElucimMotionLintOptions
     } catch (error) {
       if (!(error instanceof ElucimRetimeError)) throw error;
       const report = lintMotion(doc, rest);
+      const collapsed = error.code === 'collapsed-keyframes' || error.code === 'collapsed-effect';
       const issues: ElucimMotionLintIssue[] = [{
-        code: 'collapsed-marker',
+        code: collapsed ? 'collapsed-marker' : 'invalid-cue',
         severity: 'error',
-        path: error.path ? `timelines.${timelineId}.${error.path}` : `timelines.${timelineId}`,
+        path: !error.path ? `timelines.${timelineId}` : error.path.startsWith('timelines.') ? error.path : `timelines.${timelineId}.${error.path}`,
         message: `Cue map cannot be applied to "${timelineId}" (${error.code}): ${error.message}`,
-        suggestions: ['Give the squeezed segment more frames, move the cue, or drop a keyframe/marker.'],
+        suggestions: collapsed
+          ? ['Give the squeezed segment more frames, move the cue, or drop a keyframe/marker.']
+          : ['Check the timeline id, marker names, and that cue frames are non-negative integers in marker order.'],
       }, ...report.issues];
       return { valid: false, score: Math.max(0, report.score - 30), issues };
     }

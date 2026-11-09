@@ -88,9 +88,18 @@ describe('lintMotion against external timing', () => {
 
   it('reports cue maps that collapse markers or keyframes as errors', () => {
     const doc = makeDoc();
-    const report = lintMotion(doc, { cues: { timelineId: 'main', cues: { agent: 60, tool: 60 } } });
+    doc.timelines!.main.tracks.push({ target: 'label', property: 'opacity', keyframes: [{ frame: 45, value: 0 }, { frame: 50, value: 1 }] });
+    const report = lintMotion(doc, { cues: { timelineId: 'main', cues: { agent: 40, tool: 41 } } });
     expect(report.valid).toBe(false);
-    expect(report.issues[0]).toMatchObject({ code: 'collapsed-marker', severity: 'error', path: 'timelines.main.cues.tool' });
+    expect(report.issues[0]).toMatchObject({ code: 'collapsed-marker', severity: 'error', path: 'timelines.main.tracks[2]' });
+  });
+
+  it('reports unusable cue maps as invalid-cue errors', () => {
+    const doc = makeDoc();
+    expect(lintMotion(doc, { cues: { timelineId: 'main', cues: { agent: 60, tool: 60 } } }).issues[0])
+      .toMatchObject({ code: 'invalid-cue', severity: 'error', path: 'timelines.main.cues.tool' });
+    expect(lintMotion(doc, { cues: { timelineId: 'main', cues: { agnet: 60 } } }).issues[0])
+      .toMatchObject({ code: 'invalid-cue', message: expect.stringContaining('no marker "agnet"') });
   });
 
   it('flags markers that share a frame in an authored document', () => {
@@ -112,9 +121,9 @@ describe('retimeTimeline', () => {
     expect(timeline.markers).toEqual({ intro: 13, agent: 50, tool: 110 });
     expect(timeline.tracks[0].keyframes.map(keyframe => keyframe.frame)).toEqual([0, 50, 110, 140]);
     expect(timeline.tracks[0].keyframes[1].easing).toBe('easeOutCubic');
-    // 20 -> 25 (0..40 scaled by 50/40), 55 -> 80 (40..70 scaled by 60/30).
-    expect(timeline.tracks[1].keyframes.map(keyframe => keyframe.frame)).toEqual([25, 80]);
-    expect(timeline.camera!.keyframes.map(keyframe => keyframe.frame)).toEqual([0, 110]);
+    // 20 -> 25 (0..40 scaled by 50/40), 55 -> 80 (40..70 scaled by 60/30); split at the agent marker (40 -> 50).
+    expect(timeline.tracks[1].keyframes.map(keyframe => keyframe.frame)).toEqual([25, 50, 80]);
+    expect(timeline.camera!.keyframes.map(keyframe => keyframe.frame)).toEqual([0, 50, 110]);
     // Reveal 40..64 (3 leaves, stagger 6) -> 50..98: stagger scales by 2.
     expect(timeline.effects![0]).toMatchObject({ from: 50, staggerInFrames: 12, duration: 24 });
     expect(validateDocument(retimed).valid).toBe(true);
@@ -126,6 +135,47 @@ describe('retimeTimeline', () => {
     const before = applyTimelineFrame(doc, 'main', 20).elements.box.props.opacity as number;
     const after = applyTimelineFrame(retimed, 'main', 40).elements.box.props.opacity as number;
     expect(after).toBeCloseTo(before, 10);
+  });
+
+  it('lands the authored state at a marker exactly on its cue when a segment spans it', () => {
+    const doc = makeDoc();
+    doc.timelines!.main.markers = { mid: 50 };
+    doc.timelines!.main.tracks = [{ target: 'box', property: 'x', keyframes: [{ frame: 0, value: 0 }, { frame: 100, value: 100 }] }];
+    doc.timelines!.main.effects = [];
+    doc.timelines!.main.camera = {
+      keyframes: [
+        { frame: 0, viewport: { x: 0, y: 0, width: 400, height: 200 } },
+        { frame: 100, viewport: { x: 100, y: 0, width: 400, height: 200 } },
+      ],
+    };
+    const retimed = retimeTimeline(doc, 'main', { mid: 80 });
+    expect(applyTimelineFrame(retimed, 'main', 80).elements.box.props.x).toBe(50);
+    expect(retimed.timelines!.main.camera!.keyframes[1]).toMatchObject({ frame: 80, viewport: { x: 50 } });
+    // Eased segments keep their easing on both halves of the split.
+    doc.timelines!.main.tracks[0].keyframes[1].easing = 'easeInOutCubic';
+    const eased = retimeTimeline(doc, 'main', { mid: 80 }).timelines!.main.tracks[0].keyframes;
+    expect(eased.map(keyframe => [keyframe.frame, keyframe.easing])).toEqual([[0, undefined], [80, 'easeInOutCubic'], [130, 'easeInOutCubic']]);
+    expect(eased[1].value).toBe(50);
+  });
+
+  it('splits a staggered reveal that spans a cue so each target starts on its mapped frame', () => {
+    const doc = makeDoc();
+    // Leaves start at 30, 40, 50; marker "agent" (40) moves to 80, so the slope changes mid-stagger.
+    doc.timelines!.main.effects = [{ id: 'type-list', kind: 'reveal', targets: ['group'], from: 30, duration: 10, staggerInFrames: 10 }];
+    const retimed = retimeTimeline(doc, 'main', { agent: 80, tool: 110 });
+    const effects = retimed.timelines!.main.effects!;
+    expect(effects.map(effect => [effect.id, effect.targets, effect.from, effect.duration, effect.staggerInFrames])).toEqual([
+      ['type-list-1', ['a'], 60, 20, undefined],
+      ['type-list-2', ['b'], 80, 10, undefined],
+      ['type-list-3', ['c'], 90, 10, undefined],
+    ]);
+    expect(validateDocument(retimed).valid).toBe(true);
+  });
+
+  it('rejects a reveal whose stagger would collapse', () => {
+    const doc = makeDoc();
+    doc.timelines!.main.effects = [{ id: 'type-list', kind: 'reveal', targets: ['group'], from: 42, duration: 4, staggerInFrames: 1 }];
+    expect(errorCode(() => retimeTimeline(doc, 'main', { agent: 40, tool: 45 }))).toBe('collapsed-effect');
   });
 
   it('does not mutate the input document', () => {

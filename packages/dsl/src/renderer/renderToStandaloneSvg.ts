@@ -79,7 +79,17 @@ export function renderToStandaloneSvg(
     const y = viewBox ? viewBox[2] : '0';
     svg = svg.replace(/>/, `><rect x="${x}" y="${y}" width="${sceneWidth}" height="${sceneHeight}" fill="${fill}"/>`);
   }
-  return stripCssFunctions(svg);
+  return stripCssFunctionsInMarkup(svg);
+}
+
+/** Resolves CSS functions only in attribute values and `<style>` blocks, leaving text content and hrefs untouched. */
+function stripCssFunctionsInMarkup(svg: string): string {
+  return svg
+    .replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/gi, (_m, open: string, css: string, close: string) => open + stripCssFunctions(css) + close)
+    .replace(/(<[^\s/>!?][^>]*>)/g, tag => tag.replace(
+      /(\s)([\w:.-]+)="([^"]*)"/g,
+      (m, space: string, name: string, value: string) => (/href$/i.test(name) ? m : `${space}${name}="${stripCssFunctions(value)}"`),
+    ));
 }
 
 function resolveOutputSize(sceneWidth: number, sceneHeight: number, width?: number, height?: number) {

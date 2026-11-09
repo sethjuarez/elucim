@@ -47,7 +47,7 @@ npx @elucim/cli retime scene.elc --timeline intro --map-file cues.json --cue-fps
 npx @elucim/cli export-frames retimed.elc --out-dir frames --fps 25 --count 150 --background transparent --json
 ```
 
-`retime` prints the anchors, the new duration, validation, and motion lint. Lint flags `squeezed-beat` when a marker gets fewer than `minTransitionFrames` before the next cue and `collapsed-marker` when cues collide. It exits 1 on unknown markers, non-monotonic cues, or collisions. `--duration` sets the new timeline length; by default the tail after the last marker is kept.
+`retime` prints the anchors, the new duration, validation, and motion lint. Segments that span a cue are split there, so the authored state lands exactly on the cue. Lint flags `squeezed-beat` when a marker gets fewer than `minTransitionFrames` before the next cue and `collapsed-marker` when cues collide. It exits 1 on unknown markers, non-monotonic cues, or collisions. `--duration` sets the new timeline length; by default the tail after the last marker is kept.
 
 `export-frames --out-dir <dir>` writes `frame-000000.png` and onward (`pattern` in the JSON is ffmpeg-ready, for example `ffmpeg -framerate 25 -start_number 0 -i frames/frame-%06d.png`). Flags:
 
@@ -88,7 +88,7 @@ At export, pass measured boxes (for example from a take log) with `--anchors box
 { "source": { "width": 1280, "height": 720 }, "anchors": { "submitBtn": { "x": 612, "y": 418, "w": 96, "h": 32 } } }
 ```
 
-Anchored elements keep their authored offset from the anchor point. `endpoint` pins just one end of a line or arrow. Groups move their children. `source` scales boxes from video or viewport pixels into scene units; omit it when the scene size equals the video size.
+Anchored elements keep their authored offset from the anchor point. Their absolute-position animation tracks (`x`, point `from`/`to`) move with them. `endpoint` pins just one end of a line or arrow. Groups move their children, except children with their own anchor. `source` scales boxes from video or viewport pixels into scene units; omit it when the scene size equals the video size.
 
 ### Programmatic API
 

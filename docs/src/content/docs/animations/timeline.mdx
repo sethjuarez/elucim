@@ -82,9 +82,12 @@ const timed = retimeTimeline(doc, 'intro', { agent: 50, tool: 110 }, { duration:
 const lint = lintMotion(doc, { cues: { timelineId: 'intro', cues: { agent: 50, tool: 110 }, duration: 150 } });
 ```
 
-`retimeTimeline` is pure. It maps keyframes, camera keyframes, reveal effects, and markers without cues piecewise-linearly between frame 0, each cued marker, and the end. Each segment stretches or squeezes as a unit, so easing and shape survive. Frames are rounded to integers. It throws `ElucimRetimeError` for unknown markers, cues that are out of order or out of range, and keyframes that would collide. State machines reference timelines by id, so they follow automatically. `duration` defaults to keeping the tail after the last marker. Set `scene.fps` to the cue fps so cue frames and document frames are the same numbers. The CLI version is `elucim retime --map agent=50,tool=110` (or `--map-file cues.json --cue-fps 25`).
+`retimeTimeline` is pure. It maps keyframes, camera keyframes, reveal effects, and markers without cues piecewise-linearly between frame 0, each cued marker, and the end. A keyframe segment that spans a cued marker is split there with the state the scene had at the marker, so that state lands exactly on the cue frame. Eased segments keep their easing on both halves. A staggered reveal that spans a cue becomes one reveal per target (`<id>-1`, `<id>-2`, ...) so that each target starts on its mapped frame. Frames are rounded to integers. It throws `ElucimRetimeError` for unknown markers, cues that are out of order or out of range, and keyframes, markers, or reveal starts that would collide. State machines reference timelines by id, so they follow automatically. `duration` defaults to keeping the tail after the last marker. Set `scene.fps` to the cue fps so cue frames and document frames are the same numbers. The CLI version is `elucim retime --map agent=50,tool=110` (or `--map-file cues.json --cue-fps 25`).
 
-`lintMotion` with `cues` reports `squeezed-beat` when a marker gets fewer than `minTransitionFrames` before the next cue, and `collapsed-marker` when two markers land on the same frame.
+`lintMotion` with `cues` reports these codes:
+- `squeezed-beat` when a marker gets fewer than `minTransitionFrames` before the next cue.
+- `collapsed-marker` when markers or keyframes would land on the same frame.
+- `invalid-cue` for unknown markers or out-of-order cues.
 
 ## Pinning beats to frames
 

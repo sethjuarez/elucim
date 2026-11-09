@@ -100,6 +100,44 @@ describe('anchors', () => {
     emptyGroup.elements.callout.children = [];
     expectCode(() => bindAnchors(emptyGroup, { anchors: { submitBtn: { x: 1, y: 1 } } }), 'unsupported-element');
   });
+
+  it('shifts absolute-position tracks on moved elements so timelines keep the binding', () => {
+    const doc = overlayDoc();
+    doc.elements.slider = { id: 'slider', type: 'rect', layout: { anchor: { id: 'submitBtn', point: 'top-left' } }, props: { type: 'rect', x: 10, y: 0, width: 5, height: 5 } };
+    doc.elements.pointer = { id: 'pointer', type: 'arrow', parentId: 'callout', props: { type: 'arrow', from: [140, 150], to: [140, 140] } };
+    doc.elements.callout.children = ['bubble', 'label', 'pointer'];
+    doc.scene.children = [...(doc.scene.children ?? []), 'slider'];
+    doc.timelines = {
+      main: {
+        id: 'main',
+        duration: 10,
+        tracks: [
+          { target: 'slider', property: 'x', keyframes: [{ frame: 0, value: 10 }, { frame: 10, value: 20 }] },
+          { target: 'pointer', property: 'to', keyframes: [{ frame: 0, value: [140, 150] }, { frame: 10, value: [140, 140] }] },
+          { target: 'slider', property: 'opacity', keyframes: [{ frame: 0, value: 0 }, { frame: 10, value: 1 }] },
+        ],
+      },
+    };
+    const bound = bindAnchors(doc, { anchors: { submitBtn: { x: 150, y: 100, w: 80, h: 40 } } });
+    const tracks = bound.timelines!.main.tracks;
+    expect(tracks[0].keyframes.map(keyframe => keyframe.value)).toEqual([60, 70]);
+    expect(tracks[1].keyframes.map(keyframe => keyframe.value)).toEqual([[190, 150], [190, 140]]);
+    expect(tracks[2]).toBe(doc.timelines.main.tracks[2]);
+    expect(doc.timelines.main.tracks[0].keyframes[1].value).toBe(20);
+  });
+
+  it('positions an anchored child by its own anchor, not its anchored parent', () => {
+    const doc = overlayDoc();
+    doc.anchors!.other = { x: 0, y: 0 };
+    doc.elements.bubble.layout = { anchor: { id: 'other' } };
+    // The arrow tip is pinned while its tail moves with the group.
+    doc.elements.tip = { id: 'tip', type: 'arrow', parentId: 'callout', layout: { anchor: { id: 'submitBtn', point: 'left', endpoint: 'end' } }, props: { type: 'arrow', x1: 140, y1: 200, x2: 100, y2: 120 } };
+    doc.elements.callout.children = ['bubble', 'label', 'tip'];
+    const bound = bindAnchors(doc, { anchors: { submitBtn: { x: 120, y: 100, w: 80, h: 40 }, other: { x: 5, y: 5 } } });
+    expect(bound.elements.bubble.props).toMatchObject({ cx: 145, cy: 175 });
+    expect(bound.elements.label.props).toMatchObject({ x: 160, y: 210 });
+    expect(bound.elements.tip.props).toMatchObject({ x1: 160, y1: 200, x2: 120, y2: 120 });
+  });
 });
 
 describe('renderToStandaloneSvg', () => {
@@ -124,6 +162,17 @@ describe('renderToStandaloneSvg', () => {
   it('omits the background for transparent output and accepts a custom color', () => {
     expect(renderToStandaloneSvg(doc, 0, { background: 'transparent' })).not.toContain('#123456');
     expect(renderToStandaloneSvg(doc, 0, { background: '#00ff00' })).toContain('fill="#00ff00"');
+  });
+
+  it('resolves CSS functions in attributes but leaves text content alone', () => {
+    const text: ElucimDocument = {
+      ...doc,
+      scene: { ...doc.scene, children: ['dot', 'note'] },
+      elements: { ...doc.elements, note: { id: 'note', type: 'text', props: { type: 'text', x: 10, y: 20, content: 'Use var(--brand) and light-dark(a, b)' } } },
+    };
+    const svg = renderToStandaloneSvg(text, 0);
+    expect(svg).toContain('Use var(--brand) and light-dark(a, b)');
+    expect(svg.replace('Use var(--brand) and light-dark(a, b)', '')).not.toMatch(/var\(|light-dark\(/);
   });
 
   it('rejects mismatched aspect ratios and non-integer sizes', () => {

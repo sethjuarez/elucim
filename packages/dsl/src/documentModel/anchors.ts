@@ -83,6 +83,17 @@ export function bindAnchors(doc: ElucimDocument, bindings: ElucimAnchorBindings)
   }
 
   const elements: Record<string, ElucimElement> = { ...doc.elements };
+  const shifts = new Map<string, [number, number]>();
+  const shift = (id: string, dx: number, dy: number): boolean => {
+    const shifted = shiftElement(elements[id], dx, dy);
+    if (!shifted) return false;
+    elements[id] = shifted;
+    const previous = shifts.get(id) ?? [0, 0];
+    shifts.set(id, [previous[0] + dx, previous[1] + dy]);
+    return true;
+  };
+  const pins: Array<{ id: string; end: [number, number]; endpoint: 'start' | 'end' }> = [];
+
   for (const [id, element] of Object.entries(doc.elements)) {
     const ref = element.layout?.anchor;
     const from = ref ? declared[ref.id] : undefined;
@@ -91,35 +102,66 @@ export function bindAnchors(doc: ElucimDocument, bindings: ElucimAnchorBindings)
     const start = anchorPoint(from, ref.point);
     const end = anchorPoint(to, ref.point);
     if (ref.endpoint) {
-      elements[id] = pinEndpoint(elements[id], end, ref.endpoint);
+      pins.push({ id, end, endpoint: ref.endpoint });
       continue;
     }
     const dx = end[0] - start[0];
     const dy = end[1] - start[1];
-    const shifted = shiftElement(elements[id], dx, dy);
-    if (shifted) {
-      elements[id] = shifted;
-      continue;
-    }
+    if (shift(id, dx, dy)) continue;
     // Groups and other containers have no own geometry: move their descendants.
     // (A base layout.translate would be replaced by any translate track.)
+    // Descendants with their own full anchor are positioned by it instead.
     const descendants = collectDescendants(doc, id);
     if (descendants.length === 0) {
       throw new ElucimAnchorError('unsupported-element', `elements.${id}.layout.anchor`, `Element "${id}" follows anchor "${ref.id}" but has no position props (x/y, cx/cy, x1/y1, from/to, points, layout.x/y) or children to move.`);
     }
-    for (const childId of descendants) {
-      elements[childId] = shiftElement(elements[childId], dx, dy) ?? elements[childId];
-    }
+    for (const childId of descendants) shift(childId, dx, dy);
   }
+  // Endpoints pin last so a pinned arrow inside a moved group keeps its other end with the group.
+  for (const { id, end, endpoint } of pins) elements[id] = pinEndpoint(elements[id], end, endpoint);
 
-  return { ...doc, anchors: bound, elements };
+  return { ...doc, anchors: bound, elements, ...shiftTimelines(doc, elements, shifts) };
+}
+
+/** Absolute-position tracks (`x`, point `from`/`to`) on moved elements must move too, or they override the binding. */
+function shiftTimelines(
+  doc: ElucimDocument,
+  elements: Record<string, ElucimElement>,
+  shifts: Map<string, [number, number]>,
+): Pick<ElucimDocument, 'timelines'> | Record<string, never> {
+  if (!doc.timelines || shifts.size === 0) return {};
+  const timelines: NonNullable<ElucimDocument['timelines']> = {};
+  for (const [timelineId, timeline] of Object.entries(doc.timelines)) {
+    timelines[timelineId] = {
+      ...timeline,
+      tracks: timeline.tracks.map(track => {
+        const delta = shifts.get(track.target);
+        const props = elements[track.target]?.props ?? {};
+        if (!delta) return track;
+        if (track.property === 'x' && isNumber(props.x)) {
+          return { ...track, keyframes: track.keyframes.map(k => (isNumber(k.value) ? { ...k, value: round(k.value + delta[0]) } : k)) };
+        }
+        if ((track.property === 'from' || track.property === 'to') && isPoint(props[track.property])) {
+          return {
+            ...track,
+            keyframes: track.keyframes.map(k => (isPoint(k.value) ? { ...k, value: [round(k.value[0] + delta[0]), round(k.value[1] + delta[1])] } : k)),
+          };
+        }
+        return track;
+      }),
+    };
+  }
+  return { timelines };
 }
 
 function collectDescendants(doc: ElucimDocument, id: string, seen = new Set<string>()): string[] {
   const out: string[] = [];
   for (const childId of doc.elements[id]?.children ?? []) {
-    if (seen.has(childId) || !doc.elements[childId]) continue;
+    const child = doc.elements[childId];
+    if (seen.has(childId) || !child) continue;
     seen.add(childId);
+    const ownAnchor = child.layout?.anchor;
+    if (ownAnchor && !ownAnchor.endpoint && doc.anchors?.[ownAnchor.id]) continue;
     out.push(childId, ...collectDescendants(doc, childId, seen));
   }
   return out;
