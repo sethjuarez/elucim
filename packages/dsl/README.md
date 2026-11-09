@@ -435,7 +435,7 @@ const placed = bindAnchors(timed, { anchors: { submitBtn: { x: 612, y: 418, w: 9
 const svg = renderToStandaloneSvg(placed, 42, { width: 1920, background: 'transparent' });
 ```
 
-`retimeTimeline` maps keyframes, camera keyframes, reveal effects, and markers without cues piecewise-linearly between frame 0, each cued marker, and the end. Segments that span a cue are split there, so the authored state lands exactly on the cue frame. Staggered reveals that span a cue become one reveal per target. It throws `ElucimRetimeError` for unknown markers, non-monotonic cues, and collisions. Anchored elements also move their absolute-position tracks (`x`, point `from`/`to`), so animations keep the binding. For exact PNG frame sequences, use `export-frames` / `exportFrames` from `@elucim/cli`.
+`retimeTimeline` maps keyframes, camera keyframes, reveal effects, and markers without cues piecewise-linearly between frame 0, each cued marker, and the end. Segments that span a cue are split there, so the authored state lands exactly on the cue frame. Staggered reveals become one reveal per target when they span a cue or rounding leaves the targets unevenly spaced. It throws `ElucimRetimeError` for unknown markers, non-monotonic cues, and collisions. Anchored elements also move their absolute-position tracks (`x`, point `from`/`to`), so animations keep the binding. For exact PNG frame sequences, use `export-frames` / `exportFrames` from `@elucim/cli`.
 
 Agent guidance:
 

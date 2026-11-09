@@ -138,6 +138,15 @@ describe('anchors', () => {
     expect(bound.elements.label.props).toMatchObject({ x: 160, y: 210 });
     expect(bound.elements.tip.props).toMatchObject({ x1: 160, y1: 200, x2: 120, y2: 120 });
   });
+
+  it('keeps an endpoint on its unbound anchor when only its group moves', () => {
+    const doc = overlayDoc();
+    doc.anchors!.other = { x: 50, y: 50 };
+    doc.elements.tip = { id: 'tip', type: 'arrow', parentId: 'callout', layout: { anchor: { id: 'other', endpoint: 'end' } }, props: { type: 'arrow', x1: 140, y1: 200, x2: 50, y2: 50 } };
+    doc.elements.callout.children = ['bubble', 'label', 'tip'];
+    const bound = bindAnchors(doc, { anchors: { submitBtn: { x: 120, y: 100, w: 80, h: 40 } } });
+    expect(bound.elements.tip.props).toMatchObject({ x1: 160, y1: 200, x2: 50, y2: 50 });
+  });
 });
 
 describe('renderToStandaloneSvg', () => {

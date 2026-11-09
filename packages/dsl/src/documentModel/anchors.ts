@@ -98,13 +98,15 @@ export function bindAnchors(doc: ElucimDocument, bindings: ElucimAnchorBindings)
     const ref = element.layout?.anchor;
     const from = ref ? declared[ref.id] : undefined;
     const to = ref ? bound[ref.id] : undefined;
-    if (!ref || !from || !to || from === to) continue;
-    const start = anchorPoint(from, ref.point);
+    if (!ref || !from || !to) continue;
     const end = anchorPoint(to, ref.point);
     if (ref.endpoint) {
+      // Always pin (even if unbound) so an ancestor's shift can't drag the endpoint off its anchor.
       pins.push({ id, end, endpoint: ref.endpoint });
       continue;
     }
+    if (from === to) continue;
+    const start = anchorPoint(from, ref.point);
     const dx = end[0] - start[0];
     const dy = end[1] - start[1];
     if (shift(id, dx, dy)) continue;

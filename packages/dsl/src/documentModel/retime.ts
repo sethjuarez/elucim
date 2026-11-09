@@ -149,8 +149,9 @@ export function createRetimeMap(
  * rounded to integer frames (half up), so authored ordering survives. A
  * segment that spans a cue is split there with the evaluated state, so the
  * authored moment lands exactly on the cue; eased segments keep their easing
- * on both halves. A staggered reveal that spans a cue becomes one reveal per
- * target (`<id>-1`, `<id>-2`, ...) so every target starts on its mapped frame.
+ * on both halves. A staggered reveal whose mapped targets are no longer evenly
+ * spaced (it spans a cue, or rounding differs) becomes one reveal per target
+ * (`<id>-1`, `<id>-2`, ...) so every target starts on its mapped frame.
  *
  * Throws {@link ElucimRetimeError} for unknown markers, non-increasing cue
  * frames, or when compression would merge two keyframes of one track (or a
@@ -191,7 +192,7 @@ export function retimeTimeline(
   if (timeline.effects) {
     const usedIds = new Set(timeline.effects.map(effect => effect.id));
     timeline.effects = timeline.effects.flatMap((effect, index) =>
-      retimeEffect(doc, effect, retime, toFrame, usedIds, `timelines.${timelineId}.effects[${index}]`));
+      retimeEffect(doc, effect, toFrame, usedIds, `timelines.${timelineId}.effects[${index}]`));
   }
   if (timeline.markers) {
     const markers: Record<string, number> = {};
@@ -240,7 +241,6 @@ function clone<T>(value: T): T {
 function retimeEffect(
   doc: ElucimDocument,
   effect: ElucimRevealEffect,
-  retime: ElucimRetimeMap,
   toFrame: (frame: number) => number,
   usedIds: Set<string>,
   path: string,
@@ -248,8 +248,6 @@ function retimeEffect(
   const leaves = resolveRevealTargets(doc, effect);
   const count = Math.max(1, leaves.length);
   const stagger = effect.staggerInFrames ?? 0;
-  const sourceEnd = effect.from + effect.duration + stagger * (count - 1);
-  const crossesAnchor = retime.anchors.some(anchor => anchor.source > effect.from && anchor.source < sourceEnd);
   const starts = Array.from({ length: count }, (_, i) => toFrame(effect.from + stagger * i));
   const ends = Array.from({ length: count }, (_, i) => toFrame(effect.from + stagger * i + effect.duration));
   for (let i = 0; i < count; i += 1) {
@@ -261,15 +259,15 @@ function retimeEffect(
     }
   }
 
-  if (!crossesAnchor || count === 1 || stagger === 0) {
-    // One linear piece (or no stagger to preserve): keep a single uniform reveal.
-    const from = starts[0];
-    const newStagger = count > 1 && stagger > 0 ? Math.max(1, Math.round((starts[count - 1] - from) / (count - 1))) : stagger;
-    const duration = Math.max(1, ends[count - 1] - from - newStagger * (count - 1));
-    return [{ ...effect, from, duration, ...(effect.staggerInFrames === undefined ? {} : { staggerInFrames: newStagger }) }];
+  const duration = ends[0] - starts[0];
+  const newStagger = count > 1 ? starts[1] - starts[0] : stagger;
+  const uniform = starts.every((start, i) => start - starts[0] === newStagger * i && ends[i] - start === duration);
+  if (uniform) {
+    // Mapped timings are still evenly staggered: keep a single reveal.
+    return [{ ...effect, from: starts[0], duration, ...(effect.staggerInFrames === undefined ? {} : { staggerInFrames: newStagger }) }];
   }
 
-  // The stagger spans a cue, so different targets get different stretch: give each its own reveal.
+  // Rounding or a spanned cue made per-target timings uneven: give each target its own reveal.
   return leaves.map((leaf, i) => {
     let id = `${effect.id}-${i + 1}`;
     for (let n = 2; usedIds.has(id); n += 1) id = `${effect.id}-${i + 1}-${n}`;

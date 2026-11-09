@@ -81,7 +81,7 @@ describe('lintMotion against external timing', () => {
     const squeezed = report.issues.filter(issue => issue.code === 'squeezed-beat');
     expect(squeezed.map(issue => issue.message)).toEqual(expect.arrayContaining([
       'Beat at marker "agent" (frame 50) gets 4 frame(s) before the next cue "tool" (frame 54).',
-      expect.stringContaining('Reveal "type-list" in the beat at marker "agent" gets'),
+      expect.stringContaining('Reveal "type-list-1" in the beat at marker "agent" gets'),
     ]));
     expect(lintMotion(doc).issues.some(issue => issue.code === 'squeezed-beat')).toBe(false);
   });
@@ -170,6 +170,25 @@ describe('retimeTimeline', () => {
       ['type-list-3', ['c'], 90, 10, undefined],
     ]);
     expect(validateDocument(retimed).valid).toBe(true);
+  });
+
+  it('splits a staggered reveal when rounding makes mapped starts uneven, even within one segment', () => {
+    const doc = makeDoc();
+    // 0..40 stretches to 0..50 (x1.25): starts 1,2,3 -> 1,3,4 (half up) and ends 5,6,7 -> 6,8,9.
+    doc.timelines!.main.effects = [{ id: 'type-list', kind: 'reveal', targets: ['group'], from: 1, duration: 4, staggerInFrames: 1 }];
+    const effects = retimeTimeline(doc, 'main', { agent: 50, tool: 80 }).timelines!.main.effects!;
+    expect(effects.map(effect => [effect.id, effect.from, effect.duration])).toEqual([
+      ['type-list-1', 1, 5],
+      ['type-list-2', 3, 5],
+      ['type-list-3', 4, 5],
+    ]);
+  });
+
+  it('keeps a single reveal when mapped timings stay evenly staggered', () => {
+    const doc = makeDoc();
+    doc.timelines!.main.effects = [{ id: 'type-list', kind: 'reveal', targets: ['group'], from: 0, duration: 4, staggerInFrames: 4 }];
+    const effects = retimeTimeline(doc, 'main', { agent: 80, tool: 110 }).timelines!.main.effects!;
+    expect(effects).toEqual([{ id: 'type-list', kind: 'reveal', targets: ['group'], from: 0, duration: 8, staggerInFrames: 8 }]);
   });
 
   it('rejects a reveal whose stagger would collapse', () => {
