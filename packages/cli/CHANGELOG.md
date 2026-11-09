@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.25.0](https://github.com/sethjuarez/elucim/compare/cli-v0.24.0...cli-v0.25.0) (2026-11-09)
+
+
+### Features
+
+* cue-driven timing, retiming and transparent frame export ([#77](https://github.com/sethjuarez/elucim/issues/77)) ([7baefbc](https://github.com/sethjuarez/elucim/commit/7baefbc4b2413d776650f48743671dc399a72720))
+* unify canonical motion authoring ([b2c1ac7](https://github.com/sethjuarez/elucim/commit/b2c1ac7c0954674109d8d50bffa72aa0dd3c074f))
+* unify canonical motion authoring ([e90e0b8](https://github.com/sethjuarez/elucim/commit/e90e0b88c88fc8a6587c0f8826ab2d10f9d144db))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @elucim/dsl bumped to 0.25.0
+
 ## [0.24.0](https://github.com/sethjuarez/elucim/compare/cli-v0.23.0...cli-v0.24.0) (2026-06-28)
 
 
