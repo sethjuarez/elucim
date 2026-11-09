@@ -414,6 +414,29 @@ const poster = holdFinalFrame({ ...doc, timelines: { intro } }, { timelineId: 'i
 
 Supported semantic presets are `revealFlow`, `emphasizeDecision`, `tracePath`, `loopOnce`, `handoff`, `drainQueue`, and `compareBeforeAfter`. `createStateSnapshotMotion()` turns named visual states into timelines plus a state machine, while `holdFinalFrame()` creates static poster/final-state documents. `lintMotion()` checks blank first frames, too-fast transitions, simultaneous overload, hidden labels, flashing, excessive motion, and reduced-motion readiness. `previewBeatDiffs()` returns agent-readable beat summaries describing what appears, disappears, moves, or changes.
 
+### Cue-driven timing, anchors, and standalone frames
+
+Use these when timing or positions come from outside the document, such as narration cue frames or UI boxes measured in a screen recording:
+
+```ts
+import { bindAnchors, lintMotion, planMotionBeats, renderToStandaloneSvg, retimeTimeline } from '@elucim/dsl';
+
+// Pin beats to cue frames; unpinned beats fill the gaps. Throws ElucimMotionPlanError on overlap/out-of-order/out-of-range.
+const beats = planMotionBeats({ totalFrames: 300, beats: [{ id: 'intro' }, { id: 'agent', start: 120 }] });
+
+// Timelines may declare markers: { agent: 40, tool: 80 }. Move them onto cue frames (pure, integer frames).
+const timed = retimeTimeline(doc, 'intro', { agent: 50, tool: 110 }, { duration: 150 });
+const lint = lintMotion(doc, { cues: { timelineId: 'intro', cues: { agent: 50, tool: 110 } } }); // squeezed-beat, collapsed-marker
+
+// Document anchors: { submitBtn: { x, y, width, height } }; elements opt in with layout.anchor: { id, point?, endpoint? }.
+const placed = bindAnchors(timed, { anchors: { submitBtn: { x: 612, y: 418, w: 96, h: 32 } }, source: { width: 1280, height: 720 } });
+
+// Self-contained SVG for resvg or other rasterizers; 'transparent' keeps alpha.
+const svg = renderToStandaloneSvg(placed, 42, { width: 1920, background: 'transparent' });
+```
+
+`retimeTimeline` maps keyframes, camera keyframes, reveal effects, and markers without cues piecewise-linearly between frame 0, each cued marker, and the end, so authored easing survives. It throws `ElucimRetimeError` for unknown markers, non-monotonic cues, and collisions. For exact PNG frame sequences, use `export-frames` / `exportFrames` from `@elucim/cli`.
+
 Agent guidance:
 
 - Prefer semantic roles and intent (`role: 'title'`, `role: 'callout'`, `intent.importance: 'primary' | 'secondary' | 'supporting'`) so polish can preserve explanatory meaning.
