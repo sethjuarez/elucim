@@ -22,6 +22,43 @@ export interface ElucimDocument {
   stateMachines?: Record<string, ElucimStateMachine>;
   defaultStateMachine?: string;
   metadata?: ElucimMetadata;
+  /**
+   * Named placeholder boxes in scene coordinates (e.g. UI elements in a video
+   * take). Elements opt in with `layout.anchor`; `bindAnchors` moves them to
+   * real positions supplied at export time.
+   */
+  anchors?: Record<string, ElucimAnchor>;
+}
+
+export interface ElucimAnchor {
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  description?: string;
+}
+
+export type ElucimAnchorPoint =
+  | 'center'
+  | 'top'
+  | 'bottom'
+  | 'left'
+  | 'right'
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right';
+
+export interface ElucimAnchorRef {
+  /** Key in `document.anchors`. */
+  id: string;
+  /** Point of the anchor box this element follows. Defaults to `center`. */
+  point?: ElucimAnchorPoint;
+  /**
+   * For `line`/`arrow` elements (`x1,y1,x2,y2`): pin only this endpoint to the
+   * anchor point so the other end stays put. Without it the whole element moves.
+   */
+  endpoint?: 'start' | 'end';
 }
 
 export interface ElucimScene {
@@ -72,6 +109,8 @@ export interface ElucimLayout {
   role?: string;
   rank?: number;
   locked?: boolean;
+  /** Follow a named document anchor; see `bindAnchors`. */
+  anchor?: ElucimAnchorRef;
 }
 
 export interface ElucimElement {
