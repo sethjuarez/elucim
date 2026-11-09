@@ -3,6 +3,7 @@ import {
   applyTimelineFrame,
   createRetimeMap,
   ElucimRetimeError,
+  lintMotion,
   retimeTimeline,
   validateDocument,
   type ElucimDocument,
@@ -69,6 +70,34 @@ describe('timeline markers', () => {
       expect.stringContaining('markers.c: Marker frame cannot exceed'),
       expect.stringContaining('markers.d: Marker frame must be a non-negative integer'),
       expect.stringContaining('markers.e: Marker frame must be a non-negative integer'),
+    ]));
+  });
+});
+
+describe('lintMotion against external timing', () => {
+  it('flags beats squeezed below minTransitionFrames after retiming', () => {
+    const doc = makeDoc();
+    const report = lintMotion(doc, { cues: { timelineId: 'main', cues: { agent: 50, tool: 54 } } });
+    const squeezed = report.issues.filter(issue => issue.code === 'squeezed-beat');
+    expect(squeezed.map(issue => issue.message)).toEqual(expect.arrayContaining([
+      'Beat at marker "agent" (frame 50) gets 4 frame(s) before the next cue "tool" (frame 54).',
+      expect.stringContaining('Reveal "type-list" in the beat at marker "agent" gets'),
+    ]));
+    expect(lintMotion(doc).issues.some(issue => issue.code === 'squeezed-beat')).toBe(false);
+  });
+
+  it('reports cue maps that collapse markers or keyframes as errors', () => {
+    const doc = makeDoc();
+    const report = lintMotion(doc, { cues: { timelineId: 'main', cues: { agent: 60, tool: 60 } } });
+    expect(report.valid).toBe(false);
+    expect(report.issues[0]).toMatchObject({ code: 'collapsed-marker', severity: 'error', path: 'timelines.main.cues.tool' });
+  });
+
+  it('flags markers that share a frame in an authored document', () => {
+    const doc = makeDoc();
+    doc.timelines!.main.markers = { a: 10, b: 10 };
+    expect(lintMotion(doc).issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 'collapsed-marker', path: 'timelines.main.markers.b' }),
     ]));
   });
 });

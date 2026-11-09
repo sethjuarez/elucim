@@ -8,6 +8,7 @@ import type {
   ElucimTimelineTrack,
 } from './types';
 import { applyTimelineFrame } from './timeline';
+import { ElucimRetimeError, retimeTimeline, type ElucimCueMap } from './retime';
 
 export type ElucimSemanticMotionPreset =
   | 'revealFlow'
@@ -119,7 +120,9 @@ export type ElucimMotionLintCode =
   | 'flashing'
   | 'excessive-motion'
   | 'static-timeline'
-  | 'missing-reduced-motion';
+  | 'missing-reduced-motion'
+  | 'squeezed-beat'
+  | 'collapsed-marker';
 
 export interface ElucimMotionLintIssue {
   code: ElucimMotionLintCode;
@@ -135,6 +138,12 @@ export interface ElucimMotionLintOptions {
   maxSimultaneousChanges?: number;
   maxTranslateDistance?: number;
   requireReducedMotion?: boolean;
+  /**
+   * Lint against external timing: retime `timelineId` to these cue frames
+   * first (see `retimeTimeline`), then lint the result. Cue maps that cannot be
+   * applied are reported as `collapsed-marker` errors instead of throwing.
+   */
+  cues?: { timelineId: string; cues: ElucimCueMap; duration?: number };
 }
 
 export interface ElucimMotionLintReport {
@@ -388,6 +397,24 @@ export function createStateSnapshotMotion(spec: ElucimStateSnapshotMotionSpec): 
 }
 
 export function lintMotion(doc: ElucimDocument, options: ElucimMotionLintOptions = {}): ElucimMotionLintReport {
+  if (options.cues) {
+    const { timelineId, cues, duration } = options.cues;
+    const rest: ElucimMotionLintOptions = { ...options, cues: undefined };
+    try {
+      return lintMotion(retimeTimeline(doc, timelineId, cues, { duration }), rest);
+    } catch (error) {
+      if (!(error instanceof ElucimRetimeError)) throw error;
+      const report = lintMotion(doc, rest);
+      const issues: ElucimMotionLintIssue[] = [{
+        code: 'collapsed-marker',
+        severity: 'error',
+        path: error.path ? `timelines.${timelineId}.${error.path}` : `timelines.${timelineId}`,
+        message: `Cue map cannot be applied to "${timelineId}" (${error.code}): ${error.message}`,
+        suggestions: ['Give the squeezed segment more frames, move the cue, or drop a keyframe/marker.'],
+      }, ...report.issues];
+      return { valid: false, score: Math.max(0, report.score - 30), issues };
+    }
+  }
   const issues: ElucimMotionLintIssue[] = [];
   const minTransitionFrames = options.minTransitionFrames ?? 6;
   const maxSimultaneousChanges = options.maxSimultaneousChanges ?? 6;
@@ -406,6 +433,7 @@ export function lintMotion(doc: ElucimDocument, options: ElucimMotionLintOptions
       });
     }
     const frameChanges = new Map<number, string[]>();
+    issues.push(...lintTimelineMarkers(doc, timeline, minTransitionFrames));
     for (const [trackIndex, motionTrack] of timeline.tracks.entries()) {
       if (trackHasNoChange(motionTrack)) {
         issues.push({
@@ -491,6 +519,54 @@ export function lintMotion(doc: ElucimDocument, options: ElucimMotionLintOptions
   }
   const penalty = issues.reduce((sum, issue) => sum + (issue.severity === 'error' ? 30 : issue.severity === 'warning' ? 12 : 5), 0);
   return { valid: !issues.some(issue => issue.severity === 'error'), score: Math.max(0, 100 - penalty), issues };
+}
+
+function lintTimelineMarkers(doc: ElucimDocument, timeline: ElucimTimeline, minTransitionFrames: number): ElucimMotionLintIssue[] {
+  const entries = Object.entries(timeline.markers ?? {})
+    .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && Number.isFinite(entry[1]))
+    .sort((a, b) => a[1] - b[1]);
+  if (entries.length === 0) return [];
+  const issues: ElucimMotionLintIssue[] = [];
+  const path = `timelines.${timeline.id}.markers`;
+  entries.forEach(([name, frame], index) => {
+    const next = entries[index + 1];
+    if (next && next[1] === frame) {
+      issues.push({
+        code: 'collapsed-marker',
+        severity: 'error',
+        path: `${path}.${next[0]}`,
+        message: `Markers "${name}" and "${next[0]}" both sit on frame ${frame}.`,
+        suggestions: ['Give each cue its own frame, or merge the two markers.'],
+      });
+      return;
+    }
+    const nextFrame = next ? next[1] : timeline.duration;
+    const span = nextFrame - frame;
+    if (span > 0 && span < minTransitionFrames) {
+      issues.push({
+        code: 'squeezed-beat',
+        severity: 'warning',
+        path: `${path}.${name}`,
+        message: next
+          ? `Beat at marker "${name}" (frame ${frame}) gets ${span} frame(s) before the next cue "${next[0]}" (frame ${nextFrame}).`
+          : `Beat at marker "${name}" (frame ${frame}) gets ${span} frame(s) before the timeline ends.`,
+        suggestions: [`Leave at least ${minTransitionFrames} frames per beat, or move the cue.`],
+      });
+    }
+  });
+  timeline.effects?.forEach((effect, index) => {
+    if (effect.duration >= minTransitionFrames) return;
+    const owner = [...entries].reverse().find(([, frame]) => frame <= effect.from);
+    issues.push({
+      code: 'squeezed-beat',
+      severity: 'warning',
+      path: `timelines.${timeline.id}.effects[${index}]`,
+      message: `Reveal "${effect.id}"${owner ? ` in the beat at marker "${owner[0]}"` : ''} gets ${effect.duration} frame(s) per target.`,
+      targets: effect.targets.filter(target => doc.elements[target]),
+      suggestions: [`Use at least ${minTransitionFrames} frames per reveal, or move the cue.`],
+    });
+  });
+  return issues;
 }
 
 export function previewBeatDiffs(doc: ElucimDocument, options: ElucimBeatPreviewOptions): ElucimBeatPreviewDiff[] {
