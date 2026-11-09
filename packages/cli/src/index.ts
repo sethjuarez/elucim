@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { dirname, extname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
@@ -12,6 +12,7 @@ import {
   createCardGridPreset,
   createConnectorPreset,
   createReducedMotionDocument,
+  createRetimeMap,
   createSemanticMotionTimeline,
   createStepCardPreset,
   createTextBlockPreset,
@@ -24,11 +25,13 @@ import {
   planMotionBeats,
   previewBeatDiffs,
   repairLayoutForAgent,
+  retimeTimeline,
   suggestDocumentNudges,
   suggestLayoutRepairsForAgent,
   suggestSemanticLayoutNudges,
   validateForAgent,
   type ElucimAgentValidationResult,
+  type ElucimAnchorBindings,
   type ElucimBeatPreviewOptions,
   type ElucimDocument,
   type ElucimDocumentNudge,
@@ -45,6 +48,23 @@ import {
   type AgentElementPatch,
   type AgentElementSpec,
 } from '@elucim/dsl/agent';
+import { DEFAULT_DOCUMENT_FPS, exportFrames } from './render.js';
+
+export {
+  DEFAULT_DOCUMENT_FPS,
+  ElucimFrameExportError,
+  exportFrames,
+  planFrameExport,
+  renderFramePng,
+  renderFrameSvg,
+  resolveExportTimeline,
+  type FrameExportOptions,
+  type FrameExportPlan,
+  type FrameExportResult,
+  type FramePlanOptions,
+  type FrameRenderOptions,
+  type PlannedFrame,
+} from './render.js';
 
 export interface CliIo {
   stdout: (value: string) => void;
@@ -181,8 +201,13 @@ const COMMANDS = [
   },
   {
     name: 'export-frames',
-    usage: 'elucim export-frames <file> --timeline intro --frames 0,30,60 --json',
-    description: 'Return selected frame documents for lightweight preview/export workflows.',
+    usage: 'elucim export-frames <file> [--timeline intro] --out-dir frames --fps 25 [--start 0] [--end 100 | --count 100] [--width 1920] [--background transparent] [--anchors boxes.json] --json',
+    description: 'Render exact PNG/SVG frames at any fps (with --out-dir), or return selected frame documents for inspection.',
+  },
+  {
+    name: 'retime',
+    usage: 'elucim retime <file> --timeline intro --map agent=50,tool=110 [--map-file cues.json] [--cue-fps 25] [--duration 150] --out retimed.elc --json',
+    description: 'Move timeline markers to external cue frames, stretching keyframes piecewise-linearly between them.',
   },
 ] as const;
 
@@ -217,7 +242,11 @@ const COMMAND_EXAMPLES: Record<CliCommandName, readonly CliCommandExample[]> = {
   'hold-final': [{ description: 'Flatten a timeline to its final frame for static preview.', argv: ['hold-final', 'diagram.elc', '--timeline', 'intro', '--out', 'poster.elc', '--json'] }],
   'reduced-motion': [{ description: 'Generate a static or minimal-motion accessibility fallback.', argv: ['reduced-motion', 'diagram.elc', '--mode', 'minimal', '--out', 'reduced.elc', '--json'] }],
   'sample-beats': [{ description: 'Preview what changes across sampled points in a timeline.', argv: ['sample-beats', 'diagram.elc', '--timeline', 'intro', '--beats', '4', '--json'] }],
-  'export-frames': [{ description: 'Return selected frame documents for inspection or rendering.', argv: ['export-frames', 'diagram.elc', '--timeline', 'intro', '--frames', '0,24,48', '--json'] }],
+  'export-frames': [
+    { description: 'Return selected frame documents for inspection or rendering.', argv: ['export-frames', 'diagram.elc', '--timeline', 'intro', '--frames', '0,24,48', '--json'] },
+    { description: 'Render a transparent 25 fps PNG overlay sequence bound to measured UI boxes.', argv: ['export-frames', 'overlay.elc', '--out-dir', 'frames', '--fps', '25', '--count', '100', '--background', 'transparent', '--anchors', 'boxes.json', '--json'] },
+  ],
+  retime: [{ description: 'Land authored markers on narration cue frames.', argv: ['retime', 'scene.elc', '--timeline', 'intro', '--map', 'agent=50,tool=110', '--out', 'retimed.elc', '--json'] }],
 };
 
 function commandCatalog() {
@@ -286,6 +315,8 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
         return await sampleBeatsCommand(args, io);
       case 'export-frames':
         return await exportFramesCommand(args, io);
+      case 'retime':
+        return await retimeCommand(args, io);
       default:
         writeError(args, io, `Unknown command "${args.command}". Run "elucim ops --json" to discover commands.`);
         return 2;
@@ -328,6 +359,10 @@ function opsPayload() {
         {
           goal: 'Round-trip editor-friendly Objects',
           commands: ['add-element', 'update-element', 'delete-element', 'validate'],
+        },
+        {
+          goal: 'Time a scene or video overlay to narration cues',
+          commands: ['retime', 'validate', 'export-frames'],
         },
       ],
     },
@@ -840,6 +875,8 @@ async function sampleBeatsCommand(args: ParsedArgs, io: CliIo): Promise<number> 
 
 async function exportFramesCommand(args: ParsedArgs, io: CliIo): Promise<number> {
   const loaded = await loadDocument(requiredFile(args));
+  const outDir = flagValue(args, 'out-dir');
+  if (outDir) return renderFramesCommand(args, io, loaded, outDir);
   const timelineId = requiredFlag(args, 'timeline');
   const timeline = loaded.document.timelines?.[timelineId];
   if (!timeline) throw new Error(`Timeline "${timelineId}" does not exist.`);
@@ -859,6 +896,125 @@ async function exportFramesCommand(args: ParsedArgs, io: CliIo): Promise<number>
     })),
   });
   return 0;
+}
+
+async function renderFramesCommand(args: ParsedArgs, io: CliIo, loaded: LoadedDocument, outDir: string): Promise<number> {
+  if (!loaded.validation.valid) {
+    const messages = loaded.validation.errors.map(error => `${error.path}: ${error.message}`).join('; ');
+    throw new Error(`Cannot render an invalid document: ${messages}`);
+  }
+  const format = flagValue(args, 'format') ?? 'png';
+  if (format !== 'png' && format !== 'svg') throw new Error('--format must be png or svg.');
+  const framesFlag = flagValue(args, 'frames');
+  const result = await exportFrames(loaded.document, {
+    outDir,
+    format,
+    timelineId: flagValue(args, 'timeline'),
+    fps: optionalNumberFlag(args, 'fps'),
+    start: optionalNumberFlag(args, 'start'),
+    end: optionalNumberFlag(args, 'end'),
+    count: optionalNumberFlag(args, 'count'),
+    frames: framesFlag ? framesFlag.split(',').map(item => Number(item.trim())) : undefined,
+    width: optionalNumberFlag(args, 'width'),
+    height: optionalNumberFlag(args, 'height'),
+    background: flagValue(args, 'background'),
+    anchors: await anchorsFlag(args),
+    prefix: flagValue(args, 'prefix'),
+    fontFiles: flagValues(args, 'font').flatMap(value => value.split(',')).map(value => value.trim()).filter(Boolean),
+    systemFonts: hasFlag(args, 'system-fonts'),
+  });
+  writeOutput(args, io, {
+    command: 'export-frames',
+    file: loaded.path,
+    outDir: result.outDir,
+    format: result.format,
+    timelineId: result.timelineId,
+    documentFps: result.documentFps,
+    fps: result.fps,
+    timelineDuration: result.timelineDuration,
+    width: result.width,
+    height: result.height,
+    background: result.background,
+    frameCount: result.files.length,
+    firstFrame: result.frames[0]?.index ?? null,
+    pattern: result.pattern,
+    files: result.files,
+  });
+  return 0;
+}
+
+async function anchorsFlag(args: ParsedArgs): Promise<ElucimAnchorBindings | undefined> {
+  const file = flagValue(args, 'anchors');
+  if (!file) return undefined;
+  const parsed = JSON.parse(await readFile(file, 'utf8')) as unknown;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || typeof (parsed as { anchors?: unknown }).anchors !== 'object') {
+    throw new Error('--anchors file must be JSON like {"anchors": {"name": {"x": 0, "y": 0, "w": 10, "h": 10}}, "source": {"width": 1280, "height": 720}}.');
+  }
+  return parsed as ElucimAnchorBindings;
+}
+
+async function retimeCommand(args: ParsedArgs, io: CliIo): Promise<number> {
+  const loaded = await loadDocument(requiredFile(args));
+  const timelineId = requiredFlag(args, 'timeline');
+  const cueFps = optionalNumberFlag(args, 'cue-fps');
+  const documentFps = loaded.document.scene.fps ?? DEFAULT_DOCUMENT_FPS;
+  if (cueFps !== undefined && !(cueFps > 0)) throw new Error('--cue-fps must be a positive number.');
+  const toDocumentFrame = (frame: number) => (cueFps === undefined ? frame : Math.round((frame * documentFps) / cueFps));
+
+  const raw = await cueMapFlags(args);
+  const cues = Object.fromEntries(Object.entries(raw).map(([name, frame]) => [name, toDocumentFrame(frame)]));
+  const durationFlag = optionalNumberFlag(args, 'duration');
+  const duration = durationFlag === undefined ? undefined : toDocumentFrame(durationFlag);
+
+  const map = createRetimeMap(loaded.document, timelineId, cues, { duration });
+  const document = retimeTimeline(loaded.document, timelineId, cues, { duration });
+  const validation = validateForAgent(document);
+  const outputPath = await maybeWriteDocument(args, loaded.path, document);
+  const lint = lintMotion(document);
+  writeOutput(args, io, {
+    command: 'retime',
+    file: loaded.path,
+    outputPath,
+    timelineId,
+    documentFps,
+    cueFps: cueFps ?? documentFps,
+    cues,
+    sourceDuration: map.sourceDuration,
+    duration: map.targetDuration,
+    anchors: map.anchors,
+    markers: document.timelines?.[timelineId]?.markers,
+    validation,
+    lint,
+    document: shouldIncludeDocument(args) ? document : undefined,
+  });
+  return validation.valid && lint.valid ? 0 : 1;
+}
+
+async function cueMapFlags(args: ParsedArgs): Promise<Record<string, number>> {
+  const cues: Record<string, number> = {};
+  const add = (name: string, value: unknown, source: string) => {
+    const frame = typeof value === 'string' ? Number(value) : value;
+    if (!name || typeof frame !== 'number' || !Number.isFinite(frame)) throw new Error(`Invalid cue "${name}" in ${source}; expected name=frame with a numeric frame.`);
+    if (name in cues) throw new Error(`Cue "${name}" is given more than once.`);
+    cues[name] = frame;
+  };
+  const file = flagValue(args, 'map-file');
+  if (file) {
+    const parsed = JSON.parse(await readFile(file, 'utf8')) as unknown;
+    const entries = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? ((parsed as { cues?: unknown }).cues ?? parsed)
+      : undefined;
+    if (!entries || typeof entries !== 'object' || Array.isArray(entries)) throw new Error('--map-file must be a JSON object of {"marker": frame} (optionally under "cues").');
+    for (const [name, value] of Object.entries(entries)) add(name, value, '--map-file');
+  }
+  for (const value of flagValues(args, 'map')) {
+    for (const pair of value.split(',').map(item => item.trim()).filter(Boolean)) {
+      const [name, frame] = pair.split('=');
+      add(name?.trim() ?? '', frame?.trim(), '--map');
+    }
+  }
+  if (Object.keys(cues).length === 0) throw new Error('Command "retime" requires --map name=frame[,name=frame] or --map-file cues.json.');
+  return cues;
 }
 
 async function collectNudges(doc: ElucimDocument, args: ParsedArgs): Promise<ElucimDocumentNudge[]> {
@@ -1336,8 +1492,17 @@ const defaultIo: CliIo = {
   stderr: value => process.stderr.write(value),
 };
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && isMainModule(process.argv[1])) {
   runCli(process.argv.slice(2)).then(code => {
     process.exitCode = code;
   });
+}
+
+// npm installs `bin` entries as symlinks (or shims), so compare real paths.
+function isMainModule(argvPath: string): boolean {
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(argvPath)).href;
+  } catch {
+    return import.meta.url === pathToFileURL(argvPath).href;
+  }
 }

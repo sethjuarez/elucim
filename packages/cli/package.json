@@ -43,7 +43,8 @@
     "lint": "tsc -p tsconfig.lint.json --noEmit"
   },
   "dependencies": {
-    "@elucim/dsl": "workspace:*"
+    "@elucim/dsl": "workspace:*",
+    "@resvg/resvg-js": "^2.6.2"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",
