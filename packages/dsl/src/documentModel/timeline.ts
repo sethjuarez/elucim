@@ -97,7 +97,7 @@ export function resolveTimelineReveals(
   return reveals;
 }
 
-function resolveRevealTargets(doc: ElucimDocument, effect: ElucimRevealEffect): string[] {
+export function resolveRevealTargets(doc: ElucimDocument, effect: ElucimRevealEffect): string[] {
   const result: string[] = [];
   const seen = new Set<string>();
   const visit = (id: string, ancestry: Set<string>) => {

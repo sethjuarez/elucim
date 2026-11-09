@@ -81,6 +81,16 @@ export {
   evaluateTimelineCameraFrames,
 } from './documentModel/timeline';
 export {
+  createRetimeMap,
+  retimeTimeline,
+  ElucimRetimeError,
+  type ElucimCueMap,
+  type ElucimRetimeAnchor,
+  type ElucimRetimeErrorCode,
+  type ElucimRetimeMap,
+  type ElucimRetimeOptions,
+} from './documentModel/retime';
+export {
   getInitialStateSnapshot,
   startStateMachineRun,
   dispatchStateMachineRunEvent,

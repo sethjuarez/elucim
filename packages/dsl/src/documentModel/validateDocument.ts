@@ -240,6 +240,35 @@ function validateTimelines(doc: ElucimDocument, errors: ValidationError[]) {
     });
     validateTimelineEffects(doc, timelineId, timeline, errors);
     validateTimelineCamera(timeline.camera, `timelines.${timelineId}.camera`, timeline.duration, errors);
+    validateTimelineMarkers(timeline.markers, `timelines.${timelineId}.markers`, timeline.duration, errors);
+  }
+}
+
+function validateTimelineMarkers(markers: unknown, path: string, duration: number, errors: ValidationError[]): void {
+  if (markers === undefined) return;
+  if (!markers || typeof markers !== 'object' || Array.isArray(markers)) {
+    errors.push({ path, message: 'Timeline markers must be an object of marker name to frame', severity: 'error' });
+    return;
+  }
+  const byFrame = new Map<number, string>();
+  for (const [name, frame] of Object.entries(markers as Record<string, unknown>)) {
+    const markerPath = `${path}.${name}`;
+    if (!name.trim()) {
+      errors.push({ path: markerPath, message: 'Marker names must be non-empty', severity: 'error' });
+    }
+    if (typeof frame !== 'number' || !Number.isInteger(frame) || frame < 0) {
+      errors.push({ path: markerPath, message: 'Marker frame must be a non-negative integer', severity: 'error' });
+      continue;
+    }
+    if (Number.isFinite(duration) && frame > duration) {
+      errors.push({ path: markerPath, message: 'Marker frame cannot exceed timeline duration', severity: 'error' });
+    }
+    const existing = byFrame.get(frame);
+    if (existing !== undefined) {
+      errors.push({ path: markerPath, message: `Marker "${name}" shares frame ${frame} with marker "${existing}"`, severity: 'error' });
+    } else {
+      byFrame.set(frame, name);
+    }
   }
 }
 

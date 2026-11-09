@@ -143,6 +143,12 @@ export interface ElucimTimeline {
   effects?: ElucimRevealEffect[];
   /** Optional scene-level camera animation for this timeline. */
   camera?: CameraTrack;
+  /**
+   * Named frames in this timeline's authored (natural-pace) time, e.g.
+   * `{ agent: 42 }`. Used by `retimeTimeline` to land moments on external cues.
+   * Frames are integers in `[0, duration]` and must be distinct.
+   */
+  markers?: Record<string, number>;
 }
 
 export interface ElucimStateMachine {
