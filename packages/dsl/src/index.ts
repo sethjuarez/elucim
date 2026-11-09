@@ -218,6 +218,8 @@ export {
   lintMotion,
   planMotionBeats,
   previewBeatDiffs,
+  ElucimMotionPlanError,
+  type ElucimMotionPlanErrorCode,
   type ElucimAutoStaggerMotionSpec,
   type ElucimBeatPreviewDiff,
   type ElucimBeatPreviewOptions,
